@@ -129,3 +129,19 @@ STATIC_URL = '/static/'
 #############################################################################
 
 AUTH_USER_MODEL = 'solotodo.SoloTodoUser'
+
+#############################################################################
+# Celery configurations
+#############################################################################
+
+CELERY_ENABLE_UTC = True
+CELERY_TIMEZONE = 'America/Santiago'
+
+CELERY_BROKER_URL = 'amqp://solotodo_try:solotodo_try@localhost/solotodo_try'
+CELERY_RESULT_BACKEND = 'rpc://'
+
+CELERY_IMPORTS = (
+    'storescraper.store'
+)
+
+CELERYD_TASK_TIME_LIMIT = 300

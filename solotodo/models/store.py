@@ -1,3 +1,9 @@
+import json
+import tempfile
+
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.core.files.storage import DefaultStorage
 from django.db import models
 
 from solotodo.models.country import Country
@@ -30,7 +36,7 @@ class Store(models.Model):
             product_types = ProductType.objects.filter(
                 storescraper_name__in=scraper.product_types())
 
-        scraped_products = scraper.products(
+        scraped_products_data = scraper.products(
             product_types=[pt.storescraper_name for pt in product_types],
             extra_args=extra_args,
             queue=queue,
@@ -51,15 +57,36 @@ class Store(models.Model):
             ('product_type', e.scraped_product_type.storescraper_name)])
             for e in extra_entities]
 
-        extra_scraped_products = scraper.products_for_urls(
+        extra_scraped_products_data = scraper.products_for_urls(
             extra_entities_args,
             extra_args=extra_args,
             queue=queue,
             products_for_url_concurrency=products_for_url_concurrency
         )
 
-        scraped_products.extend(extra_scraped_products)
-        self.update_with_products(product_types, scraped_products)
+        scraped_products_data['products'].extend(
+            extra_scraped_products_data['products'])
+        scraped_products_data['discovery_urls_without_products'].extend(
+            extra_scraped_products_data['discovery_urls_without_products'])
+
+        # Store log
+
+        serialized_scraping_info = {
+            'product_types': [pt.storescraper_name for pt in product_types],
+            'discovery_urls_without_products':
+                scraped_products_data['discovery_urls_without_products'],
+            'products':
+                [p.serialize() for p in scraped_products_data['products']]
+        }
+
+        storage = settings.PRIVATE_STORAGE()
+        scraping_record_file = ContentFile(json.dumps(
+            serialized_scraping_info).encode('utf-8'))
+        storage.save('logs/scrapings/{}.json'.format(self),
+                     scraping_record_file)
+
+        self.update_with_products(product_types,
+                                  scraped_products_data['products'])
 
     def update_from_json(self, json_data):
         product_types_dict = iterable_to_dict(ProductType, 'storescraper_name')

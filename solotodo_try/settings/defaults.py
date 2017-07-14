@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+    'storages',
     'custom_user',
     'solotodo',
 ]
@@ -130,6 +131,8 @@ STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'solotodo.SoloTodoUser'
 
+DEFAULT_FILE_STORAGE = 'solotodo_try.s3utils.MediaRootS3BotoStorage'
+
 #############################################################################
 # Celery configurations
 #############################################################################
@@ -145,3 +148,21 @@ CELERY_IMPORTS = (
 )
 
 CELERYD_TASK_TIME_LIMIT = 300
+
+##############################################################################
+# Django storages configuration
+##############################################################################
+
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
+AWS_STORAGE_BUCKET_NAME = 'solotodo-try'
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+
+##############################################################################
+# Totally custom settings
+##############################################################################
+
+
+def PRIVATE_STORAGE():
+    from solotodo_try.s3utils import PrivateS3BotoStorage
+    return PrivateS3BotoStorage()

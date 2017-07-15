@@ -157,12 +157,3 @@ AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
 AWS_STORAGE_BUCKET_NAME = 'solotodo-try'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
-
-##############################################################################
-# Totally custom settings
-##############################################################################
-
-
-def PRIVATE_STORAGE():
-    from solotodo_try.s3utils import PrivateS3Boto3Storage
-    return PrivateS3Boto3Storage()

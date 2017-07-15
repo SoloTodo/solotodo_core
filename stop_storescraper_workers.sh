@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-celery multi stop -A solotodo_try storescraper_discover_urls_for_product_type_$1 storescraper_products_for_url_$1 storescraper_api_$1 --logfile=solotodo_try/logs/storescraper/%n.log --pidfile=solotodo_try/pids/storescraper/%n.pid -E -l info
+celery multi stop -A solotodo_try storescraper_discover_urls_for_product_type_$1 storescraper_products_for_url_$1 storescraper_api_$1 --logfile=solotodo_try/logs/celery/%n.log --pidfile=solotodo_try/pids/celery/%n.pid -E -l info

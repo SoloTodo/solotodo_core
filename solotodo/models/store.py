@@ -58,9 +58,26 @@ class Store(models.Model):
 
         products_task_signature.set(queue='storescraper_api_' + queue)
 
+        def log_update_error(exception):
+            if update_log:
+                update_log.status = update_log.ERROR
+                desired_filename = 'logs/scrapings/{}_{}.json'.format(
+                    self, timezone.localtime(
+                        update_log.creation_date).strftime('%Y-%m-%d_%X'))
+                storage = PrivateS3Boto3Storage()
+                real_filename = storage.save(
+                    desired_filename, ContentFile(
+                        str(exception).encode('utf-8')))
+                update_log.registry_file = real_filename
+                update_log.save()
+
         # Prevents Celery error for running a task inside another
         with allow_join_result():
-            scraped_products_data = products_task_signature.delay().get()
+            try:
+                scraped_products_data = products_task_signature.delay().get()
+            except Exception as e:
+                log_update_error(e)
+                raise
 
         # Second pass of product retrieval, for the products mis-catalogued
         # in the store
@@ -88,7 +105,12 @@ class Store(models.Model):
 
         # Prevents Celery error for running a task inside another
         with allow_join_result():
-            extra_products_data = extra_products_task_signature.delay().get()
+            try:
+                extra_products_data = \
+                    extra_products_task_signature.delay().get()
+            except Exception as e:
+                log_update_error(e)
+                raise
 
         scraped_products = [StorescraperProduct.deserialize(p)
                             for p in scraped_products_data['products'] +

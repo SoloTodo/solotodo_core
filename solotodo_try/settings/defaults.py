@@ -131,7 +131,7 @@ STATIC_URL = '/static/'
 
 AUTH_USER_MODEL = 'solotodo.SoloTodoUser'
 
-DEFAULT_FILE_STORAGE = 'solotodo_try.s3utils.MediaRootS3BotoStorage'
+DEFAULT_FILE_STORAGE = 'solotodo_try.s3utils.MediaRootS3Boto3Storage'
 
 #############################################################################
 # Celery configurations
@@ -164,5 +164,5 @@ AWS_S3_SIGNATURE_VERSION = 's3v4'
 
 
 def PRIVATE_STORAGE():
-    from solotodo_try.s3utils import PrivateS3BotoStorage
-    return PrivateS3BotoStorage()
+    from solotodo_try.s3utils import PrivateS3Boto3Storage
+    return PrivateS3Boto3Storage()

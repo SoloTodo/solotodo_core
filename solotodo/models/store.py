@@ -29,23 +29,47 @@ class Store(models.Model):
 
     def update(self, product_types=None, extra_args=None, queue=None,
                discover_urls_concurrency=None,
-               products_for_url_concurrency=None):
+               products_for_url_concurrency=None,
+               use_async=None):
         scraper = self.scraper
 
-        if product_types is None:
-            product_types = ProductType.objects.filter(
-                storescraper_name__in=scraper.product_types())
+        # 1. Parameter normalization
 
-        scraped_products_data = scraper.products(
+        if product_types is None:
+            product_types = []
+
+        sanitized_parameters = scraper.sanitize_parameters(
+            product_types=[pt.storescraper_name for pt in product_types],
+            queue=queue, discover_urls_concurrency=discover_urls_concurrency,
+            products_for_url_concurrency=products_for_url_concurrency,
+            use_async=use_async)
+
+        product_types = ProductType.objects.filter(
+                storescraper_name__in=sanitized_parameters['product_types'])
+        queue = sanitized_parameters['queue']
+        discover_urls_concurrency = \
+            sanitized_parameters['discover_urls_concurrency']
+        products_for_url_concurrency = \
+            sanitized_parameters['products_for_url_concurrency']
+        use_async = sanitized_parameters['use_async']
+
+        # 2. First pass of product retrieval
+
+        products_task_signature = scraper.products_task.s(
+            self.storescraper_class,
             product_types=[pt.storescraper_name for pt in product_types],
             extra_args=extra_args,
             queue=queue,
             discover_urls_concurrency=discover_urls_concurrency,
-            products_for_url_concurrency=products_for_url_concurrency
+            products_for_url_concurrency=products_for_url_concurrency,
+            use_async=use_async
         )
 
-        # Retrieve the products whose real product type was requested for this
-        # update but were not fetched because they were in the wrong section
+        products_task_signature.set(queue='storescraper_api_' + queue)
+        scraped_products_data = products_task_signature.delay().get()
+
+        # 3. Second pass of product retrieval, for the products mis-catalogued
+        # in the store
         extra_entities = self.entity_set.filter(
             product_type__in=product_types
         ).exclude(
@@ -61,32 +85,20 @@ class Store(models.Model):
             extra_entities_args,
             extra_args=extra_args,
             queue=queue,
-            products_for_url_concurrency=products_for_url_concurrency
+            products_for_url_concurrency=products_for_url_concurrency,
+            use_async=use_async
         )
 
-        scraped_products_data['products'].extend(
-            extra_scraped_products_data['products'])
-        scraped_products_data['discovery_urls_without_products'].extend(
-            extra_scraped_products_data['discovery_urls_without_products'])
+        scraped_products = [StorescraperProduct.deserialize(p)
+                            for p in scraped_products_data['products'] +
+                            extra_scraped_products_data['products']]
 
-        # Store log
+        discovery_urls_without_products = \
+            scraped_products_data['discovery_urls_without_products'] + \
+            extra_scraped_products_data['discovery_urls_without_products']
 
-        serialized_scraping_info = {
-            'product_types': [pt.storescraper_name for pt in product_types],
-            'discovery_urls_without_products':
-                scraped_products_data['discovery_urls_without_products'],
-            'products':
-                [p.serialize() for p in scraped_products_data['products']]
-        }
-
-        storage = settings.PRIVATE_STORAGE()
-        scraping_record_file = ContentFile(json.dumps(
-            serialized_scraping_info).encode('utf-8'))
-        storage.save('logs/scrapings/{}.json'.format(self),
-                     scraping_record_file)
-
-        self.update_with_products(product_types,
-                                  scraped_products_data['products'])
+        self.update_with_scraped_products(product_types, scraped_products,
+                                          discovery_urls_without_products)
 
     def update_from_json(self, json_data):
         product_types_dict = iterable_to_dict(ProductType, 'storescraper_name')
@@ -97,9 +109,12 @@ class Store(models.Model):
         products = [StorescraperProduct.deserialize(product)
                     for product in json_data['products']]
 
-        self.update_with_products(product_types, products)
+        self.update_with_scraped_products(
+            product_types, products,
+            json_data['discovery_urls_without_products'])
 
-    def update_with_products(self, product_types, scraped_products):
+    def update_with_scraped_products(self, product_types, scraped_products,
+                                     discovery_urls_without_products):
         from solotodo.models import Currency, Entity
 
         scraped_products_dict = iterable_to_dict(scraped_products, 'key')
@@ -134,6 +149,20 @@ class Store(models.Model):
                 product_types_dict[scraped_product.product_type],
                 currencies_dict[scraped_product.currency]
             )
+
+        # 4. Create log file
+
+        serialized_scraping_info = {
+            'product_types': [pt.storescraper_name for pt in product_types],
+            'discovery_urls_without_products': discovery_urls_without_products,
+            'products': [p.serialize() for p in scraped_products]
+        }
+
+        storage = settings.PRIVATE_STORAGE()
+        scraping_record_file = ContentFile(json.dumps(
+            serialized_scraping_info).encode('utf-8'))
+        storage.save('logs/scrapings/{}.json'.format(self),
+                     scraping_record_file)
 
     class Meta:
         ordering = ['name']

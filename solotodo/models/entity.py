@@ -1,11 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
+from django.db.models import Q
 from django.utils import timezone
 
 from solotodo.models.product import Product
 from solotodo.models.currency import Currency
 from solotodo.models.product_type import ProductType
 from solotodo.models.store import Store
+
+
+class EntityManager(models.Manager):
+    def get_available(self):
+        return self.filter(~Q(active_registry__stock=0))
 
 
 class Entity(models.Model):
@@ -33,6 +39,8 @@ class Entity(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
+    objects = EntityManager()
+
     def __str__(self):
         result = '{} - {}'.format(self.store, self.name)
         if self.cell_plan_name:
@@ -40,6 +48,12 @@ class Entity(models.Model):
         result += ' ({})'.format(self.product_type)
 
         return result
+
+    def is_available(self):
+        if self.active_registry:
+            return self.active_registry.stock != 0
+
+        return False
 
     def update_with_scraped_product(self, scraped_product,
                                     product_type, currency):
@@ -82,10 +96,11 @@ class Entity(models.Model):
             self.active_registry = current_active_registry
 
             self.save()
-        elif current_active_registry:
+        else:
             self.active_registry = None
             self.save()
-            current_active_registry.delete()
+            if current_active_registry:
+                current_active_registry.delete()
 
     @classmethod
     def create_from_scraped_product(cls, scraped_product, store, product_type,

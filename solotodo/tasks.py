@@ -9,24 +9,19 @@ def store_update(store_id, product_type_ids=None, extra_args=None, queue=None,
                  products_for_url_concurrency=None,
                  use_async=None):
     store = Store.objects.get(pk=store_id)
-    scraper = store.scraper
 
-    product_types = ProductType.objects.filter(
-        storescraper_name__in=scraper.product_types())
+    if product_type_ids:
+        product_types = ProductType.objects.get(pk__in=product_type_ids)
+    else:
+        product_types = None
 
-    if product_type_ids is not None:
-        product_types = product_types.filter(
-            pk__in=product_type_ids
-        )
+    product_types = store.sanitize_product_types_for_update(product_types)
 
     sanitized_parameters = store.scraper.sanitize_parameters(
-        product_types=[pt.storescraper_name for pt in product_types],
         queue=queue, discover_urls_concurrency=discover_urls_concurrency,
         products_for_url_concurrency=products_for_url_concurrency,
         use_async=use_async)
 
-    product_types = ProductType.objects.filter(
-        storescraper_name__in=sanitized_parameters['product_types'])
     queue = sanitized_parameters['queue']
     discover_urls_concurrency = \
         sanitized_parameters['discover_urls_concurrency']
@@ -43,6 +38,11 @@ def store_update(store_id, product_type_ids=None, extra_args=None, queue=None,
     )
 
     update_log.product_types = product_types
+
+    # Reset the product types to synchronize the task signature with the
+    # actual method implementation
+    if product_type_ids is None:
+        product_types = None
 
     store.update(product_types=product_types, extra_args=extra_args,
                  queue=queue,

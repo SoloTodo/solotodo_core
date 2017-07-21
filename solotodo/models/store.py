@@ -33,12 +33,7 @@ class Store(models.Model):
                use_async=None, update_log=None):
         scraper = self.scraper
 
-        if product_types is not None:
-            product_types = product_types.filter(
-                storescraper_name__in=scraper.product_types())
-        else:
-            product_types = ProductType.objects.filter(
-                storescraper_name__in=scraper.product_types())
+        product_types = self.sanitize_product_types_for_update(product_types)
 
         if update_log:
             update_log.status = update_log.IN_PROCESS
@@ -84,7 +79,11 @@ class Store(models.Model):
         extra_entities = self.entity_set.filter(
             product_type__in=product_types
         ).exclude(
-            scraped_product_type__in=product_types
+            scraped_product_type__in=product_types,
+            # Exclude the entities that we already scraped previously. This
+            # happens when product_types is None and is sanitized to include
+            # the product types of these entities.
+            key__in=[e['key'] for e in scraped_products_data['products']]
         )
 
         extra_entities_args = [dict([
@@ -204,6 +203,39 @@ class Store(models.Model):
             update_log.registry_file = real_filename
 
             update_log.save()
+
+    def scraper_product_types(self):
+        return ProductType.objects.filter(
+            storescraper_name__in=self.scraper.product_types())
+
+    def sanitize_product_types_for_update(self, original_product_types=None):
+        sanitized_product_types = self.scraper_product_types()
+
+        if original_product_types:
+            sanitized_product_types &= original_product_types
+
+        # If we have entities whose product_types differ between our backend
+        # and the store itsel add their product types manually to the list of
+        # product types to be updated if the original product types are not
+        # given
+        # Example:
+        # 1. "Sanitize all the product types from AbcDin"
+        # (original_product_types = None)
+        # 2. Load the default product types from AbcDin [Television, etc...]
+        # 3. We may have an entity from AbcDin with mismatched product_type.
+        # For example they had a Processor in the Notebook section
+        # Normally this entity would never be updated as Processor is not
+        # part of AbcDin scraper, so add "Processor" to the list of product
+        # types
+        if original_product_types is None:
+            extra_product_type_ids = self.entity_set.exclude(
+                product_type__in=sanitized_product_types).values(
+                'product_type')
+            extra_product_types = ProductType.objects.filter(
+                pk__in=[e['product_type'] for e in extra_product_type_ids])
+            sanitized_product_types |= extra_product_types
+
+        return sanitized_product_types
 
     class Meta:
         ordering = ['name']

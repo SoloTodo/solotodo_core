@@ -1,21 +1,34 @@
 from django.contrib.auth import get_user_model
 from rest_framework import viewsets, serializers, permissions
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.response import Response
+
+from solotodo.models import Store
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = get_user_model()
-        fields = ('url', 'email', 'is_staff')
+        fields = ('email', 'is_staff', 'is_superuser')
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = get_user_model().objects.all()
-    serializer_class = UserSerializer
+class UserViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
-    def retrieve(self, request, pk=None):
-        if pk == 'i':
-            return Response(UserSerializer(request.user,
-                                           context={'request': request}).data)
-        return super(UserViewSet, self).retrieve(request, pk)
+    @list_route()
+    def me(self, request):
+        return Response(UserSerializer(
+            request.user,
+            context={'request': request}).data)
+
+
+class StoreSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Store
+        fields = ('id', 'name')
+
+
+class StoreViewSet(viewsets.ModelViewSet):
+    queryset = Store.objects.all()
+    serializer_class = StoreSerializer
+

@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_extensions',
+    'guardian',
     'rest_framework',
     'rest_framework.authtoken',
     'storages',
@@ -137,6 +138,11 @@ AUTH_USER_MODEL = 'solotodo.SoloTodoUser'
 
 DEFAULT_FILE_STORAGE = 'solotodo_try.s3utils.MediaRootS3Boto3Storage'
 
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',
+    'guardian.backends.ObjectPermissionBackend',
+)
+
 #############################################################################
 # Celery configurations
 #############################################################################
@@ -179,3 +185,9 @@ REST_FRAMEWORK = {
 ##############################################################################
 
 CORS_ORIGIN_WHITELIST = ['localhost:3000', ]
+
+###############################################################################
+# Django-guardian Configuration
+###############################################################################
+
+ANONYMOUS_USER_NAME = None

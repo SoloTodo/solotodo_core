@@ -20,6 +20,11 @@ class Store(models.Model):
     storescraper_class = models.CharField(max_length=255, db_index=True)
     storescraper_extra_args = models.CharField(max_length=255, null=True,
                                                blank=True)
+    type = models.IntegerField(choices=[
+        (1, 'Retail'),
+        (2, 'Wholesaler'),
+        (3, 'Mobile network operator')
+    ], default=1)
 
     scraper = property(
         lambda self: get_store_class_by_name(self.storescraper_class))
@@ -238,5 +243,8 @@ class Store(models.Model):
         return sanitized_product_types
 
     class Meta:
-        ordering = ['name']
         app_label = 'solotodo'
+        ordering = ['name']
+        permissions = (
+            ['view_store', 'Can view store'],
+        )

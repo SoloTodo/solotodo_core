@@ -1,6 +1,8 @@
 from django.contrib import admin
 
 # Register your models here.
+from guardian.admin import GuardedModelAdmin
+
 from solotodo.models import Currency, Entity, EntityHistory, ProductType, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog
 
@@ -28,5 +30,5 @@ class ProductModelAdmin(admin.ModelAdmin):
 admin.site.register(Product, ProductModelAdmin)
 admin.site.register(ProductType)
 admin.site.register(SoloTodoUser)
-admin.site.register(Store)
+admin.site.register(Store, GuardedModelAdmin)
 admin.site.register(StoreUpdateLog)

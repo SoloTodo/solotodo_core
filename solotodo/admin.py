@@ -4,8 +4,9 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, ProductType, \
-    SoloTodoUser, Store, Country, Product, StoreUpdateLog
+    SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language
 
+admin.site.register(Language)
 admin.site.register(Country)
 admin.site.register(Currency)
 

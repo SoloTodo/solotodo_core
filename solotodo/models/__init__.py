@@ -1,3 +1,4 @@
+from .language import Language
 from .solotodo_user import SoloTodoUser
 from .currency import Currency
 from .country import Country

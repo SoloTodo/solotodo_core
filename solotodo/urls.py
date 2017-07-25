@@ -6,11 +6,12 @@ from rest_framework import routers
 
 
 # Routers provide an easy way of automatically determining the URL conf.
-from solotodo.views import UserViewSet, StoreViewSet
+from solotodo.views import UserViewSet, StoreViewSet, LanguageViewSet
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet, base_name='users')
 router.register(r'stores', StoreViewSet)
+router.register(r'languages', LanguageViewSet)
 
 urlpatterns = [
     url(r'^', include(router.urls)),

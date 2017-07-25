@@ -1,31 +1,34 @@
-from django.contrib.auth import get_user_model
-from rest_framework import viewsets, serializers, permissions
-from rest_framework.decorators import detail_route, list_route
+import json
+
+from rest_framework import viewsets, permissions
+from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
-from solotodo.models import Store
-
-
-class UserSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = get_user_model()
-        fields = ('email', 'is_staff', 'is_superuser')
+from solotodo.models import Store, Language
+from solotodo.serializers import UserSerializer, LanguageSerializer, \
+    StoreSerializer
 
 
 class UserViewSet(viewsets.GenericViewSet):
     permission_classes = (permissions.IsAuthenticated,)
 
-    @list_route()
+    @list_route(methods=['get', 'patch'])
     def me(self, request):
+        user = request.user
+
+        if request.method == 'PATCH':
+            content = json.loads(request.body.decode('utf-8'))
+            language = Language.objects.get(pk=content['preferred_language'])
+            user.preferred_language = language
+            user.save()
         return Response(UserSerializer(
-            request.user,
+            user,
             context={'request': request}).data)
 
 
-class StoreSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Store
-        fields = ('id', 'name')
+class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Language.objects.all()
+    serializer_class = LanguageSerializer
 
 
 class StoreViewSet(viewsets.ModelViewSet):

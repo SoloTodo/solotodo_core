@@ -4,9 +4,9 @@ from rest_framework import viewsets, permissions
 from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
-from solotodo.models import Store, Language
+from solotodo.models import Store, Language, Currency, Country
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
-    StoreSerializer
+    StoreSerializer, CurrencySerializer, CountrySerializer
 
 
 class UserViewSet(viewsets.GenericViewSet):
@@ -18,8 +18,14 @@ class UserViewSet(viewsets.GenericViewSet):
 
         if request.method == 'PATCH':
             content = json.loads(request.body.decode('utf-8'))
-            language = Language.objects.get(pk=content['preferred_language'])
-            user.preferred_language = language
+            if 'preferred_language' in content:
+                language = Language.objects.get(
+                    pk=content['preferred_language'])
+                user.preferred_language = language
+            if 'preferred_currency' in content:
+                currency = Currency.objects.get(
+                    pk=content['preferred_currency'])
+                user.preferred_currency = currency
             user.save()
         return Response(UserSerializer(
             user,
@@ -31,7 +37,16 @@ class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LanguageSerializer
 
 
-class StoreViewSet(viewsets.ModelViewSet):
+class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Currency.objects.all()
+    serializer_class = CurrencySerializer
+
+
+class CountryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Country.objects.all()
+    serializer_class = CountrySerializer
+
+
+class StoreViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
-

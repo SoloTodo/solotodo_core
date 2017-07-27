@@ -1,5 +1,7 @@
 import json
 
+from guardian.shortcuts import get_objects_for_user
+from guardian.utils import get_anonymous_user
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import list_route
 from rest_framework.response import Response
@@ -48,5 +50,9 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class StoreViewSet(viewsets.ReadOnlyModelViewSet):
+    def get_queryset(self):
+        return get_objects_for_user(self.request.user, 'view_store',
+                                    klass=Store)
+
     queryset = Store.objects.all()
     serializer_class = StoreSerializer

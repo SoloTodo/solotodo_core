@@ -5,10 +5,14 @@ from solotodo.models import Language, Store, Currency, Country
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
+    permissions = serializers.ListField(
+        child=serializers.CharField()
+    )
+
     class Meta:
         model = get_user_model()
         fields = ('email', 'is_staff', 'is_superuser', 'preferred_language_id',
-                  'preferred_country', 'preferred_currency_id')
+                  'preferred_country', 'preferred_currency_id', 'permissions')
 
 
 class LanguageSerializer(serializers.ModelSerializer):

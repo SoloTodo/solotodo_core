@@ -16,6 +16,7 @@ class SoloTodoUser(AbstractEmailUser):
     preferred_currency = models.ForeignKey(Currency, blank=True, null=True)
     preferred_country = models.ForeignKey(Country, blank=True,
                                           null=True)
+    permissions = property(lambda self: sorted(self.get_all_permissions()))
 
     class Meta:
         app_label = 'solotodo'

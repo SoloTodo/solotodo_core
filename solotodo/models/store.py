@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
 
+from solotodo.models.store_type import StoreType
 from solotodo.models.country import Country
 from solotodo.models.product_type import ProductType
 from solotodo.utils import iterable_to_dict
@@ -20,11 +21,7 @@ class Store(models.Model):
     storescraper_class = models.CharField(max_length=255, db_index=True)
     storescraper_extra_args = models.CharField(max_length=255, null=True,
                                                blank=True)
-    type = models.IntegerField(choices=[
-        (1, 'Retail'),
-        (2, 'Wholesaler'),
-        (3, 'Mobile network operator')
-    ], default=1)
+    type = models.ForeignKey(StoreType)
 
     scraper = property(
         lambda self: get_store_class_by_name(self.storescraper_class))
@@ -247,4 +244,5 @@ class Store(models.Model):
         ordering = ['name']
         permissions = (
             ['view_store', 'Can view store'],
+            ['backend_list_stores', 'Can access store list in backend'],
         )

@@ -4,7 +4,7 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, ProductType, \
-    SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language
+    SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, StoreType
 
 admin.site.register(Language)
 admin.site.register(Country)
@@ -31,5 +31,6 @@ class ProductModelAdmin(admin.ModelAdmin):
 admin.site.register(Product, ProductModelAdmin)
 admin.site.register(ProductType)
 admin.site.register(SoloTodoUser)
+admin.site.register(StoreType)
 admin.site.register(Store, GuardedModelAdmin)
 admin.site.register(StoreUpdateLog)

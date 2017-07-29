@@ -7,16 +7,17 @@ from rest_framework import routers
 
 # Routers provide an easy way of automatically determining the URL conf.
 from solotodo.views import UserViewSet, StoreViewSet, LanguageViewSet, \
-    CurrencyViewSet, CountryViewSet
+    CurrencyViewSet, CountryViewSet, StoreTypeViewSet
 
 router = routers.DefaultRouter()
-router.register(r'users', UserViewSet, base_name='users')
+router.register(r'users', UserViewSet)
 router.register(r'stores', StoreViewSet)
 router.register(r'languages', LanguageViewSet)
+router.register(r'store_types', StoreTypeViewSet)
 router.register(r'currencies', CurrencyViewSet)
 router.register(r'countries', CountryViewSet)
 
 urlpatterns = [
-    url(r'^', include(router.urls)),
-    url(r'^obtain-auth-token/$', obtain_auth_token)
+    url(r'^api/', include(router.urls)),
+    url(r'^api/obtain-auth-token/$', obtain_auth_token)
 ]

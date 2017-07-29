@@ -185,7 +185,7 @@ REST_FRAMEWORK = {
 # CORS headers configuration
 ##############################################################################
 
-CORS_ORIGIN_WHITELIST = ['localhost:3000', '192.168.99.100:3000']
+CORS_ORIGIN_WHITELIST = ['localhost:3000', ]
 
 ###############################################################################
 # Django-guardian Configuration
@@ -206,6 +206,5 @@ QUERYCOUNT = {
     },
     'IGNORE_REQUEST_PATTERNS': [],
     'IGNORE_SQL_PATTERNS': [],
-    'DISPLAY_DUPLICATES': None,
+    'DISPLAY_DUPLICATES': None
 }
-

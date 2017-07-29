@@ -1,42 +1,50 @@
 import json
 
+from django.contrib.auth import get_user_model
 from guardian.shortcuts import get_objects_for_user
-from guardian.utils import get_anonymous_user
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import list_route
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 
-from solotodo.models import Store, Language, Currency, Country
+from solotodo.models import Store, Language, Currency, Country, StoreType
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
-    StoreSerializer, CurrencySerializer, CountrySerializer
+    StoreSerializer, CurrencySerializer, CountrySerializer, StoreTypeSerializer
 
 
-class UserViewSet(viewsets.GenericViewSet):
-    permission_classes = (permissions.IsAuthenticated,)
+class UserViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = get_user_model().objects.all()
+    permission_classes = (permissions.IsAdminUser,)
 
-    @list_route(methods=['get', 'patch'])
+    @list_route(methods=['get', 'patch'],
+                permission_classes=(permissions.IsAuthenticated, ))
     def me(self, request):
         user = request.user
 
         if request.method == 'PATCH':
             content = json.loads(request.body.decode('utf-8'))
-            if 'preferred_language' in content:
-                language = Language.objects.get(
-                    pk=content['preferred_language'])
-                user.preferred_language = language
-            if 'preferred_currency' in content:
-                currency = Currency.objects.get(
-                    pk=content['preferred_currency'])
-                user.preferred_currency = currency
-            user.save()
-        return Response(UserSerializer(
+            serializer = UserSerializer(
+                user, data=content, partial=True,
+                context={'request': request})
+            if serializer.is_valid(raise_exception=True):
+                serializer.save()
+
+        payload = UserSerializer(
             user,
-            context={'request': request}).data)
+            context={'request': request}).data
+
+        payload['url'] = reverse('solotodouser-me', request=request)
+        return Response(payload)
 
 
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
+
+
+class StoreTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = StoreType.objects.all()
+    serializer_class = StoreTypeSerializer
 
 
 class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):

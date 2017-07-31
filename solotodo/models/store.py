@@ -244,5 +244,6 @@ class Store(models.Model):
         ordering = ['name']
         permissions = (
             ['view_store', 'Can view store'],
+            ['update_store_prices', 'Can update store'],
             ['backend_list_stores', 'Can access store list in backend'],
         )

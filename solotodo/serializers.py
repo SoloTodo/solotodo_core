@@ -43,5 +43,5 @@ class CountrySerializer(serializers.HyperlinkedModelSerializer):
 class StoreSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Store
-        fields = ('url', 'name', 'country', 'is_active', 'type',
+        fields = ('url', 'id', 'name', 'country', 'is_active', 'type',
                   'storescraper_class')

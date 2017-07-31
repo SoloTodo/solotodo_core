@@ -144,6 +144,8 @@ AUTHENTICATION_BACKENDS = (
     'guardian.backends.ObjectPermissionBackend',
 )
 
+GEOIP_PATH = BASE_DIR
+
 #############################################################################
 # Celery configurations
 #############################################################################

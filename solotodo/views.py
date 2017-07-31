@@ -1,15 +1,21 @@
 import json
 
 from django.contrib.auth import get_user_model
+from django.contrib.gis.geoip2 import GeoIP2
+from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import list_route
+from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
+from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
+from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, StoreTypeSerializer
+from solotodo.utils import get_client_ip
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -56,8 +62,34 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
 
+    @list_route()
+    def by_ip(self, request):
+        if 'ip' in request.GET:
+            form = IpForm(request.GET)
+        else:
+            form = IpForm({'ip': get_client_ip(request)})
 
-class StoreViewSet(viewsets.ReadOnlyModelViewSet):
+        if form.is_valid():
+            geo_ip2 = GeoIP2()
+            try:
+                country_data = geo_ip2.country(form.cleaned_data['ip'])
+            except AddressNotFoundError as err:
+                raise exceptions.NotFound(str(err))
+            try:
+                country = Country.objects.get(
+                    iso_code=country_data['country_code'])
+            except Country.DoesNotExist as err:
+                raise exceptions.NotFound(str(err))
+        else:
+            raise exceptions.ValidationError('Invalid IP address')
+
+        serializer = CountrySerializer(
+            country,
+            context={'request': request})
+        return Response(serializer.data)
+
+
+class StoreViewSet(PermissionReadOnlyModelViewSet):
     def get_queryset(self):
         return get_objects_for_user(self.request.user, 'view_store',
                                     klass=Store)

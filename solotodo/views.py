@@ -5,16 +5,18 @@ from django.contrib.gis.geoip2 import GeoIP2
 from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets, permissions
-from rest_framework.decorators import list_route
+from rest_framework.decorators import list_route, detail_route
 from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
+from solotodo.CustomFormField import CustomFormField
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
-    StoreSerializer, CurrencySerializer, CountrySerializer, StoreTypeSerializer
+    StoreSerializer, CurrencySerializer, CountrySerializer, StoreTypeSerializer, \
+    StoreUpdatePricesSerializer
 from solotodo.utils import get_client_ip
 
 
@@ -93,6 +95,16 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
     def get_queryset(self):
         return get_objects_for_user(self.request.user, 'view_store',
                                     klass=Store)
+
+    @detail_route()
+    def update_prices(self, request, pk):
+        store = self.get_object()
+        if request.method == 'POST':
+            serializer = StoreUpdatePricesSerializer(store, request.POST)
+        else:
+            serializer = StoreUpdatePricesSerializer(store)
+            new_field = CustomFormField(serializer.fields['discover_urls_concurrency'])
+            return Response(serializer.data)
 
     queryset = Store.objects.all()
     serializer_class = StoreSerializer

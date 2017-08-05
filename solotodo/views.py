@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
+from django.http import Http404
 from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets, permissions
@@ -10,13 +11,15 @@ from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
-from solotodo.CustomFormField import CustomFormField
+from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.forms.ip_form import IpForm
-from solotodo.models import Store, Language, Currency, Country, StoreType
+from solotodo.models import Store, Language, Currency, Country, StoreType, \
+    ProductType
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
-    StoreSerializer, CurrencySerializer, CountrySerializer, StoreTypeSerializer, \
-    StoreUpdatePricesSerializer
+    StoreSerializer, CurrencySerializer, CountrySerializer, \
+    StoreTypeSerializer, StoreUpdatePricesSerializer, ProductTypeSerializer
+from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
 
@@ -60,6 +63,11 @@ class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CurrencySerializer
 
 
+class ProductTypeViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ProductType.objects.all()
+    serializer_class = ProductTypeSerializer
+
+
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
@@ -92,19 +100,56 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class StoreViewSet(PermissionReadOnlyModelViewSet):
+    queryset = Store.objects.all()
+    serializer_class = StoreSerializer
+
     def get_queryset(self):
         return get_objects_for_user(self.request.user, 'view_store',
                                     klass=Store)
 
     @detail_route()
+    @detail_permission('update_store_prices')
+    def scraper(self, request, pk):
+        store = self.get_object()
+        try:
+            store.scraper
+        except AttributeError:
+            raise Http404
+        serializer = StoreUpdatePricesSerializer(
+            store, context={'request': request})
+        return Response(serializer.data)
+
+    @detail_route(methods=['POST'])
+    @detail_permission('update_store_prices')
     def update_prices(self, request, pk):
         store = self.get_object()
-        if request.method == 'POST':
-            serializer = StoreUpdatePricesSerializer(store, request.POST)
-        else:
-            serializer = StoreUpdatePricesSerializer(store)
-            new_field = CustomFormField(serializer.fields['discover_urls_concurrency'])
-            return Response(serializer.data)
+        serializer = StoreUpdatePricesSerializer(
+            store, data=request.data, context={'request': request})
+        if serializer.is_valid():
+            validated_data = serializer.validated_data
 
-    queryset = Store.objects.all()
-    serializer_class = StoreSerializer
+            product_types = validated_data['product_types']
+            if not product_types:
+                product_types = None
+
+            queue = validated_data['queue']
+            discover_urls_concurrency = \
+                validated_data['discover_urls_concurrency']
+            products_for_url_concurrency = \
+                validated_data['products_for_url_concurrency']
+            use_async = validated_data['async']
+
+            task = store_update.delay(
+                store.id,
+                product_type_ids=[pt.id for pt in product_types],
+                extra_args=None, queue=queue,
+                discover_urls_concurrency=discover_urls_concurrency,
+                products_for_url_concurrency=products_for_url_concurrency,
+                use_async=use_async)
+
+            return Response(json.dumps({
+                'task_id': task.id
+            }))
+        else:
+            print(serializer.errors)
+            return Response(str(serializer.errors))

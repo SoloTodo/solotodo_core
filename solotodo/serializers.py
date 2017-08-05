@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 from rest_framework.fields import empty
+from rest_framework.reverse import reverse
 
-from solotodo.models import Language, Store, Currency, Country, StoreType
+from solotodo.models import Language, Store, Currency, Country, StoreType, \
+    ProductType
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -48,28 +50,42 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
                   'storescraper_class')
 
 
-class StoreUpdatePricesSerializer(serializers.Serializer):
-    discover_urls_concurrency = serializers.IntegerField()
-    products_for_url_concurrency = serializers.IntegerField()
-    queue = serializers.ChoiceField(choices=[
-        ('us', 'United States'),
-        ('cl', 'Chile')
-    ])
-    async = serializers.BooleanField(required=False)
-    product_types = serializers.ChoiceField(choices=[], required=False)
+class ProductTypeSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = ProductType
+        fields = ('url', 'name',)
 
-    def __init__(self, store, data=empty):
-        super(StoreUpdatePricesSerializer, self).__init__(None, data)
-        scraper = store.scraper
+
+class StoreUpdatePricesSerializer(serializers.Serializer):
+    discover_urls_concurrency = serializers.IntegerField(
+        min_value=1
+    )
+    products_for_url_concurrency = serializers.IntegerField(
+        min_value=1
+    )
+    queue = serializers.ChoiceField(
+        choices=['us', 'cl']
+    )
+    async = serializers.BooleanField()
+    product_types = serializers.HyperlinkedRelatedField(
+        view_name='producttype-detail',
+        queryset=ProductType.objects.all(),
+        many=True
+    )
+
+    def __init__(self, instance, data=empty, **kwargs):
+        super(StoreUpdatePricesSerializer, self).__init__(None, data, **kwargs)
+        scraper = instance.scraper
         self.fields['discover_urls_concurrency'].initial = \
             scraper.preferred_discover_urls_concurrency
         self.fields['products_for_url_concurrency'].initial = \
             scraper.preferred_products_for_url_concurrency
         self.fields['queue'].initial = scraper.preferred_queue
         self.fields['async'].initial = scraper.prefer_async
-        self.fields['product_types'].choices = [
-            (pt.id, str(pt)) for pt in store.scraper_product_types()
-        ]
+        valid_product_types = instance.scraper_product_types()
+        self.fields['product_types'].child_relation.queryset = \
+            valid_product_types
         self.fields['product_types'].initial = [
-            (pt.id, str(pt)) for pt in store.scraper_product_types()
-        ]
+            reverse('producttype-detail', kwargs={'pk': pt.pk},
+                    request=kwargs['context']['request'])
+            for pt in valid_product_types]

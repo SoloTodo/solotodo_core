@@ -11,7 +11,7 @@ def store_update(store_id, product_type_ids=None, extra_args=None, queue=None,
     store = Store.objects.get(pk=store_id)
 
     if product_type_ids:
-        product_types = ProductType.objects.get(pk__in=product_type_ids)
+        product_types = ProductType.objects.filter(pk__in=product_type_ids)
     else:
         product_types = None
 

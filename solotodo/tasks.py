@@ -7,7 +7,8 @@ from solotodo.models import Store, ProductType, StoreUpdateLog
 def store_update(store_id, product_type_ids=None, extra_args=None, queue=None,
                  discover_urls_concurrency=None,
                  products_for_url_concurrency=None,
-                 use_async=None):
+                 use_async=None,
+                 update_log_id=None):
     store = Store.objects.get(pk=store_id)
 
     if product_type_ids:
@@ -29,13 +30,16 @@ def store_update(store_id, product_type_ids=None, extra_args=None, queue=None,
         sanitized_parameters['products_for_url_concurrency']
     use_async = sanitized_parameters['use_async']
 
-    update_log = StoreUpdateLog.objects.create(
-        store=store,
-        discovery_url_concurrency=discover_urls_concurrency,
-        products_for_url_concurrency=products_for_url_concurrency,
-        use_async=use_async,
-        queue=queue
-    )
+    if update_log_id:
+        update_log = StoreUpdateLog.objects.get(pk=update_log_id)
+    else:
+        update_log = StoreUpdateLog.objects.create(store=store)
+
+    update_log.discovery_url_concurrency = discover_urls_concurrency
+    update_log.products_for_url_concurrency = products_for_url_concurrency
+    update_log.use_async = use_async
+    update_log.queue = queue
+    update_log.save()
 
     update_log.product_types = product_types
 

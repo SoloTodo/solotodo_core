@@ -174,9 +174,9 @@ class InstanceModel(models.Model):
                             not instance_field.field.nullable:
                         if instance_field.value is None:
                             raise IntegrityError(
-                                '{0} is a required field of {1}'
+                                '{} is a required field of {}'
                                 ''.format(instance_field.field.name,
-                                           self.model))
+                                          self.model))
 
             self.unicode_representation = self.get_unicode_representation()
 

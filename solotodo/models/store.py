@@ -33,6 +33,8 @@ class Store(models.Model):
                discover_urls_concurrency=None,
                products_for_url_concurrency=None,
                use_async=None, update_log=None):
+        assert self.is_active
+
         scraper = self.scraper
 
         product_types = self.sanitize_product_types_for_update(product_types)
@@ -126,6 +128,8 @@ class Store(models.Model):
                                           update_log=update_log)
 
     def update_from_json(self, json_data, update_log=None):
+        assert self.is_active
+
         product_types = ProductType.objects.filter(
             storescraper_name__in=json_data['product_types'])
 
@@ -142,6 +146,8 @@ class Store(models.Model):
                                      discovery_urls_without_products,
                                      update_log=None):
         from solotodo.models import Currency, Entity
+
+        assert self.is_active
 
         scraped_products_dict = iterable_to_dict(scraped_products, 'key')
         entities_to_be_updated = self.entity_set.filter(
@@ -246,4 +252,5 @@ class Store(models.Model):
             ['view_store', 'Can view store'],
             ['update_store_prices', 'Can update store'],
             ['backend_list_stores', 'Can access store list in backend'],
+            ['view_store_update_logs', 'Can view store update logs'],
         )

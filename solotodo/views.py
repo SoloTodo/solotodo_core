@@ -15,10 +15,12 @@ from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    ProductType
+    ProductType, StoreUpdateLog
+from solotodo.pagination import StoreUpdateLogPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
-    StoreTypeSerializer, StoreUpdatePricesSerializer, ProductTypeSerializer
+    StoreTypeSerializer, StoreUpdatePricesSerializer, ProductTypeSerializer, \
+    StoreUpdateLogSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -139,17 +141,33 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                 validated_data['products_for_url_concurrency']
             use_async = validated_data['async']
 
+            store_update_log = StoreUpdateLog.objects.create(store=store)
+
             task = store_update.delay(
                 store.id,
                 product_type_ids=[pt.id for pt in product_types],
                 extra_args=None, queue=queue,
                 discover_urls_concurrency=discover_urls_concurrency,
                 products_for_url_concurrency=products_for_url_concurrency,
-                use_async=use_async)
+                use_async=use_async,
+                update_log_id=store_update_log.id
+            )
 
-            return Response(json.dumps({
-                'task_id': task.id
-            }))
+            return Response({
+                'task_id': task.id,
+                'log_id': store_update_log.id
+            })
         else:
             print(serializer.errors)
             return Response(str(serializer.errors))
+
+
+class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = StoreUpdateLog.objects.all()
+    serializer_class = StoreUpdateLogSerializer
+    pagination_class = StoreUpdateLogPagination
+
+    def get_queryset(self):
+        stores = get_objects_for_user(
+            self.request.user, 'view_store_update_logs', klass=Store)
+        return StoreUpdateLog.objects.filter(store__in=stores)

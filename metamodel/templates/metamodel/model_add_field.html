@@ -1,0 +1,33 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li><a href="{% url 'metamodel_model_meta' metamodel.id %}">{{ metamodel }}</a></li>
+                <li class="active">Add field</li>
+            </ol>
+
+            <h1 class="page-header">{{ metamodel }} <small>Add field</small></h1>
+
+            <form method="post" action="." enctype='multipart/form-data'>
+                {% csrf_token %}
+                <table class="table table-bordered">
+                    {{ form.as_table }}
+                    <tr>
+                        <th>Default:</th>
+                        <td><input type="hidden" id="id_default" name="default" /></td>
+                    </tr>
+                </table>
+                <input type="submit" value="Add field" class="btn btn-primary" />
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript" src="{% static 'metamodel/javascripts/model_add_field.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,20 @@
+.with-margin-bottom {
+    margin-bottom: 20px;
+}
+
+#metamodel-structure-table input[type="number"] {
+    width: 40px;
+}
+
+ul.errorlist {
+    list-style-type: none;
+    font-weight: bold;
+    color: #ad0000;
+    padding-left: 0;
+    font-size: 12px;
+}
+
+#instance_edit_table, #instance_edit_table td, #instance_edit_table th {
+    border: 0;
+    vertical-align: middle;
+}

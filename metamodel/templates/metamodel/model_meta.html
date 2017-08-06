@@ -1,0 +1,70 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li><a href="{% url 'metamodel_model_detail' metamodel.id %}">{{ metamodel }}</a></li>
+                <li class="active">Edit structure</li>
+            </ol>
+
+            <h1 class="page-header">{{ metamodel }} <small>Edit structure</small></h1>
+
+            <a class="btn btn-primary with-margin-bottom" href="{% url 'metamodel_model_detail' metamodel.id %}">Edit instances</a>
+            <a class="btn btn-primary with-margin-bottom" href="{% url 'metamodel_model_edit' metamodel.id %}">Edit properties</a>
+            <a class="btn btn-primary with-margin-bottom" href="{% url 'metamodel_model_add_field' metamodel.id %}">Add field</a>
+            <a class="btn btn-primary with-margin-bottom" href="{% url 'metamodel_model_usages' metamodel.id %}">Find usages</a>
+            <a class="btn btn-danger with-margin-bottom" href="{% url 'metamodel_model_delete' metamodel.id %}">Delete this model</a>
+
+            <form method="post" action=".">
+                {% csrf_token %}
+                <table class="table table-bordered" id="metamodel-structure-table">
+                    <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Nullable</th>
+                        <th>Multiple</th>
+                        <th>Hidden</th>
+                        <th>Ordering</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for meta_field in metamodel.fields.all %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'metamodel_field_detail' meta_field.id %}">{{ meta_field.name }}</a></td>
+                            <td>
+                                {% if meta_field.model.is_primitive %}
+                                    {{ meta_field.model.name }}
+                                {% else %}
+                                    <a href="{% url 'metamodel_model_meta' meta_field.model.id %}">{{ meta_field.model.name }}</a>
+                                {% endif %}
+                            </td>
+                            <td>{{ meta_field.nullable }}</td>
+                            <td>{{ meta_field.multiple }}</td>
+                            <td>{{ meta_field.hidden }}</td>
+                            <td><input type="number" name="{{ meta_field.name }}" value="{{ meta_field.ordering }}" /></td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                        <td colspan="6">
+                            <em>No fields in model</em>
+                        </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                    <tfoot>
+                    <tr>
+                        <td colspan="5">&nbsp;</td>
+                        <td><input type="submit" class="btn btn-primary" value="Update" /> </td>
+                    </tr>
+                    </tfoot>
+                </table>
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li><a href="{% url 'metamodel_model_meta' metafield.parent.id %}">{{ metafield.parent }}</a></li>
+                <li class="active">{{ metafield.name }}</li>
+            </ol>
+
+            <h1 class="page-header">{{ metafield.parent }} <small>{{ metafield.name }}</small></h1>
+
+            <form method="post" action=".">
+                {% csrf_token %}
+
+                <table class="table table-bordered">
+                    {{ form.as_table }}
+
+                    <tr>
+                        <th>Nullable</th>
+                        <td>
+                            {{ metafield.nullable }}
+
+                            {% if metafield.nullable %}
+                                (<a href="{% url 'metamodel_field_make_non_nullable' metafield.id %}">Make non-nullable</a>)
+                            {% else %}
+                                (<a href="{% url 'metamodel_field_make_nullable' metafield.id %}">Make nullable</a>)
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Multiple</th>
+                        <td>
+                            {{ metafield.multiple }}
+
+                            {% if not metafield.multiple %}
+                                (<a href="{% url 'metamodel_field_make_multiple' metafield.id %}">Make multiple</a>)
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+
+                <input type="submit" value="Save changes" class="btn btn-primary" />
+
+                <a href="{% url 'metamodel_field_delete' metafield.id %}" class="btn btn-danger">Delete field</a>
+            </form>
+
+        </div>
+    </div>
+{% endblock %}

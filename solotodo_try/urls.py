@@ -20,4 +20,5 @@ from django.contrib import admin
 urlpatterns = [
     url(r'^', include('solotodo.urls')),
     url(r'^admin/', admin.site.urls),
+    url(r'^metamodel/', include('metamodel.urls')),
 ]

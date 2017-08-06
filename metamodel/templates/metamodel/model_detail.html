@@ -1,0 +1,47 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block title %}
+{{ metamodel }} &raquo;
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li class="active">{{ metamodel }}</li>
+            </ol>
+
+            <h1 class="page-header">{{ metamodel }}</h1>
+
+            <a class="btn btn-success with-margin-bottom" href="{% url 'metamodel_model_add_instance' metamodel.id %}">Add
+                new instance</a>
+            {% if user.is_superuser %}
+                <a class="btn btn-primary with-margin-bottom" href="{% url 'metamodel_model_meta' metamodel.id %}">Edit
+                    structure</a>
+            {% endif %}
+
+            <table id="instance-model-table">
+                <thead>
+                <tr>
+                    <th>Instance</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for instance_model in metamodel.instancemodel_set.all %}
+                    <tr>
+                        <td><a href="{% url 'metamodel_instance_detail' instance_model.id %}">{{ instance_model }}</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'metamodel/javascripts/model_detail.js' %}"></script>
+{% endblock %}

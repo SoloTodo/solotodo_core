@@ -1,0 +1,32 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            {% if not hide_nav %}
+                <ol class="breadcrumb">
+                    <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                    <li><a href="{% url 'metamodel_model_detail' metamodel.id %}">{{ metamodel }}</a></li>
+                    <li class="active">Add instance</li>
+                </ol>
+            {% endif %}
+
+            <h1 class="page-header">{{ metamodel }} <small>Add instance</small></h1>
+
+            <form method="post" enctype="multipart/form-data" action="{{ form_action }}">
+                {% csrf_token %}
+                <table class="table table-bordered" id="instance_edit_table">
+                    {{ form.as_table }}
+                </table>
+
+                <input type="submit" value="Save instance" class="btn btn-primary" />
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'metamodel/javascripts/model_add_instance.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li><a href="{% url 'metamodel_model_detail' instancemodel.model.id %}">{{ instancemodel.model }}</a></li>
+                <li><a href="{% url 'metamodel_instance_detail' instancemodel.id %}">{{ instancemodel }}</a></li>
+                <li class="active">Delete</li>
+            </ol>
+
+            <h1 class="page-header">{{ instancemodel }} <small>Delete</small></h1>
+
+            <p>
+                Are you absolutely sure you want to delete this instance?
+            </p>
+
+            {% if instancemodel.fields_usage.all %}
+                <p>The following InstanceModels make use of this instance, if you delete this instance these instances will be rendered invalid</p>
+
+                <ul>
+                    {% for instancefield in instancemodel.fields_usage.all %}
+                    <li><a href="{% url 'metamodel_instance_detail' instancefield.parent.id %}">{{ instancefield.field.parent }} &raquo; {{ instancefield }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No InstanceModels make use of this instance</p>
+            {% endif %}
+
+            <form method="post" action="." enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="submit" value="Delete instance" class="btn btn-danger" />
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -3,6 +3,7 @@ import json
 from urllib import request
 from django.db import models
 from django.utils import timezone
+from storescraper.utils import format_currency
 
 
 class Currency(models.Model):
@@ -18,8 +19,10 @@ class Currency(models.Model):
     def __str__(self):
         return self.name
 
-    def quantized_precision(self):
-        return Decimal(str(10**-self.decimal_places))
+    def format_value(self, value):
+        return format_currency(
+            value, curr=self.prefix, sep=self.thousands_separator,
+            dp=self.decimal_separator, places=self.decimal_places)
 
     def update_exchange_rate(self):
         url = 'https://query.yahooapis.com/v1/public/yql' \

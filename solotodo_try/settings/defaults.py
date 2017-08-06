@@ -39,8 +39,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'storages',
+    'sorl.thumbnail',
     'custom_user',
     'corsheaders',
+    'metamodel',
     'solotodo',
 ]
 
@@ -170,6 +172,7 @@ AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
 AWS_STORAGE_BUCKET_NAME = 'solotodo-try'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_REGION_NAME = 'us-east-2'
 
 ##############################################################################
 # DRF Configuration

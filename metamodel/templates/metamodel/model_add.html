@@ -1,0 +1,26 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li class="active">Add new</li>
+            </ol>
+
+            <h1 class="page-header">Models <small>Add new</small></h1>
+
+            <form method="post" action=".">
+                {% csrf_token %}
+
+                <table class="table table-bordered">
+                    {{ form.as_table }}
+                </table>
+
+                <input type="submit" value="Create new model" class="btn btn-primary"/>
+            </form>
+        </div>
+    </div>
+{% endblock %}

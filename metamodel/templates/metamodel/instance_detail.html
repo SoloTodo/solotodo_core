@@ -1,0 +1,44 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block title %}
+    {{ instancemodel }} &raquo;
+{% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li><a href="{% url 'metamodel_model_detail' instancemodel.model.id %}">{{ instancemodel.model }}</a>
+                </li>
+                <li class="active">{{ instancemodel }}</li>
+            </ol>
+
+            <h1 class="page-header">{{ instancemodel }}</h1>
+
+            {% for plugin_content in plugin_context %}
+            <div>
+                {{ plugin_content|safe }}
+            </div>
+            {% endfor %}
+
+            <form method="post" action="." enctype="multipart/form-data">
+                {% csrf_token %}
+                <table class="table table-bordered" id="instance_edit_table">
+                    {{ form.as_table }}
+                </table>
+
+                <input type="submit" name="save" value="Save changes" class="btn btn-primary"/>
+                <input type="submit" name="save_and_continue" value="Save and continue editing"
+                       class="btn btn-primary"/>
+                <a href="{% url 'metamodel_instance_delete' instancemodel.id %}" class="btn btn-danger">Delete this
+                    instance</a>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'metamodel/javascripts/model_add_instance.js' %}"></script>
+{% endblock %}

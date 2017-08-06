@@ -1,0 +1,35 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li><a href="{% url 'metamodel_model_detail' metamodel.id %}">{{ metamodel }}</a></li>
+                <li class="active">Delete</li>
+            </ol>
+
+            <h1 class="page-header">{{ metamodel }} <small>Delete</small></h1>
+
+            <p>
+                Deleting a model removes:
+            </p>
+
+            <ul>
+                <li>All instances of this model</li>
+                <li>All field relations to this model from other models</li>
+            </ul>
+
+            <p>
+                This process is irreversible.
+            </p>
+
+            <form method="post" action=".">
+                {% csrf_token %}
+                <input type="submit" value="Delete this model" class="btn btn-danger"/>
+            </form>
+        </div>
+    </div>
+{% endblock %}

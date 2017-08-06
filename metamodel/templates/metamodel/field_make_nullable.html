@@ -1,0 +1,29 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li><a href="{% url 'metamodel_model_meta' metafield.parent.id %}">{{ metafield.parent }}</a></li>
+                <li><a href="{% url 'metamodel_field_detail' metafield.id %}">{{ metafield.name }}</a></li>
+                <li class="active">Make nullable</li>
+            </ol>
+
+            <h1 class="page-header">{{ metafield.parent }} <small>{{ metafield.name }} &raquo; Make nullable</small></h1>
+
+            <p>
+                From this interface you can mark a field as nullable, so that
+                future instances of this field can be left blank in their forms.
+            </p>
+
+            <form method="post" action=".">
+                {% csrf_token %}
+
+                <input type="submit" class="btn btn-primary" value="Mark field as nullable" />
+            </form>
+        </div>
+    </div>
+{% endblock %}

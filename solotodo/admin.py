@@ -1,3 +1,4 @@
+from custom_user.admin import EmailUserAdmin
 from django.contrib import admin
 
 # Register your models here.
@@ -30,7 +31,7 @@ class ProductModelAdmin(admin.ModelAdmin):
 
 admin.site.register(Product, ProductModelAdmin)
 admin.site.register(ProductType)
-admin.site.register(SoloTodoUser)
+admin.site.register(SoloTodoUser, EmailUserAdmin)
 admin.site.register(StoreType)
 admin.site.register(Store, GuardedModelAdmin)
 admin.site.register(StoreUpdateLog)

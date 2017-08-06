@@ -1,0 +1,36 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li class="active">Models</li>
+            </ol>
+
+            <h1 class="page-header">Models</h1>
+            {% if user.is_superuser %}
+                <a class="btn btn-primary with-margin-bottom" href="{% url 'metamodel_model_add' %}">Add new Model</a>
+            {% endif %}
+            <table id="models-table">
+                <thead>
+                <tr>
+                    <th>Model</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for model in metamodel_list %}
+                    <tr>
+                        <td><a href="{% url 'metamodel_model_detail' model.id %}">{{ model }}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script src="{% static 'metamodel/javascripts/model_list.js' %}"></script>
+{% endblock %}

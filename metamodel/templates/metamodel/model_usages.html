@@ -1,0 +1,41 @@
+{% extends 'metamodel/base.html' %}
+
+{% load staticfiles %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-xs-12">
+            <ol class="breadcrumb">
+                <li><a href="{% url 'metamodel_model_list' %}">Models</a></li>
+                <li><a href="{% url 'metamodel_model_detail' metamodel.id %}">{{ metamodel }}</a></li>
+                <li class="active">Usages</li>
+            </ol>
+
+            <h1 class="page-header">{{ metamodel }} <small>Usages</small></h1>
+
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Model</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for meta_field in metamodel.fields_usage.all %}
+                    <tr>
+                        <td>{{ meta_field.name }}</td>
+                        <td><a href="{% url 'metamodel_model_meta' meta_field.parent.id %}">{{ meta_field.parent }}</a></td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="2">
+                            <em>No usages found</em>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+{% endblock %}

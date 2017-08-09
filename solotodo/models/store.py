@@ -39,6 +39,9 @@ class Store(models.Model):
 
         product_types = self.sanitize_product_types_for_update(product_types)
 
+        if not product_types:
+            return
+
         if update_log:
             update_log.status = update_log.IN_PROCESS
             update_log.save()
@@ -250,7 +253,7 @@ class Store(models.Model):
         ordering = ['name']
         permissions = (
             ['view_store', 'Can view store'],
-            ['update_store_prices', 'Can update store'],
-            ['backend_list_stores', 'Can access store list in backend'],
             ['view_store_update_logs', 'Can view store update logs'],
+            ['update_store_prices', 'Can update store'],
+            ['backend_view_store', 'Can view store list and detail in backend'],
         )

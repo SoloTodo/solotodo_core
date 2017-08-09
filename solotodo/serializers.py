@@ -58,19 +58,23 @@ class ProductTypeSerializer(serializers.HyperlinkedModelSerializer):
 
 class StoreUpdatePricesSerializer(serializers.Serializer):
     discover_urls_concurrency = serializers.IntegerField(
-        min_value=1
+        min_value=1,
+        required=False
     )
     products_for_url_concurrency = serializers.IntegerField(
-        min_value=1
+        min_value=1,
+        required=False
     )
     queue = serializers.ChoiceField(
-        choices=['us', 'cl']
+        choices=['us', 'cl'],
+        required=False
     )
     async = serializers.BooleanField()
     product_types = serializers.HyperlinkedRelatedField(
         view_name='producttype-detail',
         queryset=ProductType.objects.all(),
-        many=True
+        many=True,
+        required=False
     )
 
     def __init__(self, instance, data=empty, **kwargs):

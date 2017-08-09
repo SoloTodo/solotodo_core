@@ -8,6 +8,7 @@ from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import list_route, detail_route
 from rest_framework import exceptions
+from rest_framework.filters import DjangoFilterBackend, OrderingFilter
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
@@ -127,25 +128,28 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         store = self.get_object()
         serializer = StoreUpdatePricesSerializer(
             store, data=request.data, context={'request': request})
+
         if serializer.is_valid():
             validated_data = serializer.validated_data
 
             product_types = validated_data['product_types']
-            if not product_types:
-                product_types = None
+            if product_types:
+                product_types_ids = [pt.id for pt in product_types]
+            else:
+                product_types_ids = None
 
-            queue = validated_data['queue']
+            queue = validated_data.get('queue')
             discover_urls_concurrency = \
-                validated_data['discover_urls_concurrency']
+                validated_data.get('discover_urls_concurrency')
             products_for_url_concurrency = \
-                validated_data['products_for_url_concurrency']
-            use_async = validated_data['async']
+                validated_data.get('products_for_url_concurrency')
+            use_async = validated_data.get('async')
 
             store_update_log = StoreUpdateLog.objects.create(store=store)
 
             task = store_update.delay(
                 store.id,
-                product_type_ids=[pt.id for pt in product_types],
+                product_type_ids=product_types_ids,
                 extra_args=None, queue=queue,
                 discover_urls_concurrency=discover_urls_concurrency,
                 products_for_url_concurrency=products_for_url_concurrency,
@@ -166,8 +170,32 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StoreUpdateLog.objects.all()
     serializer_class = StoreUpdateLogSerializer
     pagination_class = StoreUpdateLogPagination
+    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filter_fields = ('store',)
+    ordering_fields = ('last_updated', )
 
     def get_queryset(self):
         stores = get_objects_for_user(
             self.request.user, 'view_store_update_logs', klass=Store)
         return StoreUpdateLog.objects.filter(store__in=stores)
+
+    @list_route()
+    def latest(self, request, *args, **kwargs):
+        stores = get_objects_for_user(
+            self.request.user, 'view_store_update_logs', klass=Store)
+
+        result = {}
+
+        for store in stores:
+            store_url = reverse('store-detail', kwargs={'pk': store.pk}, request=request)
+            store_latest_log = store.storeupdatelog_set.order_by('-last_updated')[:1]
+
+            if store_latest_log:
+                store_latest_log = StoreUpdateLogSerializer(
+                    store_latest_log[0], context={'request': request}).data
+            else:
+                store_latest_log = None
+
+            result[store_url] = store_latest_log
+
+        return Response(result)

@@ -5,7 +5,8 @@ from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, ProductType, \
-    SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, StoreType
+    SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, StoreType, \
+    ProductTypeTier
 
 admin.site.register(Language)
 admin.site.register(Country)
@@ -30,6 +31,7 @@ class ProductModelAdmin(admin.ModelAdmin):
     readonly_fields = ['creator']
 
 admin.site.register(Product, ProductModelAdmin)
+admin.site.register(ProductTypeTier)
 admin.site.register(ProductType)
 admin.site.register(SoloTodoUser, EmailUserAdmin)
 admin.site.register(StoreType)

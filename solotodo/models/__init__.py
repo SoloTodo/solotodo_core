@@ -8,6 +8,7 @@ from .solotodo_user import SoloTodoUser
 from .currency import Currency
 from .country import Country
 from .store_type import StoreType
+from .product_type_tier import ProductTypeTier
 from .store import Store
 from .product_type import ProductType
 from .product import Product

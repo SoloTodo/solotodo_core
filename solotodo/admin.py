@@ -28,7 +28,8 @@ admin.site.register(EntityHistory, EntityHistoryModelAdmin)
 
 
 class ProductModelAdmin(admin.ModelAdmin):
-    readonly_fields = ['creator']
+    list_display = ['__str__', 'product_type']
+    readonly_fields = ['creator', 'instance_model']
 
 admin.site.register(Product, ProductModelAdmin)
 admin.site.register(ProductTypeTier)

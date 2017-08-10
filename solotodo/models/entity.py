@@ -13,6 +13,9 @@ class EntityManager(models.Manager):
     def get_available(self):
         return self.filter(~Q(active_registry__stock=0))
 
+    def get_unavailable(self):
+        return self.filter(active_registry__stock=0)
+
 
 class Entity(models.Model):
     store = models.ForeignKey(Store)

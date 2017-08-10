@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'django_filters',
+    'crispy_forms',
     'storages',
     'sorl.thumbnail',
     'custom_user',
@@ -214,3 +215,9 @@ QUERYCOUNT = {
     'IGNORE_SQL_PATTERNS': [],
     'DISPLAY_DUPLICATES': None
 }
+
+###############################################################################
+# Django crispy forms configuration
+###############################################################################
+
+CRISPY_TEMPLATE_PACK = 'bootstrap3'

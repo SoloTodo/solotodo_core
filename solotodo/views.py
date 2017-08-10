@@ -3,31 +3,35 @@ import json
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.http import Http404
+from django_filters.rest_framework import DjangoFilterBackend
 from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets, permissions
 from rest_framework.decorators import list_route, detail_route
 from rest_framework import exceptions
-from rest_framework.filters import DjangoFilterBackend, OrderingFilter
+from rest_framework.filters import OrderingFilter, \
+    SearchFilter
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
+from solotodo.filters import EntityFilter
 from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog
-from solotodo.pagination import StoreUpdateLogPagination
+    ProductType, StoreUpdateLog, Entity
+from solotodo.pagination import StoreUpdateLogPagination, EntityPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreUpdatePricesSerializer, ProductTypeSerializer, \
-    StoreUpdateLogSerializer
+    StoreUpdateLogSerializer, EntitySerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = get_user_model().objects.all()
+    serializer_class = UserSerializer
     permission_classes = (permissions.IsAdminUser,)
 
     @list_route(methods=['get', 'patch'],
@@ -199,3 +203,22 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
             result[store_url] = store_latest_log
 
         return Response(result)
+
+
+class EntityViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Entity.objects.all()
+    serializer_class = EntitySerializer
+    pagination_class = EntityPagination
+    filter_backends = (DjangoFilterBackend, SearchFilter)
+    filter_class = EntityFilter
+    # filter_fields = ('store', 'product_type', 'scraped_product_type')
+    search_fields = ('product__instance_model__unicode_representation',
+                     'cell_plan__instance_model__unicode_representation',
+                     'name',
+                     'cell_plan_name',
+                     'cell_plan_name',
+                     'part_number',
+                     'sku',
+                     'key',
+                     'url',
+                     'discovery_url')

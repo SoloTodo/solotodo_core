@@ -4,7 +4,7 @@ from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog
+    ProductType, StoreUpdateLog, Entity
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -93,6 +93,33 @@ class StoreUpdatePricesSerializer(serializers.Serializer):
             reverse('producttype-detail', kwargs={'pk': pt.pk},
                     request=kwargs['context']['request'])
             for pt in valid_product_types]
+
+
+class EntitySerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Entity
+        fields = (
+            'store',
+            'product_type',
+            'scraped_product_type',
+            'currency',
+            'product',
+            'cell_plan',
+            # 'active_registry',
+            'name',
+            'cell_plan_name',
+            'part_number',
+            'sku',
+            'key',
+            'url',
+            'discovery_url',
+            'description',
+            'is_visible',
+            'latest_association_user',
+            'latest_association_date',
+            'creation_date',
+            'last_updated',
+        )
 
 
 class StoreUpdateLogSerializer(serializers.HyperlinkedModelSerializer):

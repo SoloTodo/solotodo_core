@@ -23,5 +23,6 @@ router.register(r'entities', EntityViewSet)
 
 urlpatterns = [
     url(r'^api/', include(router.urls)),
+    url(r'^api/api-auth/', include('rest_framework.urls')),
     url(r'^api/obtain-auth-token/$', obtain_auth_token)
 ]

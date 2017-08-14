@@ -4,7 +4,7 @@ from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity
+    ProductType, StoreUpdateLog, Entity, EntityHistory
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -53,7 +53,7 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
 class ProductTypeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ProductType
-        fields = ('url', 'name',)
+        fields = ('url', 'id', 'name',)
 
 
 class StoreUpdatePricesSerializer(serializers.Serializer):
@@ -95,7 +95,16 @@ class StoreUpdatePricesSerializer(serializers.Serializer):
             for pt in valid_product_types]
 
 
+class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = EntityHistory
+        fields = ['date', 'stock', 'normal_price', 'offer_price',
+                  'cell_monthly_payment']
+
+
 class EntitySerializer(serializers.HyperlinkedModelSerializer):
+    active_registry = EntityHistorySerializer(read_only=True)
+
     class Meta:
         model = Entity
         fields = (
@@ -105,7 +114,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'currency',
             'product',
             'cell_plan',
-            # 'active_registry',
+            'active_registry',
             'name',
             'cell_plan_name',
             'part_number',

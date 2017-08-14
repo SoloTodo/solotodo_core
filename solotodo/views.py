@@ -1,5 +1,3 @@
-import json
-
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.http import Http404
@@ -11,12 +9,13 @@ from rest_framework.decorators import list_route, detail_route
 from rest_framework import exceptions
 from rest_framework.filters import OrderingFilter, \
     SearchFilter
+from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
-from solotodo.filters import EntityFilter
+from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet
 from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     ProductType, StoreUpdateLog, Entity
@@ -40,7 +39,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         user = request.user
 
         if request.method == 'PATCH':
-            content = json.loads(request.body.decode('utf-8'))
+            content = JSONParser().parse(request)
             serializer = UserSerializer(
                 user, data=content, partial=True,
                 context={'request': request})
@@ -70,7 +69,7 @@ class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CurrencySerializer
 
 
-class ProductTypeViewSet(viewsets.ReadOnlyModelViewSet):
+class ProductTypeViewSet(PermissionReadOnlyModelViewSet):
     queryset = ProductType.objects.all()
     serializer_class = ProductTypeSerializer
 
@@ -81,8 +80,8 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def by_ip(self, request):
-        if 'ip' in request.GET:
-            form = IpForm(request.GET)
+        if 'ip' in request.query_params:
+            form = IpForm(request.query_params)
         else:
             form = IpForm({'ip': get_client_ip(request)})
 
@@ -91,14 +90,14 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
             try:
                 country_data = geo_ip2.country(form.cleaned_data['ip'])
             except AddressNotFoundError as err:
-                raise exceptions.NotFound(str(err))
+                raise exceptions.NotFound(err)
             try:
                 country = Country.objects.get(
                     iso_code=country_data['country_code'])
             except Country.DoesNotExist as err:
-                raise exceptions.NotFound(str(err))
+                raise exceptions.NotFound(err)
         else:
-            raise exceptions.ValidationError('Invalid IP address')
+            raise exceptions.ValidationError({'detail': 'Invalid IP address'})
 
         serializer = CountrySerializer(
             country,
@@ -166,8 +165,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                 'log_id': store_update_log.id
             })
         else:
-            print(serializer.errors)
-            return Response(str(serializer.errors))
+            return Response(serializer.errors)
 
 
 class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
@@ -175,13 +173,8 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = StoreUpdateLogSerializer
     pagination_class = StoreUpdateLogPagination
     filter_backends = (DjangoFilterBackend, OrderingFilter)
-    filter_fields = ('store',)
+    filter_class = StoreUpdateLogFilterSet
     ordering_fields = ('last_updated', )
-
-    def get_queryset(self):
-        stores = get_objects_for_user(
-            self.request.user, 'view_store_update_logs', klass=Store)
-        return StoreUpdateLog.objects.filter(store__in=stores)
 
     @list_route()
     def latest(self, request, *args, **kwargs):
@@ -191,8 +184,10 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
         result = {}
 
         for store in stores:
-            store_url = reverse('store-detail', kwargs={'pk': store.pk}, request=request)
-            store_latest_log = store.storeupdatelog_set.order_by('-last_updated')[:1]
+            store_url = reverse('store-detail', kwargs={'pk': store.pk},
+                                request=request)
+            store_latest_log = store.storeupdatelog_set.order_by(
+                '-last_updated')[:1]
 
             if store_latest_log:
                 store_latest_log = StoreUpdateLogSerializer(
@@ -210,12 +205,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EntitySerializer
     pagination_class = EntityPagination
     filter_backends = (DjangoFilterBackend, SearchFilter)
-    filter_class = EntityFilter
-    # filter_fields = ('store', 'product_type', 'scraped_product_type')
+    filter_class = EntityFilterSet
     search_fields = ('product__instance_model__unicode_representation',
                      'cell_plan__instance_model__unicode_representation',
                      'name',
-                     'cell_plan_name',
                      'cell_plan_name',
                      'part_number',
                      'sku',

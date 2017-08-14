@@ -254,6 +254,8 @@ class Store(models.Model):
         permissions = (
             ['view_store', 'Can view store'],
             ['view_store_update_logs', 'Can view store update logs'],
-            ['update_store_prices', 'Can update store'],
-            ['backend_view_store', 'Can view store list and detail in backend'],
+            ['view_store_entities', 'Can view entities of the store'],
+            ['update_store_prices', 'Can update store prices'],
+            ['backend_view_store',
+             'Can view store list and detail in backend'],
         )

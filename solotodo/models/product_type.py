@@ -28,3 +28,7 @@ class ProductType(models.Model):
     class Meta:
         app_label = 'solotodo'
         ordering = ['name']
+        permissions = (
+            ['view_product_type_entities',
+             'Can view entities associated to this product type'],
+        )

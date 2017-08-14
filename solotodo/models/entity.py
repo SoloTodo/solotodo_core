@@ -9,12 +9,14 @@ from solotodo.models.product_type import ProductType
 from solotodo.models.store import Store
 
 
-class EntityManager(models.Manager):
+class EntityQueryset(models.QuerySet):
     def get_available(self):
-        return self.filter(~Q(active_registry__stock=0))
+        return self.exclude(Q(active_registry__isnull=True) |
+                            Q(active_registry__stock=0))
 
     def get_unavailable(self):
-        return self.filter(active_registry__stock=0)
+        return self.filter(Q(active_registry__isnull=True) |
+                           Q(active_registry__stock=0))
 
 
 class Entity(models.Model):
@@ -42,7 +44,7 @@ class Entity(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
-    objects = EntityManager()
+    objects = EntityQueryset.as_manager()
 
     def __str__(self):
         result = '{} - {}'.format(self.store, self.name)
@@ -170,3 +172,6 @@ class Entity(models.Model):
     class Meta:
         app_label = 'solotodo'
         unique_together = ('store', 'key')
+        permissions = [
+            ('backend_list_entity', 'Can view entity list in backend'),
+        ]

@@ -15,15 +15,17 @@ from rest_framework.reverse import reverse
 
 from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
-from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet
+from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
+    ProductFilterSet
 from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity
-from solotodo.pagination import StoreUpdateLogPagination, EntityPagination
+    ProductType, StoreUpdateLog, Entity, Product
+from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
+    ProductPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreUpdatePricesSerializer, ProductTypeSerializer, \
-    StoreUpdateLogSerializer, EntitySerializer
+    StoreUpdateLogSerializer, EntitySerializer, ProductSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -201,7 +203,8 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EntityViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Entity.objects.all()
+    queryset = Entity.objects.select_related(
+        'active_registry', 'product__instance_model')
     serializer_class = EntitySerializer
     pagination_class = EntityPagination
     filter_backends = (DjangoFilterBackend, SearchFilter)
@@ -215,3 +218,11 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                      'key',
                      'url',
                      'discovery_url')
+
+
+class ProductViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Product.objects.select_related('instance_model')
+    serializer_class = ProductSerializer
+    filter_backends = (DjangoFilterBackend, SearchFilter)
+    filter_class = ProductFilterSet
+    pagination_class = ProductPagination

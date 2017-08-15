@@ -18,6 +18,12 @@ class EntityQueryset(models.QuerySet):
         return self.filter(Q(active_registry__isnull=True) |
                            Q(active_registry__stock=0))
 
+    def get_active(self):
+        return self.filter(active_registry__isnull=False)
+
+    def get_inactive(self):
+        return self.filter(active_registry__isnull=True)
+
 
 class Entity(models.Model):
     store = models.ForeignKey(Store)
@@ -40,7 +46,7 @@ class Entity(models.Model):
     description = models.TextField()
     is_visible = models.BooleanField(default=True)
     latest_association_user = models.ForeignKey(get_user_model(), null=True)
-    latest_association_date = models.DateTimeField(null=True)
+    latest_association_date = models.DateTimeField(null=True, blank=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 

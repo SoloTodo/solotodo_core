@@ -4,7 +4,7 @@ from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity, EntityHistory
+    ProductType, StoreUpdateLog, Entity, EntityHistory, Product
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -56,6 +56,14 @@ class ProductTypeSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name',)
 
 
+class ProductSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(read_only=True, source='__str__')
+
+    class Meta:
+        model = Product
+        fields = ('url', 'id', 'name')
+
+
 class StoreUpdatePricesSerializer(serializers.Serializer):
     discover_urls_concurrency = serializers.IntegerField(
         min_value=1,
@@ -99,15 +107,21 @@ class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = EntityHistory
         fields = ['date', 'stock', 'normal_price', 'offer_price',
-                  'cell_monthly_payment']
+                  'cell_monthly_payment', 'timestamp']
 
 
 class EntitySerializer(serializers.HyperlinkedModelSerializer):
     active_registry = EntityHistorySerializer(read_only=True)
+    product = ProductSerializer(read_only=True)
+    cell_plan = ProductSerializer(read_only=True)
+    url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
+    external_url = serializers.URLField(source='url')
 
     class Meta:
         model = Entity
         fields = (
+            'url',
+            'id',
             'store',
             'product_type',
             'scraped_product_type',
@@ -120,7 +134,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'part_number',
             'sku',
             'key',
-            'url',
+            'external_url',
             'discovery_url',
             'description',
             'is_visible',

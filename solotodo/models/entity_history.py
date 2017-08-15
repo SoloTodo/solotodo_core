@@ -6,6 +6,7 @@ from solotodo.models.entity import Entity
 class EntityHistory(models.Model):
     entity = models.ForeignKey(Entity)
     date = models.DateField(db_index=True)
+    timestamp = models.DateTimeField(auto_now=True)
     stock = models.IntegerField(db_index=True)
     normal_price = models.DecimalField(decimal_places=2, max_digits=12)
     offer_price = models.DecimalField(decimal_places=2, max_digits=12)

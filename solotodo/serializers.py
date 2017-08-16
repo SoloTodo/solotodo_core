@@ -4,7 +4,7 @@ from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity, EntityHistory, Product
+    ProductType, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -12,7 +12,8 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         model = get_user_model()
         fields = ('url', 'email', 'first_name', 'last_name',
                   'preferred_language', 'preferred_country',
-                  'preferred_currency', 'permissions')
+                  'preferred_currency', 'preferred_number_format',
+                  'permissions')
         read_only_fields = ('email', 'first_name', 'last_name',
                             'permissions')
 
@@ -29,18 +30,23 @@ class LanguageSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'code', 'name')
 
 
+class NumberFormatSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = NumberFormat
+        fields = ('url', 'name', 'thousands_separator', 'decimal_separator')
+
+
 class CurrencySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Currency
-        fields = ('url', 'name', 'iso_code', 'decimal_places',
-                  'decimal_separator', 'thousands_separator', 'prefix',
+        fields = ('url', 'name', 'iso_code', 'decimal_places', 'prefix',
                   'exchange_rate', 'exchange_rate_last_updated')
 
 
 class CountrySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Country
-        fields = ('url', 'name', 'currency')
+        fields = ('url', 'name', 'currency', 'number_format')
 
 
 class StoreSerializer(serializers.HyperlinkedModelSerializer):

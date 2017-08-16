@@ -8,10 +8,7 @@ class ProductTypeTier(models.Model):
     default_currency_code = 'CLP'
 
     def __str__(self):
-        from solotodo.models import Currency
-        currency = Currency.objects.get(iso_code=self.default_currency_code)
-        return '{} ({})'.format(self.name, currency.format_value(
-            self.creation_payment_amount))
+        return '{} ({})'.format(self.name, self.creation_payment_amount)
 
     class Meta:
         ordering = ['name']

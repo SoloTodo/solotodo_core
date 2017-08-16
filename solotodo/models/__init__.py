@@ -4,6 +4,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
+from .number_format import NumberFormat
 from .language import Language
 from .solotodo_user import SoloTodoUser
 from .currency import Currency

@@ -6,11 +6,12 @@ from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, ProductType, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
-    StoreType, ProductTypeTier
+    StoreType, ProductTypeTier, NumberFormat
 
 admin.site.register(Language)
 admin.site.register(Country)
 admin.site.register(Currency)
+admin.site.register(NumberFormat)
 
 
 class EntityModelAdmin(admin.ModelAdmin):
@@ -34,7 +35,18 @@ class ProductModelAdmin(admin.ModelAdmin):
 admin.site.register(Product, ProductModelAdmin)
 admin.site.register(ProductTypeTier)
 admin.site.register(ProductType, GuardedModelAdmin)
-admin.site.register(SoloTodoUser, EmailUserAdmin)
+
+
+class SoloTodoUserAdmin(EmailUserAdmin):
+    fieldsets = EmailUserAdmin.fieldsets + \
+                (('Additional information', {'fields': (
+                    'preferred_language',
+                    'preferred_currency',
+                    'preferred_country',
+                    'preferred_number_format')}),
+                 )
+
+admin.site.register(SoloTodoUser, SoloTodoUserAdmin)
 admin.site.register(StoreType)
 admin.site.register(Store, GuardedModelAdmin)
 admin.site.register(StoreUpdateLog)

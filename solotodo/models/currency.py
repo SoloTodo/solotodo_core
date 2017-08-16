@@ -10,19 +10,12 @@ class Currency(models.Model):
     name = models.CharField(max_length=255)
     iso_code = models.CharField(max_length=10)
     decimal_places = models.IntegerField()
-    decimal_separator = models.CharField(max_length=10)
-    thousands_separator = models.CharField(max_length=10)
     prefix = models.CharField(max_length=10, default='$')
     exchange_rate = models.DecimalField(decimal_places=2, max_digits=8)
     exchange_rate_last_updated = models.DateTimeField()
 
     def __str__(self):
         return self.name
-
-    def format_value(self, value):
-        return format_currency(
-            value, curr=self.prefix, sep=self.thousands_separator,
-            dp=self.decimal_separator, places=self.decimal_places)
 
     def update_exchange_rate(self):
         url = 'https://query.yahooapis.com/v1/public/yql' \

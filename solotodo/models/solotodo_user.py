@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from custom_user.models import AbstractEmailUser
 
+from .number_format import NumberFormat
 from .country import Country
 from .currency import Currency
 from .language import Language
@@ -16,6 +17,8 @@ class SoloTodoUser(AbstractEmailUser):
     preferred_currency = models.ForeignKey(Currency, blank=True, null=True)
     preferred_country = models.ForeignKey(Country, blank=True,
                                           null=True)
+    preferred_number_format = models.ForeignKey(
+        NumberFormat, blank=True, null=True)
     permissions = property(lambda self: sorted(self.get_all_permissions()))
 
     class Meta:

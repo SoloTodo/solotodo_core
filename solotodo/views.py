@@ -19,13 +19,14 @@ from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet
 from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity, Product
+    ProductType, StoreUpdateLog, Entity, Product, NumberFormat
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreUpdatePricesSerializer, ProductTypeSerializer, \
-    StoreUpdateLogSerializer, EntitySerializer, ProductSerializer
+    StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
+    NumberFormatSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -59,6 +60,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
+
+
+class NumberFormatViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = NumberFormat.objects.all()
+    serializer_class = NumberFormatSerializer
 
 
 class StoreTypeViewSet(viewsets.ReadOnlyModelViewSet):

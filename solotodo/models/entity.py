@@ -43,6 +43,7 @@ class Entity(models.Model):
     key = models.CharField(max_length=256, db_index=True)
     url = models.URLField(max_length=512, db_index=True)
     discovery_url = models.URLField(max_length=512, db_index=True)
+    picture_url = models.URLField(max_length=512, blank=True, null=True)
     description = models.TextField()
     is_visible = models.BooleanField(default=True)
     latest_association_user = models.ForeignKey(get_user_model(), null=True)
@@ -87,6 +88,7 @@ class Entity(models.Model):
             self.sku = scraped_product.sku
             self.url = scraped_product.url
             self.discovery_url = scraped_product.discovery_url
+            self.picture_url = scraped_product.picture_url
             self.description = scraped_product.description
 
             if not current_active_registry:
@@ -118,7 +120,7 @@ class Entity(models.Model):
                                     currency):
         from solotodo.models import EntityHistory
 
-        new_entity = cls(
+        new_entity = cls.objects.create(
             store=store,
             product_type=product_type,
             scraped_product_type=product_type,
@@ -130,11 +132,10 @@ class Entity(models.Model):
             key=scraped_product.key,
             url=scraped_product.url,
             discovery_url=scraped_product.discovery_url,
+            picture_url=scraped_product.picture_url,
             description=scraped_product.description,
             is_visible=True,
         )
-
-        new_entity.save()
 
         new_entity_history = EntityHistory.objects.create(
             entity=new_entity,

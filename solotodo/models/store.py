@@ -3,6 +3,7 @@ import json
 from celery.result import allow_join_result
 from django.core.files.base import ContentFile
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 
 from solotodo.models.store_type import StoreType
@@ -87,6 +88,7 @@ class Store(models.Model):
             product_type__in=product_types
         ).exclude(
             scraped_product_type__in=product_types,
+        ).exclude(
             # Exclude the entities that we already scraped previously. This
             # happens when product_types is None and is sanitized to include
             # the product types of these entities.
@@ -154,7 +156,8 @@ class Store(models.Model):
 
         scraped_products_dict = iterable_to_dict(scraped_products, 'key')
         entities_to_be_updated = self.entity_set.filter(
-            product_type__in=product_types).select_related()
+            Q(product_type__in=product_types) |
+            Q(key__in=scraped_products_dict.keys())).select_related()
 
         product_types_dict = iterable_to_dict(ProductType, 'storescraper_name')
         currencies_dict = iterable_to_dict(Currency, 'iso_code')

@@ -148,6 +148,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'latest_association_date',
             'creation_date',
             'last_updated',
+            'picture_url'
         )
 
 

@@ -209,8 +209,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class EntityViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Entity.objects.select_related(
-        'active_registry', 'product__instance_model')
+    queryset = Entity.objects.all()
     serializer_class = EntitySerializer
     pagination_class = EntityPagination
     filter_backends = (DjangoFilterBackend, SearchFilter)
@@ -227,7 +226,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.select_related('instance_model')
+    queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = (DjangoFilterBackend, SearchFilter)
     filter_class = ProductFilterSet

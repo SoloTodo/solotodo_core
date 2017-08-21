@@ -48,5 +48,11 @@ class SoloTodoUserAdmin(EmailUserAdmin):
 
 admin.site.register(SoloTodoUser, SoloTodoUserAdmin)
 admin.site.register(StoreType)
-admin.site.register(Store, GuardedModelAdmin)
+
+
+class StoreModelAdmin(GuardedModelAdmin):
+    list_display = ['__str__', 'type', 'country']
+    list_filter = ['type', 'country']
+
+admin.site.register(Store, StoreModelAdmin)
 admin.site.register(StoreUpdateLog)

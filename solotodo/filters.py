@@ -52,7 +52,8 @@ class EntityFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        parent = super(EntityFilterSet, self).qs
+        parent = super(EntityFilterSet, self).qs.select_related(
+            'active_registry', 'product__instance_model')
         if self.request:
             product_types_with_permission = get_objects_for_user(
                 self.request.user, 'view_product_type_entities', ProductType)
@@ -87,7 +88,8 @@ class EntityFilterSet(rest_framework.FilterSet):
 class ProductFilterSet(rest_framework.FilterSet):
     @property
     def qs(self):
-        parent = super(ProductFilterSet, self).qs
+        parent = super(ProductFilterSet, self).qs.select_related(
+            'instance_model')
         if self.request:
             product_types_with_permission = get_objects_for_user(
                 self.request.user, 'view_product_type_products', ProductType)

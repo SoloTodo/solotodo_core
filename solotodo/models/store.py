@@ -259,6 +259,8 @@ class Store(models.Model):
             ['view_store_update_logs', 'Can view store update logs'],
             ['view_store_entities', 'Can view entities of the store'],
             ['update_store_prices', 'Can update store prices'],
+            ['associate_store_entities', 'Can associate store entities'],
             ['backend_view_store',
              'Can view store list and detail in backend'],
+
         )

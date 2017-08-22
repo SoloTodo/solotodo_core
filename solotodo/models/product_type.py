@@ -33,4 +33,6 @@ class ProductType(models.Model):
              'Can view entities associated to this product type'],
             ['view_product_type_products',
              'Can view products associated to this product type'],
+            ['associate_product_type_entities',
+             'Can associate product type entities'],
         )

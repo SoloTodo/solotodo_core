@@ -21,4 +21,5 @@ urlpatterns = [
     url(r'^', include('solotodo.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^metamodel/', include('metamodel.urls')),
+    url(r'^mailing/', include('mailing.urls')),
 ]

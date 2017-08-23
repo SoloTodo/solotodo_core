@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
-
+import logging
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -46,8 +46,10 @@ INSTALLED_APPS = [
     'sorl.thumbnail',
     'custom_user',
     'corsheaders',
+    'django_premailer',
     'metamodel',
     'solotodo',
+    'mailing'
 ]
 
 MIDDLEWARE = [
@@ -229,3 +231,19 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 ###############################################################################
 
 FILTERS_STRICTNESS = STRICTNESS.RAISE_VALIDATION_ERROR
+
+##############################################################################
+# Premailer configuration
+##############################################################################
+
+PREMAILER_OPTIONS = {
+    'strip_important': False,
+    'cssutils_logging_level': logging.ERROR
+}
+
+##############################################################################
+# Made up settings
+##############################################################################
+
+BOT_USERNAME = 'solobot@solotodo.com'
+BACKEND_HOST = 'http://localhost:3000/'

@@ -40,6 +40,8 @@ admin.site.register(ProductType, GuardedModelAdmin)
 class SoloTodoUserAdmin(EmailUserAdmin):
     fieldsets = EmailUserAdmin.fieldsets + \
                 (('Additional information', {'fields': (
+                    'first_name',
+                    'last_name',
                     'preferred_language',
                     'preferred_currency',
                     'preferred_country',

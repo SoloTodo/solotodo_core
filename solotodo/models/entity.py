@@ -68,7 +68,7 @@ class Entity(models.Model):
         return False
 
     def update_with_scraped_product(self, scraped_product,
-                                    product_type, currency):
+                                    product_type=None, currency=None):
         from solotodo.models import EntityHistory
 
         assert scraped_product is None or self.key == scraped_product.key
@@ -80,6 +80,14 @@ class Entity(models.Model):
             current_active_registry = None
 
         if scraped_product:
+            if product_type is None:
+                product_type = ProductType.objects.get(
+                    storescraper_name=scraped_product.product_type)
+
+            if currency is None:
+                currency = Currency.objects.get(
+                    iso_code=scraped_product.currency)
+
             self.scraped_product_type = product_type
             self.currency = currency
             self.name = scraped_product.name
@@ -175,6 +183,22 @@ class Entity(models.Model):
                                  'being associated')
 
         super(Entity, self).save(*args, **kwargs)
+
+    def update(self):
+        scraper = self.store.scraper
+        scraped_products = scraper.products_for_url(
+            self.discovery_url,
+            product_type=self.scraped_product_type.storescraper_name,
+            extra_args=self.store.storescraper_extra_args
+        )
+
+        entity_scraped_product = None
+        for scraped_product in scraped_products:
+            if scraped_product.key == self.key:
+                entity_scraped_product = scraped_product
+                break
+
+        self.update_with_scraped_product(entity_scraped_product)
 
     class Meta:
         app_label = 'solotodo'

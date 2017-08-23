@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from custom_user.models import AbstractEmailUser
@@ -20,6 +21,19 @@ class SoloTodoUser(AbstractEmailUser):
     preferred_number_format = models.ForeignKey(
         NumberFormat, blank=True, null=True)
     permissions = property(lambda self: sorted(self.get_all_permissions()))
+
+    @classmethod
+    def get_bot(cls):
+        return cls.objects.get(email=settings.BOT_USERNAME)
+
+    def email_recipient_text(self):
+        first_name = self.first_name or ''
+        last_name = self.last_name or ''
+        full_name = '{} {}'.format(first_name, last_name).strip()
+        if full_name:
+            return '{} <{}>'.format(full_name, self.email)
+        else:
+            return self.email
 
     class Meta:
         app_label = 'solotodo'

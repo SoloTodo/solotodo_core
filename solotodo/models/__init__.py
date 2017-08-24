@@ -16,6 +16,7 @@ from .product_type import ProductType
 from .product import Product
 from .entity import Entity
 from .entity_history import EntityHistory
+from .entity_log import EntityLog
 from .store_update_log import StoreUpdateLog
 
 

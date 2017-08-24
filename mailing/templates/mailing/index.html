@@ -1,12 +1,29 @@
 {% extends 'mailing/base.html' %}
 
+{% load i18n %}
 {% load staticfiles %}
 
 {% block head %}
   <style>
     h3 {
-      color: #8a8a8a;
+      color: #264c85;
+      font-size: 20px;
+      padding-bottom: 10px;
     }
+
+    .callout-inner {
+      padding: 20px !important;
+      border-color: #f0f0f0 !important;
+    }
+
+    .logo {
+      padding-bottom: 10px;
+    }
+
+  .logo img {
+    width: 198px;
+    height: 54px;
+  }
   </style>
 {% endblock %}
 
@@ -14,10 +31,10 @@
   <table class="row">
     <tbody>
     <tr>
-      <th class="small-12 large-12 columns">
+      <th class="small-12 large-12 columns first last">
         <table>
           <tr>
-            <th><img src="{% static 'img/mailing/logo.png' %}" /> </th>
+            <th class="logo"><img src="{% static 'img/mailing/logo.png' %}" /> </th>
           </tr>
         </table>
       </th>
@@ -28,41 +45,61 @@
     <tbody>
     <tr>
       <th class="small-12 large-12 columns first last">
-        <table>
+        <table class="callout">
           <tr>
-            <th>
-              <h3>Reporte de error</h3>
-
-              <p>Se detectó un error al actualizar la información de una entidad</p>
-
-              <ul>
-                <li><b>ID:</b> <a href="{{ host }}entities/{{ entity.id }}">{{ entity.id }}</a></li>
-                <li><b>Nombre:</b> {{ entity.name }}</li>
-                <li><b>Tienda:</b> {{ entity.store }}</li>
-              </ul>
-
-              <p>Información de la petición</p>
-
-              <ul>
-                <li><b>Fecha:</b> {{ timestamp }}</li>
-                <li><b>Usuario:</b> {{ request_user }}</li>
-              </ul>
-
-              <p>
-                El error encontrado fue:
-              </p>
-
-              <table class="callout">
+            <th class="callout-inner">
+              <table>
                 <tr>
-                  <th class="callout-inner warning">
-                    <p>{{ error|linebreaks }}</p>
+                  <th>
+                    <h3>{% trans 'Error report' %}</h3>
+
+                    <p>{% trans 'An error has been detected while updating the pricing of an entity' %}</p>
+
+                    <ul>
+                      <li><b>{% trans 'ID' %}:</b> {{ entity.id }}</li>
+                      <li><b>{% trans 'Name' %}:</b> {{ entity.name }}</li>
+                      <li><b>{% trans 'Store' %}:</b> {{ entity.store }}</li>
+                    </ul>
+
+                    <p>{% trans 'Request information' %}</p>
+
+                    <ul>
+                      <li><b>{% trans 'Date' %}:</b> {{ timestamp }}</li>
+                      <li><b>{% trans 'User' %}:</b> {{ request_user }}</li>
+                    </ul>
+
+                    <p>
+                      {% trans 'The found error' %}:
+                    </p>
+
+                    <table class="callout">
+                      <tr>
+                        <th class="callout-inner warning">
+                          <p>{{ error|linebreaks }}</p>
+                        </th>
+                        <th class="expander"></th>
+                      </tr>
+                    </table>
+
+                    <table class="button">
+                      <tr>
+                        <td>
+                          <table>
+                            <tr>
+                              <td><a href="{{ host }}entities/{{ entity.id }}">{% trans 'Solve issue' %}</a></td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
                   </th>
-                  <th class="expander"></th>
                 </tr>
               </table>
             </th>
+            <th class="expander"></th>
           </tr>
         </table>
+
       </th>
     </tr>
     </tbody>

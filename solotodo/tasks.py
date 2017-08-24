@@ -48,15 +48,15 @@ def store_update(store_id, product_type_ids=None, extra_args=None, queue=None,
     if product_type_ids is None:
         product_types = None
 
-    store.update(product_types=product_types, extra_args=extra_args,
-                 queue=queue,
-                 discover_urls_concurrency=discover_urls_concurrency,
-                 products_for_url_concurrency=products_for_url_concurrency,
-                 use_async=use_async, update_log=update_log)
+    store.update_pricing(
+        product_types=product_types, extra_args=extra_args, queue=queue,
+        discover_urls_concurrency=discover_urls_concurrency,
+        products_for_url_concurrency=products_for_url_concurrency,
+        use_async=use_async, update_log=update_log)
 
 
 @shared_task(queue='store_update')
-def store_update_from_json(store_id, json_data):
+def store_update_pricing_from_json(store_id, json_data):
     store = Store.objects.get(pk=store_id)
 
     update_log = StoreUpdateLog.objects.create(
@@ -66,4 +66,4 @@ def store_update_from_json(store_id, json_data):
     update_log.product_types = ProductType.objects.filter(
         storescraper_name__in=json_data['product_types'])
 
-    store.update_from_json(json_data, update_log=update_log)
+    store.update_pricing_from_json(json_data, update_log=update_log)

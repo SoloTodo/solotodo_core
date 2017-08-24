@@ -6,7 +6,7 @@ from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, ProductType, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
-    StoreType, ProductTypeTier, NumberFormat
+    StoreType, ProductTypeTier, NumberFormat, EntityLog
 
 admin.site.register(Language)
 admin.site.register(Country)
@@ -20,6 +20,16 @@ class EntityModelAdmin(admin.ModelAdmin):
                        'latest_association_user']
 
 admin.site.register(Entity, EntityModelAdmin)
+
+
+class EntityLogModelAdmin(admin.ModelAdmin):
+    readonly_fields = ['entity', 'product_type', 'scraped_product_type',
+                       'currency', 'product', 'cell_plan', 'user']
+
+    def get_queryset(self, request):
+        return EntityLog.objects.select_related()
+
+admin.site.register(EntityLog, EntityLogModelAdmin)
 
 
 class EntityHistoryModelAdmin(admin.ModelAdmin):

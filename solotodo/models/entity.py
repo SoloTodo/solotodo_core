@@ -44,7 +44,7 @@ class Entity(models.Model):
     url = models.URLField(max_length=512, db_index=True)
     discovery_url = models.URLField(max_length=512, db_index=True)
     picture_url = models.URLField(max_length=512, blank=True, null=True)
-    description = models.TextField()
+    description = models.TextField(null=True)
     is_visible = models.BooleanField(default=True)
     latest_association_user = models.ForeignKey(get_user_model(), null=True)
     latest_association_date = models.DateTimeField(null=True, blank=True)
@@ -88,16 +88,18 @@ class Entity(models.Model):
                 currency = Currency.objects.get(
                     iso_code=scraped_product.currency)
 
-            self.scraped_product_type = product_type
-            self.currency = currency
-            self.name = scraped_product.name
-            self.cell_plan_name = scraped_product.cell_plan_name
-            self.part_number = scraped_product.part_number
-            self.sku = scraped_product.sku
-            self.url = scraped_product.url
-            self.discovery_url = scraped_product.discovery_url
-            self.picture_url = scraped_product.picture_url
-            self.description = scraped_product.description
+            updated_data = {
+                'scraped_product_type': product_type,
+                'currency': currency,
+                'name': scraped_product.name,
+                'cell_plan_name': scraped_product.cell_plan_name,
+                'part_number': scraped_product.part_number,
+                'sku': scraped_product.sku,
+                'url': scraped_product.url,
+                'discovery_url': scraped_product.discovery_url,
+                'picture_url': scraped_product.picture_url,
+                'description': scraped_product.description,
+            }
 
             if not current_active_registry:
                 current_active_registry = EntityHistory(
@@ -114,9 +116,9 @@ class Entity(models.Model):
 
             # This is redundant if the current_active_registry is the same
             # as self.active_registry, but doesn't impact performance
-            self.active_registry = current_active_registry
+            updated_data['active_registry'] = current_active_registry
 
-            self.save()
+            self.update_keeping_log(updated_data)
         else:
             self.active_registry = None
             self.save()
@@ -157,34 +159,68 @@ class Entity(models.Model):
         new_entity.active_registry = new_entity_history
         new_entity.save()
 
-    def save(self, *args, **kwargs):
-        is_associated = self.product or self.cell_plan
+    def update_keeping_log(self, updated_data, user=None):
+        from solotodo.models import EntityLog
 
-        if self.latest_association_user and not self.latest_association_date:
+        if not user:
+            user = get_user_model().get_bot()
+
+        entity_log = EntityLog(
+            entity=self,
+            user=user,
+        )
+
+        save_log = False
+
+        for field, new_value in updated_data.items():
+            old_value = getattr(self, field)
+            if field in EntityLog.DATA_FIELDS:
+                setattr(entity_log, field, old_value)
+                if old_value != new_value:
+                    save_log = True
+
+            setattr(self, field, new_value)
+
+        if save_log:
+            # Fill the remaining fields
+            for field in EntityLog.DATA_FIELDS:
+                if field not in updated_data:
+                    entity_value = getattr(self, field)
+                    setattr(entity_log, field, entity_value)
+            entity_log.save()
+
+        self.save()
+
+    def save(self, *args, **kwargs):
+        is_associated = self.product_id or self.cell_plan_id
+
+        if self.latest_association_user_id and \
+                not self.latest_association_date:
             raise IntegrityError('Resolved entity must have a date')
 
-        if not self.latest_association_user and self.latest_association_date:
+        if not self.latest_association_user_id and \
+                self.latest_association_date:
             raise IntegrityError('Resolved entity must have a resolver')
 
         if not self.is_visible and is_associated:
             raise IntegrityError('Entity cannot be associated and be hidden '
                                  'at the same time')
 
-        if not self.product and self.cell_plan:
-            raise IntegrityError('Entity cannot have a secondary product but '
-                                 'not a primary association')
+        if not self.product_id and self.cell_plan:
+            raise IntegrityError('Entity cannot have a cell plan but '
+                                 'not a primary product')
 
-        if is_associated and not self.latest_association_user:
+        if is_associated and not self.latest_association_user_id:
             raise IntegrityError('Entity cannot be associated to product '
                                  'without resolver')
 
-        if not is_associated and self.latest_association_user:
+        if not is_associated and self.latest_association_user_id:
             raise IntegrityError('Entity cannot have a resolver without '
                                  'being associated')
 
         super(Entity, self).save(*args, **kwargs)
 
-    def update(self):
+    def update_pricing(self):
         scraper = self.store.scraper
         scraped_products = scraper.products_for_url(
             self.discovery_url,
@@ -199,6 +235,38 @@ class Entity(models.Model):
                 break
 
         self.update_with_scraped_product(entity_scraped_product)
+
+    def log_summary(self):
+        entity = self
+        log_summary = []
+
+        for log in self.entitylog_set.select_related():
+            changes = entity.apply_log(log)
+            log_summary.append({
+                'user': log.user,
+                'timestamp': log.creation_date,
+                'changes': changes
+            })
+
+        return log_summary
+
+    def apply_log(self, log):
+        from solotodo.models import EntityLog
+
+        changes = []
+
+        for field in EntityLog.DATA_FIELDS:
+            entity_value = getattr(self, field)
+            log_value = getattr(log, field)
+            if entity_value != log_value:
+                setattr(self, field, log_value)
+                changes.append({
+                    'field': field,
+                    'old_value': log_value,
+                    'new_value': entity_value,
+                })
+
+        return changes
 
     class Meta:
         app_label = 'solotodo'

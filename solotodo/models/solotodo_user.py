@@ -1,5 +1,8 @@
 from django.conf import settings
+from django.core.mail import send_mail
 from django.db import models
+from django.template.loader import render_to_string
+from django.utils import translation, timezone
 from django.utils.translation import ugettext_lazy as _
 from custom_user.models import AbstractEmailUser
 
@@ -34,6 +37,32 @@ class SoloTodoUser(AbstractEmailUser):
             return '{} <{}>'.format(full_name, self.email)
         else:
             return self.email
+
+    def send_entity_update_failure_email(self, entity, request_user,
+                                         traceback):
+        if self.preferred_language:
+            email_language = self.preferred_language.code
+        else:
+            email_language = settings.LANGUAGE_CODE
+
+        sender = SoloTodoUser().get_bot().email_recipient_text()
+        translation.activate(email_language)
+
+        email_recipients = [self.email_recipient_text()]
+
+        html_message = render_to_string('mailing/index.html', {
+            'entity': entity,
+            'request_user': request_user,
+            'timestamp': timezone.now(),
+            'host': settings.BACKEND_HOST,
+            'error': traceback
+        })
+
+        subject = _('Error updating entity')
+
+        send_mail('{} {}'.format(subject, entity.id),
+                  'Error', sender, email_recipients,
+                  html_message=html_message)
 
     class Meta:
         app_label = 'solotodo'

@@ -30,10 +30,10 @@ class Store(models.Model):
     def __str__(self):
         return self.name
 
-    def update(self, product_types=None, extra_args=None, queue=None,
-               discover_urls_concurrency=None,
-               products_for_url_concurrency=None,
-               use_async=None, update_log=None):
+    def update_pricing(self, product_types=None, extra_args=None, queue=None,
+                       discover_urls_concurrency=None,
+                       products_for_url_concurrency=None,
+                       use_async=None, update_log=None):
         assert self.is_active
 
         scraper = self.scraper
@@ -132,7 +132,7 @@ class Store(models.Model):
                                           discovery_urls_without_products,
                                           update_log=update_log)
 
-    def update_from_json(self, json_data, update_log=None):
+    def update_pricing_from_json(self, json_data, update_log=None):
         assert self.is_active
 
         product_types = ProductType.objects.filter(
@@ -258,7 +258,7 @@ class Store(models.Model):
             ['view_store', 'Can view store'],
             ['view_store_update_logs', 'Can view store update logs'],
             ['view_store_entities', 'Can view entities of the store'],
-            ['update_store_prices', 'Can update store prices'],
+            ['update_store_pricing', 'Can update store pricing'],
             ['associate_store_entities', 'Can associate store entities'],
             ['backend_view_store',
              'Can view store list and detail in backend'],

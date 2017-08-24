@@ -1,12 +1,8 @@
 import traceback
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
-from django.core.mail import send_mail
 from django.http import Http404
-from django.template.loader import render_to_string
-from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
@@ -26,7 +22,7 @@ from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet
 from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity, Product, NumberFormat, SoloTodoUser
+    ProductType, StoreUpdateLog, Entity, Product, NumberFormat
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
@@ -36,7 +32,6 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     NumberFormatSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
-from storescraper.store import StoreScrapError
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -130,7 +125,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                                     klass=Store)
 
     @detail_route()
-    @detail_permission('update_store_prices')
+    @detail_permission('update_store_pricing')
     def scraper(self, request, pk):
         store = self.get_object()
         try:
@@ -142,7 +137,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @detail_route(methods=['post'])
-    @detail_permission('update_store_prices')
+    @detail_permission('update_store_pricing')
     def update_pricing(self, request, pk):
         store = self.get_object()
         serializer = StoreUpdatePricesSerializer(
@@ -237,35 +232,25 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         entity = self.get_object()
         user = request.user
 
-        has_perm = user.has_perm('update_store_prices', entity.store) \
+        has_perm = user.has_perm('update_store_pricing', entity.store) \
             or user.has_perm('associate_product_type_entities',
                              entity.product_type) \
-            or user.has_perm('update_product_type_entities_prices',
+            or user.has_perm('update_product_type_entities_pricing',
                              entity.product_type)
 
         if not has_perm:
             raise PermissionDenied
 
         try:
-            entity.update()
+            entity.update_pricing()
             serializer = EntitySerializer(entity, context={'request': request})
             return Response(serializer.data)
         except Exception as e:
-            html_message = render_to_string('mailing/index.html', {
-                'entity': entity,
-                'request_user': user,
-                'timestamp': timezone.now(),
-                'host': settings.BACKEND_HOST,
-                'error': traceback.format_exc()
-            })
+            recipients = get_user_model().objects.filter(is_superuser=True)
 
-            sender = get_user_model().get_bot().email_recipient_text()
-            recipients = [u.email for u in get_user_model().objects.filter(
-                is_superuser=True)]
-
-            send_mail('Error actualizando entidad {}'.format(entity.id),
-                      'Error', sender, recipients,
-                      html_message=html_message)
+            for recipient in recipients:
+                recipient.send_entity_update_failure_email(
+                    entity, request.user, traceback.format_exc())
 
             return Response({'detail': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)

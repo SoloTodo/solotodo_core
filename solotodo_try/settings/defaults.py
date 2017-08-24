@@ -15,6 +15,10 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from django_filters import STRICTNESS
 
+
+def _(s):
+    return s
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -56,6 +60,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -122,7 +127,12 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
-LANGUAGE_CODE = 'es-cl'
+LANGUAGE_CODE = 'en-us'
+
+LANGUAGES = [
+  ('en', _('English')),
+  ('es', _('Spanish')),
+]
 
 TIME_ZONE = 'America/Santiago'
 
@@ -246,4 +256,4 @@ PREMAILER_OPTIONS = {
 ##############################################################################
 
 BOT_USERNAME = 'solobot@solotodo.com'
-BACKEND_HOST = 'http://localhost:3000/'
+BACKEND_HOST = 'http://192.168.90.111:3000/'

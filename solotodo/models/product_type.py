@@ -35,6 +35,6 @@ class ProductType(models.Model):
              'Can view products associated to this product type'],
             ['associate_product_type_entities',
              'Can associate product type entities'],
-            ['update_product_type_entities_prices',
+            ['update_product_type_entities_pricing',
              'Can update product type entities prices'],
         )

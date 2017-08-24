@@ -3,4 +3,4 @@ env
 __pycache__/
 *.json
 storescraper
-
+**/*.mo

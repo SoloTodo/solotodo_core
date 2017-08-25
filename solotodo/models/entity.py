@@ -236,37 +236,37 @@ class Entity(models.Model):
 
         self.update_with_scraped_product(entity_scraped_product)
 
-    def log_summary(self):
+    def events(self):
         entity = self
-        log_summary = []
+        events = []
+
+        def apply_log_to_entity(log):
+            from solotodo.models import EntityLog
+
+            local_changes = []
+
+            for field in EntityLog.DATA_FIELDS:
+                entity_value = getattr(entity, field)
+                log_value = getattr(log, field)
+                if entity_value != log_value:
+                    setattr(entity, field, log_value)
+                    local_changes.append({
+                        'field': field,
+                        'old_value': log_value,
+                        'new_value': entity_value,
+                    })
+
+            return local_changes
 
         for log in self.entitylog_set.select_related():
-            changes = entity.apply_log(log)
-            log_summary.append({
+            changes = apply_log_to_entity(log)
+            events.append({
                 'user': log.user,
                 'timestamp': log.creation_date,
                 'changes': changes
             })
 
-        return log_summary
-
-    def apply_log(self, log):
-        from solotodo.models import EntityLog
-
-        changes = []
-
-        for field in EntityLog.DATA_FIELDS:
-            entity_value = getattr(self, field)
-            log_value = getattr(log, field)
-            if entity_value != log_value:
-                setattr(self, field, log_value)
-                changes.append({
-                    'field': field,
-                    'old_value': log_value,
-                    'new_value': entity_value,
-                })
-
-        return changes
+        return events
 
     class Meta:
         app_label = 'solotodo'

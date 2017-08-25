@@ -29,10 +29,17 @@ class SoloTodoUser(AbstractEmailUser):
     def get_bot(cls):
         return cls.objects.get(email=settings.BOT_USERNAME)
 
-    def email_recipient_text(self):
+    def get_full_name(self):
+        if not self.first_name and not self.last_name:
+            return None
+
         first_name = self.first_name or ''
         last_name = self.last_name or ''
-        full_name = '{} {}'.format(first_name, last_name).strip()
+
+        return '{} {}'.format(first_name, last_name).strip()
+
+    def email_recipient_text(self):
+        full_name = self.get_full_name()
         if full_name:
             return '{} <{}>'.format(full_name, self.email)
         else:

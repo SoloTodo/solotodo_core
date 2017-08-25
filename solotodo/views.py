@@ -2,8 +2,9 @@ import traceback
 
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
+from django.db import models
 from django.http import Http404
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework
 from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets, permissions, status
@@ -19,17 +20,18 @@ from rest_framework.reverse import reverse
 from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
-    ProductFilterSet
+    ProductFilterSet, EntityHistoryFilterSet
 from solotodo.forms.ip_form import IpForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity, Product, NumberFormat
+    ProductType, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
-    ProductPagination
+    ProductPagination, EntityPriceHistoryPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreUpdatePricesSerializer, ProductTypeSerializer, \
     StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
-    NumberFormatSerializer
+    NumberFormatSerializer, EntityEventUserSerializer, \
+    EntityEventValueSerializer, EntityHistorySerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -183,7 +185,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StoreUpdateLog.objects.all()
     serializer_class = StoreUpdateLogSerializer
     pagination_class = StoreUpdateLogPagination
-    filter_backends = (DjangoFilterBackend, OrderingFilter)
+    filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = StoreUpdateLogFilterSet
     ordering_fields = ('last_updated', )
 
@@ -215,7 +217,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Entity.objects.all()
     serializer_class = EntitySerializer
     pagination_class = EntityPagination
-    filter_backends = (DjangoFilterBackend, SearchFilter)
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
     filter_class = EntityFilterSet
     search_fields = ('product__instance_model__unicode_representation',
                      'cell_plan__instance_model__unicode_representation',
@@ -255,10 +257,49 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @detail_route()
+    def events(self, request, *args, **kwargs):
+        entity = self.get_object()
+        serialized_events = []
+
+        def serialize_value(value):
+            if isinstance(value, models.Model):
+                return EntityEventValueSerializer(value).data
+            else:
+                return value
+
+        for event in entity.events():
+            serialized_changes = []
+            for change in event['changes']:
+                serialized_changes.append({
+                    'field': change['field'],
+                    'old_value': serialize_value(change['old_value']),
+                    'new_value': serialize_value(change['new_value'])
+                })
+
+            serialized_event = {
+                'timestamp': event['timestamp'],
+                'user': EntityEventUserSerializer(
+                    event['user'], context={'request': request}).data,
+                'changes': serialized_changes
+            }
+
+            serialized_events.append(serialized_event)
+
+        return Response(serialized_events)
+
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = (DjangoFilterBackend, SearchFilter)
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
     filter_class = ProductFilterSet
     pagination_class = ProductPagination
+
+
+class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = EntityHistory.objects.all()
+    serializer_class = EntityHistorySerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, )
+    filter_class = EntityHistoryFilterSet
+    pagination_class = EntityPriceHistoryPagination

@@ -112,7 +112,7 @@ class StoreUpdatePricesSerializer(serializers.Serializer):
 class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = EntityHistory
-        fields = ['date', 'stock', 'normal_price', 'offer_price',
+        fields = ['entity', 'date', 'stock', 'normal_price', 'offer_price',
                   'cell_monthly_payment', 'timestamp']
 
 
@@ -160,3 +160,16 @@ class StoreUpdateLogSerializer(serializers.HyperlinkedModelSerializer):
                   'products_for_url_concurrency', 'use_async', 'registry_file',
                   'available_products_count', 'unavailable_products_count',
                   'discovery_urls_without_products_count')
+
+
+class EntityEventValueSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField(source='__str__')
+
+
+class EntityEventUserSerializer(serializers.HyperlinkedModelSerializer):
+    full_name = serializers.CharField(source='get_full_name')
+
+    class Meta:
+        model = get_user_model()
+        fields = ['url', 'id', 'full_name']

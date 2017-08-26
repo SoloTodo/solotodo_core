@@ -119,7 +119,9 @@ def entities(request):
 
 
 class EntityHistoryFilterSet(rest_framework.FilterSet):
-    date = rest_framework.DateFromToRangeFilter()
+    date = rest_framework.DateFromToRangeFilter(
+        name='timestamp'
+    )
     available_only = rest_framework.BooleanFilter(
         method='_available_only',
         label='Available only?'

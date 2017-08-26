@@ -10,7 +10,6 @@ class EntityHistoryQueryset(models.QuerySet):
 
 class EntityHistory(models.Model):
     entity = models.ForeignKey(Entity)
-    date = models.DateField(db_index=True)
     timestamp = models.DateTimeField(auto_now=True)
     stock = models.IntegerField(db_index=True)
     normal_price = models.DecimalField(decimal_places=2, max_digits=12)
@@ -20,9 +19,8 @@ class EntityHistory(models.Model):
     objects = EntityHistoryQueryset.as_manager()
 
     def __str__(self):
-        return u'{} - {}'.format(self.entity, self.date)
+        return u'{} - {}'.format(self.entity, self.timestamp)
 
     class Meta:
         app_label = 'solotodo'
-        ordering = ['entity', 'date']
-        unique_together = ('entity', 'date')
+        ordering = ['entity', 'timestamp']

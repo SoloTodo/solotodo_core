@@ -39,7 +39,7 @@ class NumberFormatSerializer(serializers.HyperlinkedModelSerializer):
 class CurrencySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Currency
-        fields = ('url', 'name', 'iso_code', 'decimal_places', 'prefix',
+        fields = ('url', 'id', 'name', 'iso_code', 'decimal_places', 'prefix',
                   'exchange_rate', 'exchange_rate_last_updated')
 
 
@@ -112,8 +112,8 @@ class StoreUpdatePricesSerializer(serializers.Serializer):
 class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = EntityHistory
-        fields = ['entity', 'date', 'stock', 'normal_price', 'offer_price',
-                  'cell_monthly_payment', 'timestamp']
+        fields = ['entity', 'timestamp', 'stock', 'normal_price',
+                  'offer_price', 'cell_monthly_payment']
 
 
 class EntitySerializer(serializers.HyperlinkedModelSerializer):

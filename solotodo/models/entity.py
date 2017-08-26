@@ -73,12 +73,6 @@ class Entity(models.Model):
 
         assert scraped_product is None or self.key == scraped_product.key
 
-        if self.active_registry and \
-                self.active_registry.date == timezone.now().date():
-            current_active_registry = self.active_registry
-        else:
-            current_active_registry = None
-
         if scraped_product:
             if product_type is None:
                 product_type = ProductType.objects.get(
@@ -87,6 +81,14 @@ class Entity(models.Model):
             if currency is None:
                 currency = Currency.objects.get(
                     iso_code=scraped_product.currency)
+
+            new_active_registry = EntityHistory.objects.create(
+                entity=self,
+                stock=scraped_product.stock,
+                normal_price=scraped_product.normal_price,
+                offer_price=scraped_product.offer_price,
+                cell_monthly_payment=scraped_product.cell_monthly_payment,
+            )
 
             updated_data = {
                 'scraped_product_type': product_type,
@@ -99,31 +101,13 @@ class Entity(models.Model):
                 'discovery_url': scraped_product.discovery_url,
                 'picture_url': scraped_product.picture_url,
                 'description': scraped_product.description,
+                'active_registry': new_active_registry
             }
-
-            if not current_active_registry:
-                current_active_registry = EntityHistory(
-                    entity=self,
-                    date=timezone.now().date()
-                )
-
-            current_active_registry.stock = scraped_product.stock
-            current_active_registry.normal_price = scraped_product.normal_price
-            current_active_registry.offer_price = scraped_product.offer_price
-            current_active_registry.cell_monthly_payment = \
-                scraped_product.cell_monthly_payment
-            current_active_registry.save()
-
-            # This is redundant if the current_active_registry is the same
-            # as self.active_registry, but doesn't impact performance
-            updated_data['active_registry'] = current_active_registry
 
             self.update_keeping_log(updated_data)
         else:
             self.active_registry = None
             self.save()
-            if current_active_registry:
-                current_active_registry.delete()
 
     @classmethod
     def create_from_scraped_product(cls, scraped_product, store, product_type,

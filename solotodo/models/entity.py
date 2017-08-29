@@ -133,7 +133,6 @@ class Entity(models.Model):
 
         new_entity_history = EntityHistory.objects.create(
             entity=new_entity,
-            date=timezone.now().date(),
             stock=scraped_product.stock,
             normal_price=scraped_product.normal_price,
             offer_price=scraped_product.offer_price,

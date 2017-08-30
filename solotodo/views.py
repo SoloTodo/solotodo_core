@@ -2,7 +2,7 @@ import traceback
 
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
-from django.db import models
+from django.db import models, IntegrityError
 from django.http import Http404
 from django_filters import rest_framework
 from geoip2.errors import AddressNotFoundError
@@ -22,6 +22,7 @@ from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, EntityHistoryFilterSet
 from solotodo.forms.ip_form import IpForm
+from solotodo.forms.product_type_form import ProductTypeForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     ProductType, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
@@ -235,8 +236,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         user = request.user
 
         has_perm = user.has_perm('update_store_pricing', entity.store) \
-            or user.has_perm('associate_product_type_entities',
-                             entity.product_type) \
+            or entity.user_has_staff_perms(user) \
             or user.has_perm('update_product_type_entities_pricing',
                              entity.product_type)
 
@@ -287,6 +287,50 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             serialized_events.append(serialized_event)
 
         return Response(serialized_events)
+
+    @detail_route(methods=['post'])
+    def toggle_visibility(self, request, *args, **kwargs):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        try:
+            entity.update_keeping_log({'is_visible': not entity.is_visible},
+                                      request.user)
+            return Response(EntitySerializer(
+                entity, context={'request': request}).data)
+        except IntegrityError as err:
+            return Response({'detail': str(err)},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
+    def change_product_type(self, request, *args, **kwargs):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        if entity.product:
+            return Response({'detail': 'Cannot change product type of '
+                                       'associated entities'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        form = ProductTypeForm(request.data)
+
+        if form.is_valid():
+            new_product_type = form.cleaned_data['product_type']
+            if new_product_type == entity.product_type:
+                return Response({'detail': 'The new product type must be '
+                                           'different from the original one'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            entity.update_keeping_log(
+                {'product_type': new_product_type},
+                request.user)
+            return Response(
+                EntitySerializer(entity, context={'request': request}).data)
+        else:
+            return Response({'detail': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):

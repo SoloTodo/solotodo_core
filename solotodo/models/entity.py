@@ -164,6 +164,8 @@ class Entity(models.Model):
 
             setattr(self, field, new_value)
 
+        self.save()
+
         if save_log:
             # Fill the remaining fields
             for field in EntityLog.DATA_FIELDS:
@@ -171,8 +173,6 @@ class Entity(models.Model):
                     entity_value = getattr(self, field)
                     setattr(entity_log, field, entity_value)
             entity_log.save()
-
-        self.save()
 
     def save(self, *args, **kwargs):
         is_associated = self.product_id or self.cell_plan_id
@@ -189,7 +189,7 @@ class Entity(models.Model):
             raise IntegrityError('Entity cannot be associated and be hidden '
                                  'at the same time')
 
-        if not self.product_id and self.cell_plan:
+        if not self.product_id and self.cell_plan_id:
             raise IntegrityError('Entity cannot have a cell plan but '
                                  'not a primary product')
 
@@ -250,6 +250,11 @@ class Entity(models.Model):
             })
 
         return events
+
+    def user_has_staff_perms(self, user):
+        return user.has_perm('product_type_entities_staff',
+                             self.product_type) \
+               and user.has_perm('store_entities_staff', self.store)
 
     class Meta:
         app_label = 'solotodo'

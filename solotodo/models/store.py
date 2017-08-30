@@ -259,7 +259,9 @@ class Store(models.Model):
             ['view_store_update_logs', 'Can view store update logs'],
             ['view_store_entities', 'Can view entities of the store'],
             ['update_store_pricing', 'Can update store pricing'],
-            ['associate_store_entities', 'Can associate store entities'],
+            ['store_entities_staff',
+             'Is partial staff of this stores entities (also requires product '
+             'type permissions)'],
             ['backend_view_store',
              'Can view store list and detail in backend'],
 

@@ -6,9 +6,9 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
-from solotodo.models.store_type import StoreType
-from solotodo.models.country import Country
-from solotodo.models.product_type import ProductType
+from .store_type import StoreType
+from .country import Country
+from .category import Category
 from solotodo.utils import iterable_to_dict
 from solotodo_try.s3utils import PrivateS3Boto3Storage
 from storescraper.product import Product as StorescraperProduct
@@ -30,7 +30,7 @@ class Store(models.Model):
     def __str__(self):
         return self.name
 
-    def update_pricing(self, product_types=None, extra_args=None, queue=None,
+    def update_pricing(self, categories=None, extra_args=None, queue=None,
                        discover_urls_concurrency=None,
                        products_for_url_concurrency=None,
                        use_async=None, update_log=None):
@@ -38,9 +38,9 @@ class Store(models.Model):
 
         scraper = self.scraper
 
-        product_types = self.sanitize_product_types_for_update(product_types)
+        categories = self.sanitize_categories_for_update(categories)
 
-        if not product_types:
+        if not categories:
             return
 
         if update_log:
@@ -51,7 +51,7 @@ class Store(models.Model):
 
         products_task_signature = scraper.products_task.s(
             self.storescraper_class,
-            product_types=[pt.storescraper_name for pt in product_types],
+            categories=[c.storescraper_name for c in categories],
             extra_args=extra_args,
             queue=queue,
             discover_urls_concurrency=discover_urls_concurrency,
@@ -85,19 +85,19 @@ class Store(models.Model):
         # Second pass of product retrieval, for the products mis-catalogued
         # in the store
         extra_entities = self.entity_set.filter(
-            product_type__in=product_types
+            category__in=categories
         ).exclude(
-            scraped_product_type__in=product_types,
+            scraped_category__in=categories,
         ).exclude(
             # Exclude the entities that we already scraped previously. This
-            # happens when product_types is None and is sanitized to include
-            # the product types of these entities.
+            # happens when categories is None and is sanitized to include
+            # the categories of these entities.
             key__in=[e['key'] for e in scraped_products_data['products']]
         )
 
         extra_entities_args = [dict([
             ('url', e.discovery_url),
-            ('product_type', e.scraped_product_type.storescraper_name)])
+            ('category', e.scraped_category.storescraper_name)])
             for e in extra_entities]
 
         extra_products_task_signature = scraper.products_for_urls_task.s(
@@ -128,26 +128,26 @@ class Store(models.Model):
             scraped_products_data['discovery_urls_without_products'] + \
             extra_products_data['discovery_urls_without_products']
 
-        self.update_with_scraped_products(product_types, scraped_products,
+        self.update_with_scraped_products(categories, scraped_products,
                                           discovery_urls_without_products,
                                           update_log=update_log)
 
     def update_pricing_from_json(self, json_data, update_log=None):
         assert self.is_active
 
-        product_types = ProductType.objects.filter(
-            storescraper_name__in=json_data['product_types'])
+        categories = Category.objects.filter(
+            storescraper_name__in=json_data['categories'])
 
         products = [StorescraperProduct.deserialize(product)
                     for product in json_data['products']]
 
         self.update_with_scraped_products(
-            product_types, products,
+            categories, products,
             json_data['discovery_urls_without_products'],
             update_log=update_log
         )
 
-    def update_with_scraped_products(self, product_types, scraped_products,
+    def update_with_scraped_products(self, categories, scraped_products,
                                      discovery_urls_without_products,
                                      update_log=None):
         from solotodo.models import Currency, Entity
@@ -156,10 +156,10 @@ class Store(models.Model):
 
         scraped_products_dict = iterable_to_dict(scraped_products, 'key')
         entities_to_be_updated = self.entity_set.filter(
-            Q(product_type__in=product_types) |
+            Q(category__in=categories) |
             Q(key__in=scraped_products_dict.keys())).select_related()
 
-        product_types_dict = iterable_to_dict(ProductType, 'storescraper_name')
+        categories_dict = iterable_to_dict(Category, 'storescraper_name')
         currencies_dict = iterable_to_dict(Currency, 'iso_code')
 
         for entity in entities_to_be_updated:
@@ -167,24 +167,24 @@ class Store(models.Model):
                 entity.key, None)
 
             if scraped_product_for_update:
-                product_type = product_types_dict[
-                    scraped_product_for_update.product_type]
+                category = categories_dict[
+                    scraped_product_for_update.category]
                 currency = currencies_dict[
                     scraped_product_for_update.currency]
             else:
-                product_type = None
+                category = None
                 currency = None
 
             entity.update_with_scraped_product(
                 scraped_product_for_update,
-                product_type,
+                category,
                 currency)
 
         for scraped_product in scraped_products_dict.values():
             Entity.create_from_scraped_product(
                 scraped_product,
                 self,
-                product_types_dict[scraped_product.product_type],
+                categories_dict[scraped_product.category],
                 currencies_dict[scraped_product.currency]
             )
 
@@ -198,8 +198,7 @@ class Store(models.Model):
                 discovery_urls_without_products)
 
             serialized_scraping_info = {
-                'product_types': [pt.storescraper_name
-                                  for pt in product_types],
+                'categories': [c.storescraper_name for c in categories],
                 'discovery_urls_without_products':
                     discovery_urls_without_products,
                 'products': [p.serialize() for p in scraped_products]
@@ -218,38 +217,37 @@ class Store(models.Model):
 
             update_log.save()
 
-    def scraper_product_types(self):
-        return ProductType.objects.filter(
-            storescraper_name__in=self.scraper.product_types())
+    def scraper_categories(self):
+        return Category.objects.filter(
+            storescraper_name__in=self.scraper.categories())
 
-    def sanitize_product_types_for_update(self, original_product_types=None):
-        sanitized_product_types = self.scraper_product_types()
+    def sanitize_categories_for_update(self, original_categories=None):
+        sanitized_categories = self.scraper_categories()
 
-        if original_product_types:
-            sanitized_product_types &= original_product_types
+        if original_categories:
+            sanitized_categories &= original_categories
 
-        # If we have entities whose product_types differ between our backend
-        # and the store itsel add their product types manually to the list of
-        # product types to be updated if the original product types are not
+        # If we have entities whose categories differ between our backend
+        # and the store itself add their categories manually to the list of
+        # categories to be updated if the original categories are not
         # given
         # Example:
-        # 1. "Sanitize all the product types from AbcDin"
-        # (original_product_types = None)
-        # 2. Load the default product types from AbcDin [Television, etc...]
-        # 3. We may have an entity from AbcDin with mismatched product_type.
+        # 1. "Sanitize all the categories from AbcDin"
+        # (original_categories = None)
+        # 2. Load the default categories from AbcDin [Television, etc...]
+        # 3. We may have an entity from AbcDin with mismatched category.
         # For example they had a Processor in the Notebook section
         # Normally this entity would never be updated as Processor is not
-        # part of AbcDin scraper, so add "Processor" to the list of product
-        # types
-        if original_product_types is None:
-            extra_product_type_ids = self.entity_set.exclude(
-                product_type__in=sanitized_product_types).values(
-                'product_type')
-            extra_product_types = ProductType.objects.filter(
-                pk__in=[e['product_type'] for e in extra_product_type_ids])
-            sanitized_product_types |= extra_product_types
+        # part of AbcDin scraper, so add "Processor" to the list of categories
+        if original_categories is None:
+            extra_category_ids = self.entity_set.exclude(
+                category__in=sanitized_categories).values(
+                'category')
+            extra_categories = Category.objects.filter(
+                pk__in=[e['category'] for e in extra_category_ids])
+            sanitized_categories |= extra_categories
 
-        return sanitized_product_types
+        return sanitized_categories
 
     class Meta:
         app_label = 'solotodo'
@@ -257,11 +255,13 @@ class Store(models.Model):
         permissions = (
             ['view_store', 'Can view store'],
             ['view_store_update_logs', 'Can view store update logs'],
-            ['view_store_entities', 'Can view entities of the store'],
+            ['view_store_entities',
+             'Can view entities of this store (also requires category '
+             'permissions)'],
             ['update_store_pricing', 'Can update store pricing'],
             ['store_entities_staff',
-             'Is partial staff of this stores entities (also requires product '
-             'type permissions)'],
+             'Is staff of the entities of this store (also requires category '
+             'permissions)'],
             ['backend_view_store',
              'Can view store list and detail in backend'],
 

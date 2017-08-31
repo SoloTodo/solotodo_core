@@ -4,7 +4,7 @@ from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat
+    Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -56,9 +56,9 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
                   'storescraper_class')
 
 
-class ProductTypeSerializer(serializers.HyperlinkedModelSerializer):
+class CategorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = ProductType
+        model = Category
         fields = ('url', 'id', 'name',)
 
 
@@ -84,9 +84,9 @@ class StoreUpdatePricesSerializer(serializers.Serializer):
         required=False
     )
     async = serializers.BooleanField()
-    product_types = serializers.HyperlinkedRelatedField(
-        view_name='producttype-detail',
-        queryset=ProductType.objects.all(),
+    categories = serializers.HyperlinkedRelatedField(
+        view_name='category-detail',
+        queryset=Category.objects.all(),
         many=True,
         required=False
     )
@@ -100,13 +100,13 @@ class StoreUpdatePricesSerializer(serializers.Serializer):
             scraper.preferred_products_for_url_concurrency
         self.fields['queue'].initial = scraper.preferred_queue
         self.fields['async'].initial = scraper.prefer_async
-        valid_product_types = instance.scraper_product_types()
-        self.fields['product_types'].child_relation.queryset = \
-            valid_product_types
-        self.fields['product_types'].initial = [
-            reverse('producttype-detail', kwargs={'pk': pt.pk},
+        valid_categories = instance.scraper_categories()
+        self.fields['categories'].child_relation.queryset = \
+            valid_categories
+        self.fields['categories'].initial = [
+            reverse('category-detail', kwargs={'pk': category.pk},
                     request=kwargs['context']['request'])
-            for pt in valid_product_types]
+            for category in valid_categories]
 
 
 class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
@@ -129,8 +129,8 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'url',
             'id',
             'store',
-            'product_type',
-            'scraped_product_type',
+            'category',
+            'scraped_category',
             'currency',
             'product',
             'cell_plan',
@@ -155,7 +155,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
 class StoreUpdateLogSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = StoreUpdateLog
-        fields = ('url', 'store', 'product_types', 'status', 'creation_date',
+        fields = ('url', 'store', 'categories', 'status', 'creation_date',
                   'last_updated', 'queue', 'discovery_url_concurrency',
                   'products_for_url_concurrency', 'use_async', 'registry_file',
                   'available_products_count', 'unavailable_products_count',

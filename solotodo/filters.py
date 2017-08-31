@@ -2,7 +2,7 @@ from django.db.models import Q
 from django_filters import rest_framework
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.models import Entity, StoreUpdateLog, Store, ProductType, \
+from solotodo.models import Entity, StoreUpdateLog, Store, Category, \
     Product, EntityHistory
 
 
@@ -28,11 +28,11 @@ def stores(request):
     return Store.objects.all()
 
 
-def product_types(request):
+def categories(request):
     if request:
         return get_objects_for_user(
-            request.user, 'view_product_type_entities', ProductType)
-    return ProductType.objects.all()
+            request.user, 'view_category_entities', Category)
+    return Category.objects.all()
 
 
 class EntityFilterSet(rest_framework.FilterSet):
@@ -41,10 +41,10 @@ class EntityFilterSet(rest_framework.FilterSet):
         name='store',
         label='Stores'
     )
-    product_types = rest_framework.ModelMultipleChoiceFilter(
-        queryset=product_types,
-        name='product_type',
-        label='Product types'
+    categories = rest_framework.ModelMultipleChoiceFilter(
+        queryset=categories,
+        name='category',
+        label='Categories'
     )
     is_available = rest_framework.BooleanFilter(
         name='is_available', method='_is_available', label='Is available?')
@@ -58,13 +58,13 @@ class EntityFilterSet(rest_framework.FilterSet):
         parent = super(EntityFilterSet, self).qs.select_related(
             'active_registry', 'product__instance_model')
         if self.request:
-            product_types_with_permission = get_objects_for_user(
-                self.request.user, 'view_product_type_entities', ProductType)
+            categories_with_permission = get_objects_for_user(
+                self.request.user, 'view_category_entities', Category)
             stores_with_permission = get_objects_for_user(
                 self.request.user, 'view_store_entities', Store)
 
             return parent.filter(
-                Q(product_type__in=product_types_with_permission) &
+                Q(category__in=categories_with_permission) &
                 Q(store__in=stores_with_permission))
         return parent
 
@@ -94,10 +94,10 @@ class ProductFilterSet(rest_framework.FilterSet):
         parent = super(ProductFilterSet, self).qs.select_related(
             'instance_model')
         if self.request:
-            product_types_with_permission = get_objects_for_user(
-                self.request.user, 'view_product_type_products', ProductType)
+            categories_with_permission = get_objects_for_user(
+                self.request.user, 'view_category_products', Category)
 
-            return parent.filter_product_type(product_types_with_permission)
+            return parent.filter_by_category(categories_with_permission)
         return parent
 
     class Meta:
@@ -107,13 +107,13 @@ class ProductFilterSet(rest_framework.FilterSet):
 
 def entities(request):
     if request:
-        product_types_with_permission = get_objects_for_user(
-            request.user, 'view_product_type_entities', ProductType)
+        categories_with_permission = get_objects_for_user(
+            request.user, 'view_category_entities', Category)
         stores_with_permission = get_objects_for_user(
             request.user, 'view_store_entities', Store)
 
         return Entity.objects.filter(
-            Q(product_type__in=product_types_with_permission) &
+            Q(category__in=categories_with_permission) &
             Q(store__in=stores_with_permission)).select_related()
     return Entity.objects.all().select_related()
 
@@ -136,13 +136,13 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
     def qs(self):
         parent = super(EntityHistoryFilterSet, self).qs.select_related()
         if self.request:
-            product_types_with_permission = get_objects_for_user(
-                self.request.user, 'view_product_type_entities', ProductType)
+            categories_with_permission = get_objects_for_user(
+                self.request.user, 'view_category_entities', Category)
             stores_with_permission = get_objects_for_user(
                 self.request.user, 'view_store_entities', Store)
 
             return parent.filter(
-                Q(entity__product_type__in=product_types_with_permission) &
+                Q(entity__category__in=categories_with_permission) &
                 Q(entity__store__in=stores_with_permission))
         return parent
 

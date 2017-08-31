@@ -1,22 +1,22 @@
 from celery import shared_task
 
-from solotodo.models import Store, ProductType, StoreUpdateLog
+from solotodo.models import Store, Category, StoreUpdateLog
 
 
 @shared_task(queue='store_update')
-def store_update(store_id, product_type_ids=None, extra_args=None, queue=None,
+def store_update(store_id, category_ids=None, extra_args=None, queue=None,
                  discover_urls_concurrency=None,
                  products_for_url_concurrency=None,
                  use_async=None,
                  update_log_id=None):
     store = Store.objects.get(pk=store_id)
 
-    if product_type_ids:
-        product_types = ProductType.objects.filter(pk__in=product_type_ids)
+    if category_ids:
+        categories = Category.objects.filter(pk__in=category_ids)
     else:
-        product_types = None
+        categories = None
 
-    product_types = store.sanitize_product_types_for_update(product_types)
+    categories = store.sanitize_categories_for_update(categories)
 
     sanitized_parameters = store.scraper.sanitize_parameters(
         queue=queue, discover_urls_concurrency=discover_urls_concurrency,
@@ -41,15 +41,15 @@ def store_update(store_id, product_type_ids=None, extra_args=None, queue=None,
     update_log.queue = queue
     update_log.save()
 
-    update_log.product_types = product_types
+    update_log.categories = categories
 
-    # Reset the product types to synchronize the task signature with the
+    # Reset the categories to synchronize the task signature with the
     # actual method implementation
-    if product_type_ids is None:
-        product_types = None
+    if category_ids is None:
+        categories = None
 
     store.update_pricing(
-        product_types=product_types, extra_args=extra_args, queue=queue,
+        categories=categories, extra_args=extra_args, queue=queue,
         discover_urls_concurrency=discover_urls_concurrency,
         products_for_url_concurrency=products_for_url_concurrency,
         use_async=use_async, update_log=update_log)
@@ -63,7 +63,7 @@ def store_update_pricing_from_json(store_id, json_data):
         store=store
     )
 
-    update_log.product_types = ProductType.objects.filter(
-        storescraper_name__in=json_data['product_types'])
+    update_log.categories = Category.objects.filter(
+        storescraper_name__in=json_data['categories'])
 
     store.update_pricing_from_json(json_data, update_log=update_log)

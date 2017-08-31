@@ -1,13 +1,13 @@
 from django.db import models
 
 from metamodel.models import MetaModel
-from solotodo.models.product_type_tier import ProductTypeTier
+from solotodo.models.category_tier import CategoryTier
 
 
-class ProductType(models.Model):
+class Category(models.Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)
     meta_model = models.OneToOneField(MetaModel, blank=True, null=True)
-    tier = models.ForeignKey(ProductTypeTier, blank=True, null=True)
+    tier = models.ForeignKey(CategoryTier, blank=True, null=True)
     slug = models.SlugField(blank=True, null=True)
     storescraper_name = models.CharField(
         max_length=255, db_index=True, blank=True, null=True)
@@ -29,13 +29,14 @@ class ProductType(models.Model):
         app_label = 'solotodo'
         ordering = ['name']
         permissions = (
-            ['view_product_type_entities',
-             'Can view entities associated to this product type'],
-            ['view_product_type_products',
-             'Can view products associated to this product type'],
-            ['product_type_entities_staff',
-             'Is partial staff of this product types entities (also requires '
+            ['view_category_entities',
+             'Can view entities associated to this category (also requires '
              'store permissions)'],
-            ['update_product_type_entities_pricing',
-             'Can update product type entities prices'],
+            ['view_category_products',
+             'Can view products associated to this category'],
+            ['category_entities_staff',
+             'Is staff of the entities of this category (also requires '
+             'store permissions)'],
+            ['update_category_entities_pricing',
+             'Can update the pricing of this category\'s entities'],
         )

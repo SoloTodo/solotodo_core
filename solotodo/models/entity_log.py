@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 
 from .entity import Entity
-from .product_type import ProductType
+from .category import Category
 from .currency import Currency
 from .product import Product
 
@@ -13,9 +13,9 @@ class EntityLog(models.Model):
     creation_date = models.DateTimeField(auto_now_add=True)
 
     # Actual data change fields
-    product_type = models.ForeignKey(ProductType)
-    scraped_product_type = models.ForeignKey(
-        ProductType, related_name='+')
+    category = models.ForeignKey(Category)
+    scraped_category = models.ForeignKey(
+        Category, related_name='+')
     currency = models.ForeignKey(Currency)
     product = models.ForeignKey(Product, null=True)
     cell_plan = models.ForeignKey(Product, null=True, related_name='+')
@@ -30,8 +30,8 @@ class EntityLog(models.Model):
     is_visible = models.BooleanField()
 
     DATA_FIELDS = [
-        'product_type',
-        'scraped_product_type',
+        'category',
+        'scraped_category',
         'currency',
         'product',
         'cell_plan',

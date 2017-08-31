@@ -22,14 +22,14 @@ from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, EntityHistoryFilterSet
 from solotodo.forms.ip_form import IpForm
-from solotodo.forms.product_type_form import ProductTypeForm
+from solotodo.forms.category_form import CategoryForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    ProductType, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory
+    Category, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, EntityPriceHistoryPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
-    StoreTypeSerializer, StoreUpdatePricesSerializer, ProductTypeSerializer, \
+    StoreTypeSerializer, StoreUpdatePricesSerializer, CategorySerializer, \
     StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
     EntityEventValueSerializer, EntityHistorySerializer
@@ -83,9 +83,9 @@ class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CurrencySerializer
 
 
-class ProductTypeViewSet(PermissionReadOnlyModelViewSet):
-    queryset = ProductType.objects.all()
-    serializer_class = ProductTypeSerializer
+class CategoryViewSet(PermissionReadOnlyModelViewSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -149,11 +149,11 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         if serializer.is_valid():
             validated_data = serializer.validated_data
 
-            product_types = validated_data['product_types']
-            if product_types:
-                product_types_ids = [pt.id for pt in product_types]
+            categories = validated_data['categories']
+            if categories:
+                category_ids = [pt.id for pt in categories]
             else:
-                product_types_ids = None
+                category_ids = None
 
             queue = validated_data.get('queue')
             discover_urls_concurrency = \
@@ -166,7 +166,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
 
             task = store_update.delay(
                 store.id,
-                product_type_ids=product_types_ids,
+                category_ids=category_ids,
                 extra_args=None, queue=queue,
                 discover_urls_concurrency=discover_urls_concurrency,
                 products_for_url_concurrency=products_for_url_concurrency,
@@ -237,8 +237,8 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         has_perm = user.has_perm('update_store_pricing', entity.store) \
             or entity.user_has_staff_perms(user) \
-            or user.has_perm('update_product_type_entities_pricing',
-                             entity.product_type)
+            or user.has_perm('update_category_entities_pricing',
+                             entity.category)
 
         if not has_perm:
             raise PermissionDenied
@@ -304,33 +304,58 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
-    def change_product_type(self, request, *args, **kwargs):
+    def change_category(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
             raise PermissionDenied
 
         if entity.product:
-            return Response({'detail': 'Cannot change product type of '
+            return Response({'detail': 'Cannot change category of '
                                        'associated entities'},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        form = ProductTypeForm(request.data)
+        form = CategoryForm(request.data)
 
         if form.is_valid():
-            new_product_type = form.cleaned_data['product_type']
-            if new_product_type == entity.product_type:
-                return Response({'detail': 'The new product type must be '
+            new_category = form.cleaned_data['category']
+            if new_category == entity.category:
+                return Response({'detail': 'The new category must be '
                                            'different from the original one'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             entity.update_keeping_log(
-                {'product_type': new_product_type},
+                {'category': new_category},
                 request.user)
             return Response(
                 EntitySerializer(entity, context={'request': request}).data)
         else:
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['put', 'delete'])
+    def association(self, request, *args, **kwargs):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        if request.method == 'DELETE':
+            if not entity.product:
+                return Response(
+                    {'detail': 'The entity is not associated'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+            entity.update_keeping_log({
+                'product': None,
+                'cell_plan': None,
+                'latest_association_user': None,
+                'latest_association_date': None,
+            }, request.user)
+
+            return Response(
+                EntitySerializer(entity, context={'request': request}).data)
+
+        if request.method == 'PUT':
+            pass
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):

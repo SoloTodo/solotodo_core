@@ -7,12 +7,12 @@ from metamodel.models import InstanceModel
 
 
 class ProductQuerySet(models.QuerySet):
-    def filter_product_type(self, product_type):
-        lookup = 'instance_model__model__producttype'
-        if isinstance(product_type, collections.Iterable):
+    def filter_by_category(self, category):
+        lookup = 'instance_model__model__category'
+        if isinstance(category, collections.Iterable):
             lookup += '__in'
 
-        return self.filter(**{lookup: product_type})
+        return self.filter(**{lookup: category})
 
 
 class Product(models.Model):
@@ -22,7 +22,7 @@ class Product(models.Model):
 
     objects = ProductQuerySet.as_manager()
 
-    product_type = property(lambda self: self.instance_model.model.producttype)
+    category = property(lambda self: self.instance_model.model.category)
 
     def __str__(self):
         return str(self.instance_model)

@@ -10,9 +10,9 @@ from .solotodo_user import SoloTodoUser
 from .currency import Currency
 from .country import Country
 from .store_type import StoreType
-from .product_type_tier import ProductTypeTier
+from .category_tier import CategoryTier
 from .store import Store
-from .product_type import ProductType
+from .category import Category
 from .product import Product
 from .entity import Entity
 from .entity_history import EntityHistory

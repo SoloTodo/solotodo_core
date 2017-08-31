@@ -1,7 +1,7 @@
 from django.db import models
 
-from solotodo.models.product_type import ProductType
-from solotodo.models.store import Store
+from .category import Category
+from .store import Store
 from solotodo_try.s3utils import PrivateS3Boto3Storage
 
 
@@ -9,7 +9,7 @@ class StoreUpdateLog(models.Model):
     PENDING, IN_PROCESS, SUCCESS, ERROR = [1, 2, 3, 4]
 
     store = models.ForeignKey(Store)
-    product_types = models.ManyToManyField(ProductType)
+    categories = models.ManyToManyField(Category)
     status = models.IntegerField(choices=[
         (PENDING, 'Pending'),
         (IN_PROCESS, 'In process'),

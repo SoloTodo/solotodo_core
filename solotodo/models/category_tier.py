@@ -1,7 +1,7 @@
 from django.db import models
 
 
-class ProductTypeTier(models.Model):
+class CategoryTier(models.Model):
     name = models.CharField(max_length=255)
     creation_payment_amount = models.DecimalField(max_digits=5,
                                                   decimal_places=0)

@@ -7,7 +7,7 @@ from rest_framework import routers
 
 # Routers provide an easy way of automatically determining the URL conf.
 from solotodo.views import UserViewSet, StoreViewSet, LanguageViewSet, \
-    CurrencyViewSet, CountryViewSet, StoreTypeViewSet, ProductTypeViewSet, \
+    CurrencyViewSet, CountryViewSet, StoreTypeViewSet, CategoryViewSet, \
     StoreUpdateLogViewSet, EntityViewSet, ProductViewSet, \
     NumberFormatViewSet, EntityHistoryViewSet
 
@@ -19,7 +19,7 @@ router.register(r'languages', LanguageViewSet)
 router.register(r'store_types', StoreTypeViewSet)
 router.register(r'currencies', CurrencyViewSet)
 router.register(r'countries', CountryViewSet)
-router.register(r'product_types', ProductTypeViewSet)
+router.register(r'categories', CategoryViewSet)
 router.register(r'store_update_logs', StoreUpdateLogViewSet)
 router.register(r'entities', EntityViewSet)
 router.register(r'products', ProductViewSet)

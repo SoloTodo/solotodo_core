@@ -1,11 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
 from django.db.models import Q
-from django.utils import timezone
 
 from solotodo.models.product import Product
 from solotodo.models.currency import Currency
-from solotodo.models.product_type import ProductType
+from solotodo.models.category import Category
 from solotodo.models.store import Store
 
 
@@ -27,8 +26,8 @@ class EntityQueryset(models.QuerySet):
 
 class Entity(models.Model):
     store = models.ForeignKey(Store)
-    product_type = models.ForeignKey(ProductType)
-    scraped_product_type = models.ForeignKey(ProductType, related_name='+')
+    category = models.ForeignKey(Category)
+    scraped_category = models.ForeignKey(Category, related_name='+')
     currency = models.ForeignKey(Currency)
     product = models.ForeignKey(Product, null=True)
     cell_plan = models.ForeignKey(Product, null=True, related_name='+')
@@ -57,7 +56,7 @@ class Entity(models.Model):
         result = '{} - {}'.format(self.store, self.name)
         if self.cell_plan_name:
             result += ' / {}'.format(self.cell_plan_name)
-        result += ' ({})'.format(self.product_type)
+        result += ' ({})'.format(self.category)
 
         return result
 
@@ -68,15 +67,15 @@ class Entity(models.Model):
         return False
 
     def update_with_scraped_product(self, scraped_product,
-                                    product_type=None, currency=None):
+                                    category=None, currency=None):
         from solotodo.models import EntityHistory
 
         assert scraped_product is None or self.key == scraped_product.key
 
         if scraped_product:
-            if product_type is None:
-                product_type = ProductType.objects.get(
-                    storescraper_name=scraped_product.product_type)
+            if category is None:
+                category = Category.objects.get(
+                    storescraper_name=scraped_product.category)
 
             if currency is None:
                 currency = Currency.objects.get(
@@ -91,7 +90,7 @@ class Entity(models.Model):
             )
 
             updated_data = {
-                'scraped_product_type': product_type,
+                'scraped_category': category,
                 'currency': currency,
                 'name': scraped_product.name,
                 'cell_plan_name': scraped_product.cell_plan_name,
@@ -110,14 +109,14 @@ class Entity(models.Model):
             self.save()
 
     @classmethod
-    def create_from_scraped_product(cls, scraped_product, store, product_type,
+    def create_from_scraped_product(cls, scraped_product, store, category,
                                     currency):
         from solotodo.models import EntityHistory
 
         new_entity = cls.objects.create(
             store=store,
-            product_type=product_type,
-            scraped_product_type=product_type,
+            category=category,
+            scraped_category=category,
             currency=currency,
             name=scraped_product.name,
             cell_plan_name=scraped_product.cell_plan_name,
@@ -207,7 +206,7 @@ class Entity(models.Model):
         scraper = self.store.scraper
         scraped_products = scraper.products_for_url(
             self.discovery_url,
-            product_type=self.scraped_product_type.storescraper_name,
+            category=self.scraped_category.storescraper_name,
             extra_args=self.store.storescraper_extra_args
         )
 
@@ -252,8 +251,8 @@ class Entity(models.Model):
         return events
 
     def user_has_staff_perms(self, user):
-        return user.has_perm('product_type_entities_staff',
-                             self.product_type) \
+        return user.has_perm('category_entities_staff',
+                             self.category) \
                and user.has_perm('store_entities_staff', self.store)
 
     class Meta:

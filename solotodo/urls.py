@@ -9,12 +9,13 @@ from rest_framework import routers
 from solotodo.views import UserViewSet, StoreViewSet, LanguageViewSet, \
     CurrencyViewSet, CountryViewSet, StoreTypeViewSet, CategoryViewSet, \
     StoreUpdateLogViewSet, EntityViewSet, ProductViewSet, \
-    NumberFormatViewSet, EntityHistoryViewSet
+    NumberFormatViewSet, EntityHistoryViewSet, EntityStateViewSet
 
 router = routers.DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'stores', StoreViewSet)
 router.register(r'number_formats', NumberFormatViewSet)
+router.register(r'entity_states', EntityStateViewSet)
 router.register(r'languages', LanguageViewSet)
 router.register(r'store_types', StoreTypeViewSet)
 router.register(r'currencies', CurrencyViewSet)

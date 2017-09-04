@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 
+from .entity_state import EntityState
 from .store_type import StoreType
 from .country import Country
 from .category import Category
@@ -30,7 +31,7 @@ class Store(models.Model):
     def __str__(self):
         return self.name
 
-    def update_pricing(self, categories=None, extra_args=None, queue=None,
+    def update_pricing(self, categories=None, extra_args=None,
                        discover_urls_concurrency=None,
                        products_for_url_concurrency=None,
                        use_async=None, update_log=None):
@@ -53,13 +54,12 @@ class Store(models.Model):
             self.storescraper_class,
             categories=[c.storescraper_name for c in categories],
             extra_args=extra_args,
-            queue=queue,
             discover_urls_concurrency=discover_urls_concurrency,
             products_for_url_concurrency=products_for_url_concurrency,
             use_async=use_async
         )
 
-        products_task_signature.set(queue='storescraper_api_' + queue)
+        products_task_signature.set(queue='storescraper_api')
 
         def log_update_error(exception):
             if update_log:
@@ -104,12 +104,11 @@ class Store(models.Model):
             self.storescraper_class,
             extra_entities_args,
             extra_args=extra_args,
-            queue=queue,
             products_for_url_concurrency=products_for_url_concurrency,
             use_async=use_async
         )
 
-        extra_products_task_signature.set(queue='storescraper_api_' + queue)
+        extra_products_task_signature.set(queue='storescraper_api')
 
         # Prevents Celery error for running a task inside another
         with allow_join_result():
@@ -161,6 +160,7 @@ class Store(models.Model):
 
         categories_dict = iterable_to_dict(Category, 'storescraper_name')
         currencies_dict = iterable_to_dict(Currency, 'iso_code')
+        states_dict = iterable_to_dict(EntityState, 'storescraper_name')
 
         for entity in entities_to_be_updated:
             scraped_product_for_update = scraped_products_dict.pop(
@@ -185,7 +185,8 @@ class Store(models.Model):
                 scraped_product,
                 self,
                 categories_dict[scraped_product.category],
-                currencies_dict[scraped_product.currency]
+                currencies_dict[scraped_product.currency],
+                states_dict
             )
 
         if update_log:

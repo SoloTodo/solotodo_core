@@ -1,9 +1,11 @@
 import traceback
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.db import models, IntegrityError
 from django.http import Http404
+from django.utils import timezone
 from django_filters import rest_framework
 from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
@@ -21,10 +23,12 @@ from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, EntityHistoryFilterSet
+from solotodo.forms.entity_state_form import EntityStateForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    Category, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory
+    Category, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory, \
+    EntityState
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, EntityPriceHistoryPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
@@ -32,7 +36,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreTypeSerializer, StoreUpdatePricesSerializer, CategorySerializer, \
     StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
-    EntityEventValueSerializer, EntityHistorySerializer
+    EntityEventValueSerializer, EntityHistorySerializer, EntityStateSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -76,6 +80,11 @@ class NumberFormatViewSet(viewsets.ReadOnlyModelViewSet):
 class StoreTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StoreType.objects.all()
     serializer_class = StoreTypeSerializer
+
+
+class EntityStateViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = EntityState.objects.all()
+    serializer_class = EntityStateSerializer
 
 
 class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -155,7 +164,6 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
             else:
                 category_ids = None
 
-            queue = validated_data.get('queue')
             discover_urls_concurrency = \
                 validated_data.get('discover_urls_concurrency')
             products_for_url_concurrency = \
@@ -167,7 +175,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
             task = store_update.delay(
                 store.id,
                 category_ids=category_ids,
-                extra_args=None, queue=queue,
+                extra_args=None,
                 discover_urls_concurrency=discover_urls_concurrency,
                 products_for_url_concurrency=products_for_url_concurrency,
                 use_async=use_async,
@@ -230,6 +238,43 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                      'url',
                      'discovery_url')
 
+    def dispatch_and_serialize_into_response(self, entity):
+        def publish_callback(result, status):
+            pass
+            # handle publish result, status always present, result if
+            # successful status.isError to see if error happened
+
+        serialized_data = EntitySerializer(
+            entity, context={'request': self.request}).data
+        message = {
+            'type': 'updateApiResourceObject',
+            'resourceObject': serialized_data,
+            'id': entity.id,
+            'resource': 'entities',
+            'user': reverse(
+                'solotodouser-detail', kwargs={'pk': self.request.user.pk},
+                request=self.request),
+        }
+
+        settings.PUBNUB.publish().channel(
+            settings.BACKEND_CHANNEL).message(message).async(publish_callback)
+
+        return Response(serialized_data)
+
+    @detail_route(methods=['post'])
+    def register_staff_access(self, request, *args, **kwargs):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        entity.update_keeping_log(
+            {
+                'last_staff_access_user': request.user,
+                'last_staff_access_date': timezone.now(),
+            },
+            request.user)
+        return self.dispatch_and_serialize_into_response(entity)
+
     @detail_route(methods=['post'])
     def update_pricing(self, request, *args, **kwargs):
         entity = self.get_object()
@@ -244,9 +289,8 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
         try:
-            entity.update_pricing()
-            serializer = EntitySerializer(entity, context={'request': request})
-            return Response(serializer.data)
+            entity.update_pricing(request.user)
+            return self.dispatch_and_serialize_into_response(entity)
         except Exception as e:
             recipients = get_user_model().objects.filter(is_superuser=True)
 
@@ -295,10 +339,14 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
         try:
-            entity.update_keeping_log({'is_visible': not entity.is_visible},
-                                      request.user)
-            return Response(EntitySerializer(
-                entity, context={'request': request}).data)
+            entity.update_keeping_log(
+                {
+                    'is_visible': not entity.is_visible,
+                    'last_staff_change': timezone.now(),
+                    'last_staff_change_user': request.user,
+                },
+                request.user)
+            return self.dispatch_and_serialize_into_response(entity)
         except IntegrityError as err:
             return Response({'detail': str(err)},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -324,10 +372,40 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                                 status=status.HTTP_400_BAD_REQUEST)
 
             entity.update_keeping_log(
-                {'category': new_category},
+                {
+                    'category': new_category,
+                    'last_staff_change': timezone.now(),
+                    'last_staff_change_user': request.user,
+                },
                 request.user)
-            return Response(
-                EntitySerializer(entity, context={'request': request}).data)
+            return self.dispatch_and_serialize_into_response(entity)
+        else:
+            return Response({'detail': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route(methods=['post'])
+    def change_state(self, request, *args, **kwargs):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        form = EntityStateForm(request.data)
+
+        if form.is_valid():
+            new_entity_state = form.cleaned_data['entity_state']
+            if new_entity_state == entity.state:
+                return Response({'detail': 'The new category must be '
+                                           'different from the original one'},
+                                status=status.HTTP_400_BAD_REQUEST)
+
+            entity.update_keeping_log(
+                {
+                    'state': new_entity_state,
+                    'last_staff_change': timezone.now(),
+                    'last_staff_change_user': request.user,
+                },
+                request.user)
+            return self.dispatch_and_serialize_into_response(entity)
         else:
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -347,12 +425,11 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             entity.update_keeping_log({
                 'product': None,
                 'cell_plan': None,
-                'latest_association_user': None,
-                'latest_association_date': None,
+                'last_association_user': None,
+                'last_association_date': None,
             }, request.user)
 
-            return Response(
-                EntitySerializer(entity, context={'request': request}).data)
+            return self.dispatch_and_serialize_into_response(entity)
 
         if request.method == 'PUT':
             pass

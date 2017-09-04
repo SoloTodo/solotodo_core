@@ -4,7 +4,7 @@ from solotodo.models import Store, Category, StoreUpdateLog
 
 
 @shared_task(queue='store_update')
-def store_update(store_id, category_ids=None, extra_args=None, queue=None,
+def store_update(store_id, category_ids=None, extra_args=None,
                  discover_urls_concurrency=None,
                  products_for_url_concurrency=None,
                  use_async=None,
@@ -19,11 +19,10 @@ def store_update(store_id, category_ids=None, extra_args=None, queue=None,
     categories = store.sanitize_categories_for_update(categories)
 
     sanitized_parameters = store.scraper.sanitize_parameters(
-        queue=queue, discover_urls_concurrency=discover_urls_concurrency,
+        discover_urls_concurrency=discover_urls_concurrency,
         products_for_url_concurrency=products_for_url_concurrency,
         use_async=use_async)
 
-    queue = sanitized_parameters['queue']
     discover_urls_concurrency = \
         sanitized_parameters['discover_urls_concurrency']
     products_for_url_concurrency = \
@@ -38,7 +37,6 @@ def store_update(store_id, category_ids=None, extra_args=None, queue=None,
     update_log.discovery_url_concurrency = discover_urls_concurrency
     update_log.products_for_url_concurrency = products_for_url_concurrency
     update_log.use_async = use_async
-    update_log.queue = queue
     update_log.save()
 
     update_log.categories = categories
@@ -49,7 +47,7 @@ def store_update(store_id, category_ids=None, extra_args=None, queue=None,
         categories = None
 
     store.update_pricing(
-        categories=categories, extra_args=extra_args, queue=queue,
+        categories=categories, extra_args=extra_args,
         discover_urls_concurrency=discover_urls_concurrency,
         products_for_url_concurrency=products_for_url_concurrency,
         use_async=use_async, update_log=update_log)

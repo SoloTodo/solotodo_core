@@ -6,18 +6,20 @@ from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
-    StoreType, CategoryTier, NumberFormat, EntityLog
+    StoreType, CategoryTier, NumberFormat, EntityLog, EntityState
 
 admin.site.register(Language)
 admin.site.register(Country)
 admin.site.register(Currency)
 admin.site.register(NumberFormat)
+admin.site.register(EntityState)
 
 
 class EntityModelAdmin(admin.ModelAdmin):
     readonly_fields = ['store', 'category', 'scraped_category',
                        'currency', 'product', 'cell_plan', 'active_registry',
-                       'latest_association_user']
+                       'last_association_user', 'last_staff_change_user',
+                       'last_staff_access_user', 'last_pricing_update_user']
 
 admin.site.register(Entity, EntityModelAdmin)
 

@@ -4,13 +4,17 @@ from rest_framework.fields import empty
 from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
-    Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat
+    Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
+    EntityState
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
+    detail_url = serializers.HyperlinkedRelatedField(
+        view_name='solotodouser-detail', read_only=True, source='pk')
+
     class Meta:
         model = get_user_model()
-        fields = ('url', 'email', 'first_name', 'last_name',
+        fields = ('url', 'detail_url', 'email', 'first_name', 'last_name',
                   'preferred_language', 'preferred_country',
                   'preferred_currency', 'preferred_number_format',
                   'permissions')
@@ -79,10 +83,6 @@ class StoreUpdatePricesSerializer(serializers.Serializer):
         min_value=1,
         required=False
     )
-    queue = serializers.ChoiceField(
-        choices=['us', 'cl'],
-        required=False
-    )
     async = serializers.BooleanField()
     categories = serializers.HyperlinkedRelatedField(
         view_name='category-detail',
@@ -98,7 +98,6 @@ class StoreUpdatePricesSerializer(serializers.Serializer):
             scraper.preferred_discover_urls_concurrency
         self.fields['products_for_url_concurrency'].initial = \
             scraper.preferred_products_for_url_concurrency
-        self.fields['queue'].initial = scraper.preferred_queue
         self.fields['async'].initial = scraper.prefer_async
         valid_categories = instance.scraper_categories()
         self.fields['categories'].child_relation.queryset = \
@@ -116,6 +115,12 @@ class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
                   'offer_price', 'cell_monthly_payment']
 
 
+class EntityStateSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = EntityState
+        fields = ['url', 'id', 'name']
+
+
 class EntitySerializer(serializers.HyperlinkedModelSerializer):
     active_registry = EntityHistorySerializer(read_only=True)
     product = ProductSerializer(read_only=True)
@@ -130,6 +135,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'id',
             'store',
             'category',
+            'state',
             'scraped_category',
             'currency',
             'product',
@@ -144,11 +150,17 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'discovery_url',
             'description',
             'is_visible',
-            'latest_association_user',
-            'latest_association_date',
+            'last_association_user',
+            'last_association_date',
             'creation_date',
             'last_updated',
-            'picture_url'
+            'picture_url',
+            'last_staff_access_date',
+            'last_staff_access_user',
+            'last_staff_change',
+            'last_staff_change_user',
+            'last_pricing_update',
+            'last_pricing_update_user',
         )
 
 
@@ -156,7 +168,7 @@ class StoreUpdateLogSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = StoreUpdateLog
         fields = ('url', 'store', 'categories', 'status', 'creation_date',
-                  'last_updated', 'queue', 'discovery_url_concurrency',
+                  'last_updated', 'discovery_url_concurrency',
                   'products_for_url_concurrency', 'use_async', 'registry_file',
                   'available_products_count', 'unavailable_products_count',
                   'discovery_urls_without_products_count')

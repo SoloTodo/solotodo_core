@@ -34,8 +34,8 @@ class Command(BaseCommand):
                 entity = entity[0]
                 entity.product_id = association_data['product']
                 entity.cell_plan_id = association_data['secondary_product']
-                entity.latest_association_user_id = association_data['user']
-                entity.latest_association_date = pytz.utc.localize(
+                entity.last_association_user_id = association_data['user']
+                entity.last_association_date = pytz.utc.localize(
                     datetime.combine(
                         dateparse.parse_date(association_data['date']),
                         datetime.min.time()))

@@ -3,6 +3,7 @@ from django.db import models
 
 from .entity import Entity
 from .category import Category
+from .entity_state import EntityState
 from .currency import Currency
 from .product import Product
 
@@ -17,6 +18,7 @@ class EntityLog(models.Model):
     scraped_category = models.ForeignKey(
         Category, related_name='+')
     currency = models.ForeignKey(Currency)
+    state = models.ForeignKey(EntityState)
     product = models.ForeignKey(Product, null=True)
     cell_plan = models.ForeignKey(Product, null=True, related_name='+')
     name = models.CharField(max_length=256)
@@ -33,6 +35,7 @@ class EntityLog(models.Model):
         'category',
         'scraped_category',
         'currency',
+        'state',
         'product',
         'cell_plan',
         'name',

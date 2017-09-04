@@ -25,9 +25,13 @@ class SoloTodoUser(AbstractEmailUser):
         NumberFormat, blank=True, null=True)
     permissions = property(lambda self: sorted(self.get_all_permissions()))
 
+    BOT_CACHE = None
+
     @classmethod
     def get_bot(cls):
-        return cls.objects.get(email=settings.BOT_USERNAME)
+        if not cls.BOT_CACHE:
+            cls.BOT_CACHE = cls.objects.get(email=settings.BOT_USERNAME)
+        return cls.BOT_CACHE
 
     def get_full_name(self):
         if not self.first_name and not self.last_name:

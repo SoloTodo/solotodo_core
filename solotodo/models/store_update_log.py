@@ -18,7 +18,6 @@ class StoreUpdateLog(models.Model):
     ], default=PENDING)
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
-    queue = models.CharField(max_length=30, blank=True, null=True)
     discovery_url_concurrency = models.IntegerField(null=True, blank=True)
     products_for_url_concurrency = models.IntegerField(null=True, blank=True)
     use_async = models.NullBooleanField()

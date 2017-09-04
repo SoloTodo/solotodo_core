@@ -1,11 +1,14 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
 from django.db.models import Q
+from django.utils import timezone
 
-from solotodo.models.product import Product
-from solotodo.models.currency import Currency
-from solotodo.models.category import Category
-from solotodo.models.store import Store
+from .product import Product
+from .currency import Currency
+from .category import Category
+from .store import Store
+from .entity_state import EntityState
 
 
 class EntityQueryset(models.QuerySet):
@@ -29,6 +32,7 @@ class Entity(models.Model):
     category = models.ForeignKey(Category)
     scraped_category = models.ForeignKey(Category, related_name='+')
     currency = models.ForeignKey(Currency)
+    state = models.ForeignKey(EntityState)
     product = models.ForeignKey(Product, null=True)
     cell_plan = models.ForeignKey(Product, null=True, related_name='+')
     active_registry = models.OneToOneField('EntityHistory', related_name='+',
@@ -45,10 +49,37 @@ class Entity(models.Model):
     picture_url = models.URLField(max_length=512, blank=True, null=True)
     description = models.TextField(null=True)
     is_visible = models.BooleanField(default=True)
-    latest_association_user = models.ForeignKey(get_user_model(), null=True)
-    latest_association_date = models.DateTimeField(null=True, blank=True)
+
+    # Metadata
+
+    last_association_user = models.ForeignKey(get_user_model(), null=True)
+    # The last time the entity was associated. Important to leave standalone as
+    # it is used for staff payments
+    last_association_date = models.DateTimeField(null=True, blank=True)
+
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
+
+    # Last time a staff accessed the entity in the backend. Used to display a
+    # warning to other staff if they try to access it at the same time.
+    last_staff_access_date = models.DateTimeField(null=True, blank=True)
+    last_staff_access_user = models.ForeignKey(
+        get_user_model(), null=True, related_name='+')
+
+    # Last time a staff made a change to the entity (change category,
+    # visibility, association). Used to warn other staff when someone is
+    # working on an entity.
+    last_staff_change = models.DateTimeField(null=True, blank=True)
+    last_staff_change_user = models.ForeignKey(
+        get_user_model(), null=True, related_name='+')
+
+    # The last time the pricing of this entity was updated. Needed because
+    # active_registry may be null. It does not match the active_registry date
+    # either way because the registry uses the timestamp of the scraping, and
+    # this field uses the timestamp of the moment it is updated in the database
+    last_pricing_update = models.DateTimeField()
+    last_pricing_update_user = models.ForeignKey(
+        get_user_model(), related_name='+')
 
     objects = EntityQueryset.as_manager()
 
@@ -67,10 +98,19 @@ class Entity(models.Model):
         return False
 
     def update_with_scraped_product(self, scraped_product,
-                                    category=None, currency=None):
+                                    category=None, currency=None,
+                                    user=None):
         from solotodo.models import EntityHistory
 
         assert scraped_product is None or self.key == scraped_product.key
+
+        if not user:
+            user = get_user_model().get_bot()
+
+        updated_data = {
+            'last_pricing_update': timezone.now(),
+            'last_pricing_update_user': user
+        }
 
         if scraped_product:
             if category is None:
@@ -87,12 +127,13 @@ class Entity(models.Model):
                 normal_price=scraped_product.normal_price,
                 offer_price=scraped_product.offer_price,
                 cell_monthly_payment=scraped_product.cell_monthly_payment,
+                timestamp=scraped_product.timestamp,
             )
 
-            updated_data = {
+            updated_data.update({
+                'name': scraped_product.name,
                 'scraped_category': category,
                 'currency': currency,
-                'name': scraped_product.name,
                 'cell_plan_name': scraped_product.cell_plan_name,
                 'part_number': scraped_product.part_number,
                 'sku': scraped_product.sku,
@@ -100,24 +141,32 @@ class Entity(models.Model):
                 'discovery_url': scraped_product.discovery_url,
                 'picture_url': scraped_product.picture_url,
                 'description': scraped_product.description,
-                'active_registry': new_active_registry
-            }
-
-            self.update_keeping_log(updated_data)
+                'active_registry': new_active_registry,
+            })
         else:
-            self.active_registry = None
-            self.save()
+            updated_data.update({
+                'active_registry': None
+            })
+
+        self.update_keeping_log(updated_data)
 
     @classmethod
     def create_from_scraped_product(cls, scraped_product, store, category,
-                                    currency):
+                                    currency, states_dict=None):
         from solotodo.models import EntityHistory
+
+        if states_dict:
+            state = states_dict[scraped_product.state]
+        else:
+            state = EntityState.objects.get(
+                storescraper_name=scraped_product.state)
 
         new_entity = cls.objects.create(
             store=store,
             category=category,
             scraped_category=category,
             currency=currency,
+            state=state,
             name=scraped_product.name,
             cell_plan_name=scraped_product.cell_plan_name,
             part_number=scraped_product.part_number,
@@ -128,6 +177,8 @@ class Entity(models.Model):
             picture_url=scraped_product.picture_url,
             description=scraped_product.description,
             is_visible=True,
+            last_pricing_update=timezone.now(),
+            last_pricing_update_user=settings.BOT_ID
         )
 
         new_entity_history = EntityHistory.objects.create(
@@ -135,7 +186,8 @@ class Entity(models.Model):
             stock=scraped_product.stock,
             normal_price=scraped_product.normal_price,
             offer_price=scraped_product.offer_price,
-            cell_monthly_payment=scraped_product.cell_monthly_payment
+            cell_monthly_payment=scraped_product.cell_monthly_payment,
+            timestamp=scraped_product.timestamp
         )
 
         new_entity.active_registry = new_entity_history
@@ -176,12 +228,12 @@ class Entity(models.Model):
     def save(self, *args, **kwargs):
         is_associated = self.product_id or self.cell_plan_id
 
-        if self.latest_association_user_id and \
-                not self.latest_association_date:
+        if self.last_association_user_id and \
+                not self.last_association_date:
             raise IntegrityError('Resolved entity must have a date')
 
-        if not self.latest_association_user_id and \
-                self.latest_association_date:
+        if not self.last_association_user_id and \
+                self.last_association_date:
             raise IntegrityError('Resolved entity must have a resolver')
 
         if not self.is_visible and is_associated:
@@ -192,17 +244,20 @@ class Entity(models.Model):
             raise IntegrityError('Entity cannot have a cell plan but '
                                  'not a primary product')
 
-        if is_associated and not self.latest_association_user_id:
+        if is_associated and not self.last_association_user_id:
             raise IntegrityError('Entity cannot be associated to product '
                                  'without resolver')
 
-        if not is_associated and self.latest_association_user_id:
+        if not is_associated and self.last_association_user_id:
             raise IntegrityError('Entity cannot have a resolver without '
                                  'being associated')
 
         super(Entity, self).save(*args, **kwargs)
 
-    def update_pricing(self):
+    def update_pricing(self, user=None):
+        if not user:
+            user = get_user_model().get_bot()
+
         scraper = self.store.scraper
         scraped_products = scraper.products_for_url(
             self.discovery_url,
@@ -216,7 +271,7 @@ class Entity(models.Model):
                 entity_scraped_product = scraped_product
                 break
 
-        self.update_with_scraped_product(entity_scraped_product)
+        self.update_with_scraped_product(entity_scraped_product, user=user)
 
     def events(self):
         entity = self

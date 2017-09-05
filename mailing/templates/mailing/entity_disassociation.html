@@ -1,0 +1,50 @@
+{% extends 'mailing/base.html' %}
+
+{% load i18n %}
+
+{% block content %}
+
+  <h3>{% trans 'Entity disassociated' %}</h3>
+
+  <p>{% trans 'An entity you associated in the past has just been disassociated' %}</p>
+
+  <ul>
+    <li><b>{% trans 'ID' %}:</b> {{ entity.id }}</li>
+    <li><b>{% trans 'Name' %}:</b> {{ entity.name }}</li>
+    <li><b>{% trans 'Product' %}:</b> {{ entity.product }}</li>
+    <li><b>{% trans 'Store' %}:</b> {{ entity.store }}</li>
+  </ul>
+
+  <p>{% trans 'Request information' %}</p>
+
+  <ul>
+    <li><b>{% trans 'Date' %}:</b> {{ timestamp }}</li>
+    <li><b>{% trans 'User' %}:</b> {{ request_user }}</li>
+  </ul>
+
+  <p>
+    {% trans 'The reason given' %}:
+  </p>
+
+  <table class="callout">
+    <tr>
+      <th class="callout-inner warning">
+        <p>{{ reason|linebreaks }}</p>
+      </th>
+      <th class="expander"></th>
+    </tr>
+  </table>
+
+  <table class="button">
+    <tr>
+      <td>
+        <table>
+          <tr>
+            <td><a href="{{ host }}entities/{{ entity.id }}">{% trans 'Check the entity' %}</a></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+{% endblock %}

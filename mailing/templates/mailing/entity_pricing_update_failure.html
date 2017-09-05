@@ -1,0 +1,49 @@
+{% extends 'mailing/base.html' %}
+
+{% load i18n %}
+
+{% block content %}
+
+  <h3>{% trans 'Error report' %}</h3>
+
+  <p>{% trans 'An error has been detected while updating the pricing of an entity' %}</p>
+
+  <ul>
+    <li><b>{% trans 'ID' %}:</b> {{ entity.id }}</li>
+    <li><b>{% trans 'Name' %}:</b> {{ entity.name }}</li>
+    <li><b>{% trans 'Store' %}:</b> {{ entity.store }}</li>
+  </ul>
+
+  <p>{% trans 'Request information' %}</p>
+
+  <ul>
+    <li><b>{% trans 'Date' %}:</b> {{ timestamp }}</li>
+    <li><b>{% trans 'User' %}:</b> {{ request_user }}</li>
+  </ul>
+
+  <p>
+    {% trans 'The found error' %}:
+  </p>
+
+  <table class="callout">
+    <tr>
+      <th class="callout-inner warning">
+        <p>{{ error|linebreaks }}</p>
+      </th>
+      <th class="expander"></th>
+    </tr>
+  </table>
+
+  <table class="button">
+    <tr>
+      <td>
+        <table>
+          <tr>
+            <td><a href="{{ host }}entities/{{ entity.id }}">{% trans 'Solve issue' %}</a></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+{% endblock %}

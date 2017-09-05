@@ -52,17 +52,17 @@ class Entity(models.Model):
 
     # Metadata
 
-    last_association_user = models.ForeignKey(get_user_model(), null=True)
-    # The last time the entity was associated. Important to leave standalone as
-    # it is used for staff payments
-    last_association_date = models.DateTimeField(null=True, blank=True)
-
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
 
+    # The last time the entity was associated. Important to leave standalone as
+    # it is used for staff payments
+    last_association = models.DateTimeField(null=True, blank=True)
+    last_association_user = models.ForeignKey(get_user_model(), null=True)
+
     # Last time a staff accessed the entity in the backend. Used to display a
     # warning to other staff if they try to access it at the same time.
-    last_staff_access_date = models.DateTimeField(null=True, blank=True)
+    last_staff_access = models.DateTimeField(null=True, blank=True)
     last_staff_access_user = models.ForeignKey(
         get_user_model(), null=True, related_name='+')
 
@@ -178,7 +178,7 @@ class Entity(models.Model):
             description=scraped_product.description,
             is_visible=True,
             last_pricing_update=timezone.now(),
-            last_pricing_update_user=settings.BOT_ID
+            last_pricing_update_user=get_user_model().get_bot()
         )
 
         new_entity_history = EntityHistory.objects.create(
@@ -226,15 +226,11 @@ class Entity(models.Model):
             entity_log.save()
 
     def save(self, *args, **kwargs):
-        is_associated = self.product_id or self.cell_plan_id
+        is_associated = bool(self.product_id or self.cell_plan_id)
 
-        if self.last_association_user_id and \
-                not self.last_association_date:
-            raise IntegrityError('Resolved entity must have a date')
-
-        if not self.last_association_user_id and \
-                self.last_association_date:
-            raise IntegrityError('Resolved entity must have a resolver')
+        if bool(self.last_association_user_id) != bool(self.last_association):
+            raise IntegrityError('Entity must have both last_association '
+                                 'fields or none of them')
 
         if not self.is_visible and is_associated:
             raise IntegrityError('Entity cannot be associated and be hidden '
@@ -244,13 +240,10 @@ class Entity(models.Model):
             raise IntegrityError('Entity cannot have a cell plan but '
                                  'not a primary product')
 
-        if is_associated and not self.last_association_user_id:
-            raise IntegrityError('Entity cannot be associated to product '
-                                 'without resolver')
-
-        if not is_associated and self.last_association_user_id:
-            raise IntegrityError('Entity cannot have a resolver without '
-                                 'being associated')
+        if is_associated != bool(self.last_association_user_id):
+            raise IntegrityError(
+                'Associated entities must have association metadata, '
+                'non-associated entities must not')
 
         super(Entity, self).save(*args, **kwargs)
 
@@ -309,6 +302,57 @@ class Entity(models.Model):
         return user.has_perm('category_entities_staff',
                              self.category) \
                and user.has_perm('store_entities_staff', self.store)
+
+    def associate(self, user, product, cell_plan=None):
+        if not self.is_visible:
+            raise IntegrityError('Non-visible cannot be associated')
+
+        if self.product == product and self.cell_plan == cell_plan:
+            raise IntegrityError(
+                'Re-associations must be made to a different product / '
+                'cell plan pair')
+
+        if self.category != product.category:
+            raise IntegrityError(
+                'Entities must be associated to products of the same category')
+
+        now = timezone.now()
+
+        update_dict = {
+            'last_association': now,
+            'last_association_user': user,
+            'last_staff_change': now,
+            'last_staff_change_user': user,
+            'product': product,
+            'cell_plan': cell_plan
+        }
+
+        self.update_keeping_log(update_dict, user)
+
+    def disassociate(self, user, reason=None):
+        if not self.product:
+            raise IntegrityError('Cannot disassociate non-associated entity')
+        if reason and self.last_association_user == user:
+            raise IntegrityError(
+                'Reason must not be present if the last association user is '
+                'the same as the one disassociating the entity')
+
+        now = timezone.now()
+
+        update_dict = {
+            'last_association': None,
+            'last_association_user': None,
+            'last_staff_change': now,
+            'last_staff_change_user': user,
+            'product': None,
+            'cell_plan': None
+        }
+
+        if self.last_association_user != user:
+            self.last_association_user.send_entity_disassociation_mail(
+                self, reason)
+
+        self.update_keeping_log(update_dict, user)
 
     class Meta:
         app_label = 'solotodo'

@@ -23,6 +23,8 @@ from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, EntityHistoryFilterSet
+from solotodo.forms.entity_association_form import EntityAssociationForm
+from solotodo.forms.entity_disassociation_form import EntityDisssociationForm
 from solotodo.forms.entity_state_form import EntityStateForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
@@ -250,7 +252,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             entity, context={'request': self.request}).data
         message = {
             'type': 'updateApiResourceObject',
-            'resourceObject': serialized_data,
+            'apiResourceObject': serialized_data,
             'id': entity.id,
             'resource': 'entities',
             'user': reverse(
@@ -272,7 +274,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         entity.update_keeping_log(
             {
                 'last_staff_access_user': request.user,
-                'last_staff_access_date': timezone.now(),
+                'last_staff_access': timezone.now(),
             },
             request.user)
         return self.dispatch_and_serialize_into_response(entity)
@@ -419,22 +421,37 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
         if request.method == 'DELETE':
-            if not entity.product:
+            form = EntityDisssociationForm(request.data)
+            if not form.is_valid():
+                return Response({
+                    'errors': form.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                entity.disassociate(request.user, form.cleaned_data['reason'])
+            except Exception as ex:
                 return Response(
-                    {'detail': 'The entity is not associated'},
+                    {'detail': str(ex)},
                     status=status.HTTP_400_BAD_REQUEST)
 
-            entity.update_keeping_log({
-                'product': None,
-                'cell_plan': None,
-                'last_association_user': None,
-                'last_association_date': None,
-            }, request.user)
-
-            return self.dispatch_and_serialize_into_response(entity)
-
         if request.method == 'PUT':
-            pass
+            form = EntityAssociationForm(request.data)
+            if not form.is_valid():
+                return Response({
+                    'errors': form.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            product = form.cleaned_data['product']
+            cell_plan = form.cleaned_data['cell_plan']
+
+            try:
+                entity.associate(request.user, product, cell_plan)
+            except Exception as ex:
+                return Response(
+                    {'detail': str(ex)},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+        return self.dispatch_and_serialize_into_response(entity)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):

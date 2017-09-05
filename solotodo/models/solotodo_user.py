@@ -61,17 +61,45 @@ class SoloTodoUser(AbstractEmailUser):
 
         email_recipients = [self.email_recipient_text()]
 
-        html_message = render_to_string('mailing/index.html', {
-            'entity': entity,
-            'request_user': request_user,
-            'timestamp': timezone.now(),
-            'host': settings.BACKEND_HOST,
-            'error': traceback
-        })
+        html_message = render_to_string(
+            'mailing/entity_pricing_update_failure.html', {
+                'entity': entity,
+                'request_user': request_user,
+                'timestamp': timezone.now(),
+                'host': settings.BACKEND_HOST,
+                'error': traceback
+            })
 
         subject = _('Error updating entity')
 
         send_mail('{} {}'.format(subject, entity.id),
+                  'Error', sender, email_recipients,
+                  html_message=html_message)
+
+    def send_entity_disassociation_mail(self, entity, reason):
+        if self.preferred_language:
+            email_language = self.preferred_language.code
+        else:
+            email_language = settings.LANGUAGE_CODE
+
+        sender = SoloTodoUser().get_bot().email_recipient_text()
+        translation.activate(email_language)
+
+        email_recipients = [self.email_recipient_text()]
+
+        if not reason:
+            reason = _('The product didn\'t match the entity')
+
+        html_message = render_to_string(
+            'mailing/entity_disassociation.html', {
+                'entity': entity,
+                'reason': reason,
+                'host': settings.BACKEND_HOST,
+            })
+
+        subject = _('Entity disassociated')
+
+        send_mail('{} - {}'.format(subject, entity.name),
                   'Error', sender, email_recipients,
                   html_message=html_message)
 

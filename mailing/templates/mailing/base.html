@@ -22,6 +22,25 @@
         height: 20px;
       }
 
+      h3 {
+        color: #264c85;
+        font-size: 20px;
+        padding-bottom: 10px;
+      }
+
+      .callout-inner {
+        padding: 20px !important;
+        border-color: #f0f0f0 !important;
+      }
+
+      .logo {
+        padding-bottom: 10px;
+      }
+
+      .logo img {
+        width: 198px;
+        height: 54px;
+      }
     </style>
   </head>
 
@@ -43,8 +62,42 @@
             </tr>
             <tr>
               <td>
-                {% block content %}
-                {% endblock %}
+                <table class="row">
+                  <tbody>
+                  <tr>
+                    <th class="small-12 large-12 columns first last">
+                      <table>
+                        <tr>
+                          <th class="logo"><img src="{% static 'img/mailing/logo.png' %}" /> </th>
+                        </tr>
+                      </table>
+                    </th>
+                  </tr>
+                  </tbody>
+                </table>
+                <table class="row">
+                  <tbody>
+                  <tr>
+                    <th class="small-12 large-12 columns first last">
+                      <table class="callout">
+                        <tr>
+                          <th class="callout-inner">
+                            <table>
+                              <tr>
+                                <th>
+                                  {% block content %}
+                                  {% endblock %}
+                                </th>
+                              </tr>
+                            </table>
+                          </th>
+                          <th class="expander"></th>
+                        </tr>
+                      </table>
+                    </th>
+                  </tr>
+                  </tbody>
+                </table>
               </td>
             </tr>
           </table>

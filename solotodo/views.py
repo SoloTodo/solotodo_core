@@ -226,8 +226,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Entity.objects.all()
     serializer_class = EntitySerializer
     pagination_class = EntityPagination
-    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
+                       OrderingFilter)
     filter_class = EntityFilterSet
+    ordering_fields = '__all__'
     search_fields = ('product__instance_model__unicode_representation',
                      'cell_plan__instance_model__unicode_representation',
                      'name',

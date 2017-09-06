@@ -24,7 +24,7 @@ from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, EntityHistoryFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
-from solotodo.forms.entity_disassociation_form import EntityDisssociationForm
+from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_state_form import EntityStateForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
@@ -420,20 +420,6 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         if not entity.user_has_staff_perms(request.user):
             raise PermissionDenied
 
-        if request.method == 'DELETE':
-            form = EntityDisssociationForm(request.data)
-            if not form.is_valid():
-                return Response({
-                    'errors': form.errors
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            try:
-                entity.disassociate(request.user, form.cleaned_data['reason'])
-            except Exception as ex:
-                return Response(
-                    {'detail': str(ex)},
-                    status=status.HTTP_400_BAD_REQUEST)
-
         if request.method == 'PUT':
             form = EntityAssociationForm(request.data)
             if not form.is_valid():
@@ -446,6 +432,20 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
             try:
                 entity.associate(request.user, product, cell_plan)
+            except Exception as ex:
+                return Response(
+                    {'detail': str(ex)},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+        if request.method == 'DELETE':
+            form = EntityDisssociationForm(request.data)
+            if not form.is_valid():
+                return Response({
+                    'errors': form.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                entity.dissociate(request.user, form.cleaned_data['reason'])
             except Exception as ex:
                 return Response(
                     {'detail': str(ex)},

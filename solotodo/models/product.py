@@ -27,6 +27,22 @@ class Product(models.Model):
     def __str__(self):
         return str(self.instance_model)
 
+    def save(self, *args, **kwargs):
+        from django.conf import settings
+
+        super(Product, self).save(*args, **kwargs)
+
+        es = settings.ES
+        document, keywords = self.instance_model.elasticsearch_document()
+
+        document[u'product_id'] = self.id
+        document[u'keywords'] = ' '.join(keywords)
+
+        es.index(index=settings.ES_INDEX,
+                 doc_type=self.category.storescraper_name,
+                 id=self.id,
+                 body=document)
+
     class Meta:
         app_label = 'solotodo'
         ordering = ('instance_model', )

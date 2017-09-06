@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-24 15:20-0300\n"
+"POT-Creation-Date: 2017-09-06 15:31-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,42 +18,79 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: mailing/templates/mailing/index.html:49
-msgid "Error report"
-msgstr "Reporte de error"
+#: mailing/templates/mailing/entity_dissociation.html:7
+msgid "Entity dissociated"
+msgstr "Entidad disociada"
 
-#: mailing/templates/mailing/index.html:51
-msgid "An error has been detected while updating the pricing of an entity"
-msgstr "Se detectó un error al actualizar la información de una entidad"
+#: mailing/templates/mailing/entity_dissociation.html:9
+msgid "An entity you associated in the past has just been dissociated"
+msgstr "Una entidad asociada por usted en el pasado acada de ser disociada"
 
-#: mailing/templates/mailing/index.html:54
+#: mailing/templates/mailing/entity_dissociation.html:12
+#: mailing/templates/mailing/entity_pricing_update_failure.html:12
 msgid "ID"
 msgstr "ID"
 
-#: mailing/templates/mailing/index.html:55
+#: mailing/templates/mailing/entity_dissociation.html:13
+#: mailing/templates/mailing/entity_pricing_update_failure.html:13
 msgid "Name"
 msgstr "Nombre"
 
-#: mailing/templates/mailing/index.html:56
+#: mailing/templates/mailing/entity_dissociation.html:14
+#: mailing/templates/mailing/entity_pricing_update_failure.html:14
 msgid "Store"
 msgstr "Tienda"
 
-#: mailing/templates/mailing/index.html:59
-msgid "Request information"
-msgstr "Información de la petición"
+#: mailing/templates/mailing/entity_dissociation.html:15
+msgid "Original product"
+msgstr "Producto original"
 
-#: mailing/templates/mailing/index.html:62
+#: mailing/templates/mailing/entity_dissociation.html:16
+msgid "Original association date"
+msgstr "Fecha de asociación original"
+
+#: mailing/templates/mailing/entity_dissociation.html:19
+msgid "Dissociation information"
+msgstr "Información de la disasociación"
+
+#: mailing/templates/mailing/entity_dissociation.html:22
+#: mailing/templates/mailing/entity_pricing_update_failure.html:20
 msgid "Date"
 msgstr "Fecha"
 
-#: mailing/templates/mailing/index.html:63
+#: mailing/templates/mailing/entity_dissociation.html:23
+#: mailing/templates/mailing/entity_pricing_update_failure.html:21
 msgid "User"
 msgstr "Usuario"
 
-#: mailing/templates/mailing/index.html:67
+#: mailing/templates/mailing/entity_dissociation.html:28
+msgid "The reason given"
+msgstr "El motivo dado"
+
+#: mailing/templates/mailing/entity_dissociation.html:42
+msgid "No particular reason given."
+msgstr "No se dio un motivo en particular para la acción"
+
+#: mailing/templates/mailing/entity_dissociation.html:50
+msgid "Check the entity"
+msgstr "Revisar la entidad"
+
+#: mailing/templates/mailing/entity_pricing_update_failure.html:7
+msgid "Error report"
+msgstr "Reporte de error"
+
+#: mailing/templates/mailing/entity_pricing_update_failure.html:9
+msgid "An error has been detected while updating the pricing of an entity"
+msgstr "Se detectó un error al actualizar la información de una entidad"
+
+#: mailing/templates/mailing/entity_pricing_update_failure.html:17
+msgid "Request information"
+msgstr "Información de la petición"
+
+#: mailing/templates/mailing/entity_pricing_update_failure.html:25
 msgid "The found error"
 msgstr "El error encontrado fue"
 
-#: mailing/templates/mailing/index.html:84
+#: mailing/templates/mailing/entity_pricing_update_failure.html:42
 msgid "Solve issue"
 msgstr "Resolver"

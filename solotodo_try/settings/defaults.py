@@ -14,6 +14,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from django_filters import STRICTNESS
+from elasticsearch import Elasticsearch
 
 
 def _(s):
@@ -265,3 +266,10 @@ PUBNUB = None
 BOT_USERNAME = 'solobot@solotodo.com'
 BACKEND_HOST = 'http://192.168.90.111:3000/'
 CELL_PLAN_CATEGORY = 20
+
+METAMODEL = {
+    'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS': []
+}
+
+ES = Elasticsearch()
+ES_INDEX = 'products'

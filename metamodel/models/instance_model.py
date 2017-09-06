@@ -1,4 +1,5 @@
 import calendar
+import json
 import time
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
@@ -576,6 +577,102 @@ class InstanceModel(models.Model):
         cloned_instance.save(creator_id=creator_id)
 
         return cloned_instance
+
+    def elasticsearch_document(self):
+        """
+        Generates the elasticsearch document of the given InstanceModel
+        based on its fields and unicode representation and automatically
+        following all of its relations.
+        """
+
+        def sanitize_value(value):
+            serialized_value = value
+
+            if type(value) == Decimal:
+                serialized_value = float(value)
+
+            if type(value) == FieldFile:
+                serialized_value = value.name
+
+            try:
+                json.dumps(serialized_value)
+                return serialized_value
+            except TypeError:
+                raise
+
+        if not self:
+            return {}, []
+
+        result = {
+            u'id': self.id,
+            u'unicode': str(self)
+        }
+
+        keywords = result[u'unicode'].split()
+
+        meta_fields = MetaModel.get_metafields_by_model_id(
+            self.model_id)
+
+        instance_fields = self.fields.select_related()
+
+        instance_values_dict = {instance_field.field: instance_field.value
+                                for instance_field in instance_fields}
+
+        for meta_field in meta_fields:
+            if meta_field.multiple:
+                m2m_documents = []
+
+                m2m_instance_fields = instance_fields.filter(
+                    field=meta_field).select_related()
+
+                if not m2m_instance_fields:
+                    continue
+
+                for m2m_instance_field in m2m_instance_fields:
+                    m2m_document = m2m_instance_field.value.elasticsearch_document()
+
+                    m2m_documents.append(m2m_document[0])
+                    keywords.extend(m2m_document[1])
+
+                keys = m2m_documents[0].keys()
+
+                for key in keys:
+                    key_subresult = [d[key] for d in m2m_documents]
+                    result[meta_field.name + '_' + key] = key_subresult
+            else:
+                try:
+                    instance_value = instance_values_dict[meta_field]
+                except KeyError:
+                    instance_value = None
+
+                if meta_field.model.is_primitive():
+                    value = instance_value
+                    if value:
+                        value = instance_value.value
+                    result[meta_field.name] = sanitize_value(value)
+                elif instance_value:
+                    fk_result = instance_value.elasticsearch_document()
+                    for fk_key, fk_value in fk_result[0].items():
+                        try:
+                            result[meta_field.name + '_' + fk_key] = \
+                                sanitize_value(fk_value)
+                        except TypeError:
+                            pass
+
+                    keywords.extend(fk_result[1])
+
+        for function_path in settings.METAMODEL[
+                'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS']:
+            path_components = function_path.split('.')
+            f_module = importlib.import_module('.'.join(path_components[:-1]))
+            additional_es_fields_function = getattr(
+                f_module, path_components[-1])
+            additional_fields = \
+                additional_es_fields_function(self, result)
+            if additional_fields:
+                result.update(additional_fields)
+
+        return result, keywords
 
     class Meta:
         app_label = 'metamodel'

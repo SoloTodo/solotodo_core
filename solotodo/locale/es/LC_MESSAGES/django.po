@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-24 15:20-0300\n"
+"POT-Creation-Date: 2017-09-06 15:31-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,14 +18,18 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: solotodo/models/solotodo_user.py:13
+#: solotodo/models/solotodo_user.py:16
 msgid "first name"
 msgstr "Nombre"
 
-#: solotodo/models/solotodo_user.py:15
+#: solotodo/models/solotodo_user.py:18
 msgid "last name"
 msgstr "Apellido"
 
-#: solotodo/views.py:268
+#: solotodo/models/solotodo_user.py:73
 msgid "Error updating entity"
 msgstr "Error actualizando entidad"
+
+#: solotodo/models/solotodo_user.py:102
+msgid "Entity dissociated"
+msgstr "Entidad disociada"

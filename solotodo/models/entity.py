@@ -329,13 +329,13 @@ class Entity(models.Model):
 
         self.update_keeping_log(update_dict, user)
 
-    def disassociate(self, user, reason=None):
+    def dissociate(self, user, reason=None):
         if not self.product:
-            raise IntegrityError('Cannot disassociate non-associated entity')
+            raise IntegrityError('Cannot dissociate non-associated entity')
         if reason and self.last_association_user == user:
             raise IntegrityError(
                 'Reason must not be present if the last association user is '
-                'the same as the one disassociating the entity')
+                'the same as the one dissociating the entity')
 
         now = timezone.now()
 
@@ -349,8 +349,8 @@ class Entity(models.Model):
         }
 
         if self.last_association_user != user:
-            self.last_association_user.send_entity_disassociation_mail(
-                self, reason)
+            self.last_association_user.send_entity_dissociation_mail(
+                self, user, reason)
 
         self.update_keeping_log(update_dict, user)
 

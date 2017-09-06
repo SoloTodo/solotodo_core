@@ -76,7 +76,8 @@ class SoloTodoUser(AbstractEmailUser):
                   'Error', sender, email_recipients,
                   html_message=html_message)
 
-    def send_entity_disassociation_mail(self, entity, reason):
+    def send_entity_dissociation_mail(self, entity, dissociation_user,
+                                      reason=None):
         if self.preferred_language:
             email_language = self.preferred_language.code
         else:
@@ -85,19 +86,20 @@ class SoloTodoUser(AbstractEmailUser):
         sender = SoloTodoUser().get_bot().email_recipient_text()
         translation.activate(email_language)
 
+        if self.email != 'vj@solotodo.com':
+            raise Exception('Not my email!')
         email_recipients = [self.email_recipient_text()]
 
-        if not reason:
-            reason = _('The product didn\'t match the entity')
-
         html_message = render_to_string(
-            'mailing/entity_disassociation.html', {
+            'mailing/entity_dissociation.html', {
                 'entity': entity,
                 'reason': reason,
+                'dissociation_user': dissociation_user,
+                'timestamp': timezone.now(),
                 'host': settings.BACKEND_HOST,
             })
 
-        subject = _('Entity disassociated')
+        subject = _('Entity dissociated')
 
         send_mail('{} - {}'.format(subject, entity.name),
                   'Error', sender, email_recipients,

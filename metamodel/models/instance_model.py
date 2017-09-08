@@ -168,7 +168,7 @@ class InstanceModel(models.Model):
             'creator_id', None)
 
         if not initial:
-            if settings.METAMODEL_DEBUG:
+            if settings.METAMODEL['DEBUG']:
                 # Check integrity
                 for instance_field in self.fields.select_related():
                     if not instance_field.field.multiple and \
@@ -629,7 +629,8 @@ class InstanceModel(models.Model):
                     continue
 
                 for m2m_instance_field in m2m_instance_fields:
-                    m2m_document = m2m_instance_field.value.elasticsearch_document()
+                    m2m_document = m2m_instance_field.value\
+                        .elasticsearch_document()
 
                     m2m_documents.append(m2m_document[0])
                     keywords.extend(m2m_document[1])

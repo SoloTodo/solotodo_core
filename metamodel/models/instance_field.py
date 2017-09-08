@@ -13,7 +13,7 @@ class InstanceField(models.Model):
                                        self.value)
 
     def save(self, *args, **kwargs):
-        if settings.METAMODEL_DEBUG:
+        if settings.METAMODEL['DEBUG']:
             if self.pk:
                 existing_instance_field = InstanceField.objects.get(pk=self.pk)
                 if existing_instance_field.parent != self.parent:
@@ -54,7 +54,7 @@ class InstanceField(models.Model):
         return super(InstanceField, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
-        if settings.METAMODEL_DEBUG:
+        if settings.METAMODEL['DEBUG']:
             if not self.field.nullable and not self.field.multiple:
                 raise IntegrityError('Cannot delete non-nullable field')
 

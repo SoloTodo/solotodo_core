@@ -131,8 +131,8 @@ AUTH_PASSWORD_VALIDATORS = [
 LANGUAGE_CODE = 'en-us'
 
 LANGUAGES = [
-  ('en', _('English')),
-  ('es', _('Spanish')),
+    ('en', _('English')),
+    ('es', _('Spanish')),
 ]
 
 TIME_ZONE = 'America/Santiago'
@@ -268,8 +268,24 @@ BACKEND_HOST = 'http://192.168.90.111:3000/'
 CELL_PLAN_CATEGORY = 20
 
 METAMODEL = {
-    'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS': []
+    'DEBUG': False,
+    'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS': [
+        'solotodo.metamodel_custom_functions.brand_unicode.brand_unicode',
+        'solotodo.metamodel_custom_functions.notebooks.additional_es_fields',
+        'solotodo.metamodel_custom_functions.hardware.additional_es_fields',
+        'solotodo.metamodel_custom_functions.electro.additional_es_fields',
+        'solotodo.metamodel_custom_functions.smartphones.additional_es_fields'
+    ],
+    'MEDIA_PATH': 'products',
+    'UNICODE_FUNCTIONS': [
+        'solotodo.metamodel_custom_functions.hardware.unicode_function',
+        'solotodo.metamodel_custom_functions.electro.unicode_function',
+        'solotodo.metamodel_custom_functions.smartphones.unicode_function',
+    ],
+    'ORDERING_FUNCTIONS': [
+        'solotodo.metamodel_custom_functions.notebooks.ordering_value'
+    ]
 }
 
-ES = Elasticsearch()
-ES_INDEX = 'products'
+ES = Elasticsearch([{"host": "localhost", "port": 9201}])
+ES_PRODUCTS_INDEX = 'products'

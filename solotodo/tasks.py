@@ -1,6 +1,6 @@
 from celery import shared_task
 
-from solotodo.models import Store, Category, StoreUpdateLog
+from solotodo.models import Store, Category, StoreUpdateLog, Product
 
 
 @shared_task(queue='store_update')
@@ -65,3 +65,8 @@ def store_update_pricing_from_json(store_id, json_data):
         storescraper_name__in=json_data['categories'])
 
     store.update_pricing_from_json(json_data, update_log=update_log)
+
+
+@shared_task(queue='general', ignore_result=True)
+def product_save(product_id):
+    Product.objects.get(pk=product_id).save()

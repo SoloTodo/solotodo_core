@@ -140,12 +140,6 @@ class MetaModel(models.Model):
             return models_dict[model_id]
 
     @classmethod
-    def get_top_level_models_dict(cls):
-        result = {m.id: m for m in cls.objects.filter(
-            producttype__isnull=False)}
-        return result
-
-    @classmethod
     def get_metafields_by_model_id(cls, model_id):
         def get_model_fields_dict(refresh_cache=False):
             from metamodel.models import MetaField

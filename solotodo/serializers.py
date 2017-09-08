@@ -68,6 +68,18 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(read_only=True, source='__str__')
+    category = serializers.HyperlinkedRelatedField(
+        view_name='category-detail', read_only=True,
+        source='category.pk')
+
+    class Meta:
+        model = Product
+        fields = ('url', 'id', 'name', 'category', 'creation_date',
+                  'last_updated', 'specs')
+
+
+class NestedProductSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(read_only=True, source='__str__')
 
     class Meta:
         model = Product
@@ -123,8 +135,8 @@ class EntityStateSerializer(serializers.HyperlinkedModelSerializer):
 
 class EntitySerializer(serializers.HyperlinkedModelSerializer):
     active_registry = EntityHistorySerializer(read_only=True)
-    product = ProductSerializer(read_only=True)
-    cell_plan = ProductSerializer(read_only=True)
+    product = NestedProductSerializer(read_only=True)
+    cell_plan = NestedProductSerializer(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
     external_url = serializers.URLField(source='url')
 

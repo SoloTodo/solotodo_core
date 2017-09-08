@@ -457,8 +457,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
+                       OrderingFilter)
     filter_class = ProductFilterSet
+    ordering_fields = '__all__'
     pagination_class = ProductPagination
 
 

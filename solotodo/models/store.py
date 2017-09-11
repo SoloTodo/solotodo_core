@@ -265,5 +265,4 @@ class Store(models.Model):
              'permissions)'],
             ['backend_view_store',
              'Can view store list and detail in backend'],
-
         )

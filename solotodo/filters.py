@@ -1,11 +1,29 @@
+from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django_filters import rest_framework
 
 from solotodo.filter_querysets import stores__view_store_update_logs, \
     stores__view_store_entities, categories__view_category_entities, \
     entities__view, categories__view_category_products, stores__view_store
-from solotodo.models import Entity, StoreUpdateLog, Category, \
+from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country
+
+
+class UserFilterSet(rest_framework.FilterSet):
+    @property
+    def qs(self):
+        parent = super(UserFilterSet, self).qs
+        user = self.request.user
+        if 'solotodo.view_users' in user.permissions:
+            return parent
+        elif 'solotodo.view_users_with_staff_actions' in user.permissions:
+            return parent.filter_with_staff_actions()
+        else:
+            return parent.none()
+
+    class Meta:
+        model = get_user_model()
+        fields = []
 
 
 class StoreUpdateLogFilterSet(rest_framework.FilterSet):

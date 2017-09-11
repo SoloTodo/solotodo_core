@@ -9,15 +9,22 @@ from solotodo.models import Language, Store, Currency, Country, StoreType, \
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = get_user_model()
+        fields = ('url', 'id', 'email', 'first_name', 'last_name',
+                  'date_joined',)
+
+
+class MyUserSerializer(serializers.HyperlinkedModelSerializer):
     detail_url = serializers.HyperlinkedRelatedField(
         view_name='solotodouser-detail', read_only=True, source='pk')
 
     class Meta:
         model = get_user_model()
-        fields = ('url', 'detail_url', 'email', 'first_name', 'last_name',
-                  'preferred_language', 'preferred_country',
+        fields = ('url', 'id', 'detail_url', 'email', 'first_name',
+                  'last_name', 'preferred_language', 'preferred_country',
                   'preferred_currency', 'preferred_number_format',
-                  'permissions')
+                  'date_joined', 'permissions')
         read_only_fields = ('email', 'first_name', 'last_name',
                             'permissions')
 
@@ -50,7 +57,7 @@ class CurrencySerializer(serializers.HyperlinkedModelSerializer):
 class CountrySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Country
-        fields = ('url', 'name', 'currency', 'number_format')
+        fields = ('url', 'id', 'name', 'currency', 'number_format')
 
 
 class StoreSerializer(serializers.HyperlinkedModelSerializer):

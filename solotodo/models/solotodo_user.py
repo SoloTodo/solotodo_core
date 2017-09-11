@@ -4,12 +4,17 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils import translation, timezone
 from django.utils.translation import ugettext_lazy as _
-from custom_user.models import AbstractEmailUser
+from custom_user.models import AbstractEmailUser, EmailUserManager
 
 from .number_format import NumberFormat
 from .country import Country
 from .currency import Currency
 from .language import Language
+
+
+class SoloTodoUserQuerySet(models.QuerySet):
+    def filter_with_staff_actions(self):
+        return self.exclude(entity__isnull=True, product__isnull=True)
 
 
 class SoloTodoUser(AbstractEmailUser):
@@ -24,6 +29,8 @@ class SoloTodoUser(AbstractEmailUser):
     preferred_number_format = models.ForeignKey(
         NumberFormat, blank=True, null=True)
     permissions = property(lambda self: sorted(self.get_all_permissions()))
+
+    objects = EmailUserManager.from_queryset(SoloTodoUserQuerySet)()
 
     BOT_CACHE = None
 
@@ -109,3 +116,10 @@ class SoloTodoUser(AbstractEmailUser):
         app_label = 'solotodo'
         verbose_name = 'SoloTodo User'
         verbose_name_plural = 'SoloTodo Users'
+        ordering = ('-date_joined',)
+        permissions = (
+            ('view_users',
+             'Can view all users'),
+            ('view_users_with_staff_actions',
+             'Can view users with that have executed staff actions')
+        )

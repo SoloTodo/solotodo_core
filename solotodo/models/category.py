@@ -39,4 +39,6 @@ class Category(models.Model):
              'store permissions)'],
             ['update_category_entities_pricing',
              'Can update the pricing of this category\'s entities'],
+            ['backend_view_category',
+             'Can view category list / detail in the backend'],
         )

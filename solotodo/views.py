@@ -22,7 +22,7 @@ from rest_framework.reverse import reverse
 from solotodo.decorators import detail_permission
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
-    ProductFilterSet, EntityHistoryFilterSet
+    ProductFilterSet, EntityHistoryFilterSet, UserFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_state_form import EntityStateForm
@@ -32,13 +32,14 @@ from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory, \
     EntityState
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
-    ProductPagination, EntityPriceHistoryPagination
+    ProductPagination, EntityPriceHistoryPagination, UserPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreUpdatePricesSerializer, CategorySerializer, \
     StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
-    EntityEventValueSerializer, EntityHistorySerializer, EntityStateSerializer
+    EntityEventValueSerializer, EntityHistorySerializer, \
+    EntityStateSerializer, MyUserSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -46,7 +47,9 @@ from solotodo.utils import get_client_ip
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = get_user_model().objects.all()
     serializer_class = UserSerializer
-    permission_classes = (permissions.IsAdminUser,)
+    pagination_class = UserPagination
+    filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
+    filter_class = UserFilterSet
 
     @list_route(methods=['get', 'patch'],
                 permission_classes=(permissions.IsAuthenticated, ))
@@ -55,18 +58,26 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
         if request.method == 'PATCH':
             content = JSONParser().parse(request)
-            serializer = UserSerializer(
+            serializer = MyUserSerializer(
                 user, data=content, partial=True,
                 context={'request': request})
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
 
-        payload = UserSerializer(
+        payload = MyUserSerializer(
             user,
             context={'request': request}).data
 
         payload['url'] = reverse('solotodouser-me', request=request)
         return Response(payload)
+
+    @list_route()
+    def with_staff_actions(self, request):
+        users = self.get_queryset()
+        users_with_staff_actions = users.filter_with_staff_actions()
+        payload = UserSerializer(users_with_staff_actions,
+                                 many=True, context={'request': request})
+        return Response(payload.data)
 
 
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):

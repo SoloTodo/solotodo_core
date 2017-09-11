@@ -2,7 +2,7 @@ import collections
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import models
+from django.db import models, IntegrityError
 from django.db.models import Q
 from elasticsearch_dsl import Search
 
@@ -82,6 +82,14 @@ class Product(models.Model):
     def save(self, *args, **kwargs):
         from django.conf import settings
 
+        creator_id = kwargs.pop('creator_id', None)
+
+        if bool(creator_id) == bool(self.id):
+            raise IntegrityError('Exiting products cannot have a creator '
+                                 '(and vice versa)')
+
+        if creator_id:
+            self.creator_id = creator_id
         super(Product, self).save(*args, **kwargs)
 
         es = settings.ES
@@ -98,3 +106,6 @@ class Product(models.Model):
     class Meta:
         app_label = 'solotodo'
         ordering = ('instance_model', )
+        permissions = [
+            ('backend_list_product', 'Can view product list in backend'),
+        ]

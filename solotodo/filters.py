@@ -115,9 +115,9 @@ class ProductFilterSet(rest_framework.FilterSet):
     creation_date = rest_framework.DateTimeFromToRangeFilter(
         name='creation_date'
     )
-    keywords = rest_framework.CharFilter(
-        label='Keywords',
-        method='_keywords'
+    search = rest_framework.CharFilter(
+        label='Search',
+        method='_search'
     )
 
     @property
@@ -141,7 +141,7 @@ class ProductFilterSet(rest_framework.FilterSet):
             return queryset.filter_by_availability_in_stores(value)
         return queryset
 
-    def _keywords(self, queryset, name, value):
+    def _search(self, queryset, name, value):
         if value:
             return queryset.filter_by_keywords(value)
         return queryset

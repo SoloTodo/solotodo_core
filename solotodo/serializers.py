@@ -146,6 +146,10 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
     cell_plan = NestedProductSerializer(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
     external_url = serializers.URLField(source='url')
+    picture_urls = serializers.ListField(
+        child=serializers.URLField(),
+        source='picture_urls_as_list'
+    )
 
     class Meta:
         model = Entity
@@ -173,7 +177,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'last_association',
             'creation_date',
             'last_updated',
-            'picture_url',
+            'picture_urls',
             'last_staff_access',
             'last_staff_access_user',
             'last_staff_change',

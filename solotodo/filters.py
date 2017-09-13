@@ -152,7 +152,7 @@ class ProductFilterSet(rest_framework.FilterSet):
 
 
 class EntityHistoryFilterSet(rest_framework.FilterSet):
-    date = rest_framework.DateTimeFromToRangeFilter(
+    timestamp = rest_framework.DateTimeFromToRangeFilter(
         name='timestamp'
     )
     available_only = rest_framework.BooleanFilter(

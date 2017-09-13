@@ -1,3 +1,5 @@
+import json
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
@@ -46,7 +48,7 @@ class Entity(models.Model):
     key = models.CharField(max_length=256, db_index=True)
     url = models.URLField(max_length=512, db_index=True)
     discovery_url = models.URLField(max_length=512, db_index=True)
-    picture_url = models.URLField(max_length=512, blank=True, null=True)
+    picture_urls = models.TextField(blank=True, null=True)
     description = models.TextField(null=True)
     is_visible = models.BooleanField(default=True)
 
@@ -139,7 +141,7 @@ class Entity(models.Model):
                 'sku': scraped_product.sku,
                 'url': scraped_product.url,
                 'discovery_url': scraped_product.discovery_url,
-                'picture_url': scraped_product.picture_url,
+                'picture_urls': scraped_product.picture_urls_as_json(),
                 'description': scraped_product.description,
                 'active_registry': new_active_registry,
             })
@@ -174,7 +176,7 @@ class Entity(models.Model):
             key=scraped_product.key,
             url=scraped_product.url,
             discovery_url=scraped_product.discovery_url,
-            picture_url=scraped_product.picture_url,
+            picture_urls=scraped_product.picture_urls_as_json(),
             description=scraped_product.description,
             is_visible=True,
             last_pricing_update=timezone.now(),
@@ -353,6 +355,11 @@ class Entity(models.Model):
                 self, user, reason)
 
         self.update_keeping_log(update_dict, user)
+
+    def picture_urls_as_list(self):
+        if not self.picture_urls:
+            return None
+        return json.loads(self.picture_urls)
 
     class Meta:
         app_label = 'solotodo'

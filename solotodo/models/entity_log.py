@@ -27,7 +27,7 @@ class EntityLog(models.Model):
     sku = models.CharField(max_length=50, null=True)
     url = models.URLField(max_length=512)
     discovery_url = models.URLField(max_length=512)
-    picture_url = models.URLField(max_length=512, null=True)
+    picture_urls = models.TextField(null=True)
     description = models.TextField(null=True)
     is_visible = models.BooleanField()
 
@@ -44,7 +44,7 @@ class EntityLog(models.Model):
         'sku',
         'url',
         'discovery_url',
-        'picture_url',
+        'picture_urls',
         'description',
         'is_visible',
     ]

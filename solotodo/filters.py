@@ -3,8 +3,7 @@ from django.db.models import Q
 from django_filters import rest_framework
 
 from solotodo.filter_querysets import stores__view_store_update_logs, \
-    stores__view_store_entities, categories__view_category_entities, \
-    entities__view, categories__view_category_products, stores__view_store
+    categories_view, entities__view, stores__view_store
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country
 
@@ -43,12 +42,12 @@ class StoreUpdateLogFilterSet(rest_framework.FilterSet):
 
 class EntityFilterSet(rest_framework.FilterSet):
     stores = rest_framework.ModelMultipleChoiceFilter(
-        queryset=stores__view_store_entities,
+        queryset=stores__view_store,
         name='store',
         label='Stores'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
-        queryset=categories__view_category_entities,
+        queryset=categories_view,
         name='category',
         label='Categories'
     )
@@ -64,9 +63,8 @@ class EntityFilterSet(rest_framework.FilterSet):
         parent = super(EntityFilterSet, self).qs.select_related(
             'active_registry', 'product__instance_model')
         if self.request:
-            categories_with_permission = categories__view_category_entities(
-                self.request)
-            stores_with_permission = stores__view_store_entities(self.request)
+            categories_with_permission = categories_view(self.request)
+            stores_with_permission = stores__view_store(self.request)
 
             return parent.filter(
                 Q(category__in=categories_with_permission) &
@@ -95,7 +93,7 @@ class EntityFilterSet(rest_framework.FilterSet):
 
 class ProductFilterSet(rest_framework.FilterSet):
     categories = rest_framework.ModelMultipleChoiceFilter(
-        queryset=categories__view_category_products,
+        queryset=categories_view,
         name='instance_model__model__category',
         label='Categories'
     )
@@ -125,8 +123,7 @@ class ProductFilterSet(rest_framework.FilterSet):
         parent = super(ProductFilterSet, self).qs.select_related(
             'instance_model')
         if self.request:
-            categories_with_permission = categories__view_category_products(
-                self.request)
+            categories_with_permission = categories_view(self.request)
 
             parent = parent.filter_by_category(categories_with_permission)
         return parent.select_related('instance_model__model__category')
@@ -169,9 +166,8 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
     def qs(self):
         parent = super(EntityHistoryFilterSet, self).qs.select_related()
         if self.request:
-            categories_with_permission = categories__view_category_entities(
-                self.request)
-            stores_with_permission = stores__view_store_entities(self.request)
+            categories_with_permission = categories_view(self.request)
+            stores_with_permission = stores__view_store(self.request)
 
             return parent.filter(
                 Q(entity__category__in=categories_with_permission) &

@@ -29,6 +29,7 @@ from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_state_form import EntityStateForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
+from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory, \
     EntityState
@@ -36,7 +37,7 @@ from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, EntityPriceHistoryPagination, UserPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
-    StoreTypeSerializer, StoreUpdatePricesSerializer, CategorySerializer, \
+    StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
     StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
     EntityEventValueSerializer, EntityHistorySerializer, \
@@ -110,6 +111,10 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
+    def get_queryset(self):
+        return get_objects_for_user(self.request.user, 'view_category',
+                                    klass=Category)
+
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Country.objects.all()
@@ -158,31 +163,43 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
             store.scraper
         except AttributeError:
             raise Http404
-        serializer = StoreUpdatePricesSerializer(
-            store, context={'request': request})
-        return Response(serializer.data)
+        serializer = StoreScraperSerializer(
+            store,
+            context={'request': request})
+        available_categories = get_objects_for_user(
+            request.user, 'update_category_pricing',
+            store.scraper_categories())
+
+        result = serializer.data
+        result['categories'] = [
+            reverse('category-detail', kwargs={'pk': category.pk},
+                    request=request)
+            for category in available_categories]
+
+        return Response(result)
 
     @detail_route(methods=['post'])
     @detail_permission('update_store_pricing')
     def update_pricing(self, request, pk):
         store = self.get_object()
-        serializer = StoreUpdatePricesSerializer(
-            store, data=request.data, context={'request': request})
+        form = StoreUpdatePricingForm.from_store_and_user(
+            store, request.user, request.data)
 
-        if serializer.is_valid():
-            validated_data = serializer.validated_data
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
 
-            categories = validated_data['categories']
+            categories = cleaned_data['categories']
             if categories:
-                category_ids = [pt.id for pt in categories]
+                category_ids = [category.id for category in categories]
             else:
-                category_ids = None
+                category_ids = [category.id
+                                for category in form.default_categories()]
 
             discover_urls_concurrency = \
-                validated_data.get('discover_urls_concurrency')
+                cleaned_data['discover_urls_concurrency']
             products_for_url_concurrency = \
-                validated_data.get('products_for_url_concurrency')
-            use_async = validated_data.get('async')
+                cleaned_data['products_for_url_concurrency']
+            use_async = cleaned_data['async']
 
             store_update_log = StoreUpdateLog.objects.create(store=store)
 
@@ -201,7 +218,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                 'log_id': store_update_log.id
             })
         else:
-            return Response(serializer.errors)
+            return Response(form.errors)
 
 
 class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):

@@ -303,7 +303,7 @@ class Entity(models.Model):
     def user_has_staff_perms(self, user):
         return user.has_perm('category_entities_staff',
                              self.category) \
-               and user.has_perm('store_entities_staff', self.store)
+               and user.has_perm('is_store_staff', self.store)
 
     def associate(self, user, product, cell_plan=None):
         if not self.is_visible:

@@ -29,16 +29,9 @@ class Category(models.Model):
         app_label = 'solotodo'
         ordering = ['name']
         permissions = (
-            ['view_category_entities',
-             'Can view entities associated to this category (also requires '
-             'store permissions)'],
-            ['view_category_products',
-             'Can view products associated to this category'],
-            ['category_entities_staff',
-             'Is staff of the entities of this category (also requires '
-             'store permissions)'],
-            ['update_category_entities_pricing',
-             'Can update the pricing of this category\'s entities'],
-            ['backend_view_category',
-             'Can view category list / detail in the backend'],
+            ['view_category', 'Can view the category'],
+            ['is_category_staff',
+             'Is staff of the category (may also require other permissions)'],
+            ['update_category_pricing',
+             'Can update the pricing of the category\'s entities'],
         )

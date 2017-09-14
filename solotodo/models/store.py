@@ -254,15 +254,10 @@ class Store(models.Model):
         app_label = 'solotodo'
         ordering = ['name']
         permissions = (
-            ['view_store', 'Can view store'],
-            ['view_store_update_logs', 'Can view store update logs'],
-            ['view_store_entities',
-             'Can view entities of this store (also requires category '
-             'permissions)'],
-            ['update_store_pricing', 'Can update store pricing'],
-            ['store_entities_staff',
-             'Is staff of the entities of this store (also requires category '
-             'permissions)'],
-            ['backend_view_store',
-             'Can view store list and detail in backend'],
+            ['view_store', 'Can view the store'],
+            ['view_store_update_logs', 'Can view the store update logs'],
+            ['update_store_pricing', 'Can update the store pricing'],
+            ['is_store_staff',
+             'Is staff of the store (may require additional permissions)'],
+            ['backend_list_stores', 'Can view store list in backend'],
         )

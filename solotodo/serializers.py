@@ -93,38 +93,16 @@ class NestedProductSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name')
 
 
-class StoreUpdatePricesSerializer(serializers.Serializer):
+class StoreScraperSerializer(serializers.Serializer):
     discover_urls_concurrency = serializers.IntegerField(
-        min_value=1,
-        required=False
+        source='scraper.preferred_discover_urls_concurrency',
     )
     products_for_url_concurrency = serializers.IntegerField(
-        min_value=1,
-        required=False
+        source='scraper.preferred_products_for_url_concurrency',
     )
-    async = serializers.BooleanField()
-    categories = serializers.HyperlinkedRelatedField(
-        view_name='category-detail',
-        queryset=Category.objects.all(),
-        many=True,
-        required=False
+    async = serializers.BooleanField(
+        source='scraper.prefer_async',
     )
-
-    def __init__(self, instance, data=empty, **kwargs):
-        super(StoreUpdatePricesSerializer, self).__init__(None, data, **kwargs)
-        scraper = instance.scraper
-        self.fields['discover_urls_concurrency'].initial = \
-            scraper.preferred_discover_urls_concurrency
-        self.fields['products_for_url_concurrency'].initial = \
-            scraper.preferred_products_for_url_concurrency
-        self.fields['async'].initial = scraper.prefer_async
-        valid_categories = instance.scraper_categories()
-        self.fields['categories'].child_relation.queryset = \
-            valid_categories
-        self.fields['categories'].initial = [
-            reverse('category-detail', kwargs={'pk': category.pk},
-                    request=kwargs['context']['request'])
-            for category in valid_categories]
 
 
 class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
@@ -188,6 +166,8 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class StoreUpdateLogSerializer(serializers.HyperlinkedModelSerializer):
+    categories = CategorySerializer(many=True)
+
     class Meta:
         model = StoreUpdateLog
         fields = ('url', 'store', 'categories', 'status', 'creation_date',

@@ -11,13 +11,6 @@ def stores__view_store_update_logs(request):
     return Store.objects.all()
 
 
-def stores__view_store_entities(request):
-    if request:
-        return get_objects_for_user(
-            request.user, 'view_store_entities', Store)
-    return Store.objects.all()
-
-
 def stores__view_store(request):
     if request:
         return get_objects_for_user(
@@ -25,26 +18,18 @@ def stores__view_store(request):
     return Store.objects.all()
 
 
-def categories__view_category_entities(request):
+def categories_view(request):
     if request:
-        return get_objects_for_user(
-            request.user, 'view_category_entities', Category)
-    return Category.objects.all()
-
-
-def categories__view_category_products(request):
-    if request:
-        return get_objects_for_user(request.user, 'view_category_products',
-                                    Category)
+        return get_objects_for_user(request.user, 'view_category', Category)
     return Category.objects.all()
 
 
 def entities__view(request):
     if request:
         categories_with_permission = get_objects_for_user(
-            request.user, 'view_category_entities', Category)
+            request.user, 'view_category', Category)
         stores_with_permission = get_objects_for_user(
-            request.user, 'view_store_entities', Store)
+            request.user, 'view_store', Store)
 
         return Entity.objects.filter(
             Q(category__in=categories_with_permission) &

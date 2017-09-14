@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission
 from django.utils.translation import gettext_lazy as _
 from custom_user.admin import EmailUserAdmin
 from django.contrib import admin
@@ -8,6 +9,8 @@ from guardian.admin import GuardedModelAdmin
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, EntityState
+
+admin.site.register(Permission)
 
 admin.site.register(Language)
 admin.site.register(Country)

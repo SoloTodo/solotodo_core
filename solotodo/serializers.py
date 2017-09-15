@@ -105,11 +105,25 @@ class StoreScraperSerializer(serializers.Serializer):
     )
 
 
+class EntityHistoryPartialSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = EntityHistory
+        fields = ['timestamp', 'normal_price', 'offer_price',
+                  'cell_monthly_payment', 'is_available']
+
+
+class EntityHistoryFullSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = EntityHistory
+        fields = ['timestamp', 'normal_price', 'offer_price',
+                  'cell_monthly_payment', 'is_available', 'stock']
+
+
 class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = EntityHistory
-        fields = ['entity', 'timestamp', 'stock', 'normal_price',
-                  'offer_price', 'cell_monthly_payment']
+        fields = ['timestamp', 'stock', 'normal_price', 'offer_price',
+                  'cell_monthly_payment']
 
 
 class EntityStateSerializer(serializers.HyperlinkedModelSerializer):

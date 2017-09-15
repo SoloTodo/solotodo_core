@@ -107,5 +107,5 @@ class Product(models.Model):
         app_label = 'solotodo'
         ordering = ('instance_model', )
         permissions = [
-            ('backend_list_product', 'Can view product list in backend'),
+            ('backend_list_products', 'Can view product list in backend'),
         ]

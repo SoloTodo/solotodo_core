@@ -10,8 +10,12 @@ from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, EntityState
 
-admin.site.register(Permission)
 
+class PermissionModelAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'codename']
+
+
+admin.site.register(Permission, PermissionModelAdmin)
 admin.site.register(Language)
 admin.site.register(Country)
 admin.site.register(Currency)

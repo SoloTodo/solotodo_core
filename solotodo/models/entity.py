@@ -301,9 +301,13 @@ class Entity(models.Model):
         return events
 
     def user_has_staff_perms(self, user):
-        return user.has_perm('category_entities_staff',
+        return user.has_perm('is_category_staff',
                              self.category) \
                and user.has_perm('is_store_staff', self.store)
+
+    def user_can_view_stocks(self, user):
+        return user.has_perm('view_category_stocks', self.category) \
+               and user.has_perm('view_store_stocks', self.store)
 
     def associate(self, user, product, cell_plan=None):
         if not self.is_visible:
@@ -365,5 +369,5 @@ class Entity(models.Model):
         app_label = 'solotodo'
         unique_together = ('store', 'key')
         permissions = [
-            ('backend_list_entity', 'Can view entity list in backend'),
+            ('backend_list_entities', 'Can view entity list in backend'),
         ]

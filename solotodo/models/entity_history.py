@@ -21,6 +21,9 @@ class EntityHistory(models.Model):
     def __str__(self):
         return u'{} - {}'.format(self.entity, self.timestamp)
 
+    def is_available(self):
+        return self.stock != 0
+
     class Meta:
         app_label = 'solotodo'
         ordering = ['entity', 'timestamp']

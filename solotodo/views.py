@@ -23,7 +23,7 @@ from solotodo.decorators import detail_permission
 from solotodo.drf_custom_ordering import CustomProductOrderingFilter
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
-    ProductFilterSet, EntityHistoryFilterSet, UserFilterSet
+    ProductFilterSet, UserFilterSet, EntityHistoryFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_state_form import EntityStateForm
@@ -31,17 +31,18 @@ from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    Category, StoreUpdateLog, Entity, Product, NumberFormat, EntityHistory, \
+    Category, StoreUpdateLog, Entity, Product, NumberFormat, \
     EntityState
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
-    ProductPagination, EntityPriceHistoryPagination, UserPagination
+    ProductPagination, UserPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
     StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
-    EntityEventValueSerializer, EntityHistorySerializer, \
-    EntityStateSerializer, MyUserSerializer
+    EntityEventValueSerializer, \
+    EntityStateSerializer, MyUserSerializer, EntityHistoryPartialSerializer, \
+    EntityHistoryFullSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -190,8 +191,21 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
 
             categories = cleaned_data['categories']
             if categories:
+                # The request specifies the categories to update
                 category_ids = [category.id for category in categories]
+            elif form.default_categories().count() == \
+                    store.scraper_categories().count():
+                # The request does not specify the categories, and the user
+                # has permissions over all of the categories available to the
+                # scraper. Setting category_ids to None tells the updating
+                # process to also update the store entities whose type is not
+                # in the scraper official list (e.g. "power supplies" in Paris
+                # gaming section).
+                category_ids = None
             else:
+                # The request does not specify the categories, and the user
+                # only has permission over a subset of the available categories
+                # Use the categories with permissions.
                 category_ids = [category.id
                                 for category in form.default_categories()]
 
@@ -482,6 +496,25 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return self.dispatch_and_serialize_into_response(entity)
 
+    @detail_route()
+    def pricing_history(self, request, pk):
+        entity = self.get_object()
+
+        if entity.user_can_view_stocks(request.user):
+            serializer_klass = EntityHistoryFullSerializer
+        else:
+            serializer_klass = EntityHistoryPartialSerializer
+
+        filterset = EntityHistoryFilterSet(
+            data=request.query_params,
+            queryset=entity.entityhistory_set.all(),
+            request=request)
+        serializer = serializer_klass(
+            filterset.qs,
+            many=True
+        )
+        return Response(serializer.data)
+
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
@@ -491,11 +524,3 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = ProductFilterSet
     ordering_fields = None
     pagination_class = ProductPagination
-
-
-class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = EntityHistory.objects.all()
-    serializer_class = EntityHistorySerializer
-    filter_backends = (rest_framework.DjangoFilterBackend, )
-    filter_class = EntityHistoryFilterSet
-    pagination_class = EntityPriceHistoryPagination

@@ -66,18 +66,18 @@ class Product(models.Model):
 
     def __init__(self, *args, **kwargs):
         super(Product, self).__init__(*args, **kwargs)
-        self.SPECS_CACHE = None
 
     @property
     def specs(self):
-        if self.SPECS_CACHE is None:
-            se = Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
-            self.SPECS_CACHE = se.filter(
-                'term', product_id=self.id).execute()[0].to_dict()
-        return self.SPECS_CACHE
+        return self.es_search().filter(
+            'term', product_id=self.id).execute()[0].to_dict()
 
     def __str__(self):
         return str(self.instance_model)
+
+    @classmethod
+    def es_search(cls):
+        return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
 
     def save(self, *args, **kwargs):
         from django.conf import settings

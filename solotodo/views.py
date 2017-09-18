@@ -23,7 +23,7 @@ from solotodo.decorators import detail_permission
 from solotodo.drf_custom_ordering import CustomProductOrderingFilter
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
-    ProductFilterSet, UserFilterSet, EntityHistoryFilterSet
+    ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_state_form import EntityStateForm
@@ -151,6 +151,9 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 class StoreViewSet(PermissionReadOnlyModelViewSet):
     queryset = Store.objects.all()
     serializer_class = StoreSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
+                       OrderingFilter)
+    filter_class = StoreFilterSet
 
     def get_queryset(self):
         return get_objects_for_user(self.request.user, 'view_store',

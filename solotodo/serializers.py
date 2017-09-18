@@ -32,7 +32,7 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
 class StoreTypeSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = StoreType
-        fields = ('url', 'name')
+        fields = ('url', 'id', 'name')
 
 
 class LanguageSerializer(serializers.HyperlinkedModelSerializer):

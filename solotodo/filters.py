@@ -5,7 +5,7 @@ from django_filters import rest_framework
 from solotodo.filter_querysets import stores__view_store_update_logs, \
     categories__view, stores__view
 from solotodo.models import Entity, StoreUpdateLog, \
-    Product, EntityHistory, Country
+    Product, EntityHistory, Country, Store, StoreType
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -23,6 +23,30 @@ class UserFilterSet(rest_framework.FilterSet):
     class Meta:
         model = get_user_model()
         fields = []
+
+
+class StoreFilterSet(rest_framework.FilterSet):
+    countries = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Country.objects.all(),
+        name='country',
+        label='Countries'
+    )
+    types = rest_framework.ModelMultipleChoiceFilter(
+        queryset=StoreType.objects.all(),
+        name='type',
+        label='Types'
+    )
+
+    @property
+    def qs(self):
+        parent = super(StoreFilterSet, self).qs
+        if self.request:
+            return stores__view(self.request, parent)
+        return parent
+
+    class Meta:
+        model = Store
+        fields = ['is_active']
 
 
 class StoreUpdateLogFilterSet(rest_framework.FilterSet):

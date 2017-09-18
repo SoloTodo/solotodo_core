@@ -11,11 +11,15 @@ def stores__view_store_update_logs(request):
     return Store.objects.all()
 
 
-def stores__view(request):
+def stores__view(request, qs=None):
+    if not qs:
+        qs = Store.objects.all()
+
     if request:
         return get_objects_for_user(
-            request.user, 'view_store', Store)
-    return Store.objects.all()
+            request.user, 'view_store', qs)
+
+    return qs
 
 
 def stores__view_stocks(request):

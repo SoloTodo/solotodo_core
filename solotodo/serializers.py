@@ -184,7 +184,7 @@ class StoreUpdateLogSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = StoreUpdateLog
-        fields = ('url', 'store', 'categories', 'status', 'creation_date',
+        fields = ('url', 'id', 'store', 'categories', 'status', 'creation_date',
                   'last_updated', 'discovery_url_concurrency',
                   'products_for_url_concurrency', 'use_async', 'registry_file',
                   'available_products_count', 'unavailable_products_count',

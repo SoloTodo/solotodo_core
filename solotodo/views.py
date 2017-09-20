@@ -155,10 +155,6 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                        OrderingFilter)
     filter_class = StoreFilterSet
 
-    def get_queryset(self):
-        return get_objects_for_user(self.request.user, 'view_store',
-                                    klass=Store)
-
     @detail_route()
     @detail_permission('update_store_pricing')
     def scraper(self, request, pk):

@@ -12,7 +12,7 @@ def stores__view_store_update_logs(request):
 
 
 def stores__view(request, qs=None):
-    if not qs:
+    if qs is None:
         qs = Store.objects.all()
 
     if request:

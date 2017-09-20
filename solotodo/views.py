@@ -20,7 +20,8 @@ from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
 from solotodo.decorators import detail_permission
-from solotodo.drf_custom_ordering import CustomProductOrderingFilter
+from solotodo.drf_custom_ordering import CustomProductOrderingFilter, \
+    CustomEntityOrderingFilter
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet
@@ -271,9 +272,8 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EntitySerializer
     pagination_class = EntityPagination
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
-                       OrderingFilter)
+                       CustomEntityOrderingFilter)
     filter_class = EntityFilterSet
-    ordering_fields = '__all__'
     search_fields = ('product__instance_model__unicode_representation',
                      'cell_plan__instance_model__unicode_representation',
                      'name',

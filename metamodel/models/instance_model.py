@@ -677,5 +677,5 @@ class InstanceModel(models.Model):
 
     class Meta:
         app_label = 'metamodel'
-        ordering = ('model', 'decimal_value', 'unicode_value',
+        ordering = ('decimal_value', 'unicode_value',
                     'unicode_representation')

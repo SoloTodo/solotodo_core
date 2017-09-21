@@ -11,7 +11,7 @@ from solotodo.views import UserViewSet, StoreViewSet, LanguageViewSet, \
     StoreUpdateLogViewSet, EntityViewSet, ProductViewSet, \
     NumberFormatViewSet, EntityStateViewSet
 
-router = routers.DefaultRouter()
+router = routers.SimpleRouter()
 router.register(r'users', UserViewSet)
 router.register(r'stores', StoreViewSet)
 router.register(r'number_formats', NumberFormatViewSet)
@@ -24,9 +24,3 @@ router.register(r'categories', CategoryViewSet)
 router.register(r'store_update_logs', StoreUpdateLogViewSet)
 router.register(r'entities', EntityViewSet)
 router.register(r'products', ProductViewSet)
-
-urlpatterns = [
-    url(r'^api/', include(router.urls)),
-    url(r'^api/api-auth/', include('rest_framework.urls')),
-    url(r'^api/obtain-auth-token/$', obtain_auth_token)
-]

@@ -2,6 +2,7 @@ import collections
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
 from django.db.models import Q
 from elasticsearch_dsl import Search
@@ -65,12 +66,22 @@ class Product(models.Model):
     category = property(lambda self: self.instance_model.model.category)
 
     def __init__(self, *args, **kwargs):
+        self._specs = None
         super(Product, self).__init__(*args, **kwargs)
 
     @property
     def specs(self):
-        return self.es_search().filter(
-            'term', product_id=self.id).execute()[0].to_dict()
+        if not self._specs:
+            self._specs = self.es_search().filter(
+                'term', product_id=self.id).execute()[0].to_dict()
+        return self._specs
+
+    @property
+    def picture_url(self):
+        specs = self.specs
+        if 'picture' in specs:
+            return default_storage.url(specs['picture'])
+        return None
 
     def __str__(self):
         return str(self.instance_model)

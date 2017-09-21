@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django_premailer',
     'metamodel',
     'solotodo',
+    'category_templates',
     'mailing'
 ]
 

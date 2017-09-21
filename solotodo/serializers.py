@@ -82,7 +82,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Product
         fields = ('url', 'id', 'name', 'category', 'creation_date',
-                  'last_updated', 'specs')
+                  'last_updated', 'picture_url', 'specs')
 
 
 class NestedProductSerializer(serializers.HyperlinkedModelSerializer):
@@ -184,8 +184,8 @@ class StoreUpdateLogSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = StoreUpdateLog
-        fields = ('url', 'id', 'store', 'categories', 'status', 'creation_date',
-                  'last_updated', 'discovery_url_concurrency',
+        fields = ('url', 'id', 'store', 'categories', 'status',
+                  'creation_date', 'last_updated', 'discovery_url_concurrency',
                   'products_for_url_concurrency', 'use_async', 'registry_file',
                   'available_products_count', 'unavailable_products_count',
                   'discovery_urls_without_products_count')

@@ -20,7 +20,7 @@ class CustomProductOrderingFilter(OrderingFilter):
 
                 if order in ['name', '-name']:
                     new_order = order.replace(
-                        'name', 'instance_model__unicode_value')
+                        'name', 'instance_model')
 
                 if order in ['category', '-category']:
                     new_order = order.replace(

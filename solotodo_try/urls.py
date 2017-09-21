@@ -15,10 +15,19 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
+from rest_framework.authtoken.views import obtain_auth_token
+from solotodo.router import router as solotodo_router
+from category_templates.router import router as category_templates_router
+from .custom_default_router import CustomDefaultRouter
 
+router = CustomDefaultRouter()
+router.extend(solotodo_router)
+router.extend(category_templates_router)
 
 urlpatterns = [
-    url(r'^', include('solotodo.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'^metamodel/', include('metamodel.urls')),
+    url(r'^api/', include(router.urls)),
+    url(r'^api/api-auth/', include('rest_framework.urls')),
+    url(r'^api/obtain-auth-token/$', obtain_auth_token)
 ]

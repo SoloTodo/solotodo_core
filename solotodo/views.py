@@ -523,3 +523,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = ProductFilterSet
     ordering_fields = None
     pagination_class = ProductPagination
+
+    @detail_route()
+    def available_entities(self, request, pk):
+        product = self.get_object()
+        available_entities = product.entity_set.get_available()
+        serializer = EntitySerializer(available_entities, many=True,
+                                      context={'request': request})
+        return Response(serializer.data)

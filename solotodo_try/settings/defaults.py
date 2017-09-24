@@ -97,7 +97,7 @@ WSGI_APPLICATION = 'solotodo_try.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'solotodo_try',
     }
 }

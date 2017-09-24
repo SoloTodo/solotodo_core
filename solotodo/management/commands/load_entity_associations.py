@@ -32,6 +32,14 @@ class Command(BaseCommand):
                     print('More than one entity found for URL')
                     continue
                 entity = entity[0]
+
+                if entity.product_id == association_data['product'] \
+                        and entity.cell_plan_id == association_data[
+                            'secondary_product'] \
+                        and entity.last_association_user_id == \
+                            association_data['user']:
+                    continue
+
                 entity.product_id = association_data['product']
                 entity.cell_plan_id = association_data['secondary_product']
                 entity.last_association_user_id = association_data['user']

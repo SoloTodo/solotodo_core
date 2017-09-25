@@ -12,7 +12,7 @@ class ProductForm(forms.Form):
 
         products = Product.objects\
             .filter_by_category(category)\
-            .filter_by_user_perms(user)
+            .filter_by_user_perms(user, 'view_product')
 
         form.fields['product'].queryset = products
         return form

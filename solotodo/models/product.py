@@ -44,9 +44,16 @@ class ProductQuerySet(models.QuerySet):
         matching_product_ids = [r.product_id for r in es_search.execute()]
         return self.filter(pk__in=matching_product_ids)
 
-    def filter_by_user_perms(self, user):
+    def filter_by_user_perms(self, user, permission):
+        synth_permissions = {
+            'view_product': 'view_category'
+        }
+
+        assert permission in synth_permissions
+
         return self.filter_by_category(
-            Category.objects.filter_by_user_perms(user)
+            Category.objects.filter_by_user_perms(
+                user, synth_permissions[permission])
         )
 
 

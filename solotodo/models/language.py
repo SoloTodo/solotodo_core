@@ -10,3 +10,4 @@ class Language(models.Model):
 
     class Meta:
         app_label = 'solotodo'
+        ordering = ('name',)

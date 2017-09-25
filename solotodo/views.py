@@ -8,7 +8,6 @@ from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
 from geoip2.errors import AddressNotFoundError
-from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import list_route, detail_route
 from rest_framework import exceptions
@@ -23,19 +22,23 @@ from solotodo.decorators import detail_permission
 from solotodo.drf_custom_ordering import CustomProductOrderingFilter, \
     CustomEntityOrderingFilter
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
+from solotodo.filter_querysets import create_category_filter, \
+    create_store_filter
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
-    ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet
+    ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
+    EntityVisitFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_state_form import EntityStateForm
+from solotodo.forms.entity_visit_grouping_form import EntityVisitGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, \
-    EntityState
+    EntityState, ApiClient, EntityVisit
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
-    ProductPagination, UserPagination
+    ProductPagination, UserPagination, EntityVisitPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
@@ -43,7 +46,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
     EntityEventValueSerializer, \
     EntityStateSerializer, MyUserSerializer, EntityHistoryPartialSerializer, \
-    EntityHistoryFullSerializer
+    EntityHistoryFullSerializer, ApiClientSerializer, EntityVisitSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -84,6 +87,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(payload.data)
 
 
+class ApiClientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = ApiClient.objects.all()
+    serializer_class = ApiClientSerializer
+
+
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Language.objects.all()
     serializer_class = LanguageSerializer
@@ -114,8 +122,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
     serializer_class = CategorySerializer
 
     def get_queryset(self):
-        return get_objects_for_user(self.request.user, 'view_category',
-                                    klass=Category)
+        return create_category_filter()(self.request)
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -167,9 +174,8 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         serializer = StoreScraperSerializer(
             store,
             context={'request': request})
-        available_categories = get_objects_for_user(
-            request.user, 'update_category_pricing',
-            store.scraper_categories())
+        available_categories = create_category_filter(
+            'update_category_pricing', store.scraper_categories())(request)
 
         result = serializer.data
         result['categories'] = [
@@ -245,8 +251,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def latest(self, request, *args, **kwargs):
-        stores = get_objects_for_user(
-            self.request.user, 'view_store_update_logs', klass=Store)
+        stores = create_store_filter('view_store_update_logs')(self.request)
 
         result = {}
 
@@ -531,3 +536,23 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = EntitySerializer(available_entities, many=True,
                                       context={'request': request})
         return Response(serializer.data)
+
+
+class EntityVisitViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = EntityVisit.objects.all()
+    serializer_class = EntityVisitSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_class = EntityVisitFilterSet
+    pagination_class = EntityVisitPagination
+
+    @list_route()
+    def grouped(self, request):
+        filterset = EntityVisitFilterSet(
+            data=request.query_params,
+            request=request)
+
+        form = EntityVisitGroupingForm(request.query_params)
+
+        if form.is_valid():
+            result = form.aggregate_visits(filterset.qs)
+            return Response(result)

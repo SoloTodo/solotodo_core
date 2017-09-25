@@ -6,8 +6,8 @@ from solotodo.models.category_tier import CategoryTier
 
 
 class CategoryQuerySet(models.QuerySet):
-    def filter_by_user_perms(self, user):
-        return get_objects_for_user(user, 'view_category', self)
+    def filter_by_user_perms(self, user, permission):
+        return get_objects_for_user(user, permission, self)
 
 
 class Category(models.Model):
@@ -44,4 +44,6 @@ class Category(models.Model):
              'Is staff of the category (may also require other permissions)'],
             ['update_category_pricing',
              'Can update the pricing of the category\'s entities'],
+            ['view_category_entity_visits',
+             'View the entity visits associated to this category']
         )

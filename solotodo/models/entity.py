@@ -1,6 +1,5 @@
 import json
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
 from django.db.models import Q
@@ -27,6 +26,28 @@ class EntityQueryset(models.QuerySet):
 
     def get_inactive(self):
         return self.filter(active_registry__isnull=True)
+
+    def filter_by_user_perms(self, user, permission):
+        synth_permissions = {
+            'view_entity': {
+                'store': 'store_view_entity',
+                'category': 'category_view_entity',
+            }
+        }
+
+        assert permission in synth_permissions
+
+        permissions = synth_permissions[permission]
+
+        stores_with_permissions = Store.objects.filter_by_user_perms(
+            user, permissions['store'])
+        categories_with_permissions = Category.objects.filter_by_user_perms(
+            user, permissions['category'])
+
+        return self.filter(
+            store__in=stores_with_permissions,
+            category__in=categories_with_permissions,
+        )
 
 
 class Entity(models.Model):
@@ -367,6 +388,7 @@ class Entity(models.Model):
 
     class Meta:
         app_label = 'solotodo'
+        ordering = ('creation_date', )
         unique_together = ('store', 'key')
         permissions = [
             ('backend_list_entities', 'Can view entity list in backend'),

@@ -1,12 +1,11 @@
-import time
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django_filters import rest_framework
 
-from solotodo.filter_querysets import stores__view_store_update_logs, \
-    categories__view, stores__view
+from solotodo.filter_querysets import create_store_filter, \
+    create_category_filter, create_product_filter, create_entity_filter
 from solotodo.models import Entity, StoreUpdateLog, \
-    Product, EntityHistory, Country, Store, StoreType
+    Product, EntityHistory, Country, Store, StoreType, EntityVisit, ApiClient
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -40,10 +39,8 @@ class StoreFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        parent = super(StoreFilterSet, self).qs
-        if self.request:
-            return stores__view(self.request, parent)
-        return parent
+        qs = super(StoreFilterSet, self).qs
+        return create_store_filter(qs=qs)(self.request)
 
     class Meta:
         model = Store
@@ -53,12 +50,11 @@ class StoreFilterSet(rest_framework.FilterSet):
 class StoreUpdateLogFilterSet(rest_framework.FilterSet):
     @property
     def qs(self):
-        parent = super(StoreUpdateLogFilterSet, self).qs
-        if self.request:
-            stores_with_permission = stores__view_store_update_logs(
-                self.request)
-            return parent.filter(store__in=stores_with_permission)
-        return parent
+        qs = super(StoreUpdateLogFilterSet, self).qs
+        stores_with_permission = create_store_filter(
+            'view_store_update_logs')(self.request)
+        qs = qs.filter(store__in=stores_with_permission)
+        return qs
 
     class Meta:
         model = StoreUpdateLog
@@ -67,12 +63,12 @@ class StoreUpdateLogFilterSet(rest_framework.FilterSet):
 
 class EntityFilterSet(rest_framework.FilterSet):
     stores = rest_framework.ModelMultipleChoiceFilter(
-        queryset=stores__view,
+        queryset=create_store_filter(),
         name='store',
         label='Stores'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
-        queryset=categories__view,
+        queryset=create_category_filter(),
         name='category',
         label='Categories'
     )
@@ -85,16 +81,14 @@ class EntityFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        parent = super(EntityFilterSet, self).qs.select_related(
+        qs = super(EntityFilterSet, self).qs.select_related(
             'active_registry', 'product__instance_model')
-        if self.request:
-            categories_with_permission = categories__view(self.request)
-            stores_with_permission = stores__view(self.request)
+        categories_with_permission = create_category_filter()(self.request)
+        stores_with_permission = create_store_filter()(self.request)
 
-            return parent.filter(
-                Q(category__in=categories_with_permission) &
-                Q(store__in=stores_with_permission))
-        return parent
+        return qs.filter(
+            Q(category__in=categories_with_permission) &
+            Q(store__in=stores_with_permission))
 
     def _is_available(self, queryset, name, value):
         if value:
@@ -118,7 +112,7 @@ class EntityFilterSet(rest_framework.FilterSet):
 
 class ProductFilterSet(rest_framework.FilterSet):
     categories = rest_framework.ModelMultipleChoiceFilter(
-        queryset=categories__view,
+        queryset=create_category_filter(),
         name='instance_model__model__category',
         label='Categories'
     )
@@ -128,7 +122,7 @@ class ProductFilterSet(rest_framework.FilterSet):
         method='_availability_countries'
     )
     availability_stores = rest_framework.ModelMultipleChoiceFilter(
-        queryset=stores__view,
+        queryset=create_store_filter(),
         label='Available in stores',
         method='_availability_stores'
     )
@@ -145,13 +139,11 @@ class ProductFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        parent = super(ProductFilterSet, self).qs.select_related(
+        qs = super(ProductFilterSet, self).qs.select_related(
             'instance_model')
-        if self.request:
-            categories_with_permission = categories__view(self.request)
-
-            parent = parent.filter_by_category(categories_with_permission)
-        return parent.select_related('instance_model__model__category')
+        categories_with_permission = create_category_filter()(self.request)
+        qs = qs.filter_by_category(categories_with_permission)
+        return qs.select_related('instance_model__model__category')
 
     def _availability_countries(self, queryset, name, value):
         if value:
@@ -180,16 +172,62 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        parent = super(EntityHistoryFilterSet, self).qs.select_related()
-        if self.request:
-            categories_with_permission = categories__view(self.request)
-            stores_with_permission = stores__view(self.request)
+        qs = super(EntityHistoryFilterSet, self).qs.select_related()
+        categories_with_permission = create_category_filter()(self.request)
+        stores_with_permission = create_store_filter()(self.request)
 
-            return parent.filter(
-                Q(entity__category__in=categories_with_permission) &
-                Q(entity__store__in=stores_with_permission))
-        return parent
+        return qs.filter(
+            Q(entity__category__in=categories_with_permission) &
+            Q(entity__store__in=stores_with_permission))
 
     class Meta:
         model = EntityHistory
+        fields = []
+
+
+class EntityVisitFilterSet(rest_framework.FilterSet):
+    timestamp = rest_framework.DateTimeFromToRangeFilter(
+        name='timestamp'
+    )
+    stores = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_store_filter('view_store_entity_visits'),
+        name='entity_history__entity__store',
+        label='Stores'
+    )
+    products = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_product_filter(),
+        name='entity_history__entity__product',
+        label='Products'
+    )
+    api_clients = rest_framework.ModelMultipleChoiceFilter(
+        queryset=ApiClient.objects.all(),
+        name='api_client',
+        label='API Clients'
+    )
+    categories = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_category_filter('view_category_entity_visits'),
+        name='entity_history__entity__category',
+        label='Categories'
+    )
+    countries = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Country.objects.all(),
+        name='entity_history__entity__store__country',
+        label='Countries'
+    )
+    entities = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_entity_filter(),
+        name='entity_history__entity',
+        label='Entities'
+    )
+
+    @property
+    def qs(self):
+        qs = super(EntityVisitFilterSet, self).qs.select_related()
+        if self.request:
+            qs = qs.filter_by_user_perms(self.request.user,
+                                         'view_entity_visit')
+        return qs
+
+    class Meta:
+        model = EntityVisit
         fields = []

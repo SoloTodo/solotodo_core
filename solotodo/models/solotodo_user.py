@@ -10,6 +10,7 @@ from .number_format import NumberFormat
 from .country import Country
 from .currency import Currency
 from .language import Language
+from .store import Store
 
 
 class SoloTodoUserQuerySet(models.QuerySet):
@@ -28,6 +29,10 @@ class SoloTodoUser(AbstractEmailUser):
                                           null=True)
     preferred_number_format = models.ForeignKey(
         NumberFormat, blank=True, null=True)
+    preferred_store = models.ForeignKey(
+        Store, blank=True, null=True
+    )
+
     permissions = property(lambda self: sorted(self.get_all_permissions()))
 
     objects = EmailUserManager.from_queryset(SoloTodoUserQuerySet)()

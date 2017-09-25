@@ -3,10 +3,9 @@ from django.contrib import admin
 from codemirror import CodeMirrorTextarea
 
 
-from .models import CategoryTemplateTarget, CategoryTemplatePurpose, \
+from .models import CategoryTemplatePurpose, \
     CategoryTemplate
 
-admin.site.register(CategoryTemplateTarget)
 admin.site.register(CategoryTemplatePurpose)
 
 
@@ -32,7 +31,7 @@ class CategoryTemplateModelForm(forms.ModelForm):
 
 class CategoryTemplateModelAdmin(admin.ModelAdmin):
     form = CategoryTemplateModelForm
-    list_filter = ['target', 'purpose', 'category']
+    list_filter = ['api_client', 'purpose', 'category']
 
 
 admin.site.register(CategoryTemplate, CategoryTemplateModelAdmin)

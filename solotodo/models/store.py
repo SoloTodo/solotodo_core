@@ -5,6 +5,7 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
+from guardian.shortcuts import get_objects_for_user
 
 from .entity_state import EntityState
 from .store_type import StoreType
@@ -16,6 +17,11 @@ from storescraper.product import Product as StorescraperProduct
 from storescraper.utils import get_store_class_by_name
 
 
+class StoreQuerySet(models.QuerySet):
+    def filter_by_user_perms(self, user, permission):
+        return get_objects_for_user(user, permission, self)
+
+
 class Store(models.Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)
     country = models.ForeignKey(Country)
@@ -24,6 +30,8 @@ class Store(models.Model):
     storescraper_extra_args = models.CharField(max_length=255, null=True,
                                                blank=True)
     type = models.ForeignKey(StoreType)
+
+    objects = StoreQuerySet.as_manager()
 
     scraper = property(
         lambda self: get_store_class_by_name(self.storescraper_class))
@@ -261,5 +269,9 @@ class Store(models.Model):
             ['update_store_pricing', 'Can update the store pricing'],
             ['is_store_staff',
              'Is staff of the store (may require additional permissions)'],
+            ('view_store_entity_visits',
+             'View the entity visits associated to this store'),
+            # "Backend" permissions are used exclusively for UI purposes, they
+            # are not used at the API level
             ['backend_list_stores', 'Can view store list in backend'],
         )

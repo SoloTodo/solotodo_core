@@ -5,20 +5,15 @@ from rest_framework.response import Response
 
 from category_templates.filters import CategoryTemplateFilterSet
 from category_templates.models import CategoryTemplatePurpose, \
-    CategoryTemplateTarget, CategoryTemplate
+    CategoryTemplate
 from category_templates.serializers import CategoryTemplatePurposeSerializer, \
-    CategoryTemplateTargetSerializer, CategoryTemplateSerializer
+    CategoryTemplateSerializer
 from solotodo.forms.product_form import ProductForm
 
 
 class CategoryTemplatePurposeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CategoryTemplatePurpose.objects.all()
     serializer_class = CategoryTemplatePurposeSerializer
-
-
-class CategoryTemplateTargetViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = CategoryTemplateTarget.objects.all()
-    serializer_class = CategoryTemplateTargetSerializer
 
 
 class CategoryTemplateViewSet(viewsets.ReadOnlyModelViewSet):

@@ -55,4 +55,4 @@ class EntityLog(models.Model):
 
     class Meta:
         app_label = 'solotodo'
-        ordering = ['-pk']
+        ordering = ('entity', 'creation_date')

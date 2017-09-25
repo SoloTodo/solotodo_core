@@ -1,11 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_framework.fields import empty
-from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
-    EntityState
+    EntityState, EntityVisit, ApiClient
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -13,6 +11,12 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
         model = get_user_model()
         fields = ('url', 'id', 'email', 'first_name', 'last_name',
                   'date_joined',)
+
+
+class ApiClientSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = ApiClient
+        fields = ('url', 'id', 'name', 'url')
 
 
 class MyUserSerializer(serializers.HyperlinkedModelSerializer):
@@ -24,7 +28,7 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'detail_url', 'email', 'first_name',
                   'last_name', 'preferred_language', 'preferred_country',
                   'preferred_currency', 'preferred_number_format',
-                  'date_joined', 'permissions')
+                  'preferred_store', 'date_joined', 'permissions')
         read_only_fields = ('email', 'first_name', 'last_name',
                             'permissions')
 
@@ -202,3 +206,9 @@ class EntityEventUserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ['url', 'id', 'full_name']
+
+
+class EntityVisitSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = EntityVisit
+        fields = ['url', 'id', 'user', 'ip']

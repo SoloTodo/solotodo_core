@@ -7,7 +7,7 @@ from rest_framework.authtoken.models import Token
 from metamodel.models import MetaModel
 from metamodel.signals import instance_model_saved
 
-
+from .api_client import ApiClient
 from .number_format import NumberFormat
 from .language import Language
 from .solotodo_user import SoloTodoUser
@@ -23,6 +23,7 @@ from .entity import Entity
 from .entity_history import EntityHistory
 from .entity_log import EntityLog
 from .store_update_log import StoreUpdateLog
+from .entity_visit import EntityVisit
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

@@ -1,21 +1,17 @@
 from django_filters import rest_framework
 
 from category_templates.models import CategoryTemplate
-from solotodo.filter_querysets import categories__view
-from solotodo.models import Category
+from solotodo.filter_querysets import create_category_filter
 
 
 class CategoryTemplateFilterSet(rest_framework.FilterSet):
     @property
     def qs(self):
-        parent = super(CategoryTemplateFilterSet, self).qs
-        if self.request:
-            parent = parent.filter(
-                category__in=Category.objects.filter_by_user_perms(
-                    self.request.user))
-
-        return parent
+        qs = super(CategoryTemplateFilterSet, self).qs
+        categories_with_permission = create_category_filter()(self.request)
+        qs = qs.filter(category__in=categories_with_permission)
+        return qs
 
     class Meta:
         model = CategoryTemplate
-        fields = ('category', 'purpose', 'target')
+        fields = ('category', 'purpose', 'api_client')

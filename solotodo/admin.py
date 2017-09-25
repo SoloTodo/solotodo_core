@@ -8,7 +8,7 @@ from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
-    StoreType, CategoryTier, NumberFormat, EntityLog, EntityState
+    StoreType, CategoryTier, NumberFormat, EntityLog, EntityState, ApiClient
 
 
 class PermissionModelAdmin(admin.ModelAdmin):
@@ -16,6 +16,13 @@ class PermissionModelAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Permission, PermissionModelAdmin)
+
+
+class ApiClientModelAdmin(admin.ModelAdmin):
+    list_display = ['__str__', 'url']
+
+
+admin.site.register(ApiClient, ApiClientModelAdmin)
 admin.site.register(Language)
 admin.site.register(Country)
 admin.site.register(Currency)
@@ -87,7 +94,8 @@ class SoloTodoUserAdmin(EmailUserAdmin):
                     'preferred_language',
                     'preferred_currency',
                     'preferred_country',
-                    'preferred_number_format')}),
+                    'preferred_number_format',
+                    'preferred_store')}),
                  )
 
 

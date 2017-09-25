@@ -81,8 +81,8 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Product
-        fields = ('url', 'id', 'name', 'category', 'creation_date',
-                  'last_updated', 'picture_url', 'specs')
+        fields = ('url', 'id', 'name', 'category', 'instance_model_id',
+                  'creation_date', 'last_updated', 'picture_url', 'specs')
 
 
 class NestedProductSerializer(serializers.HyperlinkedModelSerializer):

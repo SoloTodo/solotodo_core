@@ -1,4 +1,5 @@
 from django.db import models
+from django.template import Template, Context
 
 from solotodo.models import Category
 
@@ -31,6 +32,11 @@ class CategoryTemplate(models.Model):
 
     def __str__(self):
         return '{} - {} - {}'.format(self.category, self.target, self.purpose)
+
+    def render(self, product):
+        template = Template(self.body)
+        context = Context(product.specs)
+        return template.render(context)
 
     class Meta:
         ordering = ('category', 'target', 'purpose')

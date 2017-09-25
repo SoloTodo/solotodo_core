@@ -9,26 +9,16 @@ from elasticsearch_dsl import Search
 
 from metamodel.models import InstanceModel
 
+from .category import Category
+
 
 class ProductQuerySet(models.QuerySet):
-    def filter_by_category(self, category):
+    def filter_by_category(self, category_or_categories):
         lookup = 'instance_model__model__category'
-        if isinstance(category, collections.Iterable):
+        if isinstance(category_or_categories, collections.Iterable):
             lookup += '__in'
 
-        return self.filter(**{lookup: category})
-
-    def prefetch_specs(self):
-        es_search = Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
-        es_search = es_search.filter('terms', product_id=[p.id for p in self])
-        es_products_dict = {
-            int(e['_id']): e['_source']
-            for e in es_search[:self.count()].execute().
-            to_dict()['hits']['hits']}
-        for product in self:
-            product.SPECS_CACHE = es_products_dict[product.id]
-
-        return self
+        return self.filter(**{lookup: category_or_categories})
 
     def filter_by_availability_in_countries(self, countries):
         return self.filter(
@@ -53,6 +43,11 @@ class ProductQuerySet(models.QuerySet):
                 'operator': 'and'})[:self.count()]
         matching_product_ids = [r.product_id for r in es_search.execute()]
         return self.filter(pk__in=matching_product_ids)
+
+    def filter_by_user_perms(self, user):
+        return self.filter_by_category(
+            Category.objects.filter_by_user_perms(user)
+        )
 
 
 class Product(models.Model):

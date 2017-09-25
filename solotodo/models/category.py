@@ -1,7 +1,13 @@
 from django.db import models
+from guardian.shortcuts import get_objects_for_user
 
 from metamodel.models import MetaModel
 from solotodo.models.category_tier import CategoryTier
+
+
+class CategoryQuerySet(models.QuerySet):
+    def filter_by_user_perms(self, user):
+        return get_objects_for_user(user, 'view_category', self)
 
 
 class Category(models.Model):
@@ -21,6 +27,8 @@ class Category(models.Model):
         max_length=255, null=True, blank=True)
     detail_bucket_key_fields = models.CharField(
         max_length=255, null=True, blank=True)
+
+    objects = CategoryQuerySet.as_manager()
 
     def __str__(self):
         return self.name

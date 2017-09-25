@@ -42,7 +42,7 @@ def additional_es_fields(instance_model, elastic_search_original):
 
     if m == 'Television':
         result['pretty_usb_ports'] = format_optional_field(
-            elastic_search_original['usb_ports'], 'No posee')
+            elastic_search_original['usb_ports'], value_if_false='No posee')
         result['pretty_video_ports'] = \
             pretty_video_ports(elastic_search_original)
         result['model_name'] = u'{} {}'.format(
@@ -65,7 +65,7 @@ def additional_es_fields(instance_model, elastic_search_original):
 
     if m == 'OpticalDiskPlayer':
         result['pretty_usb_ports'] = format_optional_field(
-            elastic_search_original['usb_ports'], 'No posee')
+            elastic_search_original['usb_ports'], value_if_false='No posee')
         return result
 
     if m == 'Oven':
@@ -98,7 +98,7 @@ def additional_es_fields(instance_model, elastic_search_original):
 
     if m == 'StereoSystem':
         result['pretty_usb_ports'] = format_optional_field(
-            elastic_search_original['usb_ports'], 'No posee')
+            elastic_search_original['usb_ports'], value_if_false='No posee')
         return result
 
     if m == 'UsbFlashDrive':

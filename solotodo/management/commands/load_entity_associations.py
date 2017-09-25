@@ -37,7 +37,7 @@ class Command(BaseCommand):
                         and entity.cell_plan_id == association_data[
                             'secondary_product'] \
                         and entity.last_association_user_id == \
-                            association_data['user']:
+                        association_data['user']:
                     continue
 
                 entity.product_id = association_data['product']

@@ -1,11 +1,11 @@
 import collections
 
 
-def iterable_to_dict(iterable_or_model, field):
+def iterable_to_dict(iterable_or_model, field='id'):
     if not isinstance(iterable_or_model, collections.Iterable):
         iterable_or_model = iterable_or_model.objects.all()
 
-    return {getattr(e, field): e for e in iterable_or_model}
+    return {getattr(e, field, e[field]): e for e in iterable_or_model}
 
 
 # REF: https://stackoverflow.com/questions/4581789/how-do-i-get-user-ip-

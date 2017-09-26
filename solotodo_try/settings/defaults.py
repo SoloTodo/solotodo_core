@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     'metamodel',
     'solotodo',
     'category_templates',
+    'reports',
     'mailing'
 ]
 

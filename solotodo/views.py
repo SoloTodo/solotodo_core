@@ -26,9 +26,10 @@ from solotodo.filter_querysets import create_category_filter, \
     create_store_filter
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
-    EntityVisitFilterSet
+    EntityVisitFilterSet, EntitySalesFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
+from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
 from solotodo.forms.entity_state_form import EntityStateForm
 from solotodo.forms.entity_visit_grouping_form import EntityVisitGroupingForm
 from solotodo.forms.ip_form import IpForm
@@ -519,6 +520,28 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         )
         return Response(serializer.data)
 
+    @list_route()
+    def estimated_sales(self, request):
+        filterset = EntitySalesFilterSet(
+            queryset=self.get_queryset(),
+            data=request.query_params,
+            request=request)
+
+        form = EntityEstimatedSalesForm(request.query_params)
+
+        if form.is_valid():
+            result = filterset.estimated_sales(
+                request,
+                form.cleaned_data['timestamp_0'],
+                form.cleaned_data['timestamp_1'],
+                form.cleaned_data['limit'],
+            )
+
+            return Response(result)
+        else:
+            return Response({'detail': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
@@ -554,5 +577,8 @@ class EntityVisitViewSet(viewsets.ReadOnlyModelViewSet):
         form = EntityVisitGroupingForm(request.query_params)
 
         if form.is_valid():
-            result = form.aggregate_visits(filterset.qs)
+            result = form.aggregate_visits(request, filterset.qs)
             return Response(result)
+        else:
+            return Response({'detail': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)

@@ -1,5 +1,6 @@
 import json
 
+from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
 from django.db.models import Q
@@ -30,9 +31,13 @@ class EntityQueryset(models.QuerySet):
     def filter_by_user_perms(self, user, permission):
         synth_permissions = {
             'view_entity': {
-                'store': 'store_view_entity',
-                'category': 'category_view_entity',
-            }
+                'store': 'view_store',
+                'category': 'view_category',
+            },
+            'view_entity_stocks': {
+                'store': 'view_store_stocks',
+                'category': 'view_category_stocks',
+            },
         }
 
         assert permission in synth_permissions
@@ -48,6 +53,52 @@ class EntityQueryset(models.QuerySet):
             store__in=stores_with_permissions,
             category__in=categories_with_permissions,
         )
+
+    def estimated_sales(self, start_date=None, end_date=None,
+                        sorting='normal_price'):
+        from solotodo.models import EntityHistory
+
+        ehs = EntityHistory.objects.filter(entity__in=self, stock__gt=0)
+        if start_date:
+            ehs = ehs.filter(timestamp__gte=start_date)
+        if end_date:
+            ehs = ehs.filter(timestamp__lte=end_date)
+
+        ehs = ehs.order_by('entity', 'timestamp').select_related('entity')
+
+        movements_by_entity = {}
+        last_eh_seen = None
+
+        for eh in ehs:
+            if not last_eh_seen or last_eh_seen.entity != eh.entity:
+                movements_by_entity[eh.entity] = {
+                    'stock': 0,
+                    'normal_price': Decimal(0),
+                    'offer_price': Decimal(0)
+                }
+            else:
+                units_sold = last_eh_seen.stock - eh.stock
+                if units_sold > 0 and units_sold / last_eh_seen.stock < 0.1:
+                    movements_by_entity[eh.entity]['stock'] += units_sold
+                    movements_by_entity[eh.entity]['normal_price'] += \
+                        units_sold * last_eh_seen.normal_price
+                    movements_by_entity[eh.entity][
+                        'offer_price'] += units_sold * last_eh_seen.offer_price
+            last_eh_seen = eh
+
+        result_list = [
+            {
+                'entity': key,
+                'stock': value['stock'],
+                'normal_price': value['normal_price'],
+                'offer_price': value['offer_price']
+            }
+            for key, value in movements_by_entity.items()]
+
+        sorted_results = sorted(
+            result_list, key=lambda x: x[sorting], reverse=True)
+
+        return sorted_results
 
 
 class Entity(models.Model):

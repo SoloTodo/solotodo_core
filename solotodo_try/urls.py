@@ -18,11 +18,13 @@ from django.contrib import admin
 from rest_framework.authtoken.views import obtain_auth_token
 from solotodo.router import router as solotodo_router
 from category_templates.router import router as category_templates_router
+from reports.router import router as reports_router
 from .custom_default_router import CustomDefaultRouter
 
 router = CustomDefaultRouter()
 router.extend(solotodo_router)
 router.extend(category_templates_router)
+router.extend(reports_router)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

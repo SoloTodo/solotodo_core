@@ -6,6 +6,7 @@ from solotodo.filter_querysets import create_store_filter, \
     create_category_filter, create_product_filter, create_entity_filter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, EntityVisit, ApiClient
+from solotodo.serializers import EntityInlineSerializer
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -108,6 +109,50 @@ class EntityFilterSet(rest_framework.FilterSet):
     class Meta:
         model = Entity
         fields = ['is_visible', ]
+
+
+class EntitySalesFilterSet(rest_framework.FilterSet):
+    stores = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_store_filter('view_store_stocks'),
+        name='store',
+        label='Stores'
+    )
+    categories = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_category_filter('view_category_stocks'),
+        name='category',
+        label='Categories'
+    )
+
+    @property
+    def qs(self):
+        qs = super(EntitySalesFilterSet, self).qs.select_related(
+            'active_registry', 'product__instance_model')
+        if self.request:
+            qs = qs.filter_by_user_perms(
+                self.request.user, 'view_entity_stocks')
+        return qs
+
+    def estimated_sales(self, request, start_date, end_date, limit):
+        result = self.qs.estimated_sales(start_date, end_date)
+
+        if limit:
+            result = result[:limit]
+
+        entity_serializer = EntityInlineSerializer(
+            [e['entity'] for e in result],
+            many=True, context={'request': request})
+        entity_serialization_dict = {
+            e['id']: e for e in entity_serializer.data}
+
+        return [
+            {
+                'entity': entity_serialization_dict[entry['entity'].id],
+                'stock': entry['stock'],
+                'normal_price': entry['normal_price'],
+                'offer_price': entry['offer_price'],
+            }
+            for entry in result
+        ]
 
 
 class ProductFilterSet(rest_framework.FilterSet):

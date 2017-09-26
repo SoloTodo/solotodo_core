@@ -12,9 +12,9 @@ class EntityVisitQuerySet(models.QuerySet):
 
         synth_permissions = {
             'view_entity_visit': {
-                'store': 'store_view_entity_visits',
-                'category': 'category_view_entity_visits',
-                'api_client': 'api_client_view_entity_visits'
+                'store': 'view_store_entity_visits',
+                'category': 'view_category_entity_visits',
+                'api_client': 'view_api_client_entity_visits'
             }
         }
 

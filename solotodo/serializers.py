@@ -136,6 +136,21 @@ class EntityStateSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'name']
 
 
+class EntityInlineSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
+    product = NestedProductSerializer()
+
+    class Meta:
+        model = Entity
+        fields = (
+            'url',
+            'id',
+            'name',
+            'product',
+            'store'
+        )
+
+
 class EntitySerializer(serializers.HyperlinkedModelSerializer):
     active_registry = EntityHistorySerializer(read_only=True)
     product = NestedProductSerializer(read_only=True)

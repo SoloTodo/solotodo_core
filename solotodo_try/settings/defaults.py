@@ -137,7 +137,7 @@ LANGUAGES = [
     ('es', _('Spanish')),
 ]
 
-TIME_ZONE = 'America/Santiago'
+TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
@@ -172,7 +172,6 @@ GEOIP_PATH = BASE_DIR
 #############################################################################
 
 CELERY_ENABLE_UTC = True
-CELERY_TIMEZONE = 'America/Santiago'
 
 CELERY_BROKER_URL = 'amqp://solotodo_try:solotodo_try@localhost/solotodo_try'
 CELERY_RESULT_BACKEND = 'rpc://'

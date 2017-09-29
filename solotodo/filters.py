@@ -4,6 +4,7 @@ from django_filters import rest_framework
 
 from solotodo.filter_querysets import create_store_filter, \
     create_category_filter, create_product_filter, create_entity_filter
+from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, EntityVisit, ApiClient
 from solotodo.serializers import EntityInlineSerializer
@@ -155,6 +156,27 @@ class EntitySalesFilterSet(rest_framework.FilterSet):
         ]
 
 
+class EntityStaffFilterSet(rest_framework.FilterSet):
+    stores = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_store_filter('is_store_staff'),
+        name='store',
+        label='Stores'
+    )
+    categories = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_category_filter('is_category_staff'),
+        name='category',
+        label='Categories'
+    )
+
+    @property
+    def qs(self):
+        qs = super(EntityStaffFilterSet, self).qs
+        if self.request:
+            qs = qs.filter_by_user_perms(
+                self.request.user, 'is_entity_staff')
+        return qs
+
+
 class ProductFilterSet(rest_framework.FilterSet):
     categories = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_category_filter(),
@@ -171,10 +193,10 @@ class ProductFilterSet(rest_framework.FilterSet):
         label='Available in stores',
         method='_availability_stores'
     )
-    last_updated = rest_framework.DateTimeFromToRangeFilter(
+    last_updated = IsoDateTimeFromToRangeFilter(
         name='last_updated'
     )
-    creation_date = rest_framework.DateTimeFromToRangeFilter(
+    creation_date = IsoDateTimeFromToRangeFilter(
         name='creation_date'
     )
     search = rest_framework.CharFilter(
@@ -211,7 +233,7 @@ class ProductFilterSet(rest_framework.FilterSet):
 
 
 class EntityHistoryFilterSet(rest_framework.FilterSet):
-    timestamp = rest_framework.DateTimeFromToRangeFilter(
+    timestamp = IsoDateTimeFromToRangeFilter(
         name='timestamp'
     )
 
@@ -231,7 +253,7 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
 
 
 class EntityVisitFilterSet(rest_framework.FilterSet):
-    timestamp = rest_framework.DateTimeFromToRangeFilter(
+    timestamp = IsoDateTimeFromToRangeFilter(
         name='timestamp'
     )
     stores = rest_framework.ModelMultipleChoiceFilter(

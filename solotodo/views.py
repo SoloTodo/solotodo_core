@@ -26,7 +26,7 @@ from solotodo.filter_querysets import create_category_filter, \
     create_store_filter
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
-    EntityVisitFilterSet, EntitySalesFilterSet
+    EntityVisitFilterSet, EntitySalesFilterSet, EntityStaffFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
@@ -313,6 +313,40 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(serialized_data)
 
+    @list_route()
+    def estimated_sales(self, request):
+        filterset = EntitySalesFilterSet(
+            queryset=self.get_queryset(),
+            data=request.query_params,
+            request=request)
+
+        form = EntityEstimatedSalesForm(request.query_params)
+
+        if form.is_valid():
+            result = filterset.estimated_sales(
+                request,
+                form.cleaned_data['timestamp_0'],
+                form.cleaned_data['timestamp_1'],
+                form.cleaned_data['limit'],
+            )
+
+            return Response(result)
+        else:
+            return Response({'detail': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+    @list_route()
+    def conflicting(self, request):
+        filterset = EntityStaffFilterSet(
+            queryset=self.get_queryset(),
+            data=request.query_params,
+            request=request)
+
+        grouped_conflicting_entities = filterset.qs.get_conflicts()
+
+        import ipdb
+        ipdb.set_trace()
+
     @detail_route(methods=['post'])
     def register_staff_access(self, request, *args, **kwargs):
         entity = self.get_object()
@@ -519,28 +553,6 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             many=True
         )
         return Response(serializer.data)
-
-    @list_route()
-    def estimated_sales(self, request):
-        filterset = EntitySalesFilterSet(
-            queryset=self.get_queryset(),
-            data=request.query_params,
-            request=request)
-
-        form = EntityEstimatedSalesForm(request.query_params)
-
-        if form.is_valid():
-            result = filterset.estimated_sales(
-                request,
-                form.cleaned_data['timestamp_0'],
-                form.cleaned_data['timestamp_1'],
-                form.cleaned_data['limit'],
-            )
-
-            return Response(result)
-        else:
-            return Response({'detail': form.errors},
-                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):

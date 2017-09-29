@@ -38,6 +38,10 @@ class EntityQueryset(models.QuerySet):
                 'store': 'view_store_stocks',
                 'category': 'view_category_stocks',
             },
+            'is_entity_staff': {
+                'store': 'is_store_staff',
+                'category': 'is_category_staff',
+            }
         }
 
         assert permission in synth_permissions

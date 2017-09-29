@@ -122,7 +122,7 @@ class Store(models.Model):
                 raise
 
         scraped_products = scraped_products_data['products'] + \
-                           extra_products_data['products']
+            extra_products_data['products']
 
         discovery_urls_without_products = \
             scraped_products_data['discovery_urls_without_products'] + \

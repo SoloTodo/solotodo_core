@@ -58,17 +58,6 @@ class Store(models.Model):
 
         # First pass of product retrieval
 
-        products_task_signature = scraper.products_task.s(
-            self.storescraper_class,
-            categories=[c.storescraper_name for c in categories],
-            extra_args=extra_args,
-            discover_urls_concurrency=discover_urls_concurrency,
-            products_for_url_concurrency=products_for_url_concurrency,
-            use_async=use_async
-        )
-
-        products_task_signature.set(queue='storescraper_api')
-
         def log_update_error(exception):
             if update_log:
                 update_log.status = update_log.ERROR
@@ -82,13 +71,18 @@ class Store(models.Model):
                 update_log.registry_file = real_filename
                 update_log.save()
 
-        # Prevents Celery error for running a task inside another
-        with allow_join_result():
-            try:
-                scraped_products_data = products_task_signature.delay().get()
-            except Exception as e:
-                log_update_error(e)
-                raise
+        try:
+            scraped_products_data = scraper.products(
+                categories=[c.storescraper_name for c in categories],
+                extra_args=extra_args,
+                discover_urls_concurrency=discover_urls_concurrency,
+                products_for_url_concurrency=products_for_url_concurrency,
+                use_async=use_async
+
+            )
+        except Exception as e:
+            log_update_error(e)
+            raise
 
         # Second pass of product retrieval, for the products mis-catalogued
         # in the store
@@ -100,7 +94,7 @@ class Store(models.Model):
             # Exclude the entities that we already scraped previously. This
             # happens when categories is None and is sanitized to include
             # the categories of these entities.
-            key__in=[e['key'] for e in scraped_products_data['products']]
+            key__in=[e.key for e in scraped_products_data['products']]
         )
 
         extra_entities_args = [dict([
@@ -116,7 +110,7 @@ class Store(models.Model):
             use_async=use_async
         )
 
-        extra_products_task_signature.set(queue='storescraper_api')
+        extra_products_task_signature.set(queue='storescraper')
 
         # Prevents Celery error for running a task inside another
         with allow_join_result():
@@ -127,9 +121,8 @@ class Store(models.Model):
                 log_update_error(e)
                 raise
 
-        scraped_products = [StorescraperProduct.deserialize(p)
-                            for p in scraped_products_data['products'] +
-                            extra_products_data['products']]
+        scraped_products = scraped_products_data['products'] + \
+                           extra_products_data['products']
 
         discovery_urls_without_products = \
             scraped_products_data['discovery_urls_without_products'] + \

@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-celery multi start -A solotodo_try storescraper_discover_urls_for_category storescraper_products_for_url storescraper_api -Q:storescraper_discover_urls_for_category storescraper_discover_urls_for_category -c:storescraper_discover_urls_for_category 5 -Q:storescraper_products_for_url storescraper_products_for_url -c:storescraper_products_for_url 20 -Q:storescraper_api storescraper_api -c:storescraper_api 5 --logfile=solotodo_try/logs/celery/%n.log --pidfile=solotodo_try/pids/celery/%n.pid -E -l info
+celery multi start -A solotodo_try storescraper -Q:storescraper storescraper -c:storescraper 30 --logfile=solotodo_try/logs/celery/%n.log --pidfile=solotodo_try/pids/celery/%n.pid -E -l info

@@ -43,13 +43,14 @@ from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
-    StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
+    StoreUpdateLogSerializer, EntityFullSerializer, ProductSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
     EntityEventValueSerializer, \
     EntityStateSerializer, MyUserSerializer, EntityHistoryPartialSerializer, \
-    EntityHistoryFullSerializer, ApiClientSerializer, EntityVisitSerializer
+    EntityHistoryFullSerializer, ApiClientSerializer, EntityVisitSerializer, \
+    NestedProductSerializer
 from solotodo.tasks import store_update
-from solotodo.utils import get_client_ip
+from solotodo.utils import get_client_ip, iterable_to_dict
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -275,7 +276,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Entity.objects.all()
-    serializer_class = EntitySerializer
+    serializer_class = EntityFullSerializer
     pagination_class = EntityPagination
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        CustomEntityOrderingFilter)
@@ -296,7 +297,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             # handle publish result, status always present, result if
             # successful status.isError to see if error happened
 
-        serialized_data = EntitySerializer(
+        serialized_data = EntityFullSerializer(
             entity, context={'request': self.request}).data
         message = {
             'type': 'updateApiResourceObject',
@@ -336,16 +337,15 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
     @list_route()
-    def conflicting(self, request):
+    def conflicts(self, request):
         filterset = EntityStaffFilterSet(
             queryset=self.get_queryset(),
             data=request.query_params,
             request=request)
 
-        grouped_conflicting_entities = filterset.qs.get_conflicts()
+        serialized_conflicts = filterset.conflicts(request)
 
-        import ipdb
-        ipdb.set_trace()
+        return Response(serialized_conflicts)
 
     @detail_route(methods=['post'])
     def register_staff_access(self, request, *args, **kwargs):
@@ -568,8 +568,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def available_entities(self, request, pk):
         product = self.get_object()
         available_entities = product.entity_set.get_available()
-        serializer = EntitySerializer(available_entities, many=True,
-                                      context={'request': request})
+        serializer = EntityFullSerializer(available_entities, many=True,
+                                          context={'request': request})
         return Response(serializer.data)
 
 

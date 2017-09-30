@@ -3,9 +3,10 @@ import json
 from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.utils import timezone
 
+from solotodo.utils import iterable_to_dict
 from .product import Product
 from .currency import Currency
 from .category import Category
@@ -103,6 +104,56 @@ class EntityQueryset(models.QuerySet):
             result_list, key=lambda x: x[sorting], reverse=True)
 
         return sorted_results
+
+    def conflicts(self):
+        raw_conflicts = self.filter(product__isnull=False)\
+            .get_available()\
+            .values('store', 'product', 'cell_plan')\
+            .annotate(conflict_count=Count('pk')) \
+            .order_by('store', 'product', 'cell_plan') \
+            .filter(conflict_count__gt=1)
+
+        store_ids = set()
+        product_ids = set()
+
+        entities_query = Q()
+        for entry in raw_conflicts:
+            store_ids.add(entry['store'])
+            product_ids.add(entry['product'])
+            if entry['cell_plan']:
+                product_ids.add(entry['cell_plan'])
+
+            entities_query |= Q(store=entry['store']) & \
+                Q(product=entry['product']) & \
+                Q(cell_plan=entry['cell_plan'])
+
+        entities = Entity.objects.filter(entities_query).select_related()
+
+        entities_dict = {}
+        for entity in entities:
+            key = (entity.store_id, entity.product_id, entity.cell_plan_id)
+            if key not in entities_dict:
+                entities_dict[key] = []
+            entities_dict[key].append(entity)
+
+        stores_dict = iterable_to_dict(Store.objects.filter(pk__in=store_ids))
+        products_dict = iterable_to_dict(
+            Product.objects.filter(pk__in=product_ids).select_related(
+                'instance_model')
+        )
+        products_dict[None] = None
+
+        result = []
+        for entry in raw_conflicts:
+            result.append({
+                'store': stores_dict[entry['store']],
+                'product': products_dict[entry['product']],
+                'cell_plan': products_dict[entry['cell_plan']],
+                'entities': entities_dict[(entry['store'], entry['product'],
+                                           entry['cell_plan'])]
+            })
+
+        return result
 
 
 class Entity(models.Model):

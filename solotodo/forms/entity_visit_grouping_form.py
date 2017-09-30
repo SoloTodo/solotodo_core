@@ -4,7 +4,7 @@ from django.db.models import Count, Sum
 from rest_framework.reverse import reverse
 
 from solotodo.models import Store, Category, Entity
-from solotodo.serializers import EntitySerializer, EntityInlineSerializer
+from solotodo.serializers import EntityWithInlineProductSerializer
 
 
 def create_generic_serializer(view_name):
@@ -77,7 +77,8 @@ class EntityVisitGroupingForm(forms.Form):
             },
             'entity': {
                 'field': 'entity_history__entity',
-                'serializer': serializer_wrapper(EntityInlineSerializer),
+                'serializer': serializer_wrapper(
+                    EntityWithInlineProductSerializer),
                 'model': Entity
             }
         }

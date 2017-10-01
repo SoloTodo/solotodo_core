@@ -1,15 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django_filters import rest_framework
-from rest_framework.reverse import reverse
 
 from solotodo.filter_querysets import create_store_filter, \
     create_category_filter, create_product_filter, create_entity_filter
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, ApiClient
-from solotodo.serializers import EntityWithInlineProductSerializer, \
-    NestedProductSerializer, EntityMinimalSerializer
+from solotodo.serializers import EntityWithInlineProductSerializer
 
 
 class UserFilterSet(rest_framework.FilterSet):

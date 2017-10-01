@@ -30,14 +30,13 @@ from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
-from solotodo.forms.entity_state_form import EntityStateForm
+from solotodo.forms.entity_condition_form import EntityConditionForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    Category, StoreUpdateLog, Entity, Product, NumberFormat, \
-    EntityState, ApiClient, Lead
+    Category, StoreUpdateLog, Entity, Product, NumberFormat, ApiClient, Lead
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
@@ -45,12 +44,11 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
     StoreUpdateLogSerializer, EntityFullSerializer, ProductSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
-    EntityEventValueSerializer, \
-    EntityStateSerializer, MyUserSerializer, EntityHistoryPartialSerializer, \
-    EntityHistoryFullSerializer, ApiClientSerializer, LeadSerializer, \
-    NestedProductSerializer, EntityConflictSerializer
+    EntityEventValueSerializer, MyUserSerializer, \
+    EntityHistoryPartialSerializer, EntityHistoryFullSerializer, \
+    ApiClientSerializer, LeadSerializer, EntityConflictSerializer
 from solotodo.tasks import store_update
-from solotodo.utils import get_client_ip, iterable_to_dict
+from solotodo.utils import get_client_ip
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -107,11 +105,6 @@ class NumberFormatViewSet(viewsets.ReadOnlyModelViewSet):
 class StoreTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StoreType.objects.all()
     serializer_class = StoreTypeSerializer
-
-
-class EntityStateViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = EntityState.objects.all()
-    serializer_class = EntityStateSerializer
 
 
 class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -287,6 +280,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                      'cell_plan_name',
                      'part_number',
                      'sku',
+                     'ean',
                      'key',
                      'url',
                      'discovery_url')
@@ -471,23 +465,23 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
     @detail_route(methods=['post'])
-    def change_state(self, request, *args, **kwargs):
+    def change_condition(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
             raise PermissionDenied
 
-        form = EntityStateForm(request.data)
+        form = EntityConditionForm(request.data)
 
         if form.is_valid():
-            new_entity_state = form.cleaned_data['entity_state']
-            if new_entity_state == entity.state:
-                return Response({'detail': 'The new category must be '
+            new_condition = form.cleaned_data['condition']
+            if new_condition == entity.condition:
+                return Response({'detail': 'The new condition must be '
                                            'different from the original one'},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             entity.update_keeping_log(
                 {
-                    'state': new_entity_state,
+                    'condition': new_condition,
                     'last_staff_change': timezone.now(),
                     'last_staff_change_user': request.user,
                 },

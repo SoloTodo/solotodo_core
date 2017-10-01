@@ -18,7 +18,6 @@ from .category_tier import CategoryTier
 from .store import Store
 from .category import Category
 from .product import Product
-from .entity_state import EntityState
 from .entity import Entity
 from .entity_history import EntityHistory
 from .entity_log import EntityLog

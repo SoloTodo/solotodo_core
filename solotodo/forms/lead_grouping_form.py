@@ -5,7 +5,7 @@ from rest_framework.reverse import reverse
 
 from solotodo.models import Store, Category, Entity, Product
 from solotodo.serializers import EntityWithInlineProductSerializer, \
-    NestedProductSerializer, EntityMinimalSerializer
+    NestedProductSerializer
 
 
 def create_generic_serializer(view_name):

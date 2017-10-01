@@ -6,12 +6,13 @@ from django.db import models, IntegrityError
 from django.db.models import Q, Count
 from django.utils import timezone
 
+from gtin_fields import fields as gtin_fields
+
 from solotodo.utils import iterable_to_dict
 from .product import Product
 from .currency import Currency
 from .category import Category
 from .store import Store
-from .entity_state import EntityState
 
 
 class EntityQueryset(models.QuerySet):
@@ -161,7 +162,12 @@ class Entity(models.Model):
     category = models.ForeignKey(Category)
     scraped_category = models.ForeignKey(Category, related_name='+')
     currency = models.ForeignKey(Currency)
-    state = models.ForeignKey(EntityState)
+    condition = models.URLField(choices=[
+        ('https://schema.org/DamagedCondition', 'Damaged'),
+        ('https://schema.org/NewCondition', 'New'),
+        ('https://schema.org/RefurbishedCondition', 'Refurbished'),
+        ('https://schema.org/UsedCondition', 'Used')
+    ])
     product = models.ForeignKey(Product, null=True)
     cell_plan = models.ForeignKey(Product, null=True, related_name='+')
     active_registry = models.OneToOneField('EntityHistory', related_name='+',
@@ -172,6 +178,7 @@ class Entity(models.Model):
     part_number = models.CharField(max_length=50, null=True, blank=True,
                                    db_index=True)
     sku = models.CharField(max_length=50, null=True, blank=True, db_index=True)
+    ean = gtin_fields.EAN13Field(null=True, blank=True)
     key = models.CharField(max_length=256, db_index=True)
     url = models.URLField(max_length=512, db_index=True)
     discovery_url = models.URLField(max_length=512, db_index=True)
@@ -266,6 +273,7 @@ class Entity(models.Model):
                 'cell_plan_name': scraped_product.cell_plan_name,
                 'part_number': scraped_product.part_number,
                 'sku': scraped_product.sku,
+                'ean': scraped_product.ean,
                 'url': scraped_product.url,
                 'discovery_url': scraped_product.discovery_url,
                 'picture_urls': scraped_product.picture_urls_as_json(),
@@ -281,25 +289,20 @@ class Entity(models.Model):
 
     @classmethod
     def create_from_scraped_product(cls, scraped_product, store, category,
-                                    currency, states_dict=None):
+                                    currency):
         from solotodo.models import EntityHistory
-
-        if states_dict:
-            state = states_dict[scraped_product.state]
-        else:
-            state = EntityState.objects.get(
-                storescraper_name=scraped_product.state)
 
         new_entity = cls.objects.create(
             store=store,
             category=category,
             scraped_category=category,
             currency=currency,
-            state=state,
+            condition=scraped_product.condition,
             name=scraped_product.name,
             cell_plan_name=scraped_product.cell_plan_name,
             part_number=scraped_product.part_number,
             sku=scraped_product.sku,
+            ean=scraped_product.ean,
             key=scraped_product.key,
             url=scraped_product.url,
             discovery_url=scraped_product.discovery_url,

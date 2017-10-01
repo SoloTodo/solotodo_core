@@ -8,7 +8,7 @@ from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
-    StoreType, CategoryTier, NumberFormat, EntityLog, EntityState, ApiClient
+    StoreType, CategoryTier, NumberFormat, EntityLog, ApiClient
 
 
 class PermissionModelAdmin(admin.ModelAdmin):
@@ -27,7 +27,6 @@ admin.site.register(Language)
 admin.site.register(Country)
 admin.site.register(Currency)
 admin.site.register(NumberFormat)
-admin.site.register(EntityState)
 
 
 class EntityModelAdmin(admin.ModelAdmin):

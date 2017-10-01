@@ -1,10 +1,9 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
-    EntityState, Lead, ApiClient
+    Lead, ApiClient
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -131,12 +130,6 @@ class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
                   'cell_monthly_payment']
 
 
-class EntityStateSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = EntityState
-        fields = ['url', 'id', 'name']
-
-
 class EntityMinimalSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
 
@@ -198,7 +191,7 @@ class EntityFullSerializer(serializers.HyperlinkedModelSerializer):
             'id',
             'store',
             'category',
-            'state',
+            'condition',
             'scraped_category',
             'currency',
             'product',
@@ -208,6 +201,7 @@ class EntityFullSerializer(serializers.HyperlinkedModelSerializer):
             'cell_plan_name',
             'part_number',
             'sku',
+            'ean',
             'key',
             'external_url',
             'discovery_url',

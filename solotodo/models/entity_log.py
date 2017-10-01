@@ -1,9 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from gtin_fields import fields as gtin_fields
+
 from .entity import Entity
 from .category import Category
-from .entity_state import EntityState
 from .currency import Currency
 from .product import Product
 
@@ -18,13 +19,19 @@ class EntityLog(models.Model):
     scraped_category = models.ForeignKey(
         Category, related_name='+')
     currency = models.ForeignKey(Currency)
-    state = models.ForeignKey(EntityState)
+    condition = models.URLField(choices=[
+        ('https://schema.org/DamagedCondition', 'Damaged'),
+        ('https://schema.org/NewCondition', 'New'),
+        ('https://schema.org/RefurbishedCondition', 'Refurbished'),
+        ('https://schema.org/UsedCondition', 'Used')]
+    )
     product = models.ForeignKey(Product, null=True)
     cell_plan = models.ForeignKey(Product, null=True, related_name='+')
     name = models.CharField(max_length=256)
     cell_plan_name = models.CharField(max_length=50, null=True)
     part_number = models.CharField(max_length=50, null=True)
     sku = models.CharField(max_length=50, null=True)
+    ean = gtin_fields.EAN13Field(null=True, blank=True)
     url = models.URLField(max_length=512)
     discovery_url = models.URLField(max_length=512)
     picture_urls = models.TextField(null=True)
@@ -35,13 +42,14 @@ class EntityLog(models.Model):
         'category',
         'scraped_category',
         'currency',
-        'state',
+        'condition',
         'product',
         'cell_plan',
         'name',
         'cell_plan_name',
         'part_number',
         'sku',
+        'ean',
         'url',
         'discovery_url',
         'picture_urls',

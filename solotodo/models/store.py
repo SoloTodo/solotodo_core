@@ -7,7 +7,6 @@ from django.db.models import Q
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
-from .entity_state import EntityState
 from .store_type import StoreType
 from .country import Country
 from .category import Category
@@ -161,7 +160,6 @@ class Store(models.Model):
 
         categories_dict = iterable_to_dict(Category, 'storescraper_name')
         currencies_dict = iterable_to_dict(Currency, 'iso_code')
-        states_dict = iterable_to_dict(EntityState, 'storescraper_name')
 
         for entity in entities_to_be_updated:
             scraped_product_for_update = scraped_products_dict.pop(
@@ -187,7 +185,6 @@ class Store(models.Model):
                 self,
                 categories_dict[scraped_product.category],
                 currencies_dict[scraped_product.currency],
-                states_dict
             )
 
         if update_log:

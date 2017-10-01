@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'custom_user',
     'corsheaders',
     'django_premailer',
+    'gtin_fields',
     'metamodel',
     'solotodo',
     'category_templates',

@@ -36,7 +36,7 @@ class CustomProductOrderingFilter(OrderingFilter):
 
 class CustomEntityOrderingFilter(OrderingFilter):
 
-    allowed_custom_filters = ['id', 'name', 'store', 'sku', 'category',
+    allowed_custom_filters = ['id', 'name', 'store', 'sku', 'ean', 'category',
                               'product', 'cell_plan', 'normal_price',
                               'offer_price', 'creation_date', 'last_updated',
                               'last_association', 'last_staff_access',

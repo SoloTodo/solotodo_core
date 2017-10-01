@@ -139,7 +139,7 @@ class EntityQueryset(models.QuerySet):
         stores_dict = iterable_to_dict(Store.objects.filter(pk__in=store_ids))
         products_dict = iterable_to_dict(
             Product.objects.filter(pk__in=product_ids).select_related(
-                'instance_model')
+                'instance_model__model__category')
         )
         products_dict[None] = None
 
@@ -498,4 +498,6 @@ class Entity(models.Model):
         unique_together = ('store', 'key')
         permissions = [
             ('backend_list_entities', 'Can view entity list in backend'),
+            ('backend_view_entity_conflicts',
+             'Can view entity conflicts in backend'),
         ]

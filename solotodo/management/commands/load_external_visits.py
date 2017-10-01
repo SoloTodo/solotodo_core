@@ -6,7 +6,7 @@ from django.core.management import BaseCommand
 
 from guardian.shortcuts import get_anonymous_user
 
-from solotodo.models import EntityHistory, EntityVisit, SoloTodoUser
+from solotodo.models import EntityHistory, Lead, SoloTodoUser
 
 
 class Command(BaseCommand):
@@ -21,17 +21,17 @@ class Command(BaseCommand):
 
         users_dict = {u.id: u for u in SoloTodoUser.objects.all()}
 
-        external_visits = json.load(open('external_visits.json', 'r'))
-        external_visit_count = len(external_visits)
+        raw_leads = json.load(open('leads.json', 'r'))
+        lead_count = len(raw_leads)
 
         timezone = pytz.timezone('America/Santiago')
 
-        svs = []
+        leads = []
 
-        for idx, external_visit in enumerate(external_visits):
-            print('{}/{}'.format(idx+1, external_visit_count))
+        for idx, raw_lead in enumerate(raw_leads):
+            print('{}/{}'.format(idx+1, lead_count))
 
-            fields = external_visit['fields']
+            fields = raw_lead['fields']
 
             matching_eh = ehs_dict.get(
                 (fields['provider'], fields['product'],
@@ -43,13 +43,13 @@ class Command(BaseCommand):
                 user_id = anonymous_user.id
 
             if matching_eh:
-                sv = EntityVisit()
-                sv.entity_history_id = matching_eh.id
-                sv.timestamp = timezone.localize(
+                lead = Lead()
+                lead.entity_history_id = matching_eh.id
+                lead.timestamp = timezone.localize(
                     parser.parse(fields['timestamp']))
-                sv.ip = '127.0.0.1'
-                sv.user_id = user_id
-                sv.api_client_id = 2
-                svs.append(sv)
+                lead.ip = '127.0.0.1'
+                lead.user_id = user_id
+                lead.api_client_id = 2
+                leads.append(lead)
 
-        EntityVisit.objects.bulk_create(svs)
+        Lead.objects.bulk_create(leads)

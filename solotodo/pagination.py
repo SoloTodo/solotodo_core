@@ -24,7 +24,7 @@ class ProductPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class EntityVisitPagination(PageNumberPagination):
+class LeadPagination(PageNumberPagination):
     page_size = 100
     page_size_query_param = 'page_size'
     max_page_size = 100

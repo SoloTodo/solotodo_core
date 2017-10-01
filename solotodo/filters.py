@@ -7,7 +7,7 @@ from solotodo.filter_querysets import create_store_filter, \
     create_category_filter, create_product_filter, create_entity_filter
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
-    Product, EntityHistory, Country, Store, StoreType, EntityVisit, ApiClient
+    Product, EntityHistory, Country, Store, StoreType, Lead, ApiClient
 from solotodo.serializers import EntityWithInlineProductSerializer, \
     NestedProductSerializer, EntityMinimalSerializer
 
@@ -178,46 +178,6 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
                 self.request.user, 'is_entity_staff')
         return qs
 
-    def conflicts(self, request):
-        conflicts = self.qs.conflicts()
-
-        products_and_cell_plans = []
-        for conflict in conflicts:
-            products_and_cell_plans.append(conflict['product'])
-            if conflict['cell_plan']:
-                products_and_cell_plans.append(conflict['cell_plan'])
-
-        products_serializer = NestedProductSerializer(
-            products_and_cell_plans, many=True, context={'request': request})
-        products_serializer_dict = {x['id']: x for x in
-                                    products_serializer.data}
-
-        entities_serializer = EntityMinimalSerializer(
-            self.qs, many=True, context={'request': request})
-        entities_serializer_dict = {x['id']: x for x in
-                                    entities_serializer.data}
-
-        serialized_conflicts = []
-        for conflict in conflicts:
-            if conflict['cell_plan']:
-                serialized_cell_plan = products_serializer_dict[
-                    conflict['cell_plan'].id]
-            else:
-                serialized_cell_plan = None
-
-            serialized_conflict = {
-                'store': reverse('store-detail',
-                                 kwargs={'pk': conflict['store'].pk},
-                                 request=request),
-                'product': products_serializer_dict[conflict['product'].id],
-                'cell_plan': serialized_cell_plan,
-                'entities': [entities_serializer_dict[x.id]
-                             for x in conflict['entities']]
-            }
-            serialized_conflicts.append(serialized_conflict)
-
-        return serialized_conflicts
-
 
 class ProductFilterSet(rest_framework.FilterSet):
     categories = rest_framework.ModelMultipleChoiceFilter(
@@ -294,12 +254,12 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
         fields = []
 
 
-class EntityVisitFilterSet(rest_framework.FilterSet):
+class LeadFilterSet(rest_framework.FilterSet):
     timestamp = IsoDateTimeFromToRangeFilter(
         name='timestamp'
     )
     stores = rest_framework.ModelMultipleChoiceFilter(
-        queryset=create_store_filter('view_store_entity_visits'),
+        queryset=create_store_filter('view_store_leads'),
         name='entity_history__entity__store',
         label='Stores'
     )
@@ -314,7 +274,7 @@ class EntityVisitFilterSet(rest_framework.FilterSet):
         label='API Clients'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
-        queryset=create_category_filter('view_category_entity_visits'),
+        queryset=create_category_filter('view_category_leads'),
         name='entity_history__entity__category',
         label='Categories'
     )
@@ -331,12 +291,11 @@ class EntityVisitFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        qs = super(EntityVisitFilterSet, self).qs.select_related()
+        qs = super(LeadFilterSet, self).qs.select_related()
         if self.request:
-            qs = qs.filter_by_user_perms(self.request.user,
-                                         'view_entity_visit')
+            qs = qs.filter_by_user_perms(self.request.user, 'view_lead')
         return qs
 
     class Meta:
-        model = EntityVisit
+        model = Lead
         fields = []

@@ -20,6 +20,6 @@ class ApiClient(models.Model):
         app_label = 'solotodo'
         ordering = ('name', )
         permissions = [
-            ('view_api_client_entity_visits',
-             'View the entity visits associated to this API client')
+            ('view_api_client_leads',
+             'View the leads associated to this API client')
         ]

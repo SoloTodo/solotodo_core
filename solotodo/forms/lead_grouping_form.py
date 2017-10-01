@@ -3,8 +3,9 @@ from django import forms
 from django.db.models import Count, Sum
 from rest_framework.reverse import reverse
 
-from solotodo.models import Store, Category, Entity
-from solotodo.serializers import EntityWithInlineProductSerializer
+from solotodo.models import Store, Category, Entity, Product
+from solotodo.serializers import EntityWithInlineProductSerializer, \
+    NestedProductSerializer, EntityMinimalSerializer
 
 
 def create_generic_serializer(view_name):
@@ -43,58 +44,82 @@ def serializer_wrapper(serializer):
     return WrappedSerializer
 
 
-class EntityVisitGroupingForm(forms.Form):
+class LeadGroupingForm(forms.Form):
     CHOICES = [
         ('store', 'Store'),
         ('date', 'Date'),
         ('category', 'Category'),
         ('entity', 'Entity'),
+        ('product', 'Product'),
     ]
 
     grouping = forms.MultipleChoiceField(
-        choices=CHOICES,
+        choices=CHOICES
+    )
+
+    ORDERING_CHOICES = [
+        ('count', 'Lead count'),
+        ('normal_price_sum', 'Sum of normal prices'),
+        ('offer_price_sum', 'Sum of offer prices'),
+    ]
+
+    ordering = forms.ChoiceField(
+        choices=ORDERING_CHOICES,
         required=False
     )
 
-    def aggregate_visits(self, request, qs):
+    def aggregate(self, request, qs):
         groupings = self.cleaned_data['grouping']
 
         conversion_dict = {
             'store': {
                 'field': 'entity_history__entity__store',
                 'serializer': create_generic_serializer('store-detail'),
-                'model': Store
+                'queryset': Store.objects.all()
             },
             'date': {
                 'field': 'date',
                 'serializer': None,
-                'model': None
+                'queryset': None
             },
             'category': {
                 'field': 'entity_history__entity__category',
                 'serializer': create_generic_serializer('category-detail'),
-                'model': Category
+                'queryset': Category.objects.all()
             },
             'entity': {
                 'field': 'entity_history__entity',
                 'serializer': serializer_wrapper(
                     EntityWithInlineProductSerializer),
-                'model': Entity
+                'queryset': Entity.objects.select_related(
+                    'store', 'category', 'product__instance_model')
+            },
+            'product': {
+                'field': 'entity_history__entity__product',
+                'serializer': serializer_wrapper(
+                    NestedProductSerializer),
+                'queryset': Product.objects.all()
             }
         }
 
-        qs_values_args = [conversion_dict[grouping]['field']
-                          for grouping in groupings]
+        aggregation_fields = [conversion_dict[grouping]['field']
+                              for grouping in groupings]
+
+        ordering = self.cleaned_data['ordering']
+        if ordering:
+            ordering = ['-' + ordering]
+        else:
+            ordering = aggregation_fields
 
         agg_result = qs \
-            .extra(select={'date': 'DATE(solotodo_entityvisit.timestamp)'})\
-            .values(*qs_values_args)\
+            .extra(select={'date': 'DATE(solotodo_lead.timestamp)'})\
+            .values(*aggregation_fields)\
             .annotate(
                 count=Count('id'),
                 normal_price_sum=Sum('entity_history__normal_price'),
                 offer_price_sum=Sum('entity_history__offer_price')
             )\
-            .order_by(*qs_values_args)
+            .order_by(*ordering)
 
         result = []
 
@@ -110,11 +135,11 @@ class EntityVisitGroupingForm(forms.Form):
         for grouping in groupings:
             values = grouping_values[grouping]
 
-            conversion_model = conversion_dict[grouping]['model']
+            conversion_qs = conversion_dict[grouping]['queryset']
 
-            if conversion_model:
-                cleaned_values = conversion_model.objects.filter(
-                    pk__in=grouping_values[grouping]).select_related()
+            if conversion_qs:
+                cleaned_values = conversion_qs.filter(
+                    pk__in=grouping_values[grouping])
             else:
                 cleaned_values = values
 

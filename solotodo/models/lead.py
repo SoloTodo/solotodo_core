@@ -5,16 +5,16 @@ from solotodo.models import ApiClient
 from .entity_history import EntityHistory
 
 
-class EntityVisitQuerySet(models.QuerySet):
+class LeadQuerySet(models.QuerySet):
     def filter_by_user_perms(self, user, permission):
         from .category import Category
         from .store import Store
 
         synth_permissions = {
-            'view_entity_visit': {
-                'store': 'view_store_entity_visits',
-                'category': 'view_category_entity_visits',
-                'api_client': 'view_api_client_entity_visits'
+            'view_lead': {
+                'store': 'view_store_leads',
+                'category': 'view_category_leads',
+                'api_client': 'view_api_client_leads'
             }
         }
 
@@ -36,14 +36,14 @@ class EntityVisitQuerySet(models.QuerySet):
         )
 
 
-class EntityVisit(models.Model):
+class Lead(models.Model):
     entity_history = models.ForeignKey(EntityHistory)
     timestamp = models.DateTimeField()
     user = models.ForeignKey(get_user_model())
     ip = models.GenericIPAddressField()
     api_client = models.ForeignKey(ApiClient)
 
-    objects = EntityVisitQuerySet.as_manager()
+    objects = LeadQuerySet.as_manager()
 
     def __str__(self):
         return '{} - {}'.format(self.entity_history.entity, self.timestamp)
@@ -51,3 +51,6 @@ class EntityVisit(models.Model):
     class Meta:
         app_label = 'solotodo'
         ordering = ('entity_history', 'timestamp')
+        permissions = (
+            ('backend_list_leads', 'Can view list of leads in the backend'),
+        )

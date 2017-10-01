@@ -10,7 +10,9 @@ cssselect==1.0.1
 cssutils==1.0.2
 dateutils==0.6.6
 decorator==4.0.11
+demjson==2.2.4
 Django==1.11.3
+django-codemirror-widget==0.4.1
 django-cors-headers==2.1.0
 django-crispy-forms==1.6.1
 django-custom-user==0.7
@@ -22,6 +24,8 @@ django-querycount==0.6.0
 django-storages==1.6.3
 djangorestframework==3.6.3
 docutils==0.13.1
+elasticsearch==5.4.0
+elasticsearch-dsl==5.3.0
 geoip2==2.5.0
 html2text==2016.9.19
 idna==2.5
@@ -46,7 +50,10 @@ premailer==3.0.0
 prompt-toolkit==1.0.14
 psycopg2==2.7.1
 ptyprocess==0.5.2
+pubnub==4.0.13
+pycryptodomex==3.4.7
 Pygments==2.2.0
+PyMeta3==0.5.1
 pynliner3==0.6
 python-dateutil==2.6.1
 pytz==2017.2
@@ -60,3 +67,4 @@ urllib3==1.21.1
 vine==1.1.3
 wcwidth==0.1.7
 Werkzeug==0.12.2
+XlsxWriter==1.0.0

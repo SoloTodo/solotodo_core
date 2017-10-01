@@ -26,20 +26,20 @@ from solotodo.filter_querysets import create_category_filter, \
     create_store_filter
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
-    EntityVisitFilterSet, EntitySalesFilterSet, EntityStaffFilterSet
+    LeadFilterSet, EntitySalesFilterSet, EntityStaffFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
 from solotodo.forms.entity_state_form import EntityStateForm
-from solotodo.forms.entity_visit_grouping_form import EntityVisitGroupingForm
+from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, \
-    EntityState, ApiClient, EntityVisit
+    EntityState, ApiClient, Lead
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
-    ProductPagination, UserPagination, EntityVisitPagination
+    ProductPagination, UserPagination, LeadPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
@@ -47,8 +47,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
     EntityEventValueSerializer, \
     EntityStateSerializer, MyUserSerializer, EntityHistoryPartialSerializer, \
-    EntityHistoryFullSerializer, ApiClientSerializer, EntityVisitSerializer, \
-    NestedProductSerializer
+    EntityHistoryFullSerializer, ApiClientSerializer, LeadSerializer, \
+    NestedProductSerializer, EntityConflictSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 
@@ -343,9 +343,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             data=request.query_params,
             request=request)
 
-        serialized_conflicts = filterset.conflicts(request)
+        serializer = EntityConflictSerializer(
+            filterset.qs.conflicts(), many=True, context={'request': request})
 
-        return Response(serialized_conflicts)
+        return Response(serializer.data)
 
     @detail_route(methods=['post'])
     def register_staff_access(self, request, *args, **kwargs):
@@ -573,23 +574,23 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
 
-class EntityVisitViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = EntityVisit.objects.all()
-    serializer_class = EntityVisitSerializer
+class LeadViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Lead.objects.all()
+    serializer_class = LeadSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
-    filter_class = EntityVisitFilterSet
-    pagination_class = EntityVisitPagination
+    filter_class = LeadFilterSet
+    pagination_class = LeadPagination
 
     @list_route()
     def grouped(self, request):
-        filterset = EntityVisitFilterSet(
+        filterset = LeadFilterSet(
             data=request.query_params,
             request=request)
 
-        form = EntityVisitGroupingForm(request.query_params)
+        form = LeadGroupingForm(request.query_params)
 
         if form.is_valid():
-            result = form.aggregate_visits(request, filterset.qs)
+            result = form.aggregate(request, filterset.qs)
             return Response(result)
         else:
             return Response({'detail': form.errors},

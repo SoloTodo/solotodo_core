@@ -23,7 +23,7 @@ from .entity import Entity
 from .entity_history import EntityHistory
 from .entity_log import EntityLog
 from .store_update_log import StoreUpdateLog
-from .entity_visit import EntityVisit
+from .lead import Lead
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

@@ -1,9 +1,10 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
-    EntityState, EntityVisit, ApiClient
+    EntityState, Lead, ApiClient
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -164,6 +165,21 @@ class EntityWithInlineProductSerializer(
         )
 
 
+class EntityConflictSerializer(serializers.Serializer):
+    store = serializers.HyperlinkedRelatedField(
+        queryset=Store.objects.all(),
+        view_name='store-detail'
+    )
+    category = serializers.HyperlinkedRelatedField(
+        queryset=Category.objects.all(),
+        view_name='category-detail',
+        source='product.category.pk'
+    )
+    product = NestedProductSerializer()
+    cell_plan = NestedProductSerializer()
+    entities = EntityMinimalSerializer(many=True)
+
+
 class EntityFullSerializer(serializers.HyperlinkedModelSerializer):
     active_registry = EntityHistorySerializer(read_only=True)
     product = NestedProductSerializer(read_only=True)
@@ -236,7 +252,7 @@ class EntityEventUserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'full_name']
 
 
-class EntityVisitSerializer(serializers.HyperlinkedModelSerializer):
+class LeadSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
-        model = EntityVisit
+        model = Lead
         fields = ['url', 'id', 'user', 'ip']

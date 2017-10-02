@@ -87,7 +87,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(payload.data)
 
 
-class ApiClientViewSet(viewsets.ReadOnlyModelViewSet):
+class ApiClientViewSet(PermissionReadOnlyModelViewSet):
     queryset = ApiClient.objects.all()
     serializer_class = ApiClientSerializer
 
@@ -571,9 +571,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Lead.objects.all()
     serializer_class = LeadSerializer
-    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
+                       OrderingFilter)
     filter_class = LeadFilterSet
     pagination_class = LeadPagination
+    ordering_fields = ('timestamp',)
 
     @list_route()
     def grouped(self, request):
@@ -585,6 +587,14 @@ class LeadViewSet(viewsets.ReadOnlyModelViewSet):
 
         if form.is_valid():
             result = form.aggregate(request, filterset.qs)
+
+            groupings = form.cleaned_data['grouping']
+
+            if 'entity' in groupings or 'product' in groupings:
+                paginator = LeadPagination()
+                page = paginator.paginate_queryset(result, request)
+                return paginator.get_paginated_response(page)
+
             return Response(result)
         else:
             return Response({'detail': form.errors},

@@ -64,6 +64,11 @@ class StoreUpdateLogFilterSet(rest_framework.FilterSet):
 
 
 class EntityFilterSet(rest_framework.FilterSet):
+    ids = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Entity.objects.all(),
+        method='_ids',
+        label='Entities'
+    )
     stores = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_store_filter(),
         name='store',
@@ -84,13 +89,20 @@ class EntityFilterSet(rest_framework.FilterSet):
     @property
     def qs(self):
         qs = super(EntityFilterSet, self).qs.select_related(
-            'active_registry', 'product__instance_model')
+            'active_registry',
+            'product__instance_model__model__category',
+        )
         categories_with_permission = create_category_filter()(self.request)
         stores_with_permission = create_store_filter()(self.request)
 
         return qs.filter(
             Q(category__in=categories_with_permission) &
             Q(store__in=stores_with_permission))
+
+    def _ids(self, queryset, name, value):
+        if value:
+            return queryset.filter(pk__in=[x.pk for x in value])
+        return queryset
 
     def _is_available(self, queryset, name, value):
         if value:
@@ -178,6 +190,11 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
 
 
 class ProductFilterSet(rest_framework.FilterSet):
+    ids = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Product.objects.all(),
+        method='_ids',
+        label='Products'
+    )
     categories = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_category_filter(),
         name='instance_model__model__category',
@@ -211,6 +228,11 @@ class ProductFilterSet(rest_framework.FilterSet):
         categories_with_permission = create_category_filter()(self.request)
         qs = qs.filter_by_category(categories_with_permission)
         return qs.select_related('instance_model__model__category')
+
+    def _ids(self, queryset, name, value):
+        if value:
+            return queryset.filter(pk__in=[x.pk for x in value])
+        return queryset
 
     def _availability_countries(self, queryset, name, value):
         if value:
@@ -289,7 +311,9 @@ class LeadFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        qs = super(LeadFilterSet, self).qs.select_related()
+        qs = super(LeadFilterSet, self).qs.select_related(
+            'entity_history__entity__product__instance_model__model__category',
+        )
         if self.request:
             qs = qs.filter_by_user_perms(self.request.user, 'view_lead')
         return qs

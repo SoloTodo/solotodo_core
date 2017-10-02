@@ -14,9 +14,12 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class ApiClientSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='apiclient-detail')
+    external_url = serializers.URLField(source='url')
+
     class Meta:
         model = ApiClient
-        fields = ('url', 'id', 'name', 'url')
+        fields = ('url', 'id', 'name', 'external_url')
 
 
 class MyUserSerializer(serializers.HyperlinkedModelSerializer):
@@ -91,10 +94,13 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
 class NestedProductSerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(read_only=True, source='__str__')
+    category = serializers.HyperlinkedRelatedField(
+        view_name='category-detail', read_only=True,
+        source='category.pk')
 
     class Meta:
         model = Product
-        fields = ('url', 'id', 'name')
+        fields = ('url', 'id', 'name', 'category')
 
 
 class StoreScraperSerializer(serializers.Serializer):
@@ -145,6 +151,7 @@ class EntityMinimalSerializer(serializers.HyperlinkedModelSerializer):
 class EntityWithInlineProductSerializer(
         serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
+    external_url = serializers.URLField(source='url')
     product = NestedProductSerializer()
 
     class Meta:
@@ -153,8 +160,11 @@ class EntityWithInlineProductSerializer(
             'url',
             'id',
             'name',
+            'category',
+            'currency',
+            'external_url',
             'product',
-            'store'
+            'store',
         )
 
 
@@ -247,6 +257,21 @@ class EntityEventUserSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class LeadSerializer(serializers.HyperlinkedModelSerializer):
+    normal_price = serializers.DecimalField(
+        source='entity_history.normal_price',
+        max_digits=20,
+        decimal_places=2
+    )
+    offer_price = serializers.DecimalField(
+        source='entity_history.offer_price',
+        max_digits=20,
+        decimal_places=2
+    )
+    entity = EntityWithInlineProductSerializer(
+        source='entity_history.entity'
+    )
+
     class Meta:
         model = Lead
-        fields = ['url', 'id', 'user', 'ip']
+        fields = ['url', 'id', 'user', 'ip', 'timestamp', 'normal_price',
+                  'offer_price', 'api_client', 'entity']

@@ -4,6 +4,7 @@ from django.db.models import Count, Sum
 from rest_framework.reverse import reverse
 
 from solotodo.models import Store, Category, Entity, Product
+from solotodo.pagination import LeadPagination
 from solotodo.serializers import EntityWithInlineProductSerializer, \
     NestedProductSerializer
 
@@ -92,13 +93,15 @@ class LeadGroupingForm(forms.Form):
                 'serializer': serializer_wrapper(
                     EntityWithInlineProductSerializer),
                 'queryset': Entity.objects.select_related(
-                    'store', 'category', 'product__instance_model')
+                    'store', 'category',
+                    'product__instance_model__model__category')
             },
             'product': {
                 'field': 'entity_history__entity__product',
                 'serializer': serializer_wrapper(
                     NestedProductSerializer),
-                'queryset': Product.objects.all()
+                'queryset': Product.objects.select_related(
+                    'instance_model__model__category')
             }
         }
 

@@ -61,7 +61,7 @@ class EntityQueryset(models.QuerySet):
         )
 
     def estimated_sales(self, start_date=None, end_date=None,
-                        sorting='normal_price'):
+                        sorting='normal_price_sum'):
         from solotodo.models import EntityHistory
 
         ehs = EntityHistory.objects.filter(entity__in=self, stock__gt=0)
@@ -73,33 +73,36 @@ class EntityQueryset(models.QuerySet):
         ehs = ehs.order_by('entity', 'timestamp').select_related('entity')
 
         movements_by_entity = {}
+        for e in self:
+            movements_by_entity[e] = {
+                'count': 0,
+                'normal_price_sum': Decimal(0),
+                'offer_price_sum': Decimal(0)
+            }
+
         last_eh_seen = None
 
         for eh in ehs:
             if not last_eh_seen or last_eh_seen.entity != eh.entity:
-                movements_by_entity[eh.entity] = {
-                    'stock': 0,
-                    'normal_price': Decimal(0),
-                    'offer_price': Decimal(0)
-                }
+                pass
             else:
                 units_sold = last_eh_seen.stock - eh.stock
                 if units_sold > 0 and units_sold / last_eh_seen.stock < 0.1:
-                    movements_by_entity[eh.entity]['stock'] += units_sold
-                    movements_by_entity[eh.entity]['normal_price'] += \
+                    movements_by_entity[eh.entity]['count'] += units_sold
+                    movements_by_entity[eh.entity]['normal_price_sum'] += \
                         units_sold * last_eh_seen.normal_price
                     movements_by_entity[eh.entity][
-                        'offer_price'] += units_sold * last_eh_seen.offer_price
+                        'offer_price_sum'] += units_sold * last_eh_seen.offer_price
             last_eh_seen = eh
 
         result_list = [
             {
-                'entity': key,
-                'stock': value['stock'],
-                'normal_price': value['normal_price'],
-                'offer_price': value['offer_price']
+                'entity': entity,
+                'count': value['count'],
+                'normal_price_sum': value['normal_price_sum'],
+                'offer_price_sum': value['offer_price_sum']
             }
-            for key, value in movements_by_entity.items()]
+            for entity, value in movements_by_entity.items()]
 
         sorted_results = sorted(
             result_list, key=lambda x: x[sorting], reverse=True)
@@ -503,4 +506,7 @@ class Entity(models.Model):
             ('backend_list_entities', 'Can view entity list in backend'),
             ('backend_view_entity_conflicts',
              'Can view entity conflicts in backend'),
+            ('backend_view_entity_estimated_sales',
+             'Can view the entity estiamted sales interface in backend'
+             )
         ]

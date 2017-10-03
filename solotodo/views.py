@@ -26,7 +26,7 @@ from solotodo.filter_querysets import create_category_filter, \
     create_store_filter
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
-    LeadFilterSet, EntitySalesFilterSet, EntityStaffFilterSet
+    LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
@@ -38,7 +38,8 @@ from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, ApiClient, Lead
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
-    ProductPagination, UserPagination, LeadPagination
+    ProductPagination, UserPagination, LeadPagination, \
+    EntitySalesEstimatePagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
@@ -46,7 +47,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
     EntityEventValueSerializer, MyUserSerializer, \
     EntityHistoryPartialSerializer, EntityHistoryFullSerializer, \
-    ApiClientSerializer, LeadSerializer, EntityConflictSerializer
+    ApiClientSerializer, LeadSerializer, EntityConflictSerializer, \
+    LeadWithUserDataSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip
 
@@ -310,7 +312,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def estimated_sales(self, request):
-        filterset = EntitySalesFilterSet(
+        filterset = EntityEstimatedSalesFilterSet(
             queryset=self.get_queryset(),
             data=request.query_params,
             request=request)
@@ -318,12 +320,17 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         form = EntityEstimatedSalesForm(request.query_params)
 
         if form.is_valid():
-            result = filterset.estimated_sales(
-                request,
-                form.cleaned_data['timestamp_0'],
-                form.cleaned_data['timestamp_1'],
-                form.cleaned_data['limit'],
+            result = form.estimated_sales(
+                filterset.qs,
+                request
             )
+
+            grouping = form.cleaned_data['grouping']
+
+            if grouping in ['entity', 'product']:
+                paginator = EntitySalesEstimatePagination()
+                page = paginator.paginate_queryset(result, request)
+                return paginator.get_paginated_response(page)
 
             return Response(result)
         else:
@@ -576,6 +583,12 @@ class LeadViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = LeadFilterSet
     pagination_class = LeadPagination
     ordering_fields = ('timestamp',)
+
+    def get_serializer_class(self):
+        if self.request.user.has_perm('solotodo.view_leads_user_data'):
+            return LeadWithUserDataSerializer
+        else:
+            return LeadSerializer
 
     @list_route()
     def grouped(self, request):

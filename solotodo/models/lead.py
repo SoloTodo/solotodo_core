@@ -52,5 +52,7 @@ class Lead(models.Model):
         app_label = 'solotodo'
         ordering = ('entity_history', 'timestamp')
         permissions = (
+            ('view_leads_user_data',
+             'Can view the IP and user associated to all leads'),
             ('backend_list_leads', 'Can view list of leads in the backend'),
         )

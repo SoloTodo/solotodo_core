@@ -18,7 +18,7 @@ class PermissionModelAdmin(admin.ModelAdmin):
 admin.site.register(Permission, PermissionModelAdmin)
 
 
-class ApiClientModelAdmin(admin.ModelAdmin):
+class ApiClientModelAdmin(GuardedModelAdmin):
     list_display = ['__str__', 'url']
 
 

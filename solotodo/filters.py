@@ -124,7 +124,7 @@ class EntityFilterSet(rest_framework.FilterSet):
         fields = ['is_visible', ]
 
 
-class EntitySalesFilterSet(rest_framework.FilterSet):
+class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
     stores = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_store_filter('view_store_stocks'),
         name='store',
@@ -138,34 +138,12 @@ class EntitySalesFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        qs = super(EntitySalesFilterSet, self).qs.select_related(
+        qs = super(EntityEstimatedSalesFilterSet, self).qs.select_related(
             'active_registry', 'product__instance_model')
         if self.request:
             qs = qs.filter_by_user_perms(
                 self.request.user, 'view_entity_stocks')
         return qs
-
-    def estimated_sales(self, request, start_date, end_date, limit):
-        result = self.qs.estimated_sales(start_date, end_date)
-
-        if limit:
-            result = result[:limit]
-
-        entity_serializer = EntityWithInlineProductSerializer(
-            [e['entity'] for e in result],
-            many=True, context={'request': request})
-        entity_serialization_dict = {
-            e['id']: e for e in entity_serializer.data}
-
-        return [
-            {
-                'entity': entity_serialization_dict[entry['entity'].id],
-                'stock': entry['stock'],
-                'normal_price': entry['normal_price'],
-                'offer_price': entry['offer_price'],
-            }
-            for entry in result
-        ]
 
 
 class EntityStaffFilterSet(rest_framework.FilterSet):
@@ -313,6 +291,7 @@ class LeadFilterSet(rest_framework.FilterSet):
     def qs(self):
         qs = super(LeadFilterSet, self).qs.select_related(
             'entity_history__entity__product__instance_model__model__category',
+            'user'
         )
         if self.request:
             qs = qs.filter_by_user_perms(self.request.user, 'view_lead')

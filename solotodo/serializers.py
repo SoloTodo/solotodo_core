@@ -144,7 +144,9 @@ class EntityMinimalSerializer(serializers.HyperlinkedModelSerializer):
         fields = (
             'url',
             'id',
-            'name'
+            'name',
+            'category',
+            'store'
         )
 
 
@@ -270,6 +272,15 @@ class LeadSerializer(serializers.HyperlinkedModelSerializer):
     entity = EntityWithInlineProductSerializer(
         source='entity_history.entity'
     )
+
+    class Meta:
+        model = Lead
+        fields = ['url', 'id', 'timestamp', 'normal_price',
+                  'offer_price', 'api_client', 'entity']
+
+
+class LeadWithUserDataSerializer(LeadSerializer):
+    user = UserSerializer()
 
     class Meta:
         model = Lead

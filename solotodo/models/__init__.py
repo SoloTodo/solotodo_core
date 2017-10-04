@@ -37,7 +37,6 @@ def handle_user_creation(sender, instance=None, created=False, **kwargs):
 
 @receiver(instance_model_saved)
 def create_or_update_product(instance_model, created, creator_id, **kwargs):
-    print('hooked')
     category_models = [c.meta_model for c in Category.objects.all()]
 
     if instance_model.model in category_models:
@@ -46,7 +45,6 @@ def create_or_update_product(instance_model, created, creator_id, **kwargs):
                 instance_model=instance_model)
             existing_product.save()
         except Product.DoesNotExist:
-            print('new product')
             new_product = Product()
             new_product.instance_model = instance_model
             new_product.save(creator_id=creator_id)

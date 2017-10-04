@@ -1,6 +1,7 @@
 import json
 
 from decimal import Decimal
+
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
 from django.db.models import Q, Count
@@ -92,7 +93,8 @@ class EntityQueryset(models.QuerySet):
                     movements_by_entity[eh.entity]['normal_price_sum'] += \
                         units_sold * last_eh_seen.normal_price
                     movements_by_entity[eh.entity][
-                        'offer_price_sum'] += units_sold * last_eh_seen.offer_price
+                        'offer_price_sum'] += \
+                        units_sold * last_eh_seen.offer_price
             last_eh_seen = eh
 
         result_list = [
@@ -110,9 +112,9 @@ class EntityQueryset(models.QuerySet):
         return sorted_results
 
     def conflicts(self):
-        raw_conflicts = self.filter(product__isnull=False)\
-            .get_available()\
-            .values('store', 'product', 'cell_plan')\
+        raw_conflicts = self.filter(product__isnull=False) \
+            .get_available() \
+            .values('store', 'product', 'cell_plan') \
             .annotate(conflict_count=Count('pk')) \
             .order_by('store', 'product', 'cell_plan') \
             .filter(conflict_count__gt=1)

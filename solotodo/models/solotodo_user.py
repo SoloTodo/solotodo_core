@@ -61,6 +61,12 @@ class SoloTodoUser(AbstractEmailUser):
         else:
             return self.email
 
+    def preferred_currency_or_default(self):
+        if self.preferred_currency:
+            return self.preferred_currency
+        else:
+            return Currency.get_default()
+
     def send_entity_update_failure_email(self, entity, request_user,
                                          traceback):
         if self.preferred_language:

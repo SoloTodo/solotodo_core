@@ -1,6 +1,8 @@
 from decimal import Decimal
 import json
 from urllib import request
+
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from storescraper.utils import format_currency
@@ -16,6 +18,10 @@ class Currency(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_default(cls):
+        return cls.objects.get(pk=settings.DEFAULT_CURRENCY)
 
     def update_exchange_rate(self):
         url = 'https://query.yahooapis.com/v1/public/yql' \

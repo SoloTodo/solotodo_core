@@ -34,10 +34,18 @@ class EntityEstimatedSalesForm(forms.Form):
     timestamp_1 = IsoDateTimeField(required=False)
 
     def estimated_sales(self, qs, request):
-        entity_values = qs.select_related('store', 'product__instance_model__model__category', 'category').estimated_sales(self.cleaned_data['timestamp_0'],
-                                    self.cleaned_data['timestamp_1'])
+        entity_values = qs.select_related(
+                'store',
+                'product__instance_model__model__category',
+                'category', 'currency')\
+            .estimated_sales(self.cleaned_data['timestamp_0'],
+                             self.cleaned_data['timestamp_1'])
 
-        grouping = self.cleaned_data.get('grouping', 'entity')
+        preferred_currency = request.user.preferred_currency_or_default()
+
+        grouping = self.cleaned_data['grouping']
+        if not grouping:
+            grouping = 'entity'
 
         conversion_dict = {
             'store': {
@@ -54,7 +62,8 @@ class EntityEstimatedSalesForm(forms.Form):
             },
             'entity': {
                 'field': None,
-                'serializer': serializer_wrapper(EntityWithInlineProductSerializer),
+                'serializer': serializer_wrapper(
+                    EntityWithInlineProductSerializer),
             }
         }
 
@@ -64,6 +73,10 @@ class EntityEstimatedSalesForm(forms.Form):
 
         for entry in entity_values:
             entity = entry['entity']
+
+            exchange_rate = preferred_currency.exchange_rate / \
+                entity.currency.exchange_rate
+
             if field:
                 group = getattr(entity, field)
             else:
@@ -78,20 +91,20 @@ class EntityEstimatedSalesForm(forms.Form):
                 }
             group_values_dict[group]['count'] += entry['count']
             group_values_dict[group]['normal_price_sum'] += \
-                entry['normal_price_sum']
+                exchange_rate * entry['normal_price_sum']
             group_values_dict[group]['offer_price_sum'] += \
-                entry['offer_price_sum']
+                exchange_rate * entry['offer_price_sum']
 
         ordering = self.cleaned_data['ordering']
         if not ordering:
             ordering = 'count'
 
-        sorted_result = sorted(group_values_dict.items(), key=lambda x: x[1][ordering], reverse=True)
+        sorted_result = sorted(group_values_dict.items(),
+                               key=lambda x: x[1][ordering], reverse=True)
 
         serializer_klass = conversion_dict[grouping]['serializer']
-        serialized_groups_dict = serializer_klass(group_values_dict.keys(), request).to_dict()
-
-        print(serialized_groups_dict)
+        serialized_groups_dict = serializer_klass(
+            group_values_dict.keys(), request).to_dict()
 
         result = []
         for group, values in sorted_result:
@@ -103,5 +116,4 @@ class EntityEstimatedSalesForm(forms.Form):
             }
             result.append(group_values)
 
-        print(result)
         return result

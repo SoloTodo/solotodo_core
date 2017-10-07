@@ -40,20 +40,22 @@ class Category(models.Model):
         return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX,
                       doc_type=str(self.meta_model))
 
-    @property
     def specs_form(self):
         form_class = type(
             '{}SpecsForm'.format(self.meta_model.name),
             (CategorySpecsForm,),
             {
                 'category': self,
-                'category_specs_fields': []
+                'category_specs_filters': [],
+                'ordering_value_to_es_field_dict': {}
             })
 
-        fields = self.categoryspecsfield_set.all()
+        for category_specs_order in self.categoryspecsfilter_set.\
+                select_related('meta_model'):
+            form_class.add_filter(category_specs_order)
 
-        for field in fields:
-            form_class.add_field(field)
+        for category_specs_order in self.categoryspecsorder_set.all():
+            form_class.add_order(category_specs_order)
 
         return form_class
 

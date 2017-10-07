@@ -21,6 +21,19 @@ from metamodel.utils import strip_whitespace, trim, \
     convert_image_to_inmemoryfile
 
 
+class InstanceModelQuerySet(models.QuerySet):
+    def get_field_values(self, field):
+        from metamodel.models import InstanceField
+
+        instance_fields = InstanceField.objects.filter(
+            parent__in=self,
+            field__name=field
+        ).select_related('parent', 'value')
+
+        return {instance_field.parent: instance_field.value.value
+                for instance_field in instance_fields}
+
+
 class InstanceModel(models.Model):
     decimal_value = models.DecimalField(max_digits=200, decimal_places=5,
                                         null=True, blank=True)
@@ -28,6 +41,8 @@ class InstanceModel(models.Model):
     unicode_representation = models.CharField(max_length=255, null=True,
                                               blank=True)
     model = models.ForeignKey(MetaModel)
+
+    objects = InstanceModelQuerySet.as_manager()
 
     METAMODEL_METAFIELDS_DICT = None
 

@@ -23,7 +23,8 @@ from .entity_history import EntityHistory
 from .entity_log import EntityLog
 from .store_update_log import StoreUpdateLog
 from .lead import Lead
-from .category_specs_field import CategorySpecsField
+from .category_specs_filter import CategorySpecsFilter
+from .category_specs_order import CategorySpecsOrder
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

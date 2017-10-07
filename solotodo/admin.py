@@ -9,7 +9,7 @@ from guardian.admin import GuardedModelAdmin
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, ApiClient, \
-    CategorySpecsField
+    CategorySpecsFilter, CategorySpecsOrder
 
 
 @admin.register(Permission)
@@ -78,9 +78,17 @@ admin.site.register(CategoryTier)
 admin.site.register(Category, GuardedModelAdmin)
 
 
-@admin.register(CategorySpecsField)
-class CategorySpecsFieldModelAdmin(admin.ModelAdmin):
-    list_filter = ('category',)
+@admin.register(CategorySpecsFilter)
+class CategorySpecsFilterModelAdmin(admin.ModelAdmin):
+    list_filter = ('category', )
+    list_display = ('category', 'name', 'meta_model', 'type', 'es_field',
+                    'value_field')
+
+
+@admin.register(CategorySpecsOrder)
+class CategorySpecsOrderModelAdmin(admin.ModelAdmin):
+    list_filter = ('category', )
+    list_display = ('category', 'name', 'es_field')
 
 
 @admin.register(SoloTodoUser)

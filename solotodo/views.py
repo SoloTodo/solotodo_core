@@ -50,7 +50,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ApiClientSerializer, LeadSerializer, EntityConflictSerializer, \
     LeadWithUserDataSerializer
 from solotodo.tasks import store_update
-from solotodo.utils import get_client_ip
+from solotodo.utils import get_client_ip, iterable_to_dict
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -120,6 +120,54 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
     def get_queryset(self):
         return create_category_filter()(self.request)
+
+    @detail_route()
+    def products(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+        form_class = category.specs_form()
+        form = form_class(request.query_params)
+        if form.is_valid():
+            es_products_search = form.get_es_products()
+
+            paginator = ProductPagination()
+            page = request.query_params.get(paginator.page_query_param, 1)
+            page_size = paginator.get_page_size(request)
+
+            offset = (page - 1) * page_size
+            upper_bound = page * page_size
+
+            es_products_page = es_products_search[offset:upper_bound].execute()
+
+            # Page contents
+
+            product_ids = [es_product.product_id
+                           for es_product in es_products_page]
+
+            db_products = Product.objects.filter(
+                pk__in=product_ids).select_related(
+                'instance_model__model__category')
+            db_products_dict = iterable_to_dict(db_products, 'id')
+
+            products = []
+            for es_product in es_products_page:
+                db_product = db_products_dict[es_product.product_id]
+                db_product._specs = es_product.to_dict()
+                products.append(db_product)
+
+            serializer = ProductSerializer(products, many=True,
+                                           context={'request': request})
+
+            # Overall aggregations
+
+            aggs = form.process_es_aggs(es_products_page.aggs)
+
+            return Response({
+                'count': es_products_page.hits.total,
+                'products': serializer.data,
+                'aggs': aggs,
+            })
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):

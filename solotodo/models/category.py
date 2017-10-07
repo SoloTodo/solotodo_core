@@ -1,7 +1,10 @@
+from django.conf import settings
 from django.db import models
+from elasticsearch_dsl import Search
 from guardian.shortcuts import get_objects_for_user
 
 from metamodel.models import MetaModel
+from solotodo.forms.category_specs_form import CategorySpecsForm
 from solotodo.models.category_tier import CategoryTier
 
 
@@ -32,6 +35,27 @@ class Category(models.Model):
 
     def __str__(self):
         return self.name
+
+    def es_search(self):
+        return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX,
+                      doc_type=str(self.meta_model))
+
+    @property
+    def specs_form(self):
+        form_class = type(
+            '{}SpecsForm'.format(self.meta_model.name),
+            (CategorySpecsForm,),
+            {
+                'category': self,
+                'category_specs_fields': []
+            })
+
+        fields = self.categoryspecsfield_set.all()
+
+        for field in fields:
+            form_class.add_field(field)
+
+        return form_class
 
     class Meta:
         app_label = 'solotodo'

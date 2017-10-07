@@ -23,6 +23,7 @@ from .entity_history import EntityHistory
 from .entity_log import EntityLog
 from .store_update_log import StoreUpdateLog
 from .lead import Lead
+from .category_specs_field import CategorySpecsField
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

@@ -8,27 +8,27 @@ from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
-    StoreType, CategoryTier, NumberFormat, EntityLog, ApiClient
+    StoreType, CategoryTier, NumberFormat, EntityLog, ApiClient, \
+    CategorySpecsField
 
 
+@admin.register(Permission)
 class PermissionModelAdmin(admin.ModelAdmin):
     list_display = ['__str__', 'codename']
 
 
-admin.site.register(Permission, PermissionModelAdmin)
-
-
+@admin.register(ApiClient)
 class ApiClientModelAdmin(GuardedModelAdmin):
     list_display = ['__str__', 'url']
 
 
-admin.site.register(ApiClient, ApiClientModelAdmin)
 admin.site.register(Language)
 admin.site.register(Country)
 admin.site.register(Currency)
 admin.site.register(NumberFormat)
 
 
+@admin.register(Entity)
 class EntityModelAdmin(admin.ModelAdmin):
     readonly_fields = ['store', 'category', 'scraped_category',
                        'currency', 'product', 'cell_plan', 'active_registry',
@@ -36,9 +36,7 @@ class EntityModelAdmin(admin.ModelAdmin):
                        'last_staff_access_user', 'last_pricing_update_user']
 
 
-admin.site.register(Entity, EntityModelAdmin)
-
-
+@admin.register(EntityLog)
 class EntityLogModelAdmin(admin.ModelAdmin):
     readonly_fields = ['entity', 'category', 'scraped_category',
                        'currency', 'product', 'cell_plan', 'user']
@@ -47,14 +45,9 @@ class EntityLogModelAdmin(admin.ModelAdmin):
         return EntityLog.objects.select_related()
 
 
-admin.site.register(EntityLog, EntityLogModelAdmin)
-
-
+@admin.register(EntityHistory)
 class EntityHistoryModelAdmin(admin.ModelAdmin):
     readonly_fields = ['entity']
-
-
-admin.site.register(EntityHistory, EntityHistoryModelAdmin)
 
 
 class ProductCreatorListFilter(admin.SimpleListFilter):
@@ -70,6 +63,7 @@ class ProductCreatorListFilter(admin.SimpleListFilter):
             return queryset.filter(creator=self.value())
 
 
+@admin.register(Product)
 class ProductModelAdmin(admin.ModelAdmin):
     list_display = ['__str__', 'category', 'creator', 'creation_date',
                     'last_updated']
@@ -80,11 +74,16 @@ class ProductModelAdmin(admin.ModelAdmin):
         return Product.objects.select_related()
 
 
-admin.site.register(Product, ProductModelAdmin)
 admin.site.register(CategoryTier)
 admin.site.register(Category, GuardedModelAdmin)
 
 
+@admin.register(CategorySpecsField)
+class CategorySpecsFieldModelAdmin(admin.ModelAdmin):
+    list_filter = ('category',)
+
+
+@admin.register(SoloTodoUser)
 class SoloTodoUserAdmin(EmailUserAdmin):
     fieldsets = EmailUserAdmin.fieldsets + \
                 (('Additional information', {'fields': (
@@ -98,14 +97,13 @@ class SoloTodoUserAdmin(EmailUserAdmin):
                  )
 
 
-admin.site.register(SoloTodoUser, SoloTodoUserAdmin)
 admin.site.register(StoreType)
 
 
+@admin.register(Store)
 class StoreModelAdmin(GuardedModelAdmin):
     list_display = ['__str__', 'type', 'country']
     list_filter = ['type', 'country']
 
 
-admin.site.register(Store, StoreModelAdmin)
 admin.site.register(StoreUpdateLog)

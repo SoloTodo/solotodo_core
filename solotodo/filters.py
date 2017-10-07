@@ -7,7 +7,6 @@ from solotodo.filter_querysets import create_store_filter, \
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, ApiClient
-from solotodo.serializers import EntityWithInlineProductSerializer
 
 
 class UserFilterSet(rest_framework.FilterSet):

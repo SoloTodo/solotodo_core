@@ -23,7 +23,6 @@ class CategorySpecsFilter(models.Model):
     def __str__(self):
         return '{} - {}'.format(self.category, self.name)
 
-    @property
     def form_fields_dict(self):
         field_names = []
         if self.type == 'exact':
@@ -54,7 +53,7 @@ class CategorySpecsFilter(models.Model):
 
         return {field_name: field for field_name in field_names}
 
-    def concrete_value_field(self):
+    def value_field_or_default(self):
         value_field = self.value_field
         if value_field is None:
             if self.type == 'exact':
@@ -63,18 +62,32 @@ class CategorySpecsFilter(models.Model):
                 value_field = 'value'
         return value_field
 
+    def es_value_field(self):
+        if self.meta_model.is_primitive():
+            return self.es_field
+        else:
+            value_field = self.value_field_or_default()
+            return '{}_{}'.format(self.es_field, value_field)
+
+    def es_id_field(self):
+        if self.meta_model.is_primitive():
+            return self.es_field
+        else:
+            return '{}_id'.format(self.es_field)
+
     def es_filter(self, form_data):
         result = Q()
 
-        value_field = self.concrete_value_field()
+        mm_value_field = self.value_field_or_default()
+        es_value_field = self.es_value_field()
 
         if self.type == 'exact' and form_data[self.name]:
             if self.meta_model.is_primitive():
                 filter_values = form_data[self.name]
             else:
-                filter_values = [getattr(obj, value_field) for obj in
+                filter_values = [getattr(obj, mm_value_field) for obj in
                                  form_data[self.name]]
-            result &= Q('terms', **{self.es_field: filter_values})
+            result &= Q('terms', **{es_value_field: filter_values})
 
         if self.type in ['gte', 'range']:
             min_form_field = '{}_0'.format(self.name)
@@ -83,8 +96,8 @@ class CategorySpecsFilter(models.Model):
                     filter_value = form_data[min_form_field]
                 else:
                     filter_value = getattr(form_data[min_form_field],
-                                           value_field)
-                result &= Q('range', **{self.es_field: {'gte': filter_value}})
+                                           mm_value_field)
+                result &= Q('range', **{es_value_field: {'gte': filter_value}})
 
         if self.type in ['lte', 'range']:
             max_form_field = '{}_1'.format(self.name)
@@ -93,8 +106,8 @@ class CategorySpecsFilter(models.Model):
                     filter_value = form_data[max_form_field]
                 else:
                     filter_value = getattr(form_data[max_form_field],
-                                           value_field)
-                result &= Q('range', **{self.es_field: {'lte': filter_value}})
+                                           mm_value_field)
+                result &= Q('range', **{es_value_field: {'lte': filter_value}})
 
         return result
 
@@ -102,13 +115,16 @@ class CategorySpecsFilter(models.Model):
         if self.meta_model.is_primitive():
             sorted_buckets = sorted(buckets, key=lambda bucket: bucket['key'])
 
-            return [{'value': bucket['key'], 'label': bucket['key'],
-                     'aggs_count': bucket['doc_count']}
+            return [{
+                'id': bucket['key'],
+                'value': bucket['key'],
+                'label': bucket['key'],
+                'doc_count': bucket['doc_count']}
                     for bucket in sorted_buckets]
 
         bucket_key_to_doc_count_dict = {bucket['key']: bucket['doc_count']
                                         for bucket in buckets}
-        value_field = self.concrete_value_field()
+        value_field = self.value_field_or_default()
         instance_models = self.meta_model.instancemodel_set.all()
 
         if value_field == 'id':
@@ -125,12 +141,13 @@ class CategorySpecsFilter(models.Model):
         processed_buckets = []
         for instance_model in instance_models:
             instance_model_value = instance_models_values_dict[instance_model]
-            doc_count = bucket_key_to_doc_count_dict.get(instance_model_value)
+            doc_count = bucket_key_to_doc_count_dict.get(instance_model.id)
             if doc_count:
                 processed_buckets.append({
+                    'id': instance_model.id,
                     'value': instance_model_value,
                     'label': str(instance_model),
-                    'aggs_count': doc_count
+                    'doc_count': doc_count
                 })
         return processed_buckets
 

@@ -1,5 +1,6 @@
 import collections
 
+import re
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
@@ -34,14 +35,14 @@ class ProductQuerySet(models.QuerySet):
                 entity__store__in=stores)
         ).distinct()
 
-    def filter_by_keywords(self, keywords):
+    def filter_by_search_string(self, search):
         es_search = Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
-        es_search = es_search\
-            .filter('terms', product_id=[p.id for p in self])\
-            .query('match', keywords={
-                'query': keywords,
-                'operator': 'and'})[:self.count()]
-        matching_product_ids = [r.product_id for r in es_search.execute()]
+        es_search = es_search.filter('terms', product_id=[p.id for p in self])
+        es_search = Product.query_es_by_search_string(
+            es_search, search, mode='AND')
+
+        matching_product_ids = [r.product_id for r in
+                                es_search[:self.count()].execute()]
         return self.filter(pk__in=matching_product_ids)
 
     def filter_by_user_perms(self, user, permission):
@@ -115,6 +116,30 @@ class Product(models.Model):
                  doc_type=self.category.storescraper_name,
                  id=self.id,
                  body=document)
+
+    @staticmethod
+    def query_es_by_search_string(es_search, search, mode='OR'):
+        from elasticsearch_dsl import Q
+
+        search = search.strip()
+
+        if not search:
+            return es_search
+
+        search_terms = [term.lower() for term in re.split(r'\W+', search)]
+        search_query = None
+        for search_term in search_terms:
+            search_term_query = Q('wildcard',
+                                  keywords='*{}*'.format(search_term))
+            if search_query:
+                if mode == 'OR':
+                    search_query |= search_term_query
+                else:
+                    search_query &= search_term_query
+            else:
+                search_query = search_term_query
+
+        return es_search.query(search_query)
 
     class Meta:
         app_label = 'solotodo'

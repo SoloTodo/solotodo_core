@@ -58,7 +58,8 @@ INSTALLED_APPS = [
     'solotodo',
     'category_templates',
     'reports',
-    'mailing'
+    'mailing',
+    'category_specs_forms',
 ]
 
 MIDDLEWARE = [

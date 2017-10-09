@@ -223,7 +223,7 @@ class ProductFilterSet(rest_framework.FilterSet):
 
     def _search(self, queryset, name, value):
         if value:
-            return queryset.filter_by_keywords(value)
+            return queryset.filter_by_search_string(value)
         return queryset
 
     class Meta:

@@ -1,5 +1,3 @@
-import json
-
 from django import forms
 from elasticsearch_dsl import Q, A
 
@@ -8,10 +6,11 @@ from solotodo.utils import iterable_to_dict
 
 class CategorySpecsForm(forms.Form):
     ordering = forms.ChoiceField(choices=[], required=False)
+    search = forms.CharField(required=False)
 
     @classmethod
     def add_filter(cls, category_specs_filter):
-        cls.base_fields.update(category_specs_filter.form_fields_dict)
+        cls.base_fields.update(category_specs_filter.form_fields_dict())
         cls.category_specs_filters.append(category_specs_filter)
 
     @classmethod
@@ -27,9 +26,15 @@ class CategorySpecsForm(forms.Form):
                 new_ordering_field
 
     def get_es_products(self):
+        from solotodo.models import Product
+
         assert self.is_valid()
 
         es_search = self.category.es_search()
+
+        search = self.cleaned_data['search']
+        if search:
+            es_search = Product.query_es_by_search_string(es_search, search)
 
         fields_es_filters_dict = {
             field: field.es_filter(self.cleaned_data)
@@ -47,7 +52,7 @@ class CategorySpecsForm(forms.Form):
             agg = A('filter', aggs_filters)
             # "result" is just a name, we could've named the bucket "foo"
             # just need to be consistent when querying the aggs later
-            agg.bucket('result', 'terms', field=field.es_field, size=1000)
+            agg.bucket('result', 'terms', field=field.es_id_field(), size=1000)
 
             es_search.aggs.bucket(field.name, agg)
             es_search = es_search.post_filter(fields_es_filters_dict[field])

@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Permission
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from custom_user.admin import EmailUserAdmin
 from django.contrib import admin
@@ -80,8 +81,12 @@ admin.site.register(Category, GuardedModelAdmin)
 
 @admin.register(CategorySpecsFilter)
 class CategorySpecsFilterModelAdmin(admin.ModelAdmin):
+    def meta_model_link(self, obj):
+        return mark_safe('<a href="/metamodel/models/{}">{}</a>'.format(
+            obj.meta_model_id, obj.meta_model))
+
     list_filter = ('category', )
-    list_display = ('category', 'name', 'meta_model', 'type', 'es_field',
+    list_display = ('category', 'name', 'meta_model_link', 'type', 'es_field',
                     'value_field')
 
 

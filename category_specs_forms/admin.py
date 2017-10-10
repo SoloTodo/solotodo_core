@@ -6,7 +6,7 @@ from category_specs_forms.models import CategorySpecsFormLayout, \
 
 @admin.register(CategorySpecsFormLayout)
 class CategorySpecsFormLayoutModelAdmin(admin.ModelAdmin):
-    list_display = ('category', 'api_client', 'name')
+    list_display = ('category', 'api_client', 'country', 'name')
     list_filter = ('category', 'api_client')
 
 

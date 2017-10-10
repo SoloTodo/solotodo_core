@@ -38,4 +38,5 @@ class CategorySpecsFormLayoutSerializer(
 
     class Meta:
         model = CategorySpecsFormLayout
-        fields = ['category', 'api_client', 'name', 'fieldsets', 'orders']
+        fields = ['category', 'api_client', 'country', 'name', 'fieldsets',
+                  'orders']

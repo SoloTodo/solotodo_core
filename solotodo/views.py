@@ -131,6 +131,11 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
             paginator = ProductPagination()
             page = request.query_params.get(paginator.page_query_param, 1)
+            try:
+                page = int(page)
+            except ValueError:
+                page = 1
+
             page_size = paginator.get_page_size(request)
 
             offset = (page - 1) * page_size
@@ -163,7 +168,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
             return Response({
                 'count': es_products_page.hits.total,
-                'products': serializer.data,
+                'results': serializer.data,
                 'aggs': aggs,
             })
         else:

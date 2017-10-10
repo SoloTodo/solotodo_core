@@ -58,9 +58,12 @@ class CategorySpecsForm(forms.Form):
             es_search = es_search.post_filter(fields_es_filters_dict[field])
 
         ordering = self.cleaned_data['ordering']
+
         if ordering:
             es_search = es_search.sort(
                 self.ordering_value_to_es_field_dict[ordering])
+        else:
+            es_search = es_search.sort('unicode.keyword')
 
         return es_search
 

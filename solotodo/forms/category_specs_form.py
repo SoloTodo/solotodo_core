@@ -34,7 +34,8 @@ class CategorySpecsForm(forms.Form):
 
         search = self.cleaned_data['search']
         if search:
-            es_search = Product.query_es_by_search_string(es_search, search, mode='AND')
+            es_search = Product.query_es_by_search_string(
+                es_search, search, mode='AND')
 
         fields_es_filters_dict = {
             field: field.es_filter(self.cleaned_data)

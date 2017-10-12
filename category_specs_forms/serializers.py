@@ -11,7 +11,8 @@ class CategorySpecsFormFilterSerializer(
 
     class Meta:
         model = CategorySpecsFormFilter
-        fields = ['label', 'name', 'type']
+        fields = ['label', 'name', 'type', 'continuous_range_step',
+                  'continuous_range_unit']
 
 
 class CategorySpecsFormFieldsetSerializer(

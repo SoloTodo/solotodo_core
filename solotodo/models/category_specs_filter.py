@@ -91,7 +91,7 @@ class CategorySpecsFilter(models.Model):
 
         if self.type in ['gte', 'range']:
             min_form_field = '{}_0'.format(self.name)
-            if form_data[min_form_field]:
+            if form_data[min_form_field] is not None:
                 if self.meta_model.is_primitive():
                     filter_value = form_data[min_form_field]
                 else:
@@ -101,7 +101,7 @@ class CategorySpecsFilter(models.Model):
 
         if self.type in ['lte', 'range']:
             max_form_field = '{}_1'.format(self.name)
-            if form_data[max_form_field]:
+            if form_data[max_form_field] is not None:
                 if self.meta_model.is_primitive():
                     filter_value = form_data[max_form_field]
                 else:

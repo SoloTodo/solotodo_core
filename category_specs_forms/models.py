@@ -43,6 +43,8 @@ class CategorySpecsFormFilter(models.Model):
     filter = models.ForeignKey(CategorySpecsFilter)
     label = models.CharField(max_length=100)
     ordering = models.IntegerField()
+    continuous_range_step = models.IntegerField(blank=True, null=True)
+    continuous_range_unit = models.CharField(max_length = 20, blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.fieldset, self.label)

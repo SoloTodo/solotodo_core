@@ -25,8 +25,7 @@ class SoloTodoUser(AbstractEmailUser):
                                  null=True)
     preferred_language = models.ForeignKey(Language, blank=True, null=True)
     preferred_currency = models.ForeignKey(Currency, blank=True, null=True)
-    preferred_country = models.ForeignKey(Country, blank=True,
-                                          null=True)
+    preferred_country = models.ForeignKey(Country)
     preferred_number_format = models.ForeignKey(
         NumberFormat, blank=True, null=True)
     preferred_store = models.ForeignKey(

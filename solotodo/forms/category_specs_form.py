@@ -1,3 +1,5 @@
+import json
+
 from django import forms
 from elasticsearch_dsl import Q, A
 
@@ -50,10 +52,12 @@ class CategorySpecsForm(forms.Form):
             for other_field in other_fields:
                 aggs_filters &= fields_es_filters_dict[other_field]
 
+            field_agg = A('terms', field=field.es_id_field(), size=1000)
+
             agg = A('filter', aggs_filters)
             # "result" is just a name, we could've named the bucket "foo"
             # just need to be consistent when querying the aggs later
-            agg.bucket('result', 'terms', field=field.es_id_field(), size=1000)
+            agg.bucket('result', field_agg)
 
             es_search.aggs.bucket(field.name, agg)
             es_search = es_search.post_filter(fields_es_filters_dict[field])
@@ -65,6 +69,8 @@ class CategorySpecsForm(forms.Form):
                 self.ordering_value_to_es_field_dict[ordering])
         else:
             es_search = es_search.sort('unicode.keyword')
+
+        print(json.dumps(es_search.to_dict(), indent=2))
 
         return es_search
 

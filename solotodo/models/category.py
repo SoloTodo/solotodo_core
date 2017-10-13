@@ -71,5 +71,6 @@ class Category(models.Model):
             ['update_category_pricing',
              'Can update the pricing of the category\'s entities'],
             ['view_category_leads',
-             'View the leads associated to this category']
+             'View the leads associated to this category'],
+            ('backend_list_categories', 'View category list in backend')
         )

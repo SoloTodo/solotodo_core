@@ -274,6 +274,7 @@ PUBNUB = None
 ##############################################################################
 
 DEFAULT_CURRENCY = 4
+DEFAULT_COUNTRY = 1
 BOT_USERNAME = 'solobot@solotodo.com'
 BACKEND_HOST = 'http://192.168.90.111:3000/'
 CELL_PLAN_CATEGORY = 20

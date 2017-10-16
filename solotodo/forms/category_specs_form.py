@@ -70,8 +70,6 @@ class CategorySpecsForm(forms.Form):
         else:
             es_search = es_search.sort('unicode.keyword')
 
-        print(json.dumps(es_search.to_dict(), indent=2))
-
         return es_search
 
     def process_es_aggs(self, aggs):

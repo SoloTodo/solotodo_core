@@ -5,7 +5,8 @@ import pytz
 from django.core.management import BaseCommand
 from django.utils import dateparse
 
-from solotodo.models import Entity
+from solotodo.models import Entity, Product
+from solotodo.utils import iterable_to_dict
 
 
 class Command(BaseCommand):
@@ -14,6 +15,8 @@ class Command(BaseCommand):
         associations = json.load(open('entity_associations.json', 'r'))
 
         total_entity_count = len(associations)
+
+        products_dict = iterable_to_dict(Product, 'id')
 
         entities_by_url = {}
         for entity in Entity.objects.all():
@@ -38,6 +41,11 @@ class Command(BaseCommand):
                             'secondary_product'] \
                         and entity.last_association_user_id == \
                         association_data['user']:
+                    continue
+
+                if association_data['product'] not in products_dict:
+                    print('Product not found ' +
+                          str(association_data['product']))
                     continue
 
                 entity.product_id = association_data['product']

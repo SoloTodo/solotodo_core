@@ -1,5 +1,6 @@
 from django.db import models
 
+from metamodel.models import InstanceModel
 from solotodo.models import CategorySpecsFilter, Category, ApiClient, \
     CategorySpecsOrder, Country
 
@@ -49,6 +50,13 @@ class CategorySpecsFormFilter(models.Model):
 
     def __str__(self):
         return '{} - {}'.format(self.fieldset, self.label)
+
+    def choices(self):
+        meta_model = self.filter.meta_model
+        if meta_model.is_primitive():
+            return None
+        else:
+            return meta_model.instancemodel_set.all()
 
     class Meta:
         ordering = ('fieldset', 'ordering')

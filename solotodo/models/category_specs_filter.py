@@ -118,7 +118,6 @@ class CategorySpecsFilter(models.Model):
             return [{
                 'id': bucket['key'],
                 'value': bucket['key'],
-                'label': bucket['key'],
                 'doc_count': bucket['doc_count']}
                     for bucket in sorted_buckets]
 
@@ -146,7 +145,6 @@ class CategorySpecsFilter(models.Model):
                 processed_buckets.append({
                     'id': instance_model.id,
                     'value': instance_model_value,
-                    'label': str(instance_model),
                     'doc_count': doc_count
                 })
         return processed_buckets

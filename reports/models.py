@@ -27,8 +27,6 @@ class Report(models.Model):
         es_dict = {e.product_id: e.to_dict()
                    for e in es_search[:100000].execute()}
 
-        print(product_ids)
-
         output = io.BytesIO()
 
         # Create a workbook and add a worksheet.
@@ -96,7 +94,6 @@ class Report(models.Model):
         row = 1
         for e in es:
             es_entry = es_dict[e.product_id]
-            print(e.id)
 
             worksheet.write_url(
                 row, 0,

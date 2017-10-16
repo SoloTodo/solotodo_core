@@ -2,16 +2,28 @@ from rest_framework import serializers
 
 from category_specs_forms.models import CategorySpecsFormFilter, \
     CategorySpecsFormFieldset, CategorySpecsFormOrder, CategorySpecsFormLayout
+from metamodel.models import InstanceModel
+
+
+class InstanceModelSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(source='__str__')
+    value = serializers.DecimalField(source='decimal_value', decimal_places=2,
+                                     max_digits=10)
+
+    class Meta:
+        model = InstanceModel
+        fields = ('id', 'name', 'value')
 
 
 class CategorySpecsFormFilterSerializer(
         serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(source='filter.name')
     type = serializers.CharField(source='filter.type')
+    choices = InstanceModelSerializer(many=True)
 
     class Meta:
         model = CategorySpecsFormFilter
-        fields = ['label', 'name', 'type', 'continuous_range_step',
+        fields = ['label', 'name', 'type', 'choices', 'continuous_range_step',
                   'continuous_range_unit']
 
 

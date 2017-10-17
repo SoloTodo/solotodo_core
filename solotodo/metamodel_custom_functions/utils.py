@@ -7,8 +7,9 @@ def pretty_dimensions(elastic_dict, axes=None, unit='mm'):
         axes = ['width', 'height', 'depth']
 
     if elastic_dict.get(axes[0]):
-        return '{} x {} x {} {}'.format(
-            *[elastic_dict[axis] for axis in axes], unit)
+        result = '{} x {} x {}'.format(*[elastic_dict[axis] for axis in axes])
+        result += ' ' + unit
+        return result
     else:
         return 'N/A'
 

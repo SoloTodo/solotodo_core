@@ -14,6 +14,8 @@ class UserFilterSet(rest_framework.FilterSet):
     def qs(self):
         parent = super(UserFilterSet, self).qs
         user = self.request.user
+        if not user.is_authenticated:
+            return parent.none()
         if 'solotodo.view_users' in user.permissions:
             return parent
         elif 'solotodo.view_users_with_staff_actions' in user.permissions:

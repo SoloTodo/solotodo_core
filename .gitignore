@@ -1,6 +1,6 @@
 .idea
 env
 __pycache__/
-*.json
+/*.json
 storescraper
 **/*.mo

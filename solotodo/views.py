@@ -276,7 +276,6 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
             task = store_update.delay(
                 store.id,
                 category_ids=category_ids,
-                extra_args=None,
                 discover_urls_concurrency=discover_urls_concurrency,
                 products_for_url_concurrency=products_for_url_concurrency,
                 use_async=use_async,

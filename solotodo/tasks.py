@@ -3,8 +3,8 @@ from celery import shared_task
 from solotodo.models import Store, Category, StoreUpdateLog, Product
 
 
-@shared_task(queue='store_update')
-def store_update(store_id, category_ids=None, extra_args=None,
+@shared_task(queue='store_update', ignore_result=True)
+def store_update(store_id, category_ids=None,
                  discover_urls_concurrency=None,
                  products_for_url_concurrency=None,
                  use_async=None,
@@ -47,7 +47,7 @@ def store_update(store_id, category_ids=None, extra_args=None,
         categories = None
 
     store.update_pricing(
-        categories=categories, extra_args=extra_args,
+        categories=categories,
         discover_urls_concurrency=discover_urls_concurrency,
         products_for_url_concurrency=products_for_url_concurrency,
         use_async=use_async, update_log=update_log)

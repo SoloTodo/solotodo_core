@@ -1,6 +1,5 @@
 from django.db import models
 from django import forms
-from django.utils.functional import lazy
 from elasticsearch_dsl import Q
 
 from metamodel.models import MetaModel

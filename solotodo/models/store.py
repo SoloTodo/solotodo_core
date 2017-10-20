@@ -38,7 +38,7 @@ class Store(models.Model):
     def __str__(self):
         return self.name
 
-    def update_pricing(self, categories=None, extra_args=None,
+    def update_pricing(self, categories=None,
                        discover_urls_concurrency=None,
                        products_for_url_concurrency=None,
                        use_async=None, update_log=None):
@@ -54,6 +54,10 @@ class Store(models.Model):
         if update_log:
             update_log.status = update_log.IN_PROCESS
             update_log.save()
+
+        extra_args = {}
+        if self.storescraper_extra_args:
+            extra_args = json.loads(self.storescraper_extra_args)
 
         # First pass of product retrieval
 

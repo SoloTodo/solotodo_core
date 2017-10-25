@@ -148,12 +148,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         form_class = category.specs_form()
         form = form_class(request.query_params)
         if form.is_valid():
-            # 1. Filtering and ordering of products
             es_products_search = form.get_es_products()
-
-            # 2. Bucketing
-
-            bucket_fields = form.bucket_fields()
 
             paginator = ProductPagination()
             page = request.query_params.get(paginator.page_query_param, 1)

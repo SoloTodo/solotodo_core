@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-06 15:31-0300\n"
+"POT-Creation-Date: 2017-10-25 17:01-0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,10 +18,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: solotodo_try/settings/defaults.py:133
+#: solotodo_try/settings/defaults.py:140
 msgid "English"
 msgstr ""
 
-#: solotodo_try/settings/defaults.py:134
+#: solotodo_try/settings/defaults.py:141
 msgid "Spanish"
 msgstr ""

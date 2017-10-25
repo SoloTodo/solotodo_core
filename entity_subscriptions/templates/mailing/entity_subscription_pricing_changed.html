@@ -1,0 +1,51 @@
+{% extends 'mailing/base.html' %}
+
+{% load i18n %}
+
+{% block content %}
+  <h3>{% trans 'Pricing change notification' %}</h3>
+
+  <p>{% trans 'One of your subscriptions has just changed its pricing' %}</p>
+
+  <ul>
+    <li><b>{% trans 'Store' %}:</b> {{ entity_subscription.entity.store }}</li>
+    <li><b>{% trans 'Name' %}:</b> {{ entity_subscription.entity.name }}</li>
+    <li><b>{% trans 'Reference price' %}:</b> {{ entity_subscription.reference_price }}</li>
+    <li><b>{% trans 'Date' %}:</b> {{ timestamp }}</li>
+  </ul>
+
+  <p><strong>{% trans 'Old registry' %}</strong></p>
+
+  <dl>
+    <dt>{% trans 'Is available' %}</dt>
+    <dd>{{ old_is_available|yesno:_("Yes,No") }}</dd>
+    <dt>{% trans 'Normal price' %}</dt>
+    <dd>{{ old_normal_price|default:"N/A" }}</dd>
+    <dt>{% trans 'Offer price' %}</dt>
+    <dd>{{ old_offer_price|default:"N/A" }}</dd>
+  </dl>
+
+  <p><strong>{% trans 'New registry' %}</strong></p>
+
+  <dl>
+    <dt>{% trans 'Is available' %}</dt>
+    <dd>{{ new_is_available|yesno:_("Yes,No") }}</dd>
+    <dt>{% trans 'Normal price' %}</dt>
+    <dd>{{ new_normal_price|default:"N/A" }}</dd>
+    <dt>{% trans 'Offer price' %}</dt>
+    <dd>{{ new_offer_price|default:"N/A" }}</dd>
+  </dl>
+
+  <table class="button">
+    <tr>
+      <td>
+        <table>
+          <tr>
+            <td><a href="{{ host }}entities/{{ entity_subscription.entity.id }}/pricing_history">{% trans 'Check price history' %}</a></td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+
+{% endblock %}

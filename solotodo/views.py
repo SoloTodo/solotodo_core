@@ -27,6 +27,7 @@ from solotodo.filter_querysets import create_category_filter, \
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
     LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet
+from solotodo.forms.category_browse_form import CategoryBrowseForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
@@ -127,7 +128,12 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         form_class = category.specs_form()
         form = form_class(request.query_params)
         if form.is_valid():
+            # 1. Filtering and ordering of products
             es_products_search = form.get_es_products()
+
+            # 2. Bucketing
+
+            bucket_fields = form.bucket_fields()
 
             paginator = ProductPagination()
             page = request.query_params.get(paginator.page_query_param, 1)
@@ -173,6 +179,14 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
             })
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route()
+    def browse(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+        form = CategoryBrowseForm(request.query_params)
+        result = form.get_products(category, request)
+
+        return Response(result)
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):

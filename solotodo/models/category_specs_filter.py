@@ -114,14 +114,23 @@ class CategorySpecsFilter(models.Model):
         if self.meta_model.is_primitive():
             sorted_buckets = sorted(buckets, key=lambda bucket: bucket['key'])
 
-            return [{
-                'id': bucket['key'],
-                'value': bucket['key'],
-                'doc_count': bucket['doc_count']}
-                    for bucket in sorted_buckets]
+            result = []
+            for bucket in sorted_buckets:
+                if 'search_bucket' in bucket:
+                    doc_count = len(bucket['search_bucket']['buckets'])
+                else:
+                    doc_count = bucket['doc_count']
 
-        bucket_key_to_doc_count_dict = {bucket['key']: bucket['doc_count']
-                                        for bucket in buckets}
+                bucket_result = {
+                    'id': bucket['key'],
+                    'value': bucket['key'],
+                    'doc_count': doc_count
+                }
+                result.append(bucket_result)
+
+            return result
+
+        bucket_key_dict = {bucket['key']: bucket for bucket in buckets}
         value_field = self.value_field_or_default()
         instance_models = self.meta_model.instancemodel_set.all()
 
@@ -139,8 +148,15 @@ class CategorySpecsFilter(models.Model):
         processed_buckets = []
         for instance_model in instance_models:
             instance_model_value = instance_models_values_dict[instance_model]
-            doc_count = bucket_key_to_doc_count_dict.get(instance_model.id)
-            if doc_count:
+            bucket = bucket_key_dict.get(instance_model.id)
+
+            if bucket:
+                if 'search_bucket' in bucket:
+                    # The search is bucketed
+                    doc_count = len(bucket['search_bucket']['buckets'])
+                else:
+                    doc_count = bucket['doc_count']
+
                 processed_buckets.append({
                     'id': instance_model.id,
                     'value': instance_model_value,

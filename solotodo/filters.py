@@ -1,12 +1,13 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Q, F
 from django_filters import rest_framework
 
 from solotodo.filter_querysets import create_store_filter, \
     create_category_filter, create_product_filter, create_entity_filter
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
-    Product, EntityHistory, Country, Store, StoreType, Lead, ApiClient
+    Product, EntityHistory, Country, Store, StoreType, Lead, ApiClient, \
+    Currency
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -166,6 +167,75 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
             qs = qs.filter_by_user_perms(
                 self.request.user, 'is_entity_staff')
         return qs
+
+
+class CategoryBrowseEntityFilterSet(rest_framework.FilterSet):
+    stores = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_store_filter(),
+        name='store',
+        label='Stores'
+    )
+    countries = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Country.objects.all(),
+        name='store__country',
+        label='Countries'
+    )
+    currencies = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Currency.objects.all(),
+        name='currency',
+        label='Currencies'
+    )
+    store_types = rest_framework.ModelMultipleChoiceFilter(
+        queryset=StoreType.objects.all(),
+        name='store__type',
+        label='Store types'
+    )
+    normal_price = rest_framework.RangeFilter(
+        label='Normal price',
+        name='active_registry__normal_price'
+    )
+    offer_price = rest_framework.RangeFilter(
+        label='Offer price',
+        name='active_registry__offer_price'
+    )
+    normal_price_usd = rest_framework.RangeFilter(
+        label='Normal price (USD)',
+        name='normal_price_usd'
+    )
+    offer_price_usd = rest_framework.RangeFilter(
+        label='Offer price (USD)',
+        name='offer_price_usd'
+    )
+
+    @classmethod
+    def create(cls, category, request):
+        entities = Entity.objects.filter(
+            product__instance_model__model__category=category
+        ).annotate(
+            offer_price_usd=F('active_registry__offer_price') /
+            F('currency__exchange_rate'),
+            normal_price_usd=F('active_registry__normal_price') /
+            F('currency__exchange_rate')
+        )
+        return cls(
+            data=request.query_params, queryset=entities, request=request)
+
+    @property
+    def qs(self):
+        qs = super(CategoryBrowseEntityFilterSet, self).qs.get_available() \
+            .filter(active_registry__cell_monthly_payment__isnull=True) \
+            .filter(product__isnull=False) \
+            .select_related(
+            'active_registry',
+            'product__instance_model__model__category',
+        )
+        stores_with_permission = create_store_filter()(self.request)
+
+        return qs.filter(store__in=stores_with_permission)
+
+    class Meta:
+        model = Entity
+        fields = []
 
 
 class ProductFilterSet(rest_framework.FilterSet):

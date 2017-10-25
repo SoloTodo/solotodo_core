@@ -111,11 +111,20 @@ class Product(models.Model):
 
         document[u'product_id'] = self.id
         document[u'keywords'] = ' '.join(keywords)
+        document[u'search_bucket_key'] = self.search_bucket_key(document)
 
         es.index(index=settings.ES_PRODUCTS_INDEX,
                  doc_type=self.category.storescraper_name,
                  id=self.id,
                  body=document)
+
+    def search_bucket_key(self, es_document):
+        bucket_fields = self.category.search_bucket_key_fields
+        if bucket_fields:
+            return ','.join([str(es_document[field.strip()])
+                             for field in bucket_fields.split(',')])
+        else:
+            return ''
 
     @staticmethod
     def query_es_by_search_string(es_search, search, mode='OR'):

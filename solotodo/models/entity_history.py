@@ -16,6 +16,7 @@ class EntityHistory(models.Model):
     offer_price = models.DecimalField(decimal_places=2, max_digits=12)
     cell_monthly_payment = models.DecimalField(decimal_places=2, max_digits=12,
                                                null=True, blank=True)
+
     objects = EntityHistoryQueryset.as_manager()
 
     def __str__(self):

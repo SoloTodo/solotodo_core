@@ -286,3 +286,37 @@ class LeadWithUserDataSerializer(LeadSerializer):
         model = Lead
         fields = ['url', 'id', 'user', 'ip', 'timestamp', 'normal_price',
                   'offer_price', 'api_client', 'entity']
+
+
+class CategoryBrowsePricesSerializer(serializers.Serializer):
+    currency = serializers.HyperlinkedRelatedField(
+        view_name='currency-detail', read_only=True, source='currency.id')
+    min_normal_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2)
+    min_offer_price = serializers.DecimalField(
+        max_digits=10, decimal_places=2)
+    min_normal_price_usd = serializers.DecimalField(
+        max_digits=10, decimal_places=2)
+    min_offer_price_usd = serializers.DecimalField(
+        max_digits=10, decimal_places=2)
+
+    class Meta:
+        fields = ['currency', 'min_normal_price', 'min_offer_price',
+                  'min_normal_price_usd', 'min_offer_price_usd']
+
+
+class CategoryBrowseProductEntrySerializer(serializers.Serializer):
+    product = ProductSerializer()
+    ordering_value = serializers.DecimalField(max_digits=10, decimal_places=2)
+    prices = CategoryBrowsePricesSerializer(many=True)
+
+    class Meta:
+        fields = ['product', 'ordering_value', 'prices']
+
+
+class CategoryBrowserResultSerializer(serializers.Serializer):
+    bucket = serializers.CharField()
+    product_entries = CategoryBrowseProductEntrySerializer(many=True)
+
+    class Meta:
+        fields = ['bucket', 'product_entries']

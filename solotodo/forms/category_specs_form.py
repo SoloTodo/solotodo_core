@@ -9,6 +9,7 @@ from solotodo.utils import iterable_to_dict
 class CategorySpecsForm(forms.Form):
     ordering = forms.ChoiceField(choices=[], required=False)
     search = forms.CharField(required=False)
+    bucket_field = forms.CharField(required=False)
 
     @classmethod
     def add_filter(cls, category_specs_filter):
@@ -27,12 +28,14 @@ class CategorySpecsForm(forms.Form):
             cls.ordering_value_to_es_field_dict[new_ordering_name] = \
                 new_ordering_field
 
-    def get_es_products(self):
+    def get_es_products(self, es_search=None):
         from solotodo.models import Product
 
-        assert self.is_valid()
+        if not self.is_valid():
+            raise Exception(self.errors)
 
-        es_search = self.category.es_search()
+        if not es_search:
+            es_search = self.category.es_search()
 
         search = self.cleaned_data['search']
         if search:
@@ -44,6 +47,12 @@ class CategorySpecsForm(forms.Form):
             for field in self.category_specs_filters
         }
 
+        bucket_field = self.cleaned_data['bucket_field']
+
+        search_bucket_agg = None
+        if bucket_field:
+            search_bucket_agg = A('terms', field=bucket_field, size=10000)
+
         for field in self.category_specs_filters:
             aggs_filters = Q()
 
@@ -54,9 +63,14 @@ class CategorySpecsForm(forms.Form):
 
             field_agg = A('terms', field=field.es_id_field(), size=1000)
 
+            if search_bucket_agg:
+                # 'search_bucket' is just a name, just need to be consistent
+                # later
+                field_agg.bucket('search_bucket', search_bucket_agg)
+
             agg = A('filter', aggs_filters)
-            # "result" is just a name, we could've named the bucket "foo"
-            # just need to be consistent when querying the aggs later
+
+            # "result" is also just an arbitrary name
             agg.bucket('result', field_agg)
 
             es_search.aggs.bucket(field.name, agg)

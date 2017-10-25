@@ -22,6 +22,12 @@ class CategorySpecsFilter(models.Model):
     def __str__(self):
         return '{} - {}'.format(self.category, self.name)
 
+    def choices(self):
+        if self.meta_model.is_primitive():
+            return None
+        else:
+            return self.meta_model.instancemodel_set.all()
+
     def form_fields_dict(self):
         field_names = []
         if self.type == 'exact':

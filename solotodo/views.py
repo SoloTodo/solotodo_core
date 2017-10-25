@@ -49,7 +49,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     EntityEventValueSerializer, MyUserSerializer, \
     EntityHistoryPartialSerializer, EntityHistoryFullSerializer, \
     ApiClientSerializer, LeadSerializer, EntityConflictSerializer, \
-    LeadWithUserDataSerializer
+    LeadWithUserDataSerializer, CategorySpecsFilterSerializer, \
+    CategorySpecsOrderSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 
@@ -121,6 +122,25 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
     def get_queryset(self):
         return create_category_filter()(self.request)
+
+    @detail_route()
+    def specs_filters(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+
+        specs_filters = category.categoryspecsfilter_set.select_related(
+            'meta_model')
+        serializer = CategorySpecsFilterSerializer(specs_filters, many=True)
+
+        return Response(serializer.data)
+
+    @detail_route()
+    def specs_orders(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+
+        specs_orders = category.categoryspecsorder_set.all()
+        serializer = CategorySpecsOrderSerializer(specs_orders, many=True)
+
+        return Response(serializer.data)
 
     @detail_route()
     def products(self, request, pk, *args, **kwargs):

@@ -1,9 +1,10 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
-    Lead, ApiClient
+    Lead, ApiClient, CategorySpecsFilter, CategorySpecsOrder
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -78,6 +79,29 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Category
         fields = ('url', 'id', 'name',)
+
+
+class CategorySpecsFilterChoiceSerializer(
+        serializers.HyperlinkedModelSerializer):
+    label = serializers.CharField(source='unicode_representation')
+
+    class Meta:
+        model = InstanceModel
+        fields = ['id', 'label']
+
+
+class CategorySpecsFilterSerializer(serializers.HyperlinkedModelSerializer):
+    choices = CategorySpecsFilterChoiceSerializer(many=True)
+
+    class Meta:
+        model = CategorySpecsFilter
+        fields = ('name', 'type', 'choices')
+
+
+class CategorySpecsOrderSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = CategorySpecsOrder
+        fields = ('name', )
 
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):

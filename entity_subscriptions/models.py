@@ -59,14 +59,19 @@ class EntitySubscription(models.Model):
                         'timestamp': timezone.now(),
                         'host': settings.BACKEND_HOST,
                         'old_is_available': old_is_available,
-                        'old_normal_price': old_history and old_history.normal_price,
-                        'old_offer_price': old_history and old_history.offer_price,
+                        'old_normal_price': old_history and
+                        old_history.normal_price,
+                        'old_offer_price': old_history and
+                        old_history.offer_price,
                         'new_is_available': new_is_available,
-                        'new_normal_price': new_history and new_history.normal_price,
-                        'new_offer_price': new_history and new_history.offer_price,
+                        'new_normal_price': new_history and
+                        new_history.normal_price,
+                        'new_offer_price': new_history and
+                        new_history.offer_price,
                     })
 
-                send_mail('{}: {} - {}'.format(_('Pricing change'), self.entity.store, self.entity.name),
+                send_mail('{}: {} - {}'.format(
+                    _('Pricing change'), self.entity.store, self.entity.name),
                           'Price change', sender, email_recipients,
                           html_message=html_message)
 

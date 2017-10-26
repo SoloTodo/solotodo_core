@@ -43,7 +43,7 @@ class CategoryBrowseForm(forms.Form):
         entities = filterset.qs \
             .values('product', 'currency') \
             .annotate(
-                min_normal_price=Min('active_registry__offer_price'),
+                min_normal_price=Min('active_registry__normal_price'),
                 min_offer_price=Min('active_registry__offer_price'),
                 min_normal_price_usd=Min(F('active_registry__normal_price') /
                                          F('currency__exchange_rate')),
@@ -56,13 +56,29 @@ class CategoryBrowseForm(forms.Form):
         # a. Be overriden (if the final ordering is based on the DB)
         # b. Act as a secondary ordering (if the first ordering is based on ES)
 
+        # 2. Get the min, max, and 80th percentile normal and offer price
+        entities_count = entities.count()
+
+        if entities_count:
+            price_ranges = {}
+            for price_type in ['normal_price_usd', 'offer_price_usd']:
+                sorted_entities = entities.order_by('min_' + price_type)
+                price_ranges[price_type] = {
+                    'min': sorted_entities.first()['min_normal_price_usd'],
+                    'max': sorted_entities.last()['min_normal_price_usd'],
+                    '80th': sorted_entities[int(entities_count*0.8)][
+                        'min_normal_price_usd']
+                }
+        else:
+            price_ranges = None
+
         ordering = self.cleaned_data['ordering']
         if not ordering:
             ordering = self.DEFAULT_ORDERING
 
         query_params = request.query_params.copy()
 
-        # 2. DB ordering (if it applies)
+        # 3. DB ordering (if it applies)
         if ordering in self.DB_ORDERING_CHOICES:
             query_params.pop('ordering', None)
 
@@ -96,7 +112,7 @@ class CategoryBrowseForm(forms.Form):
             else:
                 raise Exception('This condition is unreachable')
 
-        # 3. Create ES search that filters and order based on technical terms
+        # 4. Create ES search that filters and order based on technical terms
         # if ordering is passed. Also calculates the aggregation count for the
         # form filters
 
@@ -114,11 +130,11 @@ class CategoryBrowseForm(forms.Form):
         filtered_product_ids = [entry['product_id'] for entry in es_results]
         entities = entities.filter(product__in=filtered_product_ids)
 
-        # 4. Obtain filter aggs
+        # 5. Obtain filter aggs
 
         filter_aggs = specs_form.process_es_aggs(es_results.aggs)
 
-        # 5. Generate price entries per product
+        # 6. Generate price entries per product
 
         product_id_to_prices = {}
 
@@ -141,7 +157,7 @@ class CategoryBrowseForm(forms.Form):
             else:
                 product_id_to_prices[product_id] = [entry_prices]
 
-        # 6. Bucket the results
+        # 7. Bucket the results
 
         product_id_to_specs = {
             entry['_source']['product_id']: entry['_source']
@@ -194,7 +210,7 @@ class CategoryBrowseForm(forms.Form):
                     'prices': product_id_to_prices[product.id]
                 }
 
-        # 7. Paginate
+        # 8. Paginate
 
         bucketed_results_list = list(bucketed_results.items())
 
@@ -212,7 +228,7 @@ class CategoryBrowseForm(forms.Form):
 
         bucketed_results_page = bucketed_results_list[offset:upper_bound]
 
-        # 8. Serialization
+        # 9. Serialization
 
         bucketed_results_page_for_serialization = []
         for bucket, products_dict in bucketed_results_page:
@@ -236,5 +252,6 @@ class CategoryBrowseForm(forms.Form):
         return {
             'count': len(bucketed_results_list),
             'aggs': filter_aggs,
-            'results': serializer.data
+            'results': serializer.data,
+            'price_ranges': price_ranges
         }

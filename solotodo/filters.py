@@ -29,6 +29,19 @@ class UserFilterSet(rest_framework.FilterSet):
         fields = []
 
 
+class ApiClientFilterSet(rest_framework.FilterSet):
+    @property
+    def qs(self):
+        qs = super(ApiClientFilterSet, self).qs
+        if self.request:
+            qs = qs.filter_by_user_perms(self.request.user, 'view_api_client')
+        return qs
+
+    class Meta:
+        model = ApiClient
+        fields = []
+
+
 class StoreFilterSet(rest_framework.FilterSet):
     countries = rest_framework.ModelMultipleChoiceFilter(
         queryset=Country.objects.all(),

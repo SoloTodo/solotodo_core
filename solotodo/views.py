@@ -26,7 +26,8 @@ from solotodo.filter_querysets import create_category_filter, \
     create_store_filter
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
-    LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet
+    LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet, \
+    ApiClientFilterSet
 from solotodo.forms.category_browse_form import CategoryBrowseForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
@@ -94,6 +95,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 class ApiClientViewSet(PermissionReadOnlyModelViewSet):
     queryset = ApiClient.objects.all()
     serializer_class = ApiClientSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
+    filter_class = ApiClientFilterSet
 
 
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):

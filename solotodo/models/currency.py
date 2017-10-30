@@ -5,7 +5,6 @@ from urllib import request
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
-from storescraper.utils import format_currency
 
 
 class Currency(models.Model):

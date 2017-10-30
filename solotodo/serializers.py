@@ -52,7 +52,8 @@ class LanguageSerializer(serializers.HyperlinkedModelSerializer):
 class NumberFormatSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = NumberFormat
-        fields = ('url', 'name', 'thousands_separator', 'decimal_separator')
+        fields = ('url', 'id', 'name', 'thousands_separator',
+                  'decimal_separator')
 
 
 class CurrencySerializer(serializers.HyperlinkedModelSerializer):

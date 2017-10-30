@@ -1,7 +1,6 @@
 from django import forms
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.filter_querysets import create_category_filter
 from solotodo.models import Category
 
 

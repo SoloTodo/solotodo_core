@@ -3,7 +3,9 @@ from celery import shared_task
 from solotodo.models import Store, Category, StoreUpdateLog, Product
 
 
-@shared_task(queue='store_update', ignore_result=True)
+@shared_task(queue='store_update', ignore_result=True,
+             autoretry_for=(Exception,), max_retries=2,
+             default_retry_delay=10)
 def store_update(store_id, category_ids=None,
                  discover_urls_concurrency=None,
                  products_for_url_concurrency=None,

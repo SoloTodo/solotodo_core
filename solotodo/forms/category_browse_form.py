@@ -1,6 +1,7 @@
 from collections import OrderedDict
 from datetime import timedelta
 
+import re
 from django import forms
 from django.db.models import Min, Q, Count, Case, When, IntegerField, F
 from django.utils import timezone
@@ -198,6 +199,8 @@ class CategoryBrowseForm(forms.Form):
                     }
         else:
             # Ordering was based on ES
+            ordering_field = re.match(r'-?(.+)$', ordering).groups()[0]
+
             for es_product in es_results:
                 product = product_id_to_full_instance[es_product['product_id']]
                 bucket = product.specs[bucket_field]
@@ -206,7 +209,7 @@ class CategoryBrowseForm(forms.Form):
                     bucketed_results[bucket] = OrderedDict()
 
                 bucketed_results[bucket][product] = {
-                    'ordering_value': product.specs[ordering],
+                    'ordering_value': product.specs[ordering_field],
                     'prices': product_id_to_prices[product.id]
                 }
 

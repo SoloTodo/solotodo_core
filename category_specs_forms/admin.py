@@ -1,7 +1,8 @@
 from django.contrib import admin
 
 from category_specs_forms.models import CategorySpecsFormLayout, \
-    CategorySpecsFormFieldset, CategorySpecsFormFilter, CategorySpecsFormOrder
+    CategorySpecsFormFieldset, CategorySpecsFormFilter, \
+    CategorySpecsFormOrder, CategorySpecsFormColumn
 
 
 @admin.register(CategorySpecsFormLayout)
@@ -25,4 +26,10 @@ class CategorySpecsFormFilterModelAdmin(admin.ModelAdmin):
 @admin.register(CategorySpecsFormOrder)
 class CategorySpecsFormOrderModelAdmin(admin.ModelAdmin):
     list_display = ('layout', 'label', 'suggested_use', 'ordering')
+    list_filter = ('layout',)
+
+
+@admin.register(CategorySpecsFormColumn)
+class CategorySpecsFormOrderModelAdmin(admin.ModelAdmin):
+    list_display = ('layout', 'field', 'label', 'ordering')
     list_filter = ('layout',)

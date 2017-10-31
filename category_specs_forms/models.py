@@ -68,10 +68,23 @@ class CategorySpecsFormOrder(models.Model):
     label = models.CharField(max_length=100)
     ordering = models.IntegerField()
     suggested_use = models.CharField(max_length=20, choices=[
-        ('gte', 'High to low'),
-        ('lte', 'Low to high'),
+        ('ascending', 'Ascending'),
+        ('descending', 'Descending'),
         ('both', 'Both'),
     ])
+
+    def __str__(self):
+        return '{} - {}'.format(self.layout, self.label)
+
+    class Meta:
+        ordering = ('layout', 'ordering')
+
+
+class CategorySpecsFormColumn(models.Model):
+    layout = models.ForeignKey(CategorySpecsFormLayout, related_name='columns')
+    label = models.CharField(max_length=100)
+    field = models.CharField(max_length=100)
+    ordering = models.IntegerField()
 
     def __str__(self):
         return '{} - {}'.format(self.layout, self.label)

@@ -66,7 +66,7 @@ class CurrencySerializer(serializers.HyperlinkedModelSerializer):
 class CountrySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Country
-        fields = ('url', 'id', 'name', 'currency', 'number_format')
+        fields = ('url', 'id', 'name', 'iso_code', 'currency', 'number_format')
 
 
 class StoreSerializer(serializers.HyperlinkedModelSerializer):
@@ -119,6 +119,13 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
 
 class NestedProductSerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(read_only=True, source='__str__')
+
+    class Meta:
+        model = Product
+        fields = ('url', 'id', 'name')
+
+
+class NestedProductSerializerWithCategory(NestedProductSerializer):
     category = serializers.HyperlinkedRelatedField(
         view_name='category-detail', read_only=True,
         source='category.pk')
@@ -140,25 +147,18 @@ class StoreScraperSerializer(serializers.Serializer):
     )
 
 
-class EntityHistoryPartialSerializer(serializers.HyperlinkedModelSerializer):
+class EntityHistoryWithStockSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = EntityHistory
-        fields = ['timestamp', 'normal_price', 'offer_price',
-                  'cell_monthly_payment', 'is_available']
-
-
-class EntityHistoryFullSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = EntityHistory
-        fields = ['timestamp', 'normal_price', 'offer_price',
+        fields = ['url', 'id', 'timestamp', 'normal_price', 'offer_price',
                   'cell_monthly_payment', 'is_available', 'stock']
 
 
 class EntityHistorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = EntityHistory
-        fields = ['timestamp', 'stock', 'normal_price', 'offer_price',
-                  'cell_monthly_payment']
+        fields = ['url', 'id', 'entity', 'timestamp', 'is_available',
+                  'normal_price', 'offer_price', 'cell_monthly_payment']
 
 
 class EntityMinimalSerializer(serializers.HyperlinkedModelSerializer):
@@ -166,13 +166,7 @@ class EntityMinimalSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Entity
-        fields = (
-            'url',
-            'id',
-            'name',
-            'category',
-            'store'
-        )
+        fields = ['url', 'id', 'name', 'category', 'store']
 
 
 class EntityWithInlineProductSerializer(
@@ -210,7 +204,7 @@ class EntityConflictSerializer(serializers.Serializer):
     entities = EntityMinimalSerializer(many=True)
 
 
-class EntityFullSerializer(serializers.HyperlinkedModelSerializer):
+class EntitySerializer(serializers.HyperlinkedModelSerializer):
     active_registry = EntityHistorySerializer(read_only=True)
     product = NestedProductSerializer(read_only=True)
     cell_plan = NestedProductSerializer(read_only=True)
@@ -226,35 +220,36 @@ class EntityFullSerializer(serializers.HyperlinkedModelSerializer):
         fields = (
             'url',
             'id',
-            'store',
-            'category',
-            'condition',
-            'scraped_category',
-            'currency',
-            'product',
-            'cell_plan',
-            'active_registry',
             'name',
             'cell_plan_name',
-            'part_number',
+            'store',
+            'category',
             'sku',
-            'ean',
-            'key',
             'external_url',
-            'discovery_url',
-            'description',
+            'condition',
+            'part_number',
+            'ean',
             'is_visible',
-            'last_association_user',
-            'last_association',
+            'active_registry',
+            'product',
+            'cell_plan',
+            'currency',
+            'description',
+            'picture_urls',
+            'key',
             'creation_date',
             'last_updated',
-            'picture_urls',
-            'last_staff_access',
-            'last_staff_access_user',
-            'last_staff_change',
-            'last_staff_change_user',
             'last_pricing_update',
-            'last_pricing_update_user',
+
+            # 'discovery_url',
+            # 'scraped_category',
+            # 'last_association_user',
+            # 'last_association',
+            # 'last_staff_access',
+            # 'last_staff_access_user',
+            # 'last_staff_change',
+            # 'last_staff_change_user',
+            # 'last_pricing_update_user',
         )
 
 

@@ -38,20 +38,21 @@ from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    Category, StoreUpdateLog, Entity, Product, NumberFormat, ApiClient, Lead
+    Category, StoreUpdateLog, Entity, Product, NumberFormat, ApiClient, Lead, \
+    EntityHistory
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
-    EntitySalesEstimatePagination
+    EntitySalesEstimatePagination, EntityHistoryPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
-    StoreUpdateLogSerializer, EntityFullSerializer, ProductSerializer, \
+    StoreUpdateLogSerializer, EntitySerializer, ProductSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
     EntityEventValueSerializer, MyUserSerializer, \
-    EntityHistoryPartialSerializer, EntityHistoryFullSerializer, \
+    EntityHistoryWithStockSerializer, \
     ApiClientSerializer, LeadSerializer, EntityConflictSerializer, \
     LeadWithUserDataSerializer, CategorySpecsFilterSerializer, \
-    CategorySpecsOrderSerializer
+    CategorySpecsOrderSerializer, EntityHistorySerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 
@@ -355,8 +356,8 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
 
 class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Entity.objects.all()
-    serializer_class = EntityFullSerializer
     pagination_class = EntityPagination
+    serializer_class = EntitySerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        CustomEntityOrderingFilter)
     filter_class = EntityFilterSet
@@ -377,7 +378,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             # handle publish result, status always present, result if
             # successful status.isError to see if error happened
 
-        serialized_data = EntityFullSerializer(
+        serialized_data = EntitySerializer(
             entity, context={'request': self.request}).data
         message = {
             'type': 'updateApiResourceObject',
@@ -626,9 +627,9 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         entity = self.get_object()
 
         if entity.user_can_view_stocks(request.user):
-            serializer_klass = EntityHistoryFullSerializer
+            serializer_klass = EntityHistoryWithStockSerializer
         else:
-            serializer_klass = EntityHistoryPartialSerializer
+            serializer_klass = EntityHistorySerializer
 
         filterset = EntityHistoryFilterSet(
             data=request.query_params,
@@ -636,9 +637,26 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             request=request)
         serializer = serializer_klass(
             filterset.qs,
-            many=True
+            many=True,
+            context={'request': request}
         )
         return Response(serializer.data)
+
+
+class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = EntityHistory.objects.all()
+    serializer_class = EntityHistorySerializer
+    pagination_class = EntityHistoryPagination
+    filter_backends = (rest_framework.DjangoFilterBackend, )
+    filter_class = EntityHistoryFilterSet
+
+    @detail_route()
+    def stock(self, request, pk):
+        entity_history = self.get_object()
+        if entity_history.entity.user_can_view_stocks(request.user):
+            return Response({'stock': entity_history.stock})
+        else:
+            raise PermissionDenied
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
@@ -654,8 +672,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def available_entities(self, request, pk):
         product = self.get_object()
         available_entities = product.entity_set.get_available()
-        serializer = EntityFullSerializer(available_entities, many=True,
-                                          context={'request': request})
+        serializer = EntitySerializer(available_entities, many=True,
+                                      context={'request': request})
         return Response(serializer.data)
 
 

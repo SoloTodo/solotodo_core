@@ -7,6 +7,30 @@ class EntityHistoryQueryset(models.QuerySet):
     def get_available(self):
         return self.exclude(stock=0)
 
+    def filter_by_user_perms(self, user, permission):
+        from solotodo.models import Category, Store
+
+        synth_permissions = {
+            'view_entity_history': {
+                'store': 'view_store',
+                'category': 'view_category',
+            }
+        }
+
+        assert permission in synth_permissions
+
+        permissions = synth_permissions[permission]
+
+        stores_with_permissions = Store.objects.filter_by_user_perms(
+            user, permissions['store'])
+        categories_with_permissions = Category.objects.filter_by_user_perms(
+            user, permissions['category'])
+
+        return self.filter(
+            entity__store__in=stores_with_permissions,
+            entity__category__in=categories_with_permissions,
+        )
+
 
 class EntityHistory(models.Model):
     entity = models.ForeignKey(Entity)

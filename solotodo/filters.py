@@ -105,7 +105,7 @@ class EntityFilterSet(rest_framework.FilterSet):
     def qs(self):
         qs = super(EntityFilterSet, self).qs.select_related(
             'active_registry',
-            'product__instance_model__model__category',
+            'product__instance_model',
         )
         categories_with_permission = create_category_filter()(self.request)
         stores_with_permission = create_store_filter()(self.request)
@@ -323,13 +323,15 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        qs = super(EntityHistoryFilterSet, self).qs.select_related()
-        categories_with_permission = create_category_filter()(self.request)
-        stores_with_permission = create_store_filter()(self.request)
+        qs = super(EntityHistoryFilterSet, self).qs.select_related(
+            'entity__store',
+            'entity__category',
+        )
+        if self.request:
+            qs = qs.filter_by_user_perms(self.request.user,
+                                         'view_entity_history')
 
-        return qs.filter(
-            Q(entity__category__in=categories_with_permission) &
-            Q(entity__store__in=stores_with_permission))
+        return qs
 
     class Meta:
         model = EntityHistory

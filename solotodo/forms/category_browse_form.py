@@ -10,7 +10,7 @@ from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.filters import CategoryBrowseEntityFilterSet
 from solotodo.models import Country, Product, Currency
 from solotodo.pagination import CategoryBrowsePagination
-from solotodo.serializers import CategoryBrowserResultSerializer
+from solotodo.serializers import CategoryBrowseResultSerializer
 from solotodo.utils import iterable_to_dict
 
 
@@ -247,7 +247,7 @@ class CategoryBrowseForm(forms.Form):
                 'product_entries': product_entries
             })
 
-        serializer = CategoryBrowserResultSerializer(
+        serializer = CategoryBrowseResultSerializer(
             bucketed_results_page_for_serialization, many=True,
             context={'request': request}
         )

@@ -207,20 +207,11 @@ class Entity(models.Model):
     last_staff_access_user = models.ForeignKey(
         get_user_model(), null=True, related_name='+')
 
-    # Last time a staff made a change to the entity (change category,
-    # visibility, association). Used to warn other staff when someone is
-    # working on an entity.
-    last_staff_change = models.DateTimeField(null=True, blank=True)
-    last_staff_change_user = models.ForeignKey(
-        get_user_model(), null=True, related_name='+')
-
     # The last time the pricing of this entity was updated. Needed because
     # active_registry may be null. It does not match the active_registry date
     # either way because the registry uses the timestamp of the scraping, and
     # this field uses the timestamp of the moment it is updated in the database
     last_pricing_update = models.DateTimeField()
-    last_pricing_update_user = models.ForeignKey(
-        get_user_model(), related_name='+')
 
     objects = EntityQueryset.as_manager()
 
@@ -239,18 +230,13 @@ class Entity(models.Model):
         return False
 
     def update_with_scraped_product(self, scraped_product,
-                                    category=None, currency=None,
-                                    user=None):
+                                    category=None, currency=None):
         from solotodo.models import EntityHistory
 
         assert scraped_product is None or self.key == scraped_product.key
 
-        if not user:
-            user = get_user_model().get_bot()
-
         updated_data = {
             'last_pricing_update': timezone.now(),
-            'last_pricing_update_user': user
         }
 
         if scraped_product:
@@ -315,7 +301,6 @@ class Entity(models.Model):
             description=scraped_product.description,
             is_visible=True,
             last_pricing_update=timezone.now(),
-            last_pricing_update_user=get_user_model().get_bot()
         )
 
         new_entity_history = EntityHistory.objects.create(
@@ -384,10 +369,7 @@ class Entity(models.Model):
 
         super(Entity, self).save(*args, **kwargs)
 
-    def update_pricing(self, user=None):
-        if not user:
-            user = get_user_model().get_bot()
-
+    def update_pricing(self):
         scraper = self.store.scraper
         scraped_products = scraper.products_for_url(
             self.discovery_url,
@@ -401,7 +383,7 @@ class Entity(models.Model):
                 entity_scraped_product = scraped_product
                 break
 
-        self.update_with_scraped_product(entity_scraped_product, user=user)
+        self.update_with_scraped_product(entity_scraped_product)
 
     def events(self):
         entity = self
@@ -462,8 +444,6 @@ class Entity(models.Model):
         update_dict = {
             'last_association': now,
             'last_association_user': user,
-            'last_staff_change': now,
-            'last_staff_change_user': user,
             'product': product,
             'cell_plan': cell_plan
         }
@@ -478,13 +458,9 @@ class Entity(models.Model):
                 'Reason must not be present if the last association user is '
                 'the same as the one dissociating the entity')
 
-        now = timezone.now()
-
         update_dict = {
             'last_association': None,
             'last_association_user': None,
-            'last_staff_change': now,
-            'last_staff_change_user': user,
             'product': None,
             'cell_plan': None
         }

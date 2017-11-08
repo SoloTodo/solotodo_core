@@ -52,7 +52,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     EntityHistoryWithStockSerializer, \
     ApiClientSerializer, LeadSerializer, EntityConflictSerializer, \
     LeadWithUserDataSerializer, CategorySpecsFilterSerializer, \
-    CategorySpecsOrderSerializer, EntityHistorySerializer
+    CategorySpecsOrderSerializer, EntityHistorySerializer, \
+    EntityStaffInfoSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 
@@ -372,29 +373,6 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                      'url',
                      'discovery_url')
 
-    def dispatch_and_serialize_into_response(self, entity):
-        def publish_callback(result, status):
-            pass
-            # handle publish result, status always present, result if
-            # successful status.isError to see if error happened
-
-        serialized_data = EntitySerializer(
-            entity, context={'request': self.request}).data
-        message = {
-            'type': 'updateApiResourceObject',
-            'apiResourceObject': serialized_data,
-            'id': entity.id,
-            'resource': 'entities',
-            'user': reverse(
-                'solotodouser-detail', kwargs={'pk': self.request.user.pk},
-                request=self.request),
-        }
-
-        settings.PUBNUB.publish().channel(
-            settings.BACKEND_CHANNEL).message(message).async(publish_callback)
-
-        return Response(serialized_data)
-
     @list_route()
     def estimated_sales(self, request):
         filterset = EntityEstimatedSalesFilterSet(
@@ -446,7 +424,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                 'last_staff_access': timezone.now(),
             },
             request.user)
-        return self.dispatch_and_serialize_into_response(entity)
+
+        serialized_data = EntitySerializer(
+            entity, context={'request': self.request}).data
+        return Response(serialized_data)
 
     @detail_route(methods=['post'])
     def update_pricing(self, request, *args, **kwargs):
@@ -462,8 +443,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
         try:
-            entity.update_pricing(request.user)
-            return self.dispatch_and_serialize_into_response(entity)
+            entity.update_pricing()
+            serialized_data = EntitySerializer(
+                entity, context={'request': self.request}).data
+            return Response(serialized_data)
         except Exception as e:
             recipients = get_user_model().objects.filter(is_superuser=True)
 
@@ -515,11 +498,11 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             entity.update_keeping_log(
                 {
                     'is_visible': not entity.is_visible,
-                    'last_staff_change': timezone.now(),
-                    'last_staff_change_user': request.user,
                 },
                 request.user)
-            return self.dispatch_and_serialize_into_response(entity)
+            serialized_data = EntitySerializer(
+                entity, context={'request': self.request}).data
+            return Response(serialized_data)
         except IntegrityError as err:
             return Response({'detail': str(err)},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -547,38 +530,11 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             entity.update_keeping_log(
                 {
                     'category': new_category,
-                    'last_staff_change': timezone.now(),
-                    'last_staff_change_user': request.user,
                 },
                 request.user)
-            return self.dispatch_and_serialize_into_response(entity)
-        else:
-            return Response({'detail': form.errors},
-                            status=status.HTTP_400_BAD_REQUEST)
-
-    @detail_route(methods=['post'])
-    def change_condition(self, request, *args, **kwargs):
-        entity = self.get_object()
-        if not entity.user_has_staff_perms(request.user):
-            raise PermissionDenied
-
-        form = EntityConditionForm(request.data)
-
-        if form.is_valid():
-            new_condition = form.cleaned_data['condition']
-            if new_condition == entity.condition:
-                return Response({'detail': 'The new condition must be '
-                                           'different from the original one'},
-                                status=status.HTTP_400_BAD_REQUEST)
-
-            entity.update_keeping_log(
-                {
-                    'condition': new_condition,
-                    'last_staff_change': timezone.now(),
-                    'last_staff_change_user': request.user,
-                },
-                request.user)
-            return self.dispatch_and_serialize_into_response(entity)
+            serialized_data = EntitySerializer(
+                entity, context={'request': self.request}).data
+            return Response(serialized_data)
         else:
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
@@ -620,7 +576,9 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                     {'detail': str(ex)},
                     status=status.HTTP_400_BAD_REQUEST)
 
-        return self.dispatch_and_serialize_into_response(entity)
+        serialized_data = EntitySerializer(
+            entity, context={'request': self.request}).data
+        return Response(serialized_data)
 
     @detail_route()
     def pricing_history(self, request, pk):
@@ -641,6 +599,15 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             context={'request': request}
         )
         return Response(serializer.data)
+
+    @detail_route()
+    def staff_info(self, request, pk):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+        serialializer = EntityStaffInfoSerializer(
+            entity, context={'request': request})
+        return Response(serialializer.data)
 
 
 class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):

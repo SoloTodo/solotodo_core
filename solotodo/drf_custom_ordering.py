@@ -40,7 +40,7 @@ class CustomEntityOrderingFilter(OrderingFilter):
                               'product', 'cell_plan', 'normal_price',
                               'offer_price', 'creation_date', 'last_updated',
                               'last_association', 'last_staff_access',
-                              'last_staff_change', 'last_pricing_update']
+                              'last_pricing_update']
 
     def get_valid_fields(self, queryset, view, context={}):
         return [(item, item) for item in self.allowed_custom_filters]

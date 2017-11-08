@@ -240,16 +240,19 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'creation_date',
             'last_updated',
             'last_pricing_update',
+        )
 
-            # 'discovery_url',
-            # 'scraped_category',
-            # 'last_association_user',
-            # 'last_association',
-            # 'last_staff_access',
-            # 'last_staff_access_user',
-            # 'last_staff_change',
-            # 'last_staff_change_user',
-            # 'last_pricing_update_user',
+
+class EntityStaffInfoSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Entity
+        fields = (
+            'discovery_url',
+            'scraped_category',
+            'last_association_user',
+            'last_association',
+            'last_staff_access',
+            'last_staff_access_user',
         )
 
 
@@ -334,7 +337,7 @@ class CategoryBrowseProductEntrySerializer(serializers.Serializer):
         fields = ['product', 'ordering_value', 'prices']
 
 
-class CategoryBrowserResultSerializer(serializers.Serializer):
+class CategoryBrowseResultSerializer(serializers.Serializer):
     bucket = serializers.CharField()
     product_entries = CategoryBrowseProductEntrySerializer(many=True)
 

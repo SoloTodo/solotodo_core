@@ -33,8 +33,7 @@ admin.site.register(NumberFormat)
 class EntityModelAdmin(admin.ModelAdmin):
     readonly_fields = ['store', 'category', 'scraped_category',
                        'currency', 'product', 'cell_plan', 'active_registry',
-                       'last_association_user', 'last_staff_change_user',
-                       'last_staff_access_user', 'last_pricing_update_user']
+                       'last_association_user', 'last_staff_access_user', ]
 
 
 @admin.register(EntityLog)

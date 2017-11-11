@@ -36,10 +36,13 @@ class EntityHistory(models.Model):
     entity = models.ForeignKey(Entity)
     timestamp = models.DateTimeField()
     stock = models.IntegerField(db_index=True)
-    normal_price = models.DecimalField(decimal_places=2, max_digits=12)
-    offer_price = models.DecimalField(decimal_places=2, max_digits=12)
+    normal_price = models.DecimalField(decimal_places=2, max_digits=12,
+                                       db_index=True)
+    offer_price = models.DecimalField(decimal_places=2, max_digits=12,
+                                      db_index=True)
     cell_monthly_payment = models.DecimalField(decimal_places=2, max_digits=12,
-                                               null=True, blank=True)
+                                               null=True, blank=True,
+                                               db_index=True)
 
     objects = EntityHistoryQueryset.as_manager()
 

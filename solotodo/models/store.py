@@ -209,7 +209,7 @@ class Store(models.Model):
 
             storage = PrivateS3Boto3Storage()
             scraping_record_file = ContentFile(json.dumps(
-                serialized_scraping_info).encode('utf-8'))
+                serialized_scraping_info, indent=4).encode('utf-8'))
 
             desired_filename = 'logs/scrapings/{}_{}.json'.format(
                 self, timezone.localtime(update_log.creation_date).strftime(

@@ -636,9 +636,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = ProductPagination
 
     @detail_route()
-    def available_entities(self, request, pk):
+    def entities(self, request, pk):
         product = self.get_object()
-        available_entities = product.entity_set.get_available()
+        stores = Store.objects.filter_by_user_perms(request.user, 'view_store')
+        available_entities = product.entity_set.filter(store__in=stores)
         serializer = EntitySerializer(available_entities, many=True,
                                       context={'request': request})
         return Response(serializer.data)

@@ -106,6 +106,7 @@ class EntityFilterSet(rest_framework.FilterSet):
         qs = super(EntityFilterSet, self).qs.select_related(
             'active_registry',
             'product__instance_model',
+            'cell_plan'
         )
         categories_with_permission = create_category_filter()(self.request)
         stores_with_permission = create_store_filter()(self.request)

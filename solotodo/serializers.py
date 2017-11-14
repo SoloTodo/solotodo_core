@@ -4,7 +4,7 @@ from rest_framework import serializers
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
-    Lead, Website, CategorySpecsFilter, CategorySpecsOrder
+    Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -309,6 +309,22 @@ class LeadWithUserDataSerializer(LeadSerializer):
         model = Lead
         fields = ['url', 'id', 'user', 'ip', 'timestamp', 'normal_price',
                   'offer_price', 'website', 'entity']
+
+
+class VisitSerializer(serializers.HyperlinkedModelSerializer):
+    product = NestedProductSerializerWithCategory()
+
+    class Meta:
+        model = Visit
+        fields = ['url', 'id', 'product', 'website', 'timestamp']
+
+
+class VisitWithUserDataSerializer(VisitSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Visit
+        fields = ['url', 'id', 'product', 'website', 'timestamp', 'user', 'ip']
 
 
 class CategoryBrowsePricesSerializer(serializers.Serializer):

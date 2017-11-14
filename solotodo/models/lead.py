@@ -50,7 +50,7 @@ class Lead(models.Model):
 
     class Meta:
         app_label = 'solotodo'
-        ordering = ('entity_history', 'timestamp')
+        ordering = ('-timestamp', )
         permissions = (
             ('view_leads_user_data',
              'Can view the IP and user associated to all leads'),

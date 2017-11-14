@@ -5,7 +5,7 @@ from rest_framework.reverse import reverse
 
 from solotodo.models import Store, Category, Entity, Product
 from solotodo.serializers import EntityWithInlineProductSerializer, \
-    NestedProductSerializer
+    NestedProductSerializerWithCategory
 
 
 def create_generic_serializer(view_name):
@@ -98,7 +98,7 @@ class LeadGroupingForm(forms.Form):
             'product': {
                 'field': 'entity_history__entity__product',
                 'serializer': serializer_wrapper(
-                    NestedProductSerializer),
+                    NestedProductSerializerWithCategory),
                 'queryset': Product.objects.select_related(
                     'instance_model__model__category')
             }

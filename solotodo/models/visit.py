@@ -17,15 +17,14 @@ class VisitQuerySet(models.QuerySet):
 
         permissions = synth_permissions[permission]
 
-        categories_with_permissions = Category.objects.filter_by_user_perms(
+        perm_categories = Category.objects.filter_by_user_perms(
             user, permissions['category'])
-        websites_with_permissions = Website.objects.filter_by_user_perms(
+        perm_websites = Website.objects.filter_by_user_perms(
             user, permissions['website'])
 
         return self.filter(
-            product__instance_model__model__category__in=
-            categories_with_permissions,
-            website__in=websites_with_permissions,
+            product__instance_model__model__category__in=perm_categories,
+            website__in=perm_websites,
         )
 
 
@@ -43,7 +42,7 @@ class Visit(models.Model):
 
     class Meta:
         app_label = 'solotodo'
-        ordering = ('timestamp', )
+        ordering = ('-timestamp', )
         permissions = (
             ('view_visits_user_data',
              'Can view the IP and user associated to all visits'),

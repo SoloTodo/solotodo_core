@@ -27,7 +27,7 @@ from solotodo.filter_querysets import create_category_filter, \
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
     LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet, \
-    WebsiteFilterSet
+    WebsiteFilterSet, VisitFilterSet
 from solotodo.forms.category_browse_form import CategoryBrowseForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
@@ -36,12 +36,13 @@ from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
+from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
-    EntityHistory
+    EntityHistory, Visit
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
-    EntitySalesEstimatePagination, EntityHistoryPagination
+    EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
@@ -52,7 +53,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     WebsiteSerializer, LeadSerializer, EntityConflictSerializer, \
     LeadWithUserDataSerializer, CategorySpecsFilterSerializer, \
     CategorySpecsOrderSerializer, EntityHistorySerializer, \
-    EntityStaffInfoSerializer
+    EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 
@@ -674,6 +675,44 @@ class LeadViewSet(viewsets.ReadOnlyModelViewSet):
 
             if 'entity' in groupings or 'product' in groupings:
                 paginator = LeadPagination()
+                page = paginator.paginate_queryset(result, request)
+                return paginator.get_paginated_response(page)
+
+            return Response(result)
+        else:
+            return Response({'detail': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+
+class VisitViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Visit.objects.all()
+    serializer_class = VisitSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
+    filter_class = VisitFilterSet
+    pagination_class = VisitPagination
+    ordering_fields = ('timestamp',)
+
+    def get_serializer_class(self):
+        if self.request.user.has_perm('solotodo.view_visits_user_data'):
+            return VisitWithUserDataSerializer
+        else:
+            return VisitSerializer
+
+    @list_route()
+    def grouped(self, request):
+        filterset = VisitFilterSet(
+            data=request.query_params,
+            request=request)
+
+        form = VisitGroupingForm(request.query_params)
+
+        if form.is_valid():
+            result = form.aggregate(request, filterset.qs)
+
+            groupings = form.cleaned_data['grouping']
+
+            if 'product' in groupings:
+                paginator = VisitPagination()
                 page = paginator.paginate_queryset(result, request)
                 return paginator.get_paginated_response(page)
 

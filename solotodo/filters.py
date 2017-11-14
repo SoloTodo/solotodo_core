@@ -3,11 +3,12 @@ from django.db.models import Q, F
 from django_filters import rest_framework
 
 from solotodo.filter_querysets import create_store_filter, \
-    create_category_filter, create_product_filter, create_entity_filter
+    create_category_filter, create_product_filter, create_entity_filter, \
+    create_website_filter
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
-    Currency
+    Currency, Visit
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -355,7 +356,7 @@ class LeadFilterSet(rest_framework.FilterSet):
     )
     websites = rest_framework.ModelMultipleChoiceFilter(
         queryset=Website.objects.all(),
-        name='websites',
+        name='website',
         label='Websites'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
@@ -386,4 +387,39 @@ class LeadFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = Lead
+        fields = []
+
+
+class VisitFilterSet(rest_framework.FilterSet):
+    timestamp = IsoDateTimeFromToRangeFilter(
+        name='timestamp'
+    )
+    products = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_product_filter(),
+        name='product',
+        label='Products'
+    )
+    websites = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_website_filter('view_website_visits'),
+        name='website',
+        label='Websites'
+    )
+    categories = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_category_filter('view_category_visits'),
+        name='product__instance_model__model__category',
+        label='Categories'
+    )
+
+    @property
+    def qs(self):
+        qs = super(VisitFilterSet, self).qs.select_related(
+            'product__instance_model__model__category',
+            'user'
+        )
+        if self.request:
+            qs = qs.filter_by_user_perms(self.request.user, 'view_visit')
+        return qs
+
+    class Meta:
+        model = Visit
         fields = []

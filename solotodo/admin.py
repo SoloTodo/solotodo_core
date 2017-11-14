@@ -1,4 +1,5 @@
 from django.contrib.auth.models import Permission
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from custom_user.admin import EmailUserAdmin
@@ -10,7 +11,7 @@ from guardian.admin import GuardedModelAdmin
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
-    CategorySpecsFilter, CategorySpecsOrder
+    CategorySpecsFilter, CategorySpecsOrder, Lead, Visit
 
 
 @admin.register(Permission)
@@ -119,3 +120,72 @@ class StoreModelAdmin(GuardedModelAdmin):
 
 
 admin.site.register(StoreUpdateLog)
+
+
+@admin.register(Lead)
+class LeadModelAdmin(admin.ModelAdmin):
+    list_display = ['product_link', 'store_link', 'website', 'timestamp', 'ip',
+                    'user']
+    list_filter = ['website', 'entity_history__entity__category',
+                   'entity_history__entity__store']
+    readonly_fields = ['website', 'entity_history', 'user', 'ip', 'timestamp']
+
+    def get_queryset(self, request):
+        return Lead.objects.select_related(
+            'entity_history__entity__store',
+            'website',
+            'entity_history__entity__product__instance_model',
+            'user'
+        )
+
+    def product_link(self, obj):
+        website_url = '{}/products/{}'.format(
+            obj.website.url, obj.entity_history.entity.product_id)
+
+        return format_html("<a href='{url}'>{product}</a>",
+                           url=website_url,
+                           product=str(obj.entity_history.entity.product))
+
+    product_link.short_description = 'Product'
+
+    def store_link(self, obj):
+        from django.conf import settings
+        backend_link = '{}entities/{}'.format(
+            settings.BACKEND_HOST, obj.entity_history.entity.id)
+
+        return format_html("<a href='{url}'>{store}</a>", url=backend_link,
+                           store=str(obj.entity_history.entity.store))
+
+    store_link.short_description = 'Store'
+
+
+@admin.register(Visit)
+class VisitModelAdmin(admin.ModelAdmin):
+    list_display = ['product_link', 'website_link', 'timestamp', 'ip', 'user']
+    list_filter = ['website', 'product__instance_model__model__category']
+    readonly_fields = ['product', 'website', 'timestamp', 'ip', 'user']
+
+    def product_link(self, obj):
+        from django.conf import settings
+        backend_link = '{}products/{}'.format(settings.BACKEND_HOST,
+                                              obj.product_id)
+
+        return format_html("<a href='{url}'>{product}</a>",
+                           url=backend_link, product=str(obj.product))
+
+    product_link.short_description = 'Product'
+
+    def website_link(self, obj):
+        website_url = '{}/products/{}'.format(obj.website.url, obj.product_id)
+
+        return format_html("<a href='{url}'>{product}</a>",
+                           url=website_url, product=str(obj.website))
+
+    website_link.short_description = 'Website'
+
+    def get_queryset(self, request):
+        return Visit.objects.select_related(
+            'product__instance_model__model__category',
+            'website',
+            'user'
+        )

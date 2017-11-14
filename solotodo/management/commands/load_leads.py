@@ -24,7 +24,7 @@ class Command(BaseCommand):
         raw_leads = json.load(open('leads.json', 'r'))
         lead_count = len(raw_leads)
 
-        timezone = pytz.timezone('America/Santiago')
+        timezone = pytz.UTC
 
         leads = []
 

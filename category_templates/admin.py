@@ -31,7 +31,7 @@ class CategoryTemplateModelForm(forms.ModelForm):
 
 class CategoryTemplateModelAdmin(admin.ModelAdmin):
     form = CategoryTemplateModelForm
-    list_filter = ['api_client', 'purpose', 'category']
+    list_filter = ['website', 'purpose', 'category']
 
 
 admin.site.register(CategoryTemplate, CategoryTemplateModelAdmin)

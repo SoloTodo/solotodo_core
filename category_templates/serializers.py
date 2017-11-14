@@ -14,4 +14,4 @@ class CategoryTemplatePurposeSerializer(
 class CategoryTemplateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CategoryTemplate
-        fields = ('url', 'id', 'category', 'purpose', 'api_client', 'body')
+        fields = ('url', 'id', 'category', 'purpose', 'website', 'body')

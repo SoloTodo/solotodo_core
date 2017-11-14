@@ -27,18 +27,17 @@ from solotodo.filter_querysets import create_category_filter, \
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
     LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet, \
-    ApiClientFilterSet
+    WebsiteFilterSet
 from solotodo.forms.category_browse_form import CategoryBrowseForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
-from solotodo.forms.entity_condition_form import EntityConditionForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
-    Category, StoreUpdateLog, Entity, Product, NumberFormat, ApiClient, Lead, \
+    Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
@@ -50,7 +49,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     NumberFormatSerializer, EntityEventUserSerializer, \
     EntityEventValueSerializer, MyUserSerializer, \
     EntityHistoryWithStockSerializer, \
-    ApiClientSerializer, LeadSerializer, EntityConflictSerializer, \
+    WebsiteSerializer, LeadSerializer, EntityConflictSerializer, \
     LeadWithUserDataSerializer, CategorySpecsFilterSerializer, \
     CategorySpecsOrderSerializer, EntityHistorySerializer, \
     EntityStaffInfoSerializer
@@ -94,11 +93,11 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(payload.data)
 
 
-class ApiClientViewSet(PermissionReadOnlyModelViewSet):
-    queryset = ApiClient.objects.all()
-    serializer_class = ApiClientSerializer
+class WebsiteViewSet(PermissionReadOnlyModelViewSet):
+    queryset = Website.objects.all()
+    serializer_class = WebsiteSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = ApiClientFilterSet
+    filter_class = WebsiteFilterSet
 
 
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):

@@ -7,14 +7,14 @@ from category_specs_forms.models import CategorySpecsFormLayout, \
 
 @admin.register(CategorySpecsFormLayout)
 class CategorySpecsFormLayoutModelAdmin(admin.ModelAdmin):
-    list_display = ('category', 'api_client', 'country', 'name')
-    list_filter = ('category', 'api_client')
+    list_display = ('category', 'website', 'country', 'name')
+    list_filter = ('category', 'website')
 
 
 @admin.register(CategorySpecsFormFieldset)
 class CategorySpecsFormFieldsetModelAdmin(admin.ModelAdmin):
     list_display = ('layout', 'label', 'ordering')
-    list_filter = ('layout__api_client', 'layout__category',)
+    list_filter = ('layout__website', 'layout__category',)
 
 
 @admin.register(CategorySpecsFormFilter)

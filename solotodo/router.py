@@ -3,12 +3,12 @@ from rest_framework import routers
 from solotodo.views import UserViewSet, StoreViewSet, LanguageViewSet, \
     CurrencyViewSet, CountryViewSet, StoreTypeViewSet, CategoryViewSet, \
     StoreUpdateLogViewSet, EntityViewSet, ProductViewSet, \
-    NumberFormatViewSet, ApiClientViewSet, \
+    NumberFormatViewSet, WebsiteViewSet, \
     LeadViewSet, EntityHistoryViewSet
 
 router = routers.SimpleRouter()
 router.register(r'users', UserViewSet)
-router.register(r'api_clients', ApiClientViewSet)
+router.register(r'websites', WebsiteViewSet)
 router.register(r'stores', StoreViewSet)
 router.register(r'number_formats', NumberFormatViewSet)
 router.register(r'languages', LanguageViewSet)

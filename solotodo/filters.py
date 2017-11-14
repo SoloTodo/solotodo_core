@@ -6,7 +6,7 @@ from solotodo.filter_querysets import create_store_filter, \
     create_category_filter, create_product_filter, create_entity_filter
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
-    Product, EntityHistory, Country, Store, StoreType, Lead, ApiClient, \
+    Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
     Currency
 
 
@@ -29,16 +29,16 @@ class UserFilterSet(rest_framework.FilterSet):
         fields = []
 
 
-class ApiClientFilterSet(rest_framework.FilterSet):
+class WebsiteFilterSet(rest_framework.FilterSet):
     @property
     def qs(self):
-        qs = super(ApiClientFilterSet, self).qs
+        qs = super(WebsiteFilterSet, self).qs
         if self.request:
-            qs = qs.filter_by_user_perms(self.request.user, 'view_api_client')
+            qs = qs.filter_by_user_perms(self.request.user, 'view_website')
         return qs
 
     class Meta:
-        model = ApiClient
+        model = Website
         fields = []
 
 
@@ -353,10 +353,10 @@ class LeadFilterSet(rest_framework.FilterSet):
         name='entity_history__entity__product',
         label='Products'
     )
-    api_clients = rest_framework.ModelMultipleChoiceFilter(
-        queryset=ApiClient.objects.all(),
-        name='api_client',
-        label='API Clients'
+    websites = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Website.objects.all(),
+        name='websites',
+        label='Websites'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_category_filter('view_category_leads'),

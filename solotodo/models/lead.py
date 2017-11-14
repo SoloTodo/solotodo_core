@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from solotodo.models import ApiClient
+from solotodo.models import Website
 from .entity_history import EntityHistory
 
 
@@ -14,7 +14,7 @@ class LeadQuerySet(models.QuerySet):
             'view_lead': {
                 'store': 'view_store_leads',
                 'category': 'view_category_leads',
-                'api_client': 'view_api_client_leads'
+                'website': 'view_website_leads'
             }
         }
 
@@ -26,13 +26,13 @@ class LeadQuerySet(models.QuerySet):
             user, permissions['store'])
         categories_with_permissions = Category.objects.filter_by_user_perms(
             user, permissions['category'])
-        api_clients_with_permissions = ApiClient.objects.filter_by_user_perms(
-            user, permissions['api_client'])
+        websites_with_permissions = Website.objects.filter_by_user_perms(
+            user, permissions['website'])
 
         return self.filter(
             entity_history__entity__store__in=stores_with_permissions,
             entity_history__entity__category__in=categories_with_permissions,
-            api_client__in=api_clients_with_permissions,
+            website__in=websites_with_permissions,
         )
 
 
@@ -41,7 +41,7 @@ class Lead(models.Model):
     timestamp = models.DateTimeField()
     user = models.ForeignKey(get_user_model())
     ip = models.GenericIPAddressField()
-    api_client = models.ForeignKey(ApiClient)
+    website = models.ForeignKey(Website)
 
     objects = LeadQuerySet.as_manager()
 

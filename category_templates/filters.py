@@ -14,4 +14,4 @@ class CategoryTemplateFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = CategoryTemplate
-        fields = ('category', 'purpose', 'api_client')
+        fields = ('category', 'purpose', 'website')

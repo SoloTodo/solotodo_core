@@ -4,7 +4,7 @@ from rest_framework import serializers
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
-    Lead, ApiClient, CategorySpecsFilter, CategorySpecsOrder
+    Lead, Website, CategorySpecsFilter, CategorySpecsOrder
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -14,12 +14,12 @@ class UserSerializer(serializers.HyperlinkedModelSerializer):
                   'date_joined',)
 
 
-class ApiClientSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='apiclient-detail')
+class WebsiteSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='website-detail')
     external_url = serializers.URLField(source='url')
 
     class Meta:
-        model = ApiClient
+        model = Website
         fields = ('url', 'id', 'name', 'external_url')
 
 
@@ -299,7 +299,7 @@ class LeadSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Lead
         fields = ['url', 'id', 'timestamp', 'normal_price',
-                  'offer_price', 'api_client', 'entity']
+                  'offer_price', 'website', 'entity']
 
 
 class LeadWithUserDataSerializer(LeadSerializer):
@@ -308,7 +308,7 @@ class LeadWithUserDataSerializer(LeadSerializer):
     class Meta:
         model = Lead
         fields = ['url', 'id', 'user', 'ip', 'timestamp', 'normal_price',
-                  'offer_price', 'api_client', 'entity']
+                  'offer_price', 'website', 'entity']
 
 
 class CategoryBrowsePricesSerializer(serializers.Serializer):

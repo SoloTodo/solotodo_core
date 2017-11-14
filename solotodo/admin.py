@@ -9,7 +9,7 @@ from guardian.admin import GuardedModelAdmin
 
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
-    StoreType, CategoryTier, NumberFormat, EntityLog, ApiClient, \
+    StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
     CategorySpecsFilter, CategorySpecsOrder
 
 
@@ -18,8 +18,8 @@ class PermissionModelAdmin(admin.ModelAdmin):
     list_display = ['__str__', 'codename']
 
 
-@admin.register(ApiClient)
-class ApiClientModelAdmin(GuardedModelAdmin):
+@admin.register(Website)
+class WebsiteModelAdmin(GuardedModelAdmin):
     list_display = ['__str__', 'url']
 
 

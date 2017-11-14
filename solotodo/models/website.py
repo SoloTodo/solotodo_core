@@ -2,16 +2,16 @@ from django.db import models
 from guardian.shortcuts import get_objects_for_user
 
 
-class ApiClientQuerySet(models.QuerySet):
+class WebsiteQuerySet(models.QuerySet):
     def filter_by_user_perms(self, user, permission):
         return get_objects_for_user(user, permission, self)
 
 
-class ApiClient(models.Model):
+class Website(models.Model):
     name = models.CharField(max_length=100)
     url = models.URLField()
 
-    objects = ApiClientQuerySet.as_manager()
+    objects = WebsiteQuerySet.as_manager()
 
     def __str__(self):
         return self.name
@@ -20,7 +20,9 @@ class ApiClient(models.Model):
         app_label = 'solotodo'
         ordering = ('name', )
         permissions = [
-            ('view_api_client', 'Can view the API client'),
-            ('view_api_client_leads',
-             'Can view the leads associated to this API client')
+            ('view_website', 'Can view the website'),
+            ('view_website_visits',
+             'Can view the visits associated to this website'),
+            ('view_website_leads',
+             'Can view the leads associated to this website'),
         ]

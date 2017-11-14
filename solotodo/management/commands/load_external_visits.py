@@ -49,7 +49,7 @@ class Command(BaseCommand):
                     parser.parse(fields['timestamp']))
                 lead.ip = '127.0.0.1'
                 lead.user_id = user_id
-                lead.api_client_id = 2
+                lead.website_id = 2
                 leads.append(lead)
 
         Lead.objects.bulk_create(leads)

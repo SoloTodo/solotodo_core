@@ -1,20 +1,20 @@
 from django.db import models
 
 from metamodel.models import InstanceModel
-from solotodo.models import CategorySpecsFilter, Category, ApiClient, \
+from solotodo.models import CategorySpecsFilter, Category, Website, \
     CategorySpecsOrder, Country
 
 
 class CategorySpecsFormLayout(models.Model):
     category = models.ForeignKey(Category)
-    api_client = models.ForeignKey(ApiClient, blank=True, null=True)
+    website = models.ForeignKey(Website, blank=True, null=True)
     country = models.ForeignKey(Country, blank=True, null=True)
     name = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         result = str(self.category)
-        if self.api_client:
-            result += ' - ' + str(self.api_client)
+        if self.website:
+            result += ' - ' + str(self.website)
         if self.country:
             result += ' - ' + str(self.country)
         if self.name:
@@ -22,7 +22,7 @@ class CategorySpecsFormLayout(models.Model):
         return result
 
     class Meta:
-        ordering = ('category', 'api_client', 'country', 'name')
+        ordering = ('category', 'website', 'country', 'name')
 
 
 class CategorySpecsFormFieldset(models.Model):

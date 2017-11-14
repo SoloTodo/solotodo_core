@@ -1,4 +1,4 @@
-from solotodo.models import Store, Category, Product, Entity, ApiClient
+from solotodo.models import Store, Category, Product, Entity, Website
 
 
 def create_model_filter(model, default_permission):
@@ -19,4 +19,4 @@ create_store_filter = create_model_filter(Store, 'view_store')
 create_category_filter = create_model_filter(Category, 'view_category')
 create_product_filter = create_model_filter(Product, 'view_product')
 create_entity_filter = create_model_filter(Entity, 'view_entity')
-create_api_client_filter = create_model_filter(ApiClient, 'view_api_client')
+create_website_filter = create_model_filter(Website, 'view_website')

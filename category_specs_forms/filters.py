@@ -1,8 +1,7 @@
 from django_filters import rest_framework
 
 from category_specs_forms.models import CategorySpecsFormLayout
-from solotodo.filter_querysets import create_category_filter, \
-    create_api_client_filter
+from solotodo.filter_querysets import create_category_filter
 
 
 class CategorySpecsFormLayoutFilterset(rest_framework.FilterSet):
@@ -26,4 +25,4 @@ class CategorySpecsFormLayoutFilterset(rest_framework.FilterSet):
 
     class Meta:
         model = CategorySpecsFormLayout
-        fields = ('category', 'api_client', 'country')
+        fields = ('category', 'website', 'country')

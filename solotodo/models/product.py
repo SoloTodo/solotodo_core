@@ -93,6 +93,9 @@ class Product(models.Model):
     def es_search(cls):
         return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
 
+    def user_has_staff_perms(self, user):
+        return user.has_perm('is_category_staff', self.category)
+
     def save(self, *args, **kwargs):
         from django.conf import settings
 

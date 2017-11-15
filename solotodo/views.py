@@ -644,6 +644,18 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                                       context={'request': request})
         return Response(serializer.data)
 
+    @detail_route(methods=['post',])
+    def clone(self, request, pk):
+        product = self.get_object()
+        if not product.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        cloned_instance = product.instance_model.clone(request.user.id)
+
+        return Response({
+            'instance_id': cloned_instance.id
+        })
+
 
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Lead.objects.all()

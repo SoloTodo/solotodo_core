@@ -644,7 +644,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                                       context={'request': request})
         return Response(serializer.data)
 
-    @detail_route(methods=['post',])
+    @detail_route(methods=['post', ])
     def clone(self, request, pk):
         product = self.get_object()
         if not product.user_has_staff_perms(request.user):

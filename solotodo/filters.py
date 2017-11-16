@@ -322,6 +322,19 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
     timestamp = IsoDateTimeFromToRangeFilter(
         name='timestamp'
     )
+    stores = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_store_filter(),
+        name='entity__store',
+        label='Stores'
+    )
+    countries = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Country.objects.all(),
+        name='entity__store__country',
+        label='Countries'
+    )
+    exclude_unavailable = rest_framework.BooleanFilter(
+        name='exclude_unavailable', method='_exclude_unavailable',
+        label='Exclude unavailable?')
 
     @property
     def qs(self):
@@ -334,6 +347,12 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
                                          'view_entity_history')
 
         return qs
+
+    def _exclude_unavailable(self, queryset, name, value):
+        if value:
+            return queryset.get_available()
+
+        return queryset
 
     class Meta:
         model = EntityHistory

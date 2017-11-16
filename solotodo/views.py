@@ -1,4 +1,5 @@
 import traceback
+from collections import OrderedDict
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -53,7 +54,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     WebsiteSerializer, LeadSerializer, EntityConflictSerializer, \
     LeadWithUserDataSerializer, CategorySpecsFilterSerializer, \
     CategorySpecsOrderSerializer, EntityHistorySerializer, \
-    EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer
+    EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer, \
+    ProductPricingHistorySerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 
@@ -655,6 +657,38 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({
             'instance_id': cloned_instance.id
         })
+
+    @detail_route()
+    def pricing_history(self, request, pk):
+        product = self.get_object()
+        entity_histories = EntityHistory.objects.filter(
+            entity__product=product,
+            cell_monthly_payment__isnull=True,
+        )
+
+        filterset = EntityHistoryFilterSet(request.query_params,
+                                           entity_histories)
+        entity_histories = filterset.qs\
+            .order_by('entity', 'timestamp')\
+            .select_related('entity__product__instance_model',
+                            'entity__cell_plan__instance_model')
+
+        histories_by_entity = OrderedDict()
+        for entity_history in entity_histories:
+            if entity_history.entity not in histories_by_entity:
+                histories_by_entity[entity_history.entity] = [entity_history]
+            else:
+                histories_by_entity[entity_history.entity].append(
+                    entity_history)
+
+        result_for_serialization = [
+            {'entity': entity, 'pricing_history': pricing_history}
+            for entity, pricing_history in histories_by_entity.items()]
+
+        serializer = ProductPricingHistorySerializer(
+            result_for_serialization, many=True, context={'request': request})
+
+        return Response(serializer.data)
 
 
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):

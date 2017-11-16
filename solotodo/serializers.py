@@ -359,3 +359,8 @@ class CategoryBrowseResultSerializer(serializers.Serializer):
 
     class Meta:
         fields = ['bucket', 'product_entries']
+
+
+class ProductPricingHistorySerializer(serializers.Serializer):
+    entity = EntitySerializer()
+    pricing_history = EntityHistorySerializer(many=True)

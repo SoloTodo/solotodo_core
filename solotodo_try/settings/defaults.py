@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'reports',
     'mailing',
     'category_specs_forms',
-    'entity_subscriptions'
+    'entity_subscriptions',
+    'wtb',
 ]
 
 MIDDLEWARE = [

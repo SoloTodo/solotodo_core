@@ -16,7 +16,7 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_category_filter(),
-        name='categories',
+        name='category',
         label='Categories'
     )
 

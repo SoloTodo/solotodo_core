@@ -25,4 +25,4 @@ class CategorySpecsFormLayoutFilterset(rest_framework.FilterSet):
 
     class Meta:
         model = CategorySpecsFormLayout
-        fields = ('category', 'website', 'country')
+        fields = ('category', 'website')

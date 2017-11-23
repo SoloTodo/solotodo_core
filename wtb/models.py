@@ -1,11 +1,12 @@
 import json
 
+from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from django.db import models
+from django.db import models, IntegrityError
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.models import Store, Product, Category
+from solotodo.models import Store, Product, Category, Website
 from solotodo.utils import iterable_to_dict
 from solotodo_try.s3utils import PrivateS3Boto3Storage
 from storescraper.utils import get_store_class_by_name
@@ -21,6 +22,7 @@ class WtbBrand(models.Model):
     prefered_brand = models.CharField(max_length=100, blank=True, null=True)
     storescraper_class = models.CharField(max_length=100, blank=True,
                                           null=True)
+    website = models.ForeignKey(Website)
     stores = models.ManyToManyField(Store)
 
     objects = WtbBrandQuerySet.as_manager()
@@ -115,6 +117,7 @@ class WtbBrand(models.Model):
         ordering = ('name', )
         permissions = [
             ('view_wtb_brand', 'Can view the WTB brand'),
+            ('is_wtb_brand_staff', 'Is staff of this WTB brand'),
             ('backend_view_wtb', 'Display the WTB menu in the backend'),
         ]
 
@@ -132,8 +135,35 @@ class WtbEntity(models.Model):
     is_visible = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
 
+    # The last time the entity was associated. Important to leave standalone as
+    # it is used for staff payments
+    last_association = models.DateTimeField(null=True, blank=True)
+    last_association_user = models.ForeignKey(get_user_model(), null=True)
+
     def __str__(self):
         return '{} - {}'.format(self.brand, self.name)
+
+    def user_has_staff_perms(self, user):
+        return user.has_perm('is_wtb_brand_staff', self.brand) \
+               and user.has_perm('is_category_staff', self.category)
+
+    def save(self, *args, **kwargs):
+        is_associated = bool(self.product_id)
+
+        if bool(self.last_association_user_id) != bool(self.last_association):
+            raise IntegrityError('WtbEntity must have both last_association '
+                                 'fields or none of them')
+
+        if not self.is_visible and is_associated:
+            raise IntegrityError('WtbEntity cannot be associated and be '
+                                 'hidden at the same time')
+
+        if is_associated != bool(self.last_association_user_id):
+            raise IntegrityError(
+                'Associated wtb entities must have association metadata, '
+                'non-associated entities must not')
+
+        super(WtbEntity, self).save(*args, **kwargs)
 
     def update_with_scraped_product(self, scraped_product):
         assert scraped_product is None or self.key == scraped_product.key
@@ -147,6 +177,34 @@ class WtbEntity(models.Model):
         elif self.is_active:
             self.is_active = False
             self.save()
+
+    def associate(self, user, product):
+        if not self.is_visible:
+            raise IntegrityError('Non-visible cannot be associated')
+
+        if self.product == product:
+            raise IntegrityError(
+                'Re-associations must be made to a different product')
+
+        if self.category != product.category:
+            raise IntegrityError(
+                'Entities must be associated to products of the same category')
+
+        now = timezone.now()
+
+        self.last_association = timezone.now()
+        self.last_association_user = user
+        self.product = product
+        self.save()
+
+    def dissociate(self):
+        if not self.product:
+            raise IntegrityError('Cannot dissociate non-associated entity')
+
+        self.last_association = None
+        self.last_association_user = None
+        self.product = None
+        self.save()
 
     @classmethod
     def create_from_scraped_product(cls, scraped_product, brand, category):

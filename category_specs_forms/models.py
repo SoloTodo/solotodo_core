@@ -8,21 +8,18 @@ from solotodo.models import CategorySpecsFilter, Category, Website, \
 class CategorySpecsFormLayout(models.Model):
     category = models.ForeignKey(Category)
     website = models.ForeignKey(Website, blank=True, null=True)
-    country = models.ForeignKey(Country, blank=True, null=True)
     name = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         result = str(self.category)
         if self.website:
             result += ' - ' + str(self.website)
-        if self.country:
-            result += ' - ' + str(self.country)
         if self.name:
             result += ' - ' + self.name
         return result
 
     class Meta:
-        ordering = ('category', 'website', 'country', 'name')
+        ordering = ('category', 'website', 'name')
 
 
 class CategorySpecsFormFieldset(models.Model):
@@ -42,6 +39,7 @@ class CategorySpecsFormFilter(models.Model):
     fieldset = models.ForeignKey(CategorySpecsFormFieldset,
                                  related_name='filters')
     filter = models.ForeignKey(CategorySpecsFilter)
+    country = models.ForeignKey(Country, blank=True, null=True)
     label = models.CharField(max_length=100)
     ordering = models.IntegerField()
     continuous_range_step = models.IntegerField(blank=True, null=True)
@@ -65,6 +63,7 @@ class CategorySpecsFormFilter(models.Model):
 class CategorySpecsFormOrder(models.Model):
     layout = models.ForeignKey(CategorySpecsFormLayout, related_name='orders')
     order = models.ForeignKey(CategorySpecsOrder)
+    country = models.ForeignKey(Country, blank=True, null=True)
     label = models.CharField(max_length=100)
     ordering = models.IntegerField()
     suggested_use = models.CharField(max_length=20, choices=[

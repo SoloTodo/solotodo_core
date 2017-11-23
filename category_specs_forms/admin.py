@@ -7,7 +7,7 @@ from category_specs_forms.models import CategorySpecsFormLayout, \
 
 @admin.register(CategorySpecsFormLayout)
 class CategorySpecsFormLayoutModelAdmin(admin.ModelAdmin):
-    list_display = ('category', 'website', 'country', 'name')
+    list_display = ('category', 'website', 'name')
     list_filter = ('category', 'website')
 
 
@@ -19,17 +19,17 @@ class CategorySpecsFormFieldsetModelAdmin(admin.ModelAdmin):
 
 @admin.register(CategorySpecsFormFilter)
 class CategorySpecsFormFilterModelAdmin(admin.ModelAdmin):
-    list_display = ('fieldset', 'label', 'ordering')
+    list_display = ('fieldset', 'label', 'ordering', 'country')
     list_filter = ('fieldset',)
 
 
 @admin.register(CategorySpecsFormOrder)
 class CategorySpecsFormOrderModelAdmin(admin.ModelAdmin):
-    list_display = ('layout', 'label', 'suggested_use', 'ordering')
+    list_display = ('layout', 'label', 'suggested_use', 'ordering', 'country')
     list_filter = ('layout',)
 
 
 @admin.register(CategorySpecsFormColumn)
-class CategorySpecsFormOrderModelAdmin(admin.ModelAdmin):
+class CategorySpecsFormColumnModelAdmin(admin.ModelAdmin):
     list_display = ('layout', 'field', 'label', 'ordering')
     list_filter = ('layout',)

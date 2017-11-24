@@ -33,10 +33,10 @@ class WtbBrand(models.Model):
     def __str__(self):
         return self.name
 
-    def update_pricing(self,
-                       discover_urls_concurrency=None,
-                       products_for_url_concurrency=None,
-                       use_async=None, update_log=None):
+    def update_entities(self,
+                        discover_urls_concurrency=None,
+                        products_for_url_concurrency=None,
+                        use_async=None, update_log=None):
         assert self.storescraper_class
 
         scraper = self.scraper

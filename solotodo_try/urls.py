@@ -21,6 +21,7 @@ from category_templates.router import router as category_templates_router
 from category_specs_forms.router import router as category_specs_forms_router
 from reports.router import router as reports_router
 from wtb.router import router as wtb_router
+from category_columns.router import router as category_columns_router
 from .custom_default_router import CustomDefaultRouter
 
 router = CustomDefaultRouter()
@@ -29,6 +30,7 @@ router.extend(category_templates_router)
 router.extend(category_specs_forms_router)
 router.extend(reports_router)
 router.extend(wtb_router)
+router.extend(category_columns_router)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

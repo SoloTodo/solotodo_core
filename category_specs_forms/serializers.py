@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from category_specs_forms.models import CategorySpecsFormFilter, \
     CategorySpecsFormFieldset, CategorySpecsFormOrder, \
-    CategorySpecsFormLayout, CategorySpecsFormColumn
+    CategorySpecsFormLayout
 from metamodel.models import InstanceModel
 
 
@@ -24,8 +24,8 @@ class CategorySpecsFormFilterSerializer(
 
     class Meta:
         model = CategorySpecsFormFilter
-        fields = ['label', 'name', 'type', 'choices', 'continuous_range_step',
-                  'continuous_range_unit', 'country']
+        fields = ['label', 'name', 'type', 'country', 'continuous_range_step',
+                  'continuous_range_unit', 'choices']
 
 
 class CategorySpecsFormFieldsetSerializer(
@@ -45,20 +45,12 @@ class CategorySpecsFormOrderSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['name', 'label', 'suggested_use', 'country']
 
 
-class CategorySpecsFormColumnSerializer(
-        serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = CategorySpecsFormColumn
-        fields = ['field', 'label']
-
-
 class CategorySpecsFormLayoutSerializer(
         serializers.HyperlinkedModelSerializer):
     fieldsets = CategorySpecsFormFieldsetSerializer(many=True)
     orders = CategorySpecsFormOrderSerializer(many=True)
-    columns = CategorySpecsFormColumnSerializer(many=True)
 
     class Meta:
         model = CategorySpecsFormLayout
         fields = ['category', 'website', 'name', 'fieldsets',
-                  'orders', 'columns']
+                  'orders']

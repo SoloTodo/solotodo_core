@@ -15,9 +15,9 @@ admin.site.register(CategoryColumnPurpose)
 
 @admin.register(CategoryColumn)
 class CategoryColumnModelAdmin(admin.ModelAdmin):
-    list_display = ('field_label', 'field_category', 'es_field', 'purpose',
-                    'country', 'ordering')
-    list_filter = ('field__category', )
+    list_display = ('field_label', 'field_category', 'purpose',
+                    'ordering', 'es_field', 'country')
+    list_filter = ('purpose', 'field__category')
 
     def get_queryset(self, request):
         qs = super(CategoryColumnModelAdmin, self).get_queryset(request)

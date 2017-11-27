@@ -145,36 +145,50 @@ def additional_es_fields(instance_model, elastic_search_result):
         video_cards_unicode = []
 
         if elastic_search_result['is_multi_gpu']:
-            dedicated_video_card_es = instance_model.dedicated_video_card \
-                .elasticsearch_document()[0]
+            dedicated_video_card_es = \
+                instance_model.dedicated_video_card.elasticsearch_document()[0]
 
             for key, value in dedicated_video_card_es.items():
-                result['video_cards_' + key] = [value] * 2
-                if key == 'id':
+                result[u'video_cards_' + key] = [value] * 2
+                if key == u'id':
                     video_cards_id.extend([value] * 2)
-                elif key == 'unicode':
+                elif key == u'unicode':
                     video_cards_unicode.extend([value] * 2)
-        else:
-            integrated_gpu_result = instance_model.processor.gpu \
-                .elasticsearch_document()
 
-            for key, value in integrated_gpu_result[0].items():
-                result['video_cards_' + key] = [value]
-                if key == 'id':
-                    video_cards_id.append(value)
-                elif key == 'unicode':
-                    video_cards_unicode.append(value)
+            pretty_dedicated_video_card = \
+                elastic_search_result['dedicated_video_card_unicode']
+        else:
+            if 'processor_gpu_id' in elastic_search_result:
+                integrated_gpu_result = \
+                    instance_model.processor.gpu.elasticsearch_document()[0]
+
+                for key, value in integrated_gpu_result.items():
+                    result[u'video_cards_' + key] = [value]
+                    if key == u'id':
+                        video_cards_id.append(value)
+                    elif key == u'unicode':
+                        video_cards_unicode.append(value)
 
             if 'dedicated_video_card_id' in elastic_search_result:
                 subresult = instance_model.dedicated_video_card\
-                    .elasticsearch_document()
+                    .elasticsearch_document()[0]
 
-                for key, value in subresult[0].items():
-                    result['video_cards_' + key].append(value)
-                    if key == 'id':
+                for key, value in subresult.items():
+                    es_key = u'video_cards_' + key
+                    if es_key in result:
+                        result[es_key].append(value)
+                    else:
+                        result[es_key] = value
+
+                    if key == u'id':
                         video_cards_id.append(value)
-                    elif key == 'unicode':
+                    elif key == u'unicode':
                         video_cards_unicode.append(value)
+
+                pretty_dedicated_video_card = \
+                    elastic_search_result['dedicated_video_card_unicode']
+            else:
+                pretty_dedicated_video_card = 'No posee'
 
         result['pretty_battery'] = pretty_battery(
             elastic_search_result)
@@ -191,6 +205,7 @@ def additional_es_fields(instance_model, elastic_search_result):
             elastic_search_result['line_name'],
             elastic_search_result['name'],
         ).strip()
+        result[u'pretty_dedicated_video_card'] = pretty_dedicated_video_card
         result['video_cards_id_unicode'] = {id: value for id, value in
                                             zip(video_cards_id,
                                                 video_cards_unicode)}

@@ -35,4 +35,4 @@ class CategoryColumn(models.Model):
         return '{} - {}'.format(self.field, self.purpose)
 
     class Meta:
-        ordering = ('field__category', 'ordering')
+        ordering = ('field__category', 'purpose', 'ordering')

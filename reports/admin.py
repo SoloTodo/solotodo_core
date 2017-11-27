@@ -1,6 +1,14 @@
 from django.contrib import admin
 from guardian.admin import GuardedModelAdmin
 
-from reports.models import Report
+from reports.models import Report, ReportDownload
 
-admin.site.register(Report, GuardedModelAdmin)
+
+@admin.register(Report)
+class ReportModelAdmin(GuardedModelAdmin):
+    list_display = ('name', 'slug')
+
+
+@admin.register(ReportDownload)
+class ReportDownloadModelAdmin(admin.ModelAdmin):
+    readonly_fields = ('user', )

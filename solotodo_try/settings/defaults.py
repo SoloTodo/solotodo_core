@@ -304,3 +304,7 @@ METAMODEL = {
 
 ES = Elasticsearch([{"host": "localhost", "port": 9201}])
 ES_PRODUCTS_INDEX = 'products'
+
+CURRENCYLAYER_API_ACCESS_KEY = ''
+
+REPORTS_PURPOSE_ID = 3

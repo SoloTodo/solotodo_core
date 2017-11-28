@@ -68,10 +68,13 @@ class Command(BaseCommand):
             entity.product_id = association_data['product']
             entity.cell_plan_id = association_data['secondary_product']
             entity.last_association_user_id = association_data['user']
-            entity.last_association = pytz.utc.localize(
-                datetime.combine(
-                    dateparse.parse_date(association_data['date']),
-                    datetime.min.time()))
+            if association_data['date']:
+                entity.last_association = pytz.utc.localize(
+                    datetime.combine(
+                        dateparse.parse_date(association_data['date']),
+                        datetime.min.time()))
+            else:
+                entity.last_association = None
             entity.category = categories_dict[
                 association_data['product_type']]
             entity.is_visible = association_data['is_visible']

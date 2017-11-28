@@ -77,7 +77,7 @@ def get_score_games(elastic_dict):
     processor_rating = min(elastic_dict['processor_speed_score'] / 5000.0, 1.0)
     ram_rating = min(float(elastic_dict['ram_quantity_value']) / 6.0, 1.0)
 
-    gpu = elastic_dict['processor_gpu_speed_score']
+    gpu = elastic_dict.get('processor_gpu_speed_score', 0)
     dedicated = 0
     if 'dedicated_video_card_id' in elastic_dict:
         dedicated = elastic_dict['dedicated_video_card_speed_score']

@@ -5,7 +5,7 @@ import pytz
 from django.core.management import BaseCommand
 from django.utils import dateparse
 
-from solotodo.models import Entity, Product
+from solotodo.models import Entity, Product, Category
 from solotodo.utils import iterable_to_dict
 
 
@@ -17,6 +17,7 @@ class Command(BaseCommand):
         total_entity_count = len(associations)
 
         products_dict = iterable_to_dict(Product, 'id')
+        categories_dict = iterable_to_dict(Category, 'id')
 
         entities_by_url = {}
         for entity in Entity.objects.all():
@@ -40,7 +41,11 @@ class Command(BaseCommand):
                         and entity.cell_plan_id == association_data[
                             'secondary_product'] \
                         and entity.last_association_user_id == \
-                        association_data['user']:
+                        association_data['user'] \
+                        and entity.category_id == \
+                        association_data['product_type'] \
+                        and entity.is_visible == \
+                        association_data['is_visible']:
                     continue
 
                 if association_data['product'] not in products_dict:
@@ -55,6 +60,9 @@ class Command(BaseCommand):
                     datetime.combine(
                         dateparse.parse_date(association_data['date']),
                         datetime.min.time()))
+                entity.category = categories_dict[
+                    association_data['product_type']]
+                entity.is_visible = association_data['is_visible']
                 print('Saving entity')
                 entity.save()
             except KeyError:

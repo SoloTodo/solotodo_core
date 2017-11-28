@@ -53,12 +53,14 @@ class Command(BaseCommand):
                 print('No changes found, skipping')
                 continue
 
-            if association_data['product'] not in products_dict:
+            if association_data['product'] and association_data['product'] \
+                    not in products_dict:
                 print('Product not found ' +
                       str(association_data['product']))
                 continue
 
-            if association_data['secondary_product'] not in products_dict:
+            if association_data['secondary_product'] and \
+                    association_data['secondary_product'] not in products_dict:
                 print('Product not found ' +
                       str(association_data['secondary_product']))
                 continue

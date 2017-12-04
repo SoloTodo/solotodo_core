@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django_premailer',
     'gtin_fields',
     'polymorphic',
+    'rest_framework_tracking',
     'metamodel',
     'solotodo',
     'category_templates',

@@ -58,6 +58,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductPricingHistorySerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
+from rest_framework_tracking.mixins import LoggingMixin
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -123,7 +124,7 @@ class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CurrencySerializer
 
 
-class CategoryViewSet(PermissionReadOnlyModelViewSet):
+class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
@@ -357,7 +358,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(result)
 
 
-class EntityViewSet(viewsets.ReadOnlyModelViewSet):
+class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Entity.objects.all()
     pagination_class = EntityPagination
     serializer_class = EntitySerializer
@@ -628,7 +629,7 @@ class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
 
-class ProductViewSet(viewsets.ReadOnlyModelViewSet):
+class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,

@@ -44,6 +44,7 @@ class Command(BaseCommand):
 
             if not product:
                 print('No matching product found: {}'.format(product_id))
+                continue
 
             secondary_product_id = payload['secondary_product']
 
@@ -53,6 +54,7 @@ class Command(BaseCommand):
                 if not secondary_product:
                     print('No matching secondary product found: {}'.format(
                         product_id))
+                    continue
             else:
                 secondary_product = None
 

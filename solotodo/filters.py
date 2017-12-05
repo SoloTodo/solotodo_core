@@ -156,7 +156,10 @@ class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
     @property
     def qs(self):
         qs = super(EntityEstimatedSalesFilterSet, self).qs.select_related(
-            'active_registry', 'product__instance_model')
+            'active_registry',
+            'product__instance_model',
+            'cell_plan'
+        )
         if self.request:
             qs = qs.filter_by_user_perms(
                 self.request.user, 'view_entity_stocks')
@@ -177,7 +180,11 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        qs = super(EntityStaffFilterSet, self).qs
+        qs = super(EntityStaffFilterSet, self).qs.select_related(
+            'active_registry',
+            'product__instance_model',
+            'cell_plan'
+        )
         if self.request:
             qs = qs.filter_by_user_perms(
                 self.request.user, 'is_entity_staff')

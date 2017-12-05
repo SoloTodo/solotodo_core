@@ -1,10 +1,10 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 
-from metamodel.models import MetaModel
+from metamodel.models import MetaModel, InstanceModel
 from metamodel.signals import instance_model_saved
 
 from .website import Website
@@ -51,3 +51,12 @@ def create_or_update_product(instance_model, created, creator_id, **kwargs):
             new_product = Product()
             new_product.instance_model = instance_model
             new_product.save(creator_id=creator_id)
+
+
+@receiver(pre_delete, sender=InstanceModel)
+def delete_product_from_es(sender, instance, using, **kwargs):
+    category_models = MetaModel.objects.filter(category__isnull=False)
+
+    if instance.model in category_models:
+        associated_product = Product.objects.get(instance_model=instance)
+        associated_product.delete_from_elasticsearch()

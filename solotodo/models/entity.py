@@ -61,6 +61,10 @@ class EntityQueryset(models.QuerySet):
             category__in=categories_with_permissions,
         )
 
+    def get_pending(self):
+        return self.get_available().filter(product__isnull=True,
+                                           is_visible=True)
+
     def estimated_sales(self, start_date=None, end_date=None,
                         sorting='normal_price_sum'):
         from solotodo.models import EntityHistory
@@ -471,6 +475,58 @@ class Entity(models.Model):
 
         self.update_keeping_log(update_dict, user)
 
+    def associate_related_cell_entities(self, user):
+        from django.conf import settings
+
+        assert self.cell_plan_name
+        assert self.product
+
+        print('Associating related entities for: {}'.format(self))
+
+        other_entities = Entity.objects.filter(
+            store=self.store,
+            name=self.name
+        ).exclude(
+            pk=self.pk
+        )
+
+        other_entities_cell_plan_names = [e.cell_plan_name
+                                          for e in other_entities]
+
+        cell_plan_category = Category.objects.get(
+            pk=settings.CELL_PLAN_CATEGORY)
+
+        filter_parameters = {
+            'association_name.keyword': other_entities_cell_plan_names
+        }
+
+        matching_cell_plans = cell_plan_category.es_search() \
+            .filter('terms', **filter_parameters)[:100] \
+            .execute()
+
+        cell_plan_ids = [cell_plan.product_id
+                         for cell_plan in matching_cell_plans]
+        cell_plans = Product.objects.filter(pk__in=cell_plan_ids)
+        cell_plans_dict = iterable_to_dict(cell_plans)
+
+        cell_plans_dict = {
+            cell_plan.association_name: cell_plans_dict[cell_plan.product_id]
+            for cell_plan in matching_cell_plans
+        }
+
+        print('Related entities found:')
+        for entity in other_entities:
+            print('* {}'.format(entity))
+
+            if entity.cell_plan_name in cell_plans_dict:
+                cell_plan = cell_plans_dict[entity.cell_plan_name]
+                print('Matching plan found: {}'.format(cell_plan))
+                if entity.product != self.product or \
+                        entity.cell_plan != cell_plan:
+                    entity.associate(user, self.product, cell_plan)
+            else:
+                print('No matching cell plan found')
+
     def picture_urls_as_list(self):
         if not self.picture_urls:
             return None
@@ -485,6 +541,9 @@ class Entity(models.Model):
             ('backend_view_entity_conflicts',
              'Can view entity conflicts in backend'),
             ('backend_view_entity_estimated_sales',
-             'Can view the entity estiamted sales interface in backend'
-             )
+             'Can view the entity estimated sales interface in backend'
+             ),
+            ('backend_view_pending_entities',
+             'Can view the pending entities interface in the backend'
+             ),
         ]

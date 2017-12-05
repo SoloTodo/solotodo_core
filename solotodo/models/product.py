@@ -129,6 +129,15 @@ class Product(models.Model):
         else:
             return ''
 
+    def delete_from_elasticsearch(self):
+        from django.conf import settings
+
+        es = settings.ES
+        es.delete(
+            index=settings.ES_PRODUCTS_INDEX,
+            doc_type=str(self.instance_model.model),
+            id=self.pk)
+
     @staticmethod
     def query_es_by_search_string(es_search, search, mode='OR'):
         from elasticsearch_dsl import Q

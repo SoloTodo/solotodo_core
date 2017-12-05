@@ -55,7 +55,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     LeadWithUserDataSerializer, CategorySpecsFilterSerializer, \
     CategorySpecsOrderSerializer, EntityHistorySerializer, \
     EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer, \
-    ProductPricingHistorySerializer
+    ProductPricingHistorySerializer, NestedProductSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from rest_framework_tracking.mixins import LoggingMixin
@@ -415,6 +415,23 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
         return Response(serializer.data)
 
+    @list_route()
+    def pending(self, request):
+        filterset = EntityStaffFilterSet(
+            queryset=self.get_queryset(),
+            data=request.query_params,
+            request=request)
+
+        qs = filterset.qs.get_pending()
+
+        paginator = self.paginator
+        page = paginator.paginate_queryset(qs, request)
+
+        serializer = EntitySerializer(page, many=True,
+                                      context={'request': request})
+
+        return paginator.get_paginated_response(serializer.data)
+
     @detail_route(methods=['post'])
     def register_staff_access(self, request, *args, **kwargs):
         entity = self.get_object()
@@ -542,42 +559,53 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['put', 'delete'])
-    def association(self, request, *args, **kwargs):
+    @detail_route(methods=['post', ])
+    def associate(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
             raise PermissionDenied
 
-        if request.method == 'PUT':
-            form = EntityAssociationForm(request.data)
-            if not form.is_valid():
-                return Response({
-                    'errors': form.errors
-                }, status=status.HTTP_400_BAD_REQUEST)
+        form = EntityAssociationForm(request.data)
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
 
-            product = form.cleaned_data['product']
-            cell_plan = form.cleaned_data['cell_plan']
+        product = form.cleaned_data['product']
+        cell_plan = form.cleaned_data['cell_plan']
 
-            try:
-                entity.associate(request.user, product, cell_plan)
-            except Exception as ex:
-                return Response(
-                    {'detail': str(ex)},
-                    status=status.HTTP_400_BAD_REQUEST)
+        try:
+            entity.associate(request.user, product, cell_plan)
+        except Exception as ex:
+            return Response(
+                {'detail': str(ex)},
+                status=status.HTTP_400_BAD_REQUEST)
 
-        if request.method == 'DELETE':
-            form = EntityDisssociationForm(request.data)
-            if not form.is_valid():
-                return Response({
-                    'errors': form.errors
-                }, status=status.HTTP_400_BAD_REQUEST)
+        if entity.cell_plan_name:
+            entity.associate_related_cell_entities(request.user)
 
-            try:
-                entity.dissociate(request.user, form.cleaned_data['reason'])
-            except Exception as ex:
-                return Response(
-                    {'detail': str(ex)},
-                    status=status.HTTP_400_BAD_REQUEST)
+        serialized_data = EntitySerializer(
+            entity, context={'request': self.request}).data
+        return Response(serialized_data)
+
+    @detail_route(methods=['post', ])
+    def dissociate(self, request, *args, **kwargs):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        form = EntityDisssociationForm(request.data)
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            entity.dissociate(request.user, form.cleaned_data['reason'])
+        except Exception as ex:
+            return Response(
+                {'detail': str(ex)},
+                status=status.HTTP_400_BAD_REQUEST)
 
         serialized_data = EntitySerializer(
             entity, context={'request': self.request}).data
@@ -611,6 +639,38 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         serialializer = EntityStaffInfoSerializer(
             entity, context={'request': request})
         return Response(serialializer.data)
+
+    @detail_route()
+    def cell_plan_choices(self, request, *args, **kwargs):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        cell_category = Category.objects.get(pk=settings.CELL_CATEGORY)
+        cell_plan_category = Category.objects.get(
+            pk=settings.CELL_PLAN_CATEGORY)
+
+        if entity.category != cell_category:
+            cell_plan_choices = Product.objects.none()
+        elif entity.cell_plan_name:
+            filter_parameters = {
+                'association_name.keyword': entity.cell_plan_name
+            }
+
+            matching_cell_plans = cell_plan_category.es_search()\
+                .filter('term', **filter_parameters)\
+                .execute()
+
+            cell_plan_ids = [x.product_id for x in matching_cell_plans]
+            cell_plan_choices = Product.objects.filter(pk__in=cell_plan_ids)
+        else:
+            cell_plan_choices = Product.objects.filter_by_category(
+                cell_plan_category).filter(
+                instance_model__unicode_representation__icontains='prepago')
+
+        serializer = NestedProductSerializer(cell_plan_choices, many=True,
+                                             context={'request': request})
+        return Response(serializer.data)
 
 
 class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):

@@ -46,6 +46,29 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
         fields = ['is_active', 'is_visible', 'product']
 
 
+class WtbEntityStaffFilterSet(rest_framework.FilterSet):
+    brands = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_wtb_brand_filter('is_wtb_brand_staff'),
+        name='brand',
+        label='Brands'
+    )
+    categories = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_category_filter('is_category_staff'),
+        name='category',
+        label='Categories'
+    )
+
+    @property
+    def qs(self):
+        qs = super(WtbEntityStaffFilterSet, self).qs.select_related(
+            'product__instance_model',
+        )
+        if self.request:
+            qs = qs.filter_by_user_perms(
+                self.request.user, 'is_wtb_entity_staff')
+        return qs
+
+
 class WtbBrandUpdateLogFilterSet(rest_framework.FilterSet):
     @property
     def qs(self):

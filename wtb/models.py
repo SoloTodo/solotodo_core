@@ -122,6 +122,37 @@ class WtbBrand(models.Model):
         ]
 
 
+class WtbEntityQuerySet(models.QuerySet):
+    def filter_by_user_perms(self, user, permission):
+        synth_permissions = {
+            'view_wtb_entity': {
+                'wtb_brand': 'view_wtb_brand',
+                'category': 'view_category',
+            },
+            'is_wtb_entity_staff': {
+                'wtb_brand': 'is_wtb_brand_staff',
+                'category': 'is_category_staff',
+            }
+        }
+
+        assert permission in synth_permissions
+
+        permissions = synth_permissions[permission]
+
+        brands_with_permissions = WtbBrand.objects.filter_by_user_perms(
+            user, permissions['wtb_brand'])
+        categories_with_permissions = Category.objects.filter_by_user_perms(
+            user, permissions['category'])
+
+        return self.filter(
+            brand__in=brands_with_permissions,
+            category__in=categories_with_permissions,
+        )
+
+    def get_pending(self):
+        return self.filter(product__isnull=True, is_visible=True)
+
+
 class WtbEntity(models.Model):
     name = models.CharField(max_length=255)
     brand = models.ForeignKey(WtbBrand)
@@ -134,6 +165,8 @@ class WtbEntity(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     is_visible = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
+
+    objects = WtbEntityQuerySet.as_manager()
 
     # The last time the entity was associated. Important to leave standalone as
     # it is used for staff payments
@@ -219,6 +252,11 @@ class WtbEntity(models.Model):
 
     class Meta:
         ordering = ('brand', 'name')
+        permissions = [
+            ('backend_view_pending_wtb_entities',
+             'Can view the pending WTB entities interface in the backend'
+             ),
+        ]
 
 
 class WtbBrandUpdateLog(models.Model):

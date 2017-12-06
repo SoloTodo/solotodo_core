@@ -1,7 +1,7 @@
 from django.db import IntegrityError
 from django_filters import rest_framework
 from rest_framework import viewsets, status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.response import Response
@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.forms.category_form import CategoryForm
 from wtb.filters import create_wtb_brand_filter, WtbEntityFilterSet, \
-    WtbBrandUpdateLogFilterSet
+    WtbBrandUpdateLogFilterSet, WtbEntityStaffFilterSet
 from wtb.forms import WtbEntityAssociationForm
 from wtb.models import WtbBrand, WtbEntity, WtbBrandUpdateLog
 from wtb.pagination import WtbEntityPagination, WtbStoreUpdateLogPagination
@@ -36,6 +36,23 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
                        'product')
     search_fields = ('product__instance_model__unicode_representation',
                      'name', 'key', 'url')
+
+    @list_route()
+    def pending(self, request):
+        filterset = WtbEntityStaffFilterSet(
+            queryset=self.get_queryset(),
+            data=request.query_params,
+            request=request)
+
+        qs = filterset.qs.get_pending()
+
+        paginator = self.paginator
+        page = paginator.paginate_queryset(qs, request)
+
+        serializer = WtbEntitySerializer(page, many=True,
+                                         context={'request': request})
+
+        return paginator.get_paginated_response(serializer.data)
 
     @detail_route()
     def staff_info(self, request, pk):
@@ -111,6 +128,10 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(
                 {'detail': str(ex)},
                 status=status.HTTP_400_BAD_REQUEST)
+
+        serialized_data = WtbEntitySerializer(
+            wtb_entity, context={'request': self.request}).data
+        return Response(serialized_data)
 
     @detail_route(methods=['post'])
     def dissociate(self, request, *args, **kwargs):

@@ -13,6 +13,7 @@ import logging
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from decimal import Decimal
 from django_filters import STRICTNESS
 from elasticsearch import Elasticsearch
 
@@ -310,3 +311,6 @@ ES_PRODUCTS_INDEX = 'products'
 CURRENCYLAYER_API_ACCESS_KEY = ''
 
 REPORTS_PURPOSE_ID = 3
+
+ENTITY_ASSOCIATION_AMOUNT = Decimal(0)
+WTB_ENTITY_ASSOCIATION_AMOUNT = Decimal(0)

@@ -39,6 +39,10 @@ class SoloTodoUser(AbstractEmailUser):
 
     BOT_CACHE = None
 
+    @property
+    def name(self):
+        return self.email
+
     @classmethod
     def get_bot(cls):
         if not cls.BOT_CACHE:
@@ -132,5 +136,6 @@ class SoloTodoUser(AbstractEmailUser):
             ('view_users',
              'Can view all users'),
             ('view_users_with_staff_actions',
-             'Can view users with that have executed staff actions')
+             'Can view users with that have executed staff actions'),
+            ('backend_list_users', 'Can view user list in backend'),
         )

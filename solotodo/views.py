@@ -1,10 +1,14 @@
 import traceback
 from collections import OrderedDict
 
+import datetime
+
+from decimal import Decimal
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.db import models, IntegrityError
+from django.db.models import Count
 from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
@@ -30,6 +34,7 @@ from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet, \
     WebsiteFilterSet, VisitFilterSet
 from solotodo.forms.category_browse_form import CategoryBrowseForm
+from solotodo.forms.date_range_form import DateRangeForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
@@ -40,7 +45,7 @@ from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
-    EntityHistory, Visit
+    EntityHistory, Visit, CategoryTier
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination
@@ -95,6 +100,114 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         payload = UserSerializer(users_with_staff_actions,
                                  many=True, context={'request': request})
         return Response(payload.data)
+
+    @detail_route()
+    def staff_summary(self, request, pk, *args, **kwargs):
+        from wtb.models import WtbEntity
+
+        request_user = request.user
+
+        if not request_user.is_authenticated:
+            raise PermissionDenied
+
+        user = self.get_object()
+
+        if user != request_user and not request_user.is_superuser:
+            raise PermissionDenied
+
+        if not user.is_staff:
+            raise PermissionDenied
+
+        form = DateRangeForm(request.query_params)
+
+        end_date = timezone.now()
+        start_date = end_date - datetime.timedelta(days=30)
+
+        if form.is_valid():
+            form_dates = form.cleaned_data['timestamp']
+            if form_dates and form_dates.start and form_dates.stop:
+                start_date = form_dates.start
+                end_date = form_dates.stop
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        result = {}
+
+        total_amount = Decimal(0)
+
+        # Entities
+
+        association_amount = settings.ENTITY_ASSOCIATION_AMOUNT
+
+        associated_entities_count = Entity.objects.filter(
+            last_association__gte=start_date,
+            last_association__lte=end_date,
+            last_association_user=user
+        ).count()
+
+        entities_total_amount = association_amount * associated_entities_count
+        total_amount += entities_total_amount
+
+        result['entities'] = {
+            'count': associated_entities_count,
+            'individual_amount': str(association_amount),
+            'total_amount': str(entities_total_amount)
+        }
+
+        # WTB Entities
+
+        wtb_association_amount = settings.WTB_ENTITY_ASSOCIATION_AMOUNT
+
+        associated_wtb_entities_count = WtbEntity.objects.filter(
+            last_association__gte=start_date,
+            last_association__lte=end_date,
+            last_association_user=user
+        ).count()
+
+        wtb_entities_total_amount = \
+            wtb_association_amount * associated_wtb_entities_count
+        total_amount += wtb_entities_total_amount
+
+        result['wtb_entities'] = {
+            'count': associated_wtb_entities_count,
+            'individual_amount': str(wtb_association_amount),
+            'total_amount': str(wtb_entities_total_amount)
+        }
+
+        # Products
+
+        created_products_per_category = Product.objects.filter(
+            creation_date__gte=start_date,
+            creation_date__lte=end_date,
+            creator=user
+        ).values('instance_model__model__category__tier')\
+            .annotate(c=Count('pk')).order_by()
+
+        created_products_per_category_dict = {
+            e['instance_model__model__category__tier']: e['c']
+            for e in created_products_per_category
+        }
+
+        result['products'] = []
+
+        for tier in CategoryTier.objects.all():
+            created_products_count = created_products_per_category_dict.get(
+                tier.pk, 0)
+
+            tier_total_amount = \
+                tier.creation_payment_amount * created_products_count
+            total_amount += tier_total_amount
+
+            result['products'].append({
+                'tier': str(tier),
+                'count': created_products_count,
+                'individual_amount': str(tier.creation_payment_amount),
+                'total_amount': str(tier_total_amount)
+            })
+
+        result['total_amount'] = str(total_amount)
+
+        return Response(result)
 
 
 class WebsiteViewSet(PermissionReadOnlyModelViewSet):

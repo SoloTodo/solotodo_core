@@ -11,7 +11,7 @@ def staff_login_required(f):
     from django.contrib.auth.views import redirect_to_login
 
     def wrap(request, *args, **kwargs):
-        if not request.user.is_authenticated() or not request.user.is_staff:
+        if not request.user.is_authenticated or not request.user.is_staff:
             return redirect_to_login(request.get_full_path())
 
         return f(request, *args, **kwargs)
@@ -24,7 +24,7 @@ def superuser_required(function=None, redirect_field_name='next',
     from django.contrib.auth.decorators import user_passes_test
 
     actual_decorator = user_passes_test(
-        lambda u: u.is_authenticated() and u.is_superuser,
+        lambda u: u.is_authenticated and u.is_superuser,
         login_url=login_url,
         redirect_field_name=redirect_field_name
     )

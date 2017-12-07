@@ -41,7 +41,7 @@ def store_update(store_id, category_ids=None,
     update_log.use_async = use_async
     update_log.save()
 
-    update_log.categories = categories
+    update_log.categories.set(categories)
 
     # Reset the categories to synchronize the task signature with the
     # actual method implementation
@@ -63,8 +63,8 @@ def store_update_pricing_from_json(store_id, json_data):
         store=store
     )
 
-    update_log.categories = Category.objects.filter(
-        storescraper_name__in=json_data['categories'])
+    update_log.categories.set(Category.objects.filter(
+        storescraper_name__in=json_data['categories']))
 
     store.update_pricing_from_json(json_data, update_log=update_log)
 

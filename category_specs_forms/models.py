@@ -6,8 +6,9 @@ from solotodo.models import CategorySpecsFilter, Category, Website, \
 
 
 class CategorySpecsFormLayout(models.Model):
-    category = models.ForeignKey(Category)
-    website = models.ForeignKey(Website, blank=True, null=True)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    website = models.ForeignKey(Website, on_delete=models.CASCADE,
+                                blank=True, null=True)
     name = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
@@ -24,6 +25,7 @@ class CategorySpecsFormLayout(models.Model):
 
 class CategorySpecsFormFieldset(models.Model):
     layout = models.ForeignKey(CategorySpecsFormLayout,
+                               on_delete=models.CASCADE,
                                related_name='fieldsets')
     label = models.CharField(max_length=100)
     ordering = models.IntegerField()
@@ -37,9 +39,11 @@ class CategorySpecsFormFieldset(models.Model):
 
 class CategorySpecsFormFilter(models.Model):
     fieldset = models.ForeignKey(CategorySpecsFormFieldset,
+                                 on_delete=models.CASCADE,
                                  related_name='filters')
-    filter = models.ForeignKey(CategorySpecsFilter)
-    country = models.ForeignKey(Country, blank=True, null=True)
+    filter = models.ForeignKey(CategorySpecsFilter, on_delete=models.CASCADE)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE,
+                                blank=True, null=True)
     label = models.CharField(max_length=100)
     ordering = models.IntegerField()
     continuous_range_step = models.IntegerField(blank=True, null=True)
@@ -61,9 +65,12 @@ class CategorySpecsFormFilter(models.Model):
 
 
 class CategorySpecsFormOrder(models.Model):
-    layout = models.ForeignKey(CategorySpecsFormLayout, related_name='orders')
-    order = models.ForeignKey(CategorySpecsOrder)
-    country = models.ForeignKey(Country, blank=True, null=True)
+    layout = models.ForeignKey(CategorySpecsFormLayout,
+                               on_delete=models.CASCADE, related_name='orders')
+    order = models.ForeignKey(CategorySpecsOrder, on_delete=models.CASCADE)
+    country = models.ForeignKey(Country,
+                                on_delete=models.CASCADE,
+                                blank=True, null=True)
     label = models.CharField(max_length=100)
     ordering = models.IntegerField()
     suggested_use = models.CharField(max_length=20, choices=[

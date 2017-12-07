@@ -40,7 +40,7 @@ class InstanceModel(models.Model):
     unicode_value = models.CharField(max_length=1024, null=True, blank=True)
     unicode_representation = models.CharField(max_length=255, null=True,
                                               blank=True)
-    model = models.ForeignKey(MetaModel)
+    model = models.ForeignKey(MetaModel, on_delete=models.CASCADE)
 
     objects = InstanceModelQuerySet.as_manager()
 

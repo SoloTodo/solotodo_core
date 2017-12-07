@@ -21,8 +21,8 @@ class Report(models.Model):
 
 
 class ReportDownload(models.Model):
-    report = models.ForeignKey(Report)
-    user = models.ForeignKey(get_user_model())
+    report = models.ForeignKey(Report, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     file = models.FileField(storage=PrivateS3Boto3Storage())
     timestamp = models.DateTimeField(auto_now_add=True)
 

@@ -1,19 +1,22 @@
 from decimal import Decimal
 import keyword
 from datetime import datetime
-from django.core.urlresolvers import reverse
 from django.db import models, IntegrityError
 from django import forms
+from django.urls import reverse
+
 from metamodel.models.meta_model import MetaModel
 import re
 
 
 class MetaField(models.Model):
     name = models.CharField(max_length=100)
-    parent = models.ForeignKey(MetaModel, related_name='fields')
+    parent = models.ForeignKey(MetaModel, on_delete=models.CASCADE,
+                               related_name='fields')
     nullable = models.BooleanField(default=False)
     multiple = models.BooleanField(default=False)
-    model = models.ForeignKey(MetaModel, related_name='fields_usage')
+    model = models.ForeignKey(MetaModel, on_delete=models.CASCADE,
+                              related_name='fields_usage')
     ordering = models.IntegerField(default=1)
     hidden = models.BooleanField(default=False)
 

@@ -10,8 +10,10 @@ from solotodo.models import Entity, EntityHistory, SoloTodoUser
 
 
 class EntitySubscription(models.Model):
-    entity = models.ForeignKey(Entity)
-    last_history_seen = models.ForeignKey(EntityHistory, blank=True, null=True)
+    entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
+    last_history_seen = models.ForeignKey(EntityHistory,
+                                          on_delete=models.CASCADE,
+                                          blank=True, null=True)
     users = models.ManyToManyField(get_user_model())
     reference_price = models.DecimalField(max_digits=10, decimal_places=2)
     last_updated = models.DateTimeField(auto_now=True)

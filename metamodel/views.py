@@ -4,8 +4,8 @@ import os
 from django.conf import settings
 from django.contrib import messages
 from django.core.files.storage import default_storage
-from django.core.urlresolvers import reverse_lazy, reverse
 from django.http import HttpResponseRedirect, HttpResponse
+from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, FormView
 from metamodel.forms.meta_field_form import MetaFieldForm
 from metamodel.forms.meta_field_make_non_nullable_meta_field_form import \

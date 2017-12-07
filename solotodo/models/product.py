@@ -59,9 +59,9 @@ class ProductQuerySet(models.QuerySet):
 
 
 class Product(models.Model):
-    instance_model = models.ForeignKey(InstanceModel)
+    instance_model = models.ForeignKey(InstanceModel, on_delete=models.CASCADE)
     creation_date = models.DateTimeField(db_index=True, auto_now_add=True)
-    creator = models.ForeignKey(get_user_model())
+    creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     last_updated = models.DateTimeField(auto_now=True)
 
     objects = ProductQuerySet.as_manager()

@@ -29,9 +29,9 @@ class VisitQuerySet(models.QuerySet):
 
 
 class Visit(models.Model):
-    product = models.ForeignKey(Product)
-    website = models.ForeignKey(Website)
-    user = models.ForeignKey(get_user_model())
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    website = models.ForeignKey(Website, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     timestamp = models.DateTimeField()
     ip = models.GenericIPAddressField()
 

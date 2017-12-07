@@ -7,9 +7,9 @@ from .category import Category
 
 
 class CategorySpecsFilter(models.Model):
-    category = models.ForeignKey(Category)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
-    meta_model = models.ForeignKey(MetaModel)
+    meta_model = models.ForeignKey(MetaModel, on_delete=models.CASCADE)
     type = models.CharField(max_length=20, choices=[
         ('exact', 'Exact'),
         ('gte', 'Greater than or equal'),

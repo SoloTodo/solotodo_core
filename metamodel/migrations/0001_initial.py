@@ -57,37 +57,37 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='metafield',
             name='model',
-            field=models.ForeignKey(related_name='fields_usage', to='metamodel.MetaModel'),
+            field=models.ForeignKey(related_name='fields_usage', to='metamodel.MetaModel', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='metafield',
             name='parent',
-            field=models.ForeignKey(related_name='fields', to='metamodel.MetaModel'),
+            field=models.ForeignKey(related_name='fields', to='metamodel.MetaModel', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='instancemodel',
             name='model',
-            field=models.ForeignKey(to='metamodel.MetaModel'),
+            field=models.ForeignKey(to='metamodel.MetaModel', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='instancefield',
             name='field',
-            field=models.ForeignKey(to='metamodel.MetaField'),
+            field=models.ForeignKey(to='metamodel.MetaField', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='instancefield',
             name='parent',
-            field=models.ForeignKey(related_name='fields', to='metamodel.InstanceModel'),
+            field=models.ForeignKey(related_name='fields', to='metamodel.InstanceModel', on_delete=models.CASCADE),
             preserve_default=True,
         ),
         migrations.AddField(
             model_name='instancefield',
             name='value',
-            field=models.ForeignKey(related_name='fields_usage', to='metamodel.InstanceModel'),
+            field=models.ForeignKey(related_name='fields_usage', to='metamodel.InstanceModel', on_delete=models.CASCADE),
             preserve_default=True,
         ),
     ]

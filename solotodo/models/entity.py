@@ -167,19 +167,23 @@ class EntityQueryset(models.QuerySet):
 
 
 class Entity(models.Model):
-    store = models.ForeignKey(Store)
-    category = models.ForeignKey(Category)
-    scraped_category = models.ForeignKey(Category, related_name='+')
-    currency = models.ForeignKey(Currency)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    scraped_category = models.ForeignKey(Category, on_delete=models.CASCADE,
+                                         related_name='+')
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     condition = models.URLField(choices=[
         ('https://schema.org/DamagedCondition', 'Damaged'),
         ('https://schema.org/NewCondition', 'New'),
         ('https://schema.org/RefurbishedCondition', 'Refurbished'),
         ('https://schema.org/UsedCondition', 'Used')
     ])
-    product = models.ForeignKey(Product, null=True)
-    cell_plan = models.ForeignKey(Product, null=True, related_name='+')
-    active_registry = models.OneToOneField('EntityHistory', related_name='+',
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
+                                  related_name='+')
+    active_registry = models.OneToOneField('EntityHistory',
+                                           on_delete=models.CASCADE,
+                                           related_name='+',
                                            null=True)
     name = models.CharField(max_length=256, db_index=True)
     cell_plan_name = models.CharField(max_length=50, null=True,
@@ -203,13 +207,16 @@ class Entity(models.Model):
     # The last time the entity was associated. Important to leave standalone as
     # it is used for staff payments
     last_association = models.DateTimeField(null=True, blank=True)
-    last_association_user = models.ForeignKey(get_user_model(), null=True)
+    last_association_user = models.ForeignKey(get_user_model(),
+                                              on_delete=models.CASCADE,
+                                              null=True)
 
     # Last time a staff accessed the entity in the backend. Used to display a
     # warning to other staff if they try to access it at the same time.
     last_staff_access = models.DateTimeField(null=True, blank=True)
     last_staff_access_user = models.ForeignKey(
-        get_user_model(), null=True, related_name='+')
+        get_user_model(), on_delete=models.CASCADE, null=True,
+        related_name='+')
 
     # The last time the pricing of this entity was updated. Needed because
     # active_registry may be null. It does not match the active_registry date

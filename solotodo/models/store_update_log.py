@@ -8,7 +8,7 @@ from solotodo_try.s3utils import PrivateS3Boto3Storage
 class StoreUpdateLog(models.Model):
     PENDING, IN_PROCESS, SUCCESS, ERROR = [1, 2, 3, 4]
 
-    store = models.ForeignKey(Store)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE)
     categories = models.ManyToManyField(Category)
     status = models.IntegerField(choices=[
         (PENDING, 'Pending'),

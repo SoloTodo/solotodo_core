@@ -37,11 +37,11 @@ class LeadQuerySet(models.QuerySet):
 
 
 class Lead(models.Model):
-    entity_history = models.ForeignKey(EntityHistory)
+    entity_history = models.ForeignKey(EntityHistory, on_delete=models.CASCADE)
     timestamp = models.DateTimeField()
-    user = models.ForeignKey(get_user_model())
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     ip = models.GenericIPAddressField()
-    website = models.ForeignKey(Website)
+    website = models.ForeignKey(Website, on_delete=models.CASCADE)
 
     objects = LeadQuerySet.as_manager()
 

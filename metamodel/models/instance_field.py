@@ -4,9 +4,11 @@ from metamodel.models import InstanceModel, MetaField
 
 
 class InstanceField(models.Model):
-    parent = models.ForeignKey(InstanceModel, related_name='fields')
-    field = models.ForeignKey(MetaField)
-    value = models.ForeignKey(InstanceModel, related_name='fields_usage')
+    parent = models.ForeignKey(InstanceModel, on_delete=models.CASCADE,
+                               related_name='fields')
+    field = models.ForeignKey(MetaField, on_delete=models.CASCADE)
+    value = models.ForeignKey(InstanceModel, on_delete=models.CASCADE,
+                              related_name='fields_usage')
 
     def __str__(self):
         return '{0} - {1}: {2}'.format(self.parent, self.field.name,

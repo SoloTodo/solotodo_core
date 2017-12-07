@@ -10,23 +10,24 @@ from .product import Product
 
 
 class EntityLog(models.Model):
-    entity = models.ForeignKey(Entity)
-    user = models.ForeignKey(get_user_model())
+    entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     creation_date = models.DateTimeField(auto_now_add=True)
 
     # Actual data change fields
-    category = models.ForeignKey(Category)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     scraped_category = models.ForeignKey(
-        Category, related_name='+')
-    currency = models.ForeignKey(Currency)
+        Category, on_delete=models.CASCADE, related_name='+')
+    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     condition = models.URLField(choices=[
         ('https://schema.org/DamagedCondition', 'Damaged'),
         ('https://schema.org/NewCondition', 'New'),
         ('https://schema.org/RefurbishedCondition', 'Refurbished'),
         ('https://schema.org/UsedCondition', 'Used')]
     )
-    product = models.ForeignKey(Product, null=True)
-    cell_plan = models.ForeignKey(Product, null=True, related_name='+')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
+                                  related_name='+')
     name = models.CharField(max_length=256)
     cell_plan_name = models.CharField(max_length=50, null=True)
     part_number = models.CharField(max_length=50, null=True)

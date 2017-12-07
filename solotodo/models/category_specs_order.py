@@ -3,7 +3,7 @@ from .category import Category
 
 
 class CategorySpecsOrder(models.Model):
-    category = models.ForeignKey(Category)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     es_field = models.CharField(max_length=100)
 

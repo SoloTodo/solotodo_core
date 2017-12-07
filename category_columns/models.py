@@ -4,7 +4,7 @@ from solotodo.models import Category, Country
 
 
 class CategoryField(models.Model):
-    category = models.ForeignKey(Category)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     es_field = models.CharField(max_length=100)
     label = models.CharField(max_length=100)
 
@@ -26,9 +26,11 @@ class CategoryColumnPurpose(models.Model):
 
 
 class CategoryColumn(models.Model):
-    field = models.ForeignKey(CategoryField)
-    purpose = models.ForeignKey(CategoryColumnPurpose)
-    country = models.ForeignKey(Country, blank=True, null=True)
+    field = models.ForeignKey(CategoryField, on_delete=models.CASCADE)
+    purpose = models.ForeignKey(CategoryColumnPurpose,
+                                on_delete=models.CASCADE)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE,
+                                blank=True, null=True)
     ordering = models.PositiveIntegerField()
 
     def __str__(self):

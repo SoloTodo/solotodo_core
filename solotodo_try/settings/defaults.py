@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_premailer',
     'gtin_fields',
-    'polymorphic',
     'rest_framework_tracking',
     'metamodel',
     'solotodo',

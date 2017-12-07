@@ -23,12 +23,12 @@ class StoreQuerySet(models.QuerySet):
 
 class Store(models.Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)
-    country = models.ForeignKey(Country)
+    country = models.ForeignKey(Country, on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     storescraper_class = models.CharField(max_length=255, db_index=True)
     storescraper_extra_args = models.CharField(max_length=255, null=True,
                                                blank=True)
-    type = models.ForeignKey(StoreType)
+    type = models.ForeignKey(StoreType, on_delete=models.CASCADE)
 
     objects = StoreQuerySet.as_manager()
 

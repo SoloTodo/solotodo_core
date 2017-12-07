@@ -15,9 +15,10 @@ class CategoryTemplatePurpose(models.Model):
 
 
 class CategoryTemplate(models.Model):
-    category = models.ForeignKey(Category)
-    website = models.ForeignKey(Website)
-    purpose = models.ForeignKey(CategoryTemplatePurpose)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    website = models.ForeignKey(Website, on_delete=models.CASCADE)
+    purpose = models.ForeignKey(CategoryTemplatePurpose,
+                                on_delete=models.CASCADE)
     body = models.TextField()
 
     def __str__(self):

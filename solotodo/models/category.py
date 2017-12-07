@@ -15,8 +15,10 @@ class CategoryQuerySet(models.QuerySet):
 
 class Category(models.Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)
-    meta_model = models.OneToOneField(MetaModel, blank=True, null=True)
-    tier = models.ForeignKey(CategoryTier, blank=True, null=True)
+    meta_model = models.OneToOneField(MetaModel, on_delete=models.CASCADE,
+                                      blank=True, null=True)
+    tier = models.ForeignKey(CategoryTier, on_delete=models.CASCADE,
+                             blank=True, null=True)
     slug = models.SlugField(blank=True, null=True)
     storescraper_name = models.CharField(
         max_length=255, db_index=True, blank=True, null=True)

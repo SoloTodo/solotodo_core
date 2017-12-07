@@ -22,7 +22,7 @@ class WtbBrand(models.Model):
     prefered_brand = models.CharField(max_length=100, blank=True, null=True)
     storescraper_class = models.CharField(max_length=100, blank=True,
                                           null=True)
-    website = models.ForeignKey(Website)
+    website = models.ForeignKey(Website, on_delete=models.CASCADE)
     stores = models.ManyToManyField(Store)
 
     objects = WtbBrandQuerySet.as_manager()
@@ -155,9 +155,10 @@ class WtbEntityQuerySet(models.QuerySet):
 
 class WtbEntity(models.Model):
     name = models.CharField(max_length=255)
-    brand = models.ForeignKey(WtbBrand)
-    category = models.ForeignKey(Category)
-    product = models.ForeignKey(Product, blank=True, null=True)
+    brand = models.ForeignKey(WtbBrand, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE,
+                                blank=True, null=True)
     key = models.CharField(max_length=255)
     url = models.URLField()
     picture_url = models.URLField()
@@ -171,7 +172,8 @@ class WtbEntity(models.Model):
     # The last time the entity was associated. Important to leave standalone as
     # it is used for staff payments
     last_association = models.DateTimeField(null=True, blank=True)
-    last_association_user = models.ForeignKey(get_user_model(), null=True)
+    last_association_user = models.ForeignKey(
+        get_user_model(), on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.brand, self.name)
@@ -262,7 +264,7 @@ class WtbEntity(models.Model):
 class WtbBrandUpdateLog(models.Model):
     PENDING, IN_PROCESS, SUCCESS, ERROR = [1, 2, 3, 4]
 
-    brand = models.ForeignKey(WtbBrand)
+    brand = models.ForeignKey(WtbBrand, on_delete=models.CASCADE)
     status = models.IntegerField(choices=[
         (PENDING, 'Pending'),
         (IN_PROCESS, 'In process'),

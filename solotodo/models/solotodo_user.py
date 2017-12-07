@@ -1,6 +1,8 @@
+from decimal import Decimal
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import models
+from django.db.models import Count
 from django.template.loader import render_to_string
 from django.utils import translation, timezone
 from django.utils.translation import ugettext_lazy as _
@@ -126,6 +128,136 @@ class SoloTodoUser(AbstractEmailUser):
         send_mail('{} - {}'.format(subject, entity.name),
                   'Error', sender, email_recipients,
                   html_message=html_message)
+
+    def staff_summary(self, start_date, end_date):
+        from solotodo.models import Entity, Product, CategoryTier
+        from wtb.models import WtbEntity
+
+        result = {}
+
+        total_amount = Decimal(0)
+
+        # Entities
+
+        association_amount = settings.ENTITY_ASSOCIATION_AMOUNT
+
+        associated_entities_count = Entity.objects.filter(
+            last_association__gte=start_date,
+            last_association__lte=end_date,
+            last_association_user=self
+        ).count()
+
+        entities_total_amount = association_amount * associated_entities_count
+        total_amount += entities_total_amount
+
+        result['entities'] = {
+            'count': associated_entities_count,
+            'individual_amount': str(association_amount),
+            'total_amount': str(entities_total_amount)
+        }
+
+        # WTB Entities
+
+        wtb_association_amount = settings.WTB_ENTITY_ASSOCIATION_AMOUNT
+
+        associated_wtb_entities_count = WtbEntity.objects.filter(
+            last_association__gte=start_date,
+            last_association__lte=end_date,
+            last_association_user=self
+        ).count()
+
+        wtb_entities_total_amount = \
+            wtb_association_amount * associated_wtb_entities_count
+        total_amount += wtb_entities_total_amount
+
+        result['wtb_entities'] = {
+            'count': associated_wtb_entities_count,
+            'individual_amount': str(wtb_association_amount),
+            'total_amount': str(wtb_entities_total_amount)
+        }
+
+        # Products
+
+        created_products_per_category = Product.objects.filter(
+            creation_date__gte=start_date,
+            creation_date__lte=end_date,
+            creator=self
+        ).values('instance_model__model__category__tier') \
+            .annotate(c=Count('pk')).order_by()
+
+        created_products_per_category_dict = {
+            e['instance_model__model__category__tier']: e['c']
+            for e in created_products_per_category
+        }
+
+        result['products'] = []
+
+        for tier in CategoryTier.objects.all():
+            created_products_count = created_products_per_category_dict.get(
+                tier.pk, 0)
+
+            tier_total_amount = \
+                tier.creation_payment_amount * created_products_count
+            total_amount += tier_total_amount
+
+            result['products'].append({
+                'tier': str(tier),
+                'count': created_products_count,
+                'individual_amount': str(tier.creation_payment_amount),
+                'total_amount': str(tier_total_amount)
+            })
+
+        result['total_amount'] = str(total_amount)
+
+        return result
+
+    def staff_actions(self, start_date, end_date):
+        from solotodo.models import EntityLog, Product
+        from wtb.models import WtbEntity
+
+        result = {}
+
+        # Entity actions
+
+        logs = EntityLog.objects\
+            .filter(user=self,
+                    creation_date__gte=start_date,
+                    creation_date__lte=end_date)\
+            .order_by('-creation_date') \
+            .select_related('entity')
+
+        result['entities'] = [{'id': log.id,
+                               'entity_id': log.entity.id,
+                               'name': log.entity.name,
+                               'date': log.creation_date} for log in logs]
+
+        # WtbEntity actions
+
+        wtb_entities = WtbEntity.objects\
+            .filter(last_association_user=self,
+                    last_association__gte=start_date,
+                    last_association__lte=end_date)\
+            .order_by('-last_association')
+
+        result['wtb_entities'] = [{'id': e.id,
+                                   'name': e.name,
+                                   'date': e.last_association}
+                                  for e in wtb_entities]
+
+        # Created products
+
+        products = Product.objects\
+            .filter(creator=self,
+                    creation_date__gte=start_date,
+                    creation_date__lte=end_date)\
+            .order_by('-creation_date')\
+            .select_related('instance_model')
+        result['products'] = [{'id': p.id,
+                               'name': str(p),
+                               'date': p.creation_date}
+                              for p in products]
+
+        return result
 
     class Meta:
         app_label = 'solotodo'

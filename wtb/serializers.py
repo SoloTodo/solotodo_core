@@ -11,6 +11,17 @@ class WtbBrandSerializer(serializers.HyperlinkedModelSerializer):
                   'stores', 'website')
 
 
+class WtbEntityMinimalSerializer(serializers.HyperlinkedModelSerializer):
+    url = serializers.HyperlinkedIdentityField(view_name='wtbentity-detail')
+    external_url = serializers.URLField(source='url')
+
+    class Meta:
+        model = WtbEntity
+        fields = ('url', 'id', 'name', 'brand', 'category', 'external_url',
+                  'key', 'picture_url', 'creation_date',
+                  'last_updated', 'is_visible', 'is_active')
+
+
 class WtbEntitySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='wtbentity-detail')
     external_url = serializers.URLField(source='url')

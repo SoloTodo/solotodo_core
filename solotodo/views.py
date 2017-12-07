@@ -45,7 +45,7 @@ from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
-    EntityHistory, Visit, CategoryTier
+    EntityHistory, Visit, CategoryTier, EntityLog
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination
@@ -60,7 +60,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     LeadWithUserDataSerializer, CategorySpecsFilterSerializer, \
     CategorySpecsOrderSerializer, EntityHistorySerializer, \
     EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer, \
-    ProductPricingHistorySerializer, NestedProductSerializer
+    ProductPricingHistorySerializer, NestedProductSerializer, \
+    EntityMinimalSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from rest_framework_tracking.mixins import LoggingMixin
@@ -103,8 +104,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @detail_route()
     def staff_summary(self, request, pk, *args, **kwargs):
-        from wtb.models import WtbEntity
-
         request_user = request.user
 
         if not request_user.is_authenticated:
@@ -116,7 +115,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
         if not user.is_staff:
-            raise PermissionDenied
+            raise Http404
 
         form = DateRangeForm(request.query_params)
 
@@ -131,81 +130,40 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        result = {}
+        result = user.staff_summary(start_date, end_date)
 
-        total_amount = Decimal(0)
+        return Response(result)
 
-        # Entities
+    @detail_route()
+    def staff_actions(self, request, pk, *args, **kwargs):
 
-        association_amount = settings.ENTITY_ASSOCIATION_AMOUNT
+        request_user = request.user
 
-        associated_entities_count = Entity.objects.filter(
-            last_association__gte=start_date,
-            last_association__lte=end_date,
-            last_association_user=user
-        ).count()
+        if not request_user.is_authenticated:
+            raise PermissionDenied
 
-        entities_total_amount = association_amount * associated_entities_count
-        total_amount += entities_total_amount
+        user = self.get_object()
 
-        result['entities'] = {
-            'count': associated_entities_count,
-            'individual_amount': str(association_amount),
-            'total_amount': str(entities_total_amount)
-        }
+        if user != request_user and not request_user.is_superuser:
+            raise PermissionDenied
 
-        # WTB Entities
+        if not user.is_staff:
+            raise Http404
 
-        wtb_association_amount = settings.WTB_ENTITY_ASSOCIATION_AMOUNT
+        form = DateRangeForm(request.query_params)
 
-        associated_wtb_entities_count = WtbEntity.objects.filter(
-            last_association__gte=start_date,
-            last_association__lte=end_date,
-            last_association_user=user
-        ).count()
+        end_date = timezone.now()
+        start_date = end_date - datetime.timedelta(days=7)
 
-        wtb_entities_total_amount = \
-            wtb_association_amount * associated_wtb_entities_count
-        total_amount += wtb_entities_total_amount
+        if form.is_valid():
+            form_dates = form.cleaned_data['timestamp']
+            if form_dates and form_dates.start and form_dates.stop:
+                start_date = form_dates.start
+                end_date = form_dates.stop
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        result['wtb_entities'] = {
-            'count': associated_wtb_entities_count,
-            'individual_amount': str(wtb_association_amount),
-            'total_amount': str(wtb_entities_total_amount)
-        }
-
-        # Products
-
-        created_products_per_category = Product.objects.filter(
-            creation_date__gte=start_date,
-            creation_date__lte=end_date,
-            creator=user
-        ).values('instance_model__model__category__tier')\
-            .annotate(c=Count('pk')).order_by()
-
-        created_products_per_category_dict = {
-            e['instance_model__model__category__tier']: e['c']
-            for e in created_products_per_category
-        }
-
-        result['products'] = []
-
-        for tier in CategoryTier.objects.all():
-            created_products_count = created_products_per_category_dict.get(
-                tier.pk, 0)
-
-            tier_total_amount = \
-                tier.creation_payment_amount * created_products_count
-            total_amount += tier_total_amount
-
-            result['products'].append({
-                'tier': str(tier),
-                'count': created_products_count,
-                'individual_amount': str(tier.creation_payment_amount),
-                'total_amount': str(tier_total_amount)
-            })
-
-        result['total_amount'] = str(total_amount)
+        result = user.staff_actions(start_date, end_date)
 
         return Response(result)
 
@@ -815,8 +773,8 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     def entities(self, request, pk):
         product = self.get_object()
         stores = Store.objects.filter_by_user_perms(request.user, 'view_store')
-        available_entities = product.entity_set.filter(store__in=stores)
-        serializer = EntitySerializer(available_entities, many=True,
+        product_entities = product.entity_set.filter(store__in=stores)
+        serializer = EntitySerializer(product_entities, many=True,
                                       context={'request': request})
         return Response(serializer.data)
 

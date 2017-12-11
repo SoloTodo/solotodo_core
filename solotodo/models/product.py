@@ -1,12 +1,17 @@
 import collections
 
 import re
+
+from decimal import Decimal
+
+import numpy as np
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
 from django.db.models import Q
 from elasticsearch_dsl import Search
+from sklearn.neighbors import NearestNeighbors
 
 from metamodel.models import InstanceModel
 
@@ -161,6 +166,157 @@ class Product(models.Model):
                 search_query = search_term_query
 
         return es_search.query(search_query)
+
+    @classmethod
+    def find_similar_products(cls, query_products, stores=None, brands=None,
+                              results_per_product=5):
+        from solotodo.models import Entity
+
+        if not query_products:
+            return []
+
+        category = query_products[0].category
+
+        # Get the candidates
+
+        candidates_query = Entity.objects.filter(
+            product__isnull=False,
+            product__instance_model__model__category=category)\
+            .order_by().get_available().distinct('product')\
+            .select_related('product')
+
+        if stores is not None:
+            candidates_query = candidates_query.filter(store__in=stores)
+
+        candidates = []
+
+        product_ids = [e.product_id for e in candidates_query]
+        es_brand_products = category.es_search().filter(
+            'terms', product_id=product_ids)
+
+        if brands is not None:
+            filter_parameters = {
+                'brand_unicode.keyword': brands
+            }
+            es_brand_products = es_brand_products.filter(
+                'terms', **filter_parameters)
+
+        es_results_dict = {e.product_id: e.to_dict()
+                           for e in es_brand_products[:100000].execute()}
+
+        for entity in candidates_query:
+            product = entity.product
+            candidate_specs = es_results_dict.get(entity.product_id)
+            if not candidate_specs:
+                continue
+            product._specs = candidate_specs
+            candidates.append(product)
+
+        # Obtain the (field_name, weight) pairs
+        fields_metadata = []
+        for field_with_weight in category.similar_products_fields.split(','):
+            field_with_weight = field_with_weight.strip()
+
+            if '**' in field_with_weight:
+                field, weight_factor = field_with_weight.split('**')
+                weight = 1.0 + float(weight_factor) / 10
+            else:
+                field = field_with_weight
+                weight = 1.0
+
+            fields_metadata.append({
+                'field': field,
+                'weight': weight,
+                'min': Decimal('Inf'),
+                'max': Decimal('-Inf'),
+            })
+
+        def attr_getter(x, field_name):
+            field_value = x.get(field_name, 0)
+
+            if field_value is None:
+                return 0
+            return float(field_value)
+
+        def field_normalizer(data_entry):
+            result = []
+            for idx, field_value in enumerate(data_entry):
+                if fields_metadata[idx]['min'] == fields_metadata[idx]['max']:
+                    entry_value = 0
+                else:
+                    entry_value = \
+                        float(field_value - fields_metadata[idx]['min']) / \
+                        (fields_metadata[idx]['max'] -
+                         fields_metadata[idx]['min'])
+                    entry_value /= fields_metadata[idx]['weight']
+                result.append(entry_value)
+            return result
+
+        candidate_entries = []
+        for candidate in candidates:
+            candidate_entry = []
+
+            for idx, entry in enumerate(fields_metadata):
+                field_value = attr_getter(candidate.specs, entry['field'])
+
+                if field_value < entry['min']:
+                    entry['min'] = field_value
+
+                if field_value > entry['max']:
+                    entry['max'] = field_value
+
+                candidate_entry.append(field_value)
+
+            candidate_entries.append(candidate_entry)
+
+        candidate_entries = [field_normalizer(entry)
+                             for entry in candidate_entries]
+
+        if candidate_entries:
+            n_neighbors = results_per_product + 1
+            if n_neighbors > len(candidate_entries):
+                n_neighbors = len(candidate_entries)
+
+            neighbors = NearestNeighbors(
+                n_neighbors=n_neighbors).fit(candidate_entries)
+
+            query_entries = []
+            for query_product in query_products:
+                query_product_specs = query_product.specs
+                query_product_entry = [
+                    attr_getter(query_product_specs, entry['field'])
+                    for entry in fields_metadata]
+                query_product_entry = field_normalizer(query_product_entry)
+                query_entries.append(query_product_entry)
+
+            distances, indices = neighbors.kneighbors(query_entries)
+        else:
+            distances = [[]] * len(query_products)
+            indices = [[]] * len(query_products)
+
+        result = []
+        for idx, query_product in enumerate(query_products):
+            similar_products = []
+
+            for i in range(len(indices[idx])):
+                candidate = candidates[indices[idx][i]]
+                if candidate != query_product:
+                    similar_products.append({
+                        'product': candidates[indices[idx][i]],
+                        'distance': distances[idx][i]
+                    })
+
+            result.append({
+                'product': query_product,
+                'similar': similar_products
+            })
+
+        return result
+
+    def find_similar(self, stores=None, brands=None, results_per_product=5):
+        return self.find_similar_products(
+            [self], stores=stores, brands=brands,
+            results_per_product=results_per_product)[0]
 
     class Meta:
         app_label = 'solotodo'

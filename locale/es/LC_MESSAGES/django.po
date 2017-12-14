@@ -18,10 +18,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: solotodo_try/settings/defaults.py:140
+#: solotodo_core/settings/defaults.py:140
 msgid "English"
 msgstr ""
 
-#: solotodo_try/settings/defaults.py:141
+#: solotodo_core/settings/defaults.py:141
 msgid "Spanish"
 msgstr ""

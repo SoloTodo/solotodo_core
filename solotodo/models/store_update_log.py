@@ -2,7 +2,7 @@ from django.db import models
 
 from .category import Category
 from .store import Store
-from solotodo_try.s3utils import PrivateS3Boto3Storage
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
 class StoreUpdateLog(models.Model):

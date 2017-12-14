@@ -1,8 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from solotodo.models import Entity, Product
-from solotodo_try.s3utils import PrivateS3Boto3Storage
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
 class Report(models.Model):

@@ -8,7 +8,7 @@ from guardian.shortcuts import get_objects_for_user
 
 from solotodo.models import Store, Product, Category, Website
 from solotodo.utils import iterable_to_dict
-from solotodo_try.s3utils import PrivateS3Boto3Storage
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 from storescraper.utils import get_store_class_by_name
 
 

@@ -11,7 +11,7 @@ from .store_type import StoreType
 from .country import Country
 from .category import Category
 from solotodo.utils import iterable_to_dict
-from solotodo_try.s3utils import PrivateS3Boto3Storage
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 from storescraper.product import Product as StorescraperProduct
 from storescraper.utils import get_store_class_by_name
 

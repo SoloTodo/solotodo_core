@@ -10,7 +10,7 @@ from guardian.shortcuts import get_objects_for_user
 from category_columns.models import CategoryColumn
 from solotodo.models import Category, Store, Country, StoreType, Currency, \
     Entity, Product
-from solotodo_try.s3utils import PrivateS3Boto3Storage
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
 class ReportCurrentPricesForm(forms.Form):

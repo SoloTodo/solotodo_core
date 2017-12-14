@@ -196,9 +196,9 @@ CELERYD_TASK_TIME_LIMIT = 300
 
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
-AWS_STORAGE_BUCKET_NAME = 'solotodo-try'
+AWS_STORAGE_BUCKET_NAME = 'solotodo-core'
 AWS_S3_SIGNATURE_VERSION = 's3v4'
-AWS_S3_REGION_NAME = 'us-east-2'
+AWS_S3_REGION_NAME = 'us-east-1'
 
 ##############################################################################
 # DRF Configuration

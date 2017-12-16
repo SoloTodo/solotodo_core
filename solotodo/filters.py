@@ -95,6 +95,7 @@ class EntityFilterSet(rest_framework.FilterSet):
         name='category',
         label='Categories'
     )
+
     is_available = rest_framework.BooleanFilter(
         name='is_available', method='_is_available', label='Is available?')
     is_active = rest_framework.BooleanFilter(

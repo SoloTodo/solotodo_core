@@ -61,7 +61,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     CategorySpecsOrderSerializer, EntityHistorySerializer, \
     EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer, \
     ProductPricingHistorySerializer, NestedProductSerializer, \
-    EntityMinimalSerializer
+    EntityMinimalSerializer, ProductAvailableEntitiesSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from rest_framework_tracking.mixins import LoggingMixin
@@ -768,6 +768,33 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     filter_class = ProductFilterSet
     ordering_fields = None
     pagination_class = ProductPagination
+
+    @list_route()
+    def available_entities(self, request):
+        queryset = self.filter_queryset(self.get_queryset())
+        products = self.paginate_queryset(queryset)
+
+        entities = Entity.objects.filter(product__in=products).get_available()
+
+        entity_query_params = request.query_params.copy()
+        entity_query_params.pop('ids', None)
+        entity_filterset = EntityFilterSet(data=entity_query_params,
+                                           queryset=entities, request=request)
+
+        result_dict = {}
+
+        for product in products:
+            result_dict[product] = []
+
+        for entity in entity_filterset.qs:
+            result_dict[entity.product].append(entity)
+
+        result_array = [{'product': product, 'entities': entities}
+                        for product, entities in result_dict.items()]
+
+        serializer = ProductAvailableEntitiesSerializer(
+            result_array, many=True, context={'request': request})
+        return self.paginator.get_paginated_response(serializer.data)
 
     @detail_route()
     def entities(self, request, pk):

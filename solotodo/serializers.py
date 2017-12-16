@@ -364,3 +364,8 @@ class CategoryBrowseResultSerializer(serializers.Serializer):
 class ProductPricingHistorySerializer(serializers.Serializer):
     entity = EntitySerializer()
     pricing_history = EntityHistorySerializer(many=True)
+
+
+class ProductAvailableEntitiesSerializer(serializers.Serializer):
+    product = ProductSerializer()
+    entities = EntitySerializer(many=True)

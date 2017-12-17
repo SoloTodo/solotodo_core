@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
-cd ~/projects/solotodo_core/
+cd "${0%/*}"
+source env/bin/activate
 
-sh stop_storescraper_workers.sh
+./stop_storescraper_workers.sh
 sleep 5
-sh stop_storescraper_workers.sh
-sleep 5
-killall phantomjs
-killall chrome
-killall chromedriver
-killall google-chrome
+./stop_storescraper_workers.sh
 sleep 5
 killall phantomjs
 killall chrome
 killall chromedriver
 killall google-chrome
 sleep 5
-sh start_storescraper_workers.sh
+killall phantomjs
+killall chrome
+killall chromedriver
+killall google-chrome
+sleep 5
+./start_storescraper_workers.sh

@@ -1,10 +1,11 @@
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
 
 from wtb.models import WtbBrand, WtbEntity, WtbBrandUpdateLog
 
 
 @admin.register(WtbBrand)
-class WtbBrandModelAdmin(admin.ModelAdmin):
+class WtbBrandModelAdmin(GuardedModelAdmin):
     list_display = ('__str__', 'storescraper_class')
 
 

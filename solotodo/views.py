@@ -774,7 +774,10 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         queryset = self.filter_queryset(self.get_queryset())
         products = self.paginate_queryset(queryset)
 
-        entities = Entity.objects.filter(product__in=products).get_available()
+        entities = Entity.objects\
+            .filter(product__in=products)\
+            .get_available()\
+            .order_by('active_registry__normal_price')
 
         entity_query_params = request.query_params.copy()
         entity_query_params.pop('ids', None)

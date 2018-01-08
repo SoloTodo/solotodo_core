@@ -1,4 +1,6 @@
-#!/usr/bin/env bash
+#!/usr/bin/env zsh
+source ~/.zshrc
+
 cd "${0%/*}"
 source env/bin/activate
 

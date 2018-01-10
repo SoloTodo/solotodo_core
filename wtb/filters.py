@@ -19,6 +19,10 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
         name='category',
         label='Categories'
     )
+    keys = rest_framework.CharFilter(
+        name='key',
+        label='Key'
+    )
 
     is_associated = rest_framework.BooleanFilter(
         name='is_associated', method='_is_associated', label='Is associated?')

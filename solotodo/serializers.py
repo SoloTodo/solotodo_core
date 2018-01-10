@@ -73,7 +73,7 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Store
         fields = ('url', 'id', 'name', 'country', 'is_active', 'type',
-                  'storescraper_class')
+                  'storescraper_class', 'logo')
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):

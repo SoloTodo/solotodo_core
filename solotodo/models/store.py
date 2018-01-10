@@ -6,6 +6,7 @@ from django.db import models
 from django.db.models import Q
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
+from sorl.thumbnail import ImageField
 
 from .store_type import StoreType
 from .country import Country
@@ -29,6 +30,7 @@ class Store(models.Model):
     storescraper_extra_args = models.CharField(max_length=255, null=True,
                                                blank=True)
     type = models.ForeignKey(StoreType, on_delete=models.CASCADE)
+    logo = ImageField(upload_to='store_logos')
 
     objects = StoreQuerySet.as_manager()
 

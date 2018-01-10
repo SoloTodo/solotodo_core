@@ -41,6 +41,7 @@ from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
+from solotodo.forms.product_register_visit_form import ProductRegisterVisitForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
@@ -851,6 +852,28 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
             result_for_serialization, many=True, context={'request': request})
 
         return Response(serializer.data)
+
+    @detail_route(methods=['post'])
+    def register_visit(self, request, pk):
+        product = self.get_object()
+
+        form = ProductRegisterVisitForm.from_user(request.user, request.data)
+
+        if form.is_valid():
+            website = form.cleaned_data['website']
+            ip = get_client_ip(request)
+
+            visit = Visit.objects.create(
+                product=product,
+                website=website,
+                user=request.user,
+                ip=ip
+            )
+
+            return Response(VisitSerializer(
+                visit, context={'request': request}).data)
+        else:
+            return Response(form.errors)
 
 
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):

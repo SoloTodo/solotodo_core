@@ -11,6 +11,7 @@ from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
 from geoip2.errors import AddressNotFoundError
+from guardian.utils import get_anonymous_user
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import list_route, detail_route
 from rest_framework import exceptions
@@ -752,7 +753,12 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
                           'associated registry, so it can\'t register leads'},
                 status=status.HTTP_400_BAD_REQUEST)
 
-        form = WebsiteForm.from_user(request.user, request.data)
+        if request.user.is_authenticated:
+            user = request.user
+        else:
+            user = get_anonymous_user()
+
+        form = WebsiteForm.from_user(user, request.data)
 
         if form.is_valid():
             website = form.cleaned_data['website']
@@ -761,7 +767,7 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
             lead = Lead.objects.create(
                 entity_history=entity.active_registry,
                 website=website,
-                user=request.user,
+                user=user,
                 ip=ip
             )
 
@@ -883,7 +889,12 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     def register_visit(self, request, pk):
         product = self.get_object()
 
-        form = ProductRegisterVisitForm.from_user(request.user, request.data)
+        if request.user.is_authenticated:
+            user = request.user
+        else:
+            user = get_anonymous_user()
+
+        form = WebsiteForm.from_user(user, request.data)
 
         if form.is_valid():
             website = form.cleaned_data['website']
@@ -892,7 +903,7 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
             visit = Visit.objects.create(
                 product=product,
                 website=website,
-                user=request.user,
+                user=user,
                 ip=ip
             )
 

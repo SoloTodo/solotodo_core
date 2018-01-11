@@ -3,12 +3,10 @@ from collections import OrderedDict
 
 import datetime
 
-from decimal import Decimal
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.db import models, IntegrityError
-from django.db.models import Count
 from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
@@ -41,12 +39,12 @@ from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
-from solotodo.forms.product_register_visit_form import ProductRegisterVisitForm
+from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
-    EntityHistory, Visit, CategoryTier, EntityLog
+    EntityHistory, Visit
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination
@@ -743,6 +741,34 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         serializer = NestedProductSerializer(cell_plan_choices, many=True,
                                              context={'request': request})
         return Response(serializer.data)
+
+    @detail_route(methods=['post'])
+    def register_lead(self, request, pk):
+        entity = self.get_object()
+
+        if not entity.active_registry:
+            return Response(
+                {'error': 'Then requested entity does not have an '
+                          'associated registry, so it can\'t register leads'},
+                status=status.HTTP_400_BAD_REQUEST)
+
+        form = WebsiteForm.from_user(request.user, request.data)
+
+        if form.is_valid():
+            website = form.cleaned_data['website']
+            ip = get_client_ip(request)
+
+            lead = Lead.objects.create(
+                entity_history=entity.active_registry,
+                website=website,
+                user=request.user,
+                ip=ip
+            )
+
+            return Response(LeadSerializer(
+                lead, context={'request': request}).data)
+        else:
+            return Response(form.errors)
 
 
 class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):

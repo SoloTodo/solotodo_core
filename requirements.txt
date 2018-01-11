@@ -20,6 +20,7 @@ django-extensions==1.8.1
 django-filter==1.0.4
 django-gtin-fields==0.1.2
 django-guardian==1.4.9
+django-mathfilters==0.4.0
 django-polymorphic==1.3
 django-premailer==0.2.0
 django-querycount==0.6.0

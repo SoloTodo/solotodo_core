@@ -4,7 +4,7 @@ from guardian.shortcuts import get_objects_for_user
 from solotodo.models import Website
 
 
-class ProductRegisterVisitForm(forms.Form):
+class WebsiteForm(forms.Form):
     website = forms.ModelChoiceField(
         queryset=Website.objects.all()
     )

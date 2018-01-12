@@ -193,6 +193,11 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
 
 
 class CategoryBrowseEntityFilterSet(rest_framework.FilterSet):
+    products = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Product.objects.all(),
+        name='product',
+        label='Products'
+    )
     stores = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_store_filter(),
         name='store',

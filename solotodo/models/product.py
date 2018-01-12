@@ -168,7 +168,10 @@ class Product(models.Model):
         return es_search.query(search_query)
 
     @classmethod
-    def find_similar_products(cls, query_products, stores=None, brands=None,
+    def find_similar_products(cls, query_products,
+                              stores=None,
+                              brands=None,
+                              initial_candidate_entities=None,
                               results_per_product=5):
         from solotodo.models import Entity
 
@@ -179,10 +182,13 @@ class Product(models.Model):
 
         # Get the candidates
 
-        candidates_query = Entity.objects.filter(
+        if not initial_candidate_entities:
+            initial_candidate_entities = Entity.objects.all()
+
+        candidates_query = initial_candidate_entities.filter(
             product__isnull=False,
-            product__instance_model__model__category=category)\
-            .order_by().get_available().distinct('product')\
+            product__instance_model__model__category=category) \
+            .order_by().get_available().distinct('product') \
             .select_related('product')
 
         if stores is not None:
@@ -313,9 +319,14 @@ class Product(models.Model):
 
         return result
 
-    def find_similar(self, stores=None, brands=None, results_per_product=5):
+    def find_similar(self,
+                     stores=None,
+                     brands=None,
+                     initial_candidate_entities=None,
+                     results_per_product=5):
         return self.find_similar_products(
             [self], stores=stores, brands=brands,
+            initial_candidate_entities=initial_candidate_entities,
             results_per_product=results_per_product)[0]
 
     class Meta:

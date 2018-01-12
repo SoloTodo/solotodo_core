@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.forms.category_form import CategoryForm
+from solotodo.models import Entity, Product
 from wtb.filters import create_wtb_brand_filter, WtbEntityFilterSet, \
     WtbBrandUpdateLogFilterSet, WtbEntityStaffFilterSet
 from wtb.forms import WtbEntityAssociationForm
@@ -148,6 +149,47 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         serialized_data = WtbEntitySerializer(
             wtb_entity, context={'request': self.request}).data
+        return Response(serialized_data)
+
+    @detail_route()
+    def available_alternatives(self, request, pk):
+        wtb_entity = self.get_object()
+
+        if not wtb_entity.product_id:
+            return Response(
+                {'error': 'Please select an associated WTB Entity'})
+
+        wtb_brand = wtb_entity.brand
+        stores = wtb_brand.stores.all()
+        product = wtb_entity.product
+
+        entities = Entity.objects.filter(
+            product__wtbentity__brand=wtb_brand,
+            product__wtbentity__is_active=True,
+        )
+
+        similar_products = product.find_similar(
+            stores=stores,
+            initial_candidate_entities=entities
+        )['similar']
+
+        similar_products = [e['product'] for e in similar_products]
+
+        wtb_entities = WtbEntity.objects.filter(
+            brand=wtb_brand,
+            product__in=similar_products
+        ).select_related('product')
+
+        product_wtb_entity_dict = {}
+        for wtb_entity in wtb_entities:
+            product_wtb_entity_dict[wtb_entity.product] = wtb_entity
+
+        similar_wtb_entities = [product_wtb_entity_dict[product]
+                                for product in similar_products]
+
+        serialized_data = WtbEntitySerializer(
+            similar_wtb_entities,
+            many=True, context={'request': self.request}).data
         return Response(serialized_data)
 
 

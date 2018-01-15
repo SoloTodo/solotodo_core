@@ -292,7 +292,7 @@ class Product(models.Model):
                 query_product_entry = [
                     attr_getter(query_product_specs, entry['field'])
                     for entry in fields_metadata]
-                query_entries.append(query_product_entry)
+                query_entries.append(field_normalizer(query_product_entry))
 
             distances, indices = neighbors.kneighbors(query_entries)
         else:

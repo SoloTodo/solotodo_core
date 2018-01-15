@@ -110,7 +110,7 @@ def additional_es_fields(instance_model, elastic_search_original):
         read_speed = elastic_search_original['read_speed']
         result['pretty_read_speed'] = format_optional_field(read_speed, 'MB/s')
 
-        write_speed = elastic_search_original['read_speed']
+        write_speed = elastic_search_original['write_speed']
         result['pretty_write_speed'] = format_optional_field(
             write_speed, 'MB/s')
 

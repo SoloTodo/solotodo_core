@@ -40,6 +40,7 @@ from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
+from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
@@ -911,6 +912,39 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
                 visit, context={'request': request}).data)
         else:
             return Response(form.errors)
+
+    @detail_route()
+    def bucket(self, request, pk):
+        product = self.get_object()
+
+        form = ProductBucketFieldForm(request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        fields = form.cleaned_data['fields'].split(',')
+        product_specs = product.specs
+        search = product.category.es_search()
+
+        for field in fields:
+            field_value = product_specs.get(field)
+            search = search.filter('term', **{field: field_value})
+
+        es_products_dict = {
+            es_product.product_id: es_product.to_dict()
+            for es_product in search[:100].execute()
+        }
+
+        bucket_products = Product.objects.filter(
+            pk__in=es_products_dict.keys()
+        ).select_related('instance_model__model__category')
+
+        for product in bucket_products:
+            product._specs = es_products_dict[product.id]
+
+        serializer = ProductSerializer(
+            bucket_products, many=True, context={'request': request})
+        return Response(serializer.data)
 
 
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):

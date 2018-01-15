@@ -1,6 +1,6 @@
 from django_filters import rest_framework
 
-from category_columns.models import CategoryColumn
+from category_columns.models import CategoryColumn, CategoryColumnPurpose
 from solotodo.filter_querysets import create_category_filter
 
 
@@ -9,6 +9,11 @@ class CategoryColumnFilterSet(rest_framework.FilterSet):
         queryset=create_category_filter(),
         name='field__category',
         label='Categories'
+    )
+    purposes = rest_framework.ModelMultipleChoiceFilter(
+        queryset=CategoryColumnPurpose.objects.all(),
+        name='purpose',
+        label='Purposes'
     )
 
     @property

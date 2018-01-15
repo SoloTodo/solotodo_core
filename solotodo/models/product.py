@@ -202,7 +202,7 @@ class Product(models.Model):
 
         if brands is not None:
             filter_parameters = {
-                'brand_unicode.keyword': brands
+                'brand_unicode': brands
             }
             es_brand_products = es_brand_products.filter(
                 'terms', **filter_parameters)
@@ -262,7 +262,7 @@ class Product(models.Model):
         for candidate in candidates:
             candidate_entry = []
 
-            for idx, entry in enumerate(fields_metadata):
+            for entry in fields_metadata:
                 field_value = attr_getter(candidate.specs, entry['field'])
 
                 if field_value < entry['min']:
@@ -292,7 +292,6 @@ class Product(models.Model):
                 query_product_entry = [
                     attr_getter(query_product_specs, entry['field'])
                     for entry in fields_metadata]
-                query_product_entry = field_normalizer(query_product_entry)
                 query_entries.append(query_product_entry)
 
             distances, indices = neighbors.kneighbors(query_entries)
@@ -306,6 +305,7 @@ class Product(models.Model):
 
             for i in range(len(indices[idx])):
                 candidate = candidates[indices[idx][i]]
+
                 if candidate != query_product:
                     similar_products.append({
                         'product': candidates[indices[idx][i]],

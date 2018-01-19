@@ -106,7 +106,9 @@ class SoloTodoUserAdmin(EmailUserAdmin):
                     'preferred_currency',
                     'preferred_country',
                     'preferred_number_format',
-                    'preferred_store')}),
+                    'preferred_store',
+                    'preferred_stores',
+                )}),
                  )
 
 

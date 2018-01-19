@@ -32,7 +32,8 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name', 'detail_url', 'email', 'first_name',
                   'last_name', 'preferred_language', 'preferred_country',
                   'preferred_currency', 'preferred_number_format',
-                  'preferred_store', 'date_joined', 'is_staff', 'permissions')
+                  'preferred_store', 'preferred_stores',
+                  'date_joined', 'is_staff', 'permissions')
         read_only_fields = ('email', 'first_name', 'last_name',
                             'permissions')
 

@@ -35,7 +35,12 @@ class SoloTodoUser(AbstractEmailUser):
         NumberFormat, on_delete=models.CASCADE, blank=True, null=True)
     preferred_store = models.ForeignKey(
         Store, on_delete=models.CASCADE, blank=True, null=True,
+        related_name='+'
     )
+    preferred_stores = models.ManyToManyField(
+        Store,
+        blank=True,
+        related_name='+')
 
     permissions = property(lambda self: sorted(self.get_all_permissions()))
 

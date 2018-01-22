@@ -67,7 +67,8 @@ class CurrencySerializer(serializers.HyperlinkedModelSerializer):
 class CountrySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Country
-        fields = ('url', 'id', 'name', 'iso_code', 'currency', 'number_format')
+        fields = ('url', 'id', 'name', 'iso_code', 'currency', 'number_format',
+                  'flag')
 
 
 class StoreSerializer(serializers.HyperlinkedModelSerializer):

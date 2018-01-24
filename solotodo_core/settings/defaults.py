@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'guardian',
     'rest_framework',
     'rest_framework.authtoken',
+    'rest_auth',
     'django_filters',
     'crispy_forms',
     'storages',

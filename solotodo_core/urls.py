@@ -36,6 +36,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^metamodel/', include('metamodel.urls')),
     url(r'^api-auth/', include('rest_framework.urls')),
+    url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^obtain-auth-token/$', obtain_auth_token),
     url(r'^', include(router.urls)),
 ]

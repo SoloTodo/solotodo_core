@@ -18,6 +18,7 @@ from rest_framework import exceptions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, \
     SearchFilter
+from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -952,6 +953,29 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         serializer = ProductSerializer(
             bucket_products, many=True, context={'request': request})
         return Response(serializer.data)
+
+    @detail_route()
+    def render(self, request, pk):
+        from category_templates.models import CategoryTemplate
+        from category_templates.forms import ProductRenderForm
+
+        product = self.get_object()
+
+        form = ProductRenderForm.from_user(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors)
+
+        category_template = get_object_or_404(
+            CategoryTemplate,
+            category=product.category,
+            website=form.cleaned_data['website'],
+            purpose=form.cleaned_data['purpose'],
+        )
+
+        return Response({
+            'result': category_template.render(product)
+        })
 
 
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):

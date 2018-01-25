@@ -42,12 +42,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'django_extensions',
     'mathfilters',
     'guardian',
     'rest_framework',
     'rest_framework.authtoken',
+    'allauth',
+    'allauth.account',
     'rest_auth',
+    'rest_auth.registration',
     'django_filters',
     'crispy_forms',
     'storages',
@@ -67,6 +71,8 @@ INSTALLED_APPS = [
     'entity_subscriptions',
     'wtb',
 ]
+
+SITE_ID = 1
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -275,6 +281,15 @@ CODEMIRROR_PATH = 'node_modules/codemirror'
 
 BACKEND_CHANNEL = 'backend'
 PUBNUB = None
+
+##############################################################################
+# all-auth settings
+##############################################################################
+
+ACCOUNT_USER_MODEL_USERNAME_FIELD = 'email'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
 
 ##############################################################################
 # Made up settings

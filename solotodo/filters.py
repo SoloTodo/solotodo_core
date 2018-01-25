@@ -192,11 +192,16 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
         return qs
 
 
-class CategoryBrowseEntityFilterSet(rest_framework.FilterSet):
+class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
     products = rest_framework.ModelMultipleChoiceFilter(
         queryset=Product.objects.all(),
         name='product',
         label='Products'
+    )
+    categories = rest_framework.ModelMultipleChoiceFilter(
+        queryset=create_category_filter(),
+        name='category',
+        label='Categories'
     )
     stores = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_store_filter(),
@@ -236,10 +241,8 @@ class CategoryBrowseEntityFilterSet(rest_framework.FilterSet):
     )
 
     @classmethod
-    def create(cls, category, request):
-        entities = Entity.objects.filter(
-            product__instance_model__model__category=category
-        ).annotate(
+    def create(cls, request):
+        entities = Entity.objects.annotate(
             offer_price_usd=F('active_registry__offer_price') /
             F('currency__exchange_rate'),
             normal_price_usd=F('active_registry__normal_price') /
@@ -250,7 +253,7 @@ class CategoryBrowseEntityFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        qs = super(CategoryBrowseEntityFilterSet, self).qs.get_available() \
+        qs = super(ProductsBrowseEntityFilterSet, self).qs.get_available() \
             .filter(active_registry__cell_monthly_payment__isnull=True) \
             .filter(product__isnull=False) \
             .select_related(

@@ -32,7 +32,6 @@ from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
     LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet, \
     WebsiteFilterSet, VisitFilterSet
-from solotodo.forms.category_browse_form import CategoryBrowseForm
 from solotodo.forms.date_range_form import DateRangeForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
@@ -41,6 +40,7 @@ from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
+from solotodo.forms.products_browse_form import ProductsBrowseForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
@@ -62,7 +62,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     CategorySpecsOrderSerializer, EntityHistorySerializer, \
     EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer, \
     ProductPricingHistorySerializer, NestedProductSerializer, \
-    EntityMinimalSerializer, ProductAvailableEntitiesSerializer
+    ProductAvailableEntitiesSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from rest_framework_tracking.mixins import LoggingMixin
@@ -278,8 +278,8 @@ class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
     @detail_route()
     def browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
-        form = CategoryBrowseForm(request.query_params)
-        result = form.get_products(category, request)
+        form = ProductsBrowseForm(request.query_params)
+        result = form.get_category_products(category, request)
 
         return Response(result)
 
@@ -832,6 +832,13 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         serializer = ProductAvailableEntitiesSerializer(
             result_array, many=True, context={'request': request})
         return self.paginator.get_paginated_response(serializer.data)
+
+    @list_route()
+    def browse(self, request, *args, **kwargs):
+        form = ProductsBrowseForm(request.query_params)
+        result = form.get_products(request)
+
+        return Response(result)
 
     @detail_route()
     def entities(self, request, pk):

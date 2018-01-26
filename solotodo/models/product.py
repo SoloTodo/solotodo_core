@@ -10,6 +10,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
 from django.db.models import Q
+from django.utils.text import slugify
 from elasticsearch_dsl import Search
 from sklearn.neighbors import NearestNeighbors
 
@@ -90,6 +91,10 @@ class Product(models.Model):
         if 'picture' in specs:
             return default_storage.url(specs['picture'])
         return None
+
+    @property
+    def slug(self):
+        return slugify(str(self))
 
     def __str__(self):
         return str(self.instance_model)

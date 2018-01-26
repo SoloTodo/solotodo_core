@@ -109,13 +109,14 @@ class CategorySpecsOrderSerializer(serializers.HyperlinkedModelSerializer):
 
 class ProductSerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField(read_only=True, source='__str__')
+    slug = serializers.CharField(read_only=True)
     category = serializers.HyperlinkedRelatedField(
         view_name='category-detail', read_only=True,
         source='category.pk')
 
     class Meta:
         model = Product
-        fields = ('url', 'id', 'name', 'category', 'instance_model_id',
+        fields = ('url', 'id', 'name', 'slug', 'category', 'instance_model_id',
                   'creation_date', 'last_updated', 'picture_url', 'specs')
 
 

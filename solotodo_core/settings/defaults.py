@@ -292,6 +292,7 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_ADAPTER = 'solotodo.solotodo_account_adapter.SoloTodoAccountAdapter'
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 ##############################################################################
 # Made up settings

@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'category_columns',
     'entity_subscriptions',
     'wtb',
+    'navigation',
 ]
 
 SITE_ID = 1

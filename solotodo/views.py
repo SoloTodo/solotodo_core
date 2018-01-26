@@ -23,6 +23,8 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 
+from navigation.models import NavDepartment
+from navigation.serializers import NavDepartmentSerializer
 from solotodo.decorators import detail_permission
 from solotodo.drf_custom_ordering import CustomProductOrderingFilter, \
     CustomEntityOrderingFilter
@@ -313,6 +315,14 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = CountrySerializer(
             country,
             context={'request': request})
+        return Response(serializer.data)
+
+    @detail_route()
+    def navigation(self, request, pk, *args, **kwargs):
+        country = self.get_object()
+        nav_departments = NavDepartment.objects.filter(
+            country=country).prefetch_related('sections__items')
+        serializer = NavDepartmentSerializer(nav_departments, many=True)
         return Response(serializer.data)
 
 

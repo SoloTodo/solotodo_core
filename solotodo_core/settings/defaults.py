@@ -145,7 +145,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
 LANGUAGES = [
     ('en', _('English')),
@@ -286,10 +286,11 @@ PUBNUB = None
 # all-auth settings
 ##############################################################################
 
-ACCOUNT_USER_MODEL_USERNAME_FIELD = 'email'
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_ADAPTER = 'solotodo.solotodo_account_adapter.SoloTodoAccountAdapter'
 
 ##############################################################################
 # Made up settings
@@ -331,3 +332,5 @@ REPORTS_PURPOSE_ID = 3
 
 ENTITY_ASSOCIATION_AMOUNT = Decimal(0)
 WTB_ENTITY_ASSOCIATION_AMOUNT = Decimal(0)
+
+SOLOTODO_COM_SITE_ID = 1

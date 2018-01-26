@@ -183,9 +183,8 @@ class ProductsBrowseForm(forms.Form):
                 lead_filter &= Q(store__country=ordering_country)
 
             return entities \
-                .annotate(leads=Count(
-                    Case(When(lead_filter, then=1),
-                         output_field=IntegerField()))) \
+                .filter(lead_filter) \
+                .annotate(leads=Count('entityhistory__lead')) \
                 .order_by('-leads', 'product', 'currency')
         else:
             raise Exception('This condition is unreachable')

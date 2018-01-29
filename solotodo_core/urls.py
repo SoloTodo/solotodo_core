@@ -41,4 +41,5 @@ urlpatterns = [
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^obtain-auth-token/$', obtain_auth_token),
     url(r'^', include(router.urls)),
+    url(r'^', include('django.contrib.auth.urls')),
 ]

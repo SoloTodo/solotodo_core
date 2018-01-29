@@ -22,6 +22,7 @@ from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from sorl.thumbnail import get_thumbnail
 
 from navigation.models import NavDepartment
 from navigation.serializers import NavDepartmentSerializer
@@ -43,6 +44,7 @@ from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
+from solotodo.forms.product_picture_form import ProductPictureForm
 from solotodo.forms.products_browse_form import ProductsBrowseForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
@@ -986,6 +988,30 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         return Response({
             'result': category_template.render(product)
         })
+
+    @detail_route()
+    def picture(self, request, pk):
+        product = self.get_object()
+
+        form = ProductPictureForm(request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        specs = product.specs
+
+        if 'picture' not in specs:
+            raise Response({'detail': 'No picture found for product'},
+                           status=status.HTTP_404_NOT_FOUND)
+
+        picture = specs['picture']
+        dimensions = '{}x{}'.format(form.cleaned_data['width'],
+                                    form.cleaned_data['height'])
+        resized_picture = get_thumbnail(picture, dimensions)
+
+        response = Response(status=status.HTTP_302_FOUND)
+        response['Location'] = resized_picture.url
+        return response
 
 
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):

@@ -296,6 +296,12 @@ ACCOUNT_ADAPTER = 'solotodo.solotodo_account_adapter.SoloTodoAccountAdapter'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 
 ##############################################################################
+# rest-auth configuration
+##############################################################################
+
+OLD_PASSWORD_FIELD_ENABLED = True
+
+##############################################################################
 # SORL Thumbnail settings
 ##############################################################################
 

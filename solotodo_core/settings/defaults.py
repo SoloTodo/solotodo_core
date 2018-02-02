@@ -184,6 +184,13 @@ AUTHENTICATION_BACKENDS = (
 
 GEOIP_PATH = BASE_DIR
 
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.memcached.MemcachedCache',
+        'LOCATION': '127.0.0.1:11211',
+    }
+}
+
 #############################################################################
 # Celery configurations
 #############################################################################

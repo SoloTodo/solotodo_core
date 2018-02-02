@@ -64,6 +64,7 @@ Pygments==2.2.0
 PyMeta3==0.5.1
 pynliner3==0.6
 python-dateutil==2.6.1
+python-memcached==1.59
 python-stdnum==1.7
 python3-openid==3.1.0
 pytz==2017.3

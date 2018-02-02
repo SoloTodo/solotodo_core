@@ -1,6 +1,5 @@
 from django.db import models
 
-from metamodel.models import InstanceModel
 from solotodo.models import CategorySpecsFilter, Category, Website, \
     CategorySpecsOrder, Country
 

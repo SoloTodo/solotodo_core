@@ -1,3 +1,5 @@
+import hashlib
+import json
 import traceback
 from collections import OrderedDict
 
@@ -6,6 +8,7 @@ import datetime
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
+from django.core.cache import cache
 from django.db import models, IntegrityError
 from django.http import Http404
 from django.utils import timezone
@@ -20,6 +23,7 @@ from rest_framework.filters import OrderingFilter, \
     SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from sorl.thumbnail import get_thumbnail
@@ -283,8 +287,23 @@ class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
     @detail_route()
     def browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
-        form = ProductsBrowseForm(request.query_params)
-        result = form.get_category_products(category, request)
+
+        cache_json = OrderedDict(request.query_params)
+        stores_with_permission = create_store_filter()(self.request)
+        cache_json['store_permissions'] = \
+            [s.id for s in stores_with_permission]
+        cache_json['method'] = 'category_browse'
+        cache_key = hashlib.sha1(
+            json.dumps(cache_json).encode('utf-8')).hexdigest()
+
+        serialized_result = cache.get(cache_key)
+        if serialized_result:
+            result = json.loads(serialized_result.decode('utf-8'))
+        else:
+            form = ProductsBrowseForm(request.query_params)
+            result = form.get_category_products(category, request)
+            serialized_result = JSONRenderer().render(result)
+            cache.set(cache_key, serialized_result, timeout=60*60)
 
         return Response(result)
 
@@ -815,6 +834,12 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     filter_class = ProductFilterSet
     ordering_fields = None
     pagination_class = ProductPagination
+
+    def _should_log(self, request, response):
+        for keyword in ['browse', 'entities']:
+            if keyword in request.path:
+                return True
+        return False
 
     @list_route()
     def available_entities(self, request):

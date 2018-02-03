@@ -809,6 +809,17 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         else:
             return Response(form.errors)
 
+    @detail_route()
+    def affiliate_url(self, request, pk, *args, **kwargs):
+        entity = self.get_object()
+
+        affiliate_url = entity.affiliate_url()
+
+        if not affiliate_url:
+            raise Http404
+
+        return Response({'affiliate_url': affiliate_url})
+
 
 class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = EntityHistory.objects.all()

@@ -1,4 +1,5 @@
 import json
+import urllib
 
 from decimal import Decimal
 
@@ -507,7 +508,7 @@ class Entity(models.Model):
             'association_name.keyword': other_entities_cell_plan_names
         }
 
-        matching_cell_plans = cell_plan_category.es_search() \
+        matching_cell_plans = cell_plan_category.es_search()\
             .filter('terms', **filter_parameters)[:100] \
             .execute()
 
@@ -538,6 +539,30 @@ class Entity(models.Model):
         if not self.picture_urls:
             return None
         return json.loads(self.picture_urls)
+
+    def affiliate_url(self):
+        from django.conf import settings
+
+        linio_settings = settings.LINIO_AFFILIATE_SETTINGS
+
+        if self.store_id == linio_settings['STORE_ID']:
+            if '?' in self.url:
+                separator = '&'
+            else:
+                separator = '?'
+
+            target_url = '{}{}utm_source=affiliates&utm_medium=hasoffers&' \
+                         'utm_campaign={}&aff_sub=' \
+                         ''.format(self.url, separator,
+                                   linio_settings['AFFILIATE_ID'])
+
+            url = 'https://linio.go2cloud.org/aff_c?offer_id=18&aff_id={}' \
+                  '&url={}'.format(linio_settings['AFFILIATE_ID'],
+                                   urllib.parse.quote(target_url))
+
+            return url
+
+        return None
 
     class Meta:
         app_label = 'solotodo'

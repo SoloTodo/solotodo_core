@@ -197,12 +197,12 @@ class ProductsBrowseForm(forms.Form):
 
         price_ranges = {}
         for price_type in ['normal_price_usd', 'offer_price_usd']:
-            sorted_entities = entities.order_by('min_' + price_type)
+            price_field = 'min_' + price_type
+            sorted_entities = entities.order_by(price_field)
             price_ranges[price_type] = {
-                'min': sorted_entities.first()['min_normal_price_usd'],
-                'max': sorted_entities.last()['min_normal_price_usd'],
-                '80th': sorted_entities[int(entities_count * 0.8)][
-                    'min_normal_price_usd']
+                'min': sorted_entities.first()[price_field],
+                'max': sorted_entities.last()[price_field],
+                '80th': sorted_entities[int(entities_count * 0.8)][price_field]
             }
 
         return price_ranges

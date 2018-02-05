@@ -24,7 +24,7 @@ class CategorySpecsFormFilterSerializer(
 
     class Meta:
         model = CategorySpecsFormFilter
-        fields = ['label', 'name', 'type', 'country', 'continuous_range_step',
+        fields = ['id', 'label', 'name', 'type', 'country', 'continuous_range_step',
                   'continuous_range_unit', 'choices']
 
 
@@ -34,7 +34,7 @@ class CategorySpecsFormFieldsetSerializer(
 
     class Meta:
         model = CategorySpecsFormFieldset
-        fields = ['label', 'filters']
+        fields = ['id', 'label', 'filters']
 
 
 class CategorySpecsFormOrderSerializer(serializers.HyperlinkedModelSerializer):
@@ -42,7 +42,7 @@ class CategorySpecsFormOrderSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = CategorySpecsFormOrder
-        fields = ['name', 'label', 'suggested_use', 'country']
+        fields = ['id', 'name', 'label', 'suggested_use', 'country']
 
 
 class CategorySpecsFormLayoutSerializer(

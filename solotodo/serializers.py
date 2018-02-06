@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
+from hardware.serializers import InlineBudgetSerializer
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
@@ -26,6 +27,7 @@ class WebsiteSerializer(serializers.HyperlinkedModelSerializer):
 class MyUserSerializer(serializers.HyperlinkedModelSerializer):
     detail_url = serializers.HyperlinkedRelatedField(
         view_name='solotodouser-detail', read_only=True, source='pk')
+    budgets = InlineBudgetSerializer(many=True)
 
     class Meta:
         model = get_user_model()
@@ -33,7 +35,7 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
                   'last_name', 'preferred_language', 'preferred_country',
                   'preferred_currency', 'preferred_number_format',
                   'preferred_store', 'preferred_stores',
-                  'date_joined', 'is_staff', 'permissions')
+                  'date_joined', 'is_staff', 'permissions', 'budgets')
         read_only_fields = ('email', 'first_name', 'last_name',
                             'permissions')
 

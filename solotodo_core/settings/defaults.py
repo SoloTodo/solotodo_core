@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'rest_framework_tracking',
     'metamodel',
     'solotodo',
+    'hardware',
     'category_templates',
     'reports',
     'mailing',

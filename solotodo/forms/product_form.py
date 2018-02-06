@@ -16,3 +16,13 @@ class ProductForm(forms.Form):
 
         form.fields['product'].queryset = products
         return form
+
+    @classmethod
+    def from_user(cls, user, data):
+        form = cls(data)
+
+        products = Product.objects\
+            .filter_by_user_perms(user, 'view_product')
+
+        form.fields['product'].queryset = products
+        return form

@@ -16,5 +16,5 @@ class BudgetSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Budget
-        fields = ['id', 'name', 'creation_date', 'is_public', 'user',
+        fields = ['id', 'url', 'name', 'creation_date', 'is_public', 'user',
                   'creation_date', 'products_pool']

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from hardware.serializers import InlineBudgetSerializer
+from hardware.models import Budget
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
@@ -22,6 +22,12 @@ class WebsiteSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Website
         fields = ('url', 'id', 'name', 'external_url')
+
+
+class InlineBudgetSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Budget
+        fields = ['id', 'name', 'creation_date']
 
 
 class MyUserSerializer(serializers.HyperlinkedModelSerializer):

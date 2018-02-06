@@ -5,7 +5,8 @@ from solotodo.models import Category, Product, Store
 
 
 class BudgetEntry(models.Model):
-    budget = models.ForeignKey(Budget, on_delete=models.CASCADE)
+    budget = models.ForeignKey(Budget, on_delete=models.CASCADE,
+                               related_name='entries')
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     selected_product = models.ForeignKey(Product, on_delete=models.CASCADE,
                                          null=True, blank=True)

@@ -24,8 +24,8 @@ class CategorySpecsFormFilterSerializer(
 
     class Meta:
         model = CategorySpecsFormFilter
-        fields = ['id', 'label', 'name', 'type', 'country', 'continuous_range_step',
-                  'continuous_range_unit', 'choices']
+        fields = ['id', 'label', 'name', 'type', 'country',
+                  'continuous_range_step', 'continuous_range_unit', 'choices']
 
 
 class CategorySpecsFormFieldsetSerializer(

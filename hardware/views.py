@@ -20,13 +20,13 @@ class BudgetViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             return Budget.objects.select_related('user').prefetch_related(
                 'products_pool__instance_model',
-                'entries__selected_product__instance_model'
+                'entries__selected_product__instance_model',
                 'entries__selected_store'
             )
         else:
             return user.budgets.select_related('user').prefetch_related(
                 'products_pool__instance_model',
-                'entries__selected_product__instance_model'
+                'entries__selected_product__instance_model',
                 'entries__selected_store'
             )
 

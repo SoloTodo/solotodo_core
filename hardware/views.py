@@ -20,12 +20,15 @@ class BudgetViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             return Budget.objects.select_related('user').prefetch_related(
                 'products_pool__instance_model',
-                'entries__selected_entity__product__instance_model'
+                'entries__selected_product__instance_model'
+                'entries__selected_store'
             )
         else:
             return user.budgets.select_related('user').prefetch_related(
                 'products_pool__instance_model',
-                'entries__selected_entity__product__instance_model')
+                'entries__selected_product__instance_model'
+                'entries__selected_store'
+            )
 
     @detail_route(methods=['post'])
     def add_product(self, request, pk, *args, **kwargs):
@@ -53,10 +56,14 @@ class BudgetEntryViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             return BudgetEntry.objects.select_related(
                 'budget', 'category',
-                'selected_entity__product__instance_model')
+                'selected_product__instance_model',
+                'selected_store',
+            )
         else:
             return BudgetEntry.objects.filter(
                 budget__user=user
             ).select_related(
                 'budget', 'category',
-                'selected_entity__product__instance_model')
+                'selected_product__instance_model',
+                'selected_store',
+            )

@@ -1,16 +1,14 @@
 from rest_framework import serializers
 
 from hardware.models import Budget, BudgetEntry
-from solotodo.serializers import NestedProductSerializer, UserSerializer, \
-    EntityWithInlineProductSerializer
+from solotodo.serializers import NestedProductSerializer, UserSerializer
 
 
 class BudgetEntrySerializer(serializers.HyperlinkedModelSerializer):
-    selected_entity = EntityWithInlineProductSerializer()
-
     class Meta:
         model = BudgetEntry
-        fields = ['id', 'url', 'category', 'selected_entity']
+        fields = ['id', 'url', 'category', 'selected_product',
+                  'selected_store']
 
 
 class BudgetSerializer(serializers.HyperlinkedModelSerializer):

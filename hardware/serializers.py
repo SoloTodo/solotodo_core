@@ -16,7 +16,7 @@ class BudgetSerializer(serializers.HyperlinkedModelSerializer):
                                             read_only=True)
     user = UserSerializer(required=False, read_only=True)
     is_public = serializers.BooleanField(required=False, read_only=True)
-    entries = BudgetEntrySerializer(many=True)
+    entries = BudgetEntrySerializer(many=True, required=False)
 
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user

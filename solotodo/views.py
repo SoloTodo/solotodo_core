@@ -289,6 +289,7 @@ class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
         category = self.get_object()
 
         cache_json = OrderedDict(request.query_params)
+        cache_json['category_id'] = category.id
         stores_with_permission = create_store_filter()(self.request)
         cache_json['store_permissions'] = \
             [s.id for s in stores_with_permission]

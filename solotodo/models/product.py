@@ -4,7 +4,6 @@ import re
 
 from decimal import Decimal
 
-import numpy as np
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage

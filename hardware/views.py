@@ -7,6 +7,8 @@ from hardware.models import Budget, BudgetEntry
 from hardware.pagination import BudgetPagination
 from hardware.serializers import BudgetSerializer, BudgetEntrySerializer
 from solotodo.forms.product_form import ProductForm
+from solotodo.forms.stores_form import StoresForm
+from solotodo.models import Store
 
 
 class BudgetViewSet(viewsets.ModelViewSet):
@@ -42,6 +44,27 @@ class BudgetViewSet(viewsets.ModelViewSet):
         budget.products_pool.add(product)
 
         serializer = BudgetSerializer(budget, context={'request': request})
+        return Response(serializer.data)
+
+    @detail_route(methods=['post'])
+    def select_cheapest_stores(self, request, pk, *args, **kwargs):
+        budget = self.get_object()
+        form = StoresForm.from_user(request.user, request.data)
+
+        if not form.is_valid():
+            return Response(form.errors)
+
+        stores = form.cleaned_data['stores']
+        if not stores:
+            stores = Store.objects.filter_by_user_perms(
+                request.user, 'view_store')
+
+        budget.select_cheapest_stores(stores)
+
+        updated_budget = self.get_object()
+        serializer = BudgetSerializer(updated_budget,
+                                      context={'request': request})
+
         return Response(serializer.data)
 
 

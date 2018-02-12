@@ -90,6 +90,11 @@ class BudgetViewSet(viewsets.ModelViewSet):
 
         return Response({'content': exported_budget})
 
+    @detail_route()
+    def compatibility_issues(self, request, pk, *args, **kwargs):
+        budget = self.get_object()
+        return Response(budget.compatibility_issues())
+
 
 class BudgetEntryViewSet(viewsets.ModelViewSet):
     queryset = BudgetEntry.objects.all()

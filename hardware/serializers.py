@@ -7,7 +7,7 @@ from solotodo.serializers import NestedProductSerializer, UserSerializer
 class BudgetEntrySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BudgetEntry
-        fields = ['id', 'url', 'category', 'selected_product',
+        fields = ['id', 'url', 'budget', 'category', 'selected_product',
                   'selected_store']
 
 

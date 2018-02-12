@@ -28,6 +28,12 @@ class Currency(models.Model):
 
         return converted_value.quantize(precision)
 
+    def excel_format(self):
+        if self.decimal_places:
+            return '{}#,##0.{}'.format(self.prefix, '0' * self.decimal_places)
+        else:
+            return '{}#,###'.format(self.prefix)
+
     @classmethod
     def get_default(cls):
         return cls.objects.get(pk=settings.DEFAULT_CURRENCY)

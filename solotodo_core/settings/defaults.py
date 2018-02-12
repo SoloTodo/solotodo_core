@@ -362,16 +362,3 @@ LINIO_AFFILIATE_SETTINGS = {
     'STORE_ID': None,
     'AFFILIATE_ID': None
 }
-
-BUDGET_CATEGORIES = [
-    12,  # Cooler CPU
-    8,  # Discos duros
-    9,  # Fuentes de poder
-    10,  # Gabinetes
-    4,  # Monitores
-    5,  # Placas madre
-    3,  # Procesadores
-    7,  # Ram
-    2,  # Tarjetas de video
-    39,  # Unidades de Estado Sólido
-]

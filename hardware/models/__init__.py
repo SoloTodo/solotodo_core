@@ -5,12 +5,11 @@ from .budget_entry import BudgetEntry
 
 
 def create_budget_entries(sender, instance, created, **kwargs):
-    from django.conf import settings
     from solotodo.models import Category
 
     if created:
         budget_categories = Category.objects.filter(
-            pk__in=settings.BUDGET_CATEGORIES)
+            budget_ordering__isnull=False).order_by('budget_ordering')
         for category in budget_categories:
             BudgetEntry.objects.create(
                 budget=instance,

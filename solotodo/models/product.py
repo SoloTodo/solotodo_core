@@ -105,6 +105,9 @@ class Product(models.Model):
     def user_has_staff_perms(self, user):
         return user.has_perm('is_category_staff', self.category)
 
+    def solotodo_com_url(self):
+        pass
+
     def save(self, *args, **kwargs):
         from django.conf import settings
 

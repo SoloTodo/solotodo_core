@@ -3,6 +3,7 @@ from rest_framework.decorators import detail_route
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from hardware.forms.budget_export_format_form import BudgetExportFormatForm
 from hardware.models import Budget, BudgetEntry
 from hardware.pagination import BudgetPagination
 from hardware.serializers import BudgetSerializer, BudgetEntrySerializer
@@ -66,6 +67,28 @@ class BudgetViewSet(viewsets.ModelViewSet):
                                       context={'request': request})
 
         return Response(serializer.data)
+
+    @detail_route()
+    def export(self, request, pk, *args, **kwargs):
+        budget = self.get_object()
+        form = StoresForm.from_user(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors)
+
+        stores = form.cleaned_data['stores']
+        if not stores:
+            stores = Store.objects.filter_by_user_perms(
+                request.user, 'view_store')
+
+        form = BudgetExportFormatForm(request.query_params)
+        if not form.is_valid():
+            return Response(form.errors)
+
+        export_format = form.cleaned_data['export_format']
+        exported_budget = budget.export(stores, export_format)
+
+        return Response({'content': exported_budget})
 
 
 class BudgetEntryViewSet(viewsets.ModelViewSet):

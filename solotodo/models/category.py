@@ -22,6 +22,7 @@ class Category(models.Model):
     slug = models.SlugField(blank=True, null=True)
     storescraper_name = models.CharField(
         max_length=255, db_index=True, blank=True, null=True)
+    budget_ordering = models.IntegerField(null=True, blank=True)
     suggested_alternatives_ordering = models.CharField(
         max_length=255, blank=True, null=True)
     suggested_alternatives_filter = models.CharField(

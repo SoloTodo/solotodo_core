@@ -861,7 +861,7 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         entities = Entity.objects\
             .filter(product__in=products)\
             .get_available()\
-            .order_by('active_registry__normal_price')
+            .order_by('active_registry__offer_price')
 
         entity_query_params = request.query_params.copy()
         entity_query_params.pop('ids', None)

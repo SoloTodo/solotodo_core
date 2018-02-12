@@ -14,6 +14,7 @@ from elasticsearch_dsl import Search
 from sklearn.neighbors import NearestNeighbors
 
 from metamodel.models import InstanceModel
+from solotodo.models.utils import solotodo_com_site
 
 from .category import Category
 
@@ -106,7 +107,9 @@ class Product(models.Model):
         return user.has_perm('is_category_staff', self.category)
 
     def solotodo_com_url(self):
-        pass
+        site = solotodo_com_site()
+        return 'https://{}/products/{}-{}'.format(site.domain, self.id,
+                                                  slugify(str(self)))
 
     def save(self, *args, **kwargs):
         from django.conf import settings

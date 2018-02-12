@@ -53,8 +53,8 @@ class Budget(models.Model):
         entities = Entity.objects.filter(
             product__in=self.products_pool.all(),
             store__in=stores
-        ).get_available()\
-            .order_by('active_registry__offer_price')\
+        ).get_available() \
+            .order_by('active_registry__offer_price') \
             .select_related('product')
 
         product_to_cheapest_store_dict = {}
@@ -115,22 +115,32 @@ class Budget(models.Model):
                             standard_format)
 
             if entry.selected_product:
-                product_text = str(entry.selected_product)
+                worksheet.write_url(
+                    row,
+                    PRODUCT_COLUMN,
+                    entry.selected_product.solotodo_com_url(),
+                    string=str(entry.selected_product),
+                    cell_format=standard_format)
             else:
-                product_text = 'N/A'
-
-            worksheet.write(row, PRODUCT_COLUMN, product_text, standard_format)
-
-            if entry.selected_store:
-                store_text = str(entry.selected_store)
-            else:
-                store_text = 'N/A'
-
-            worksheet.write(row, STORE_COLUMN, store_text, standard_format)
+                worksheet.write(row, PRODUCT_COLUMN, 'N/A', standard_format)
 
             matching_entity = product_store_to_cheapest_entity_dict.get(
                 (entry.selected_product, entry.selected_store)
             )
+
+            if entry.selected_store:
+                if matching_entity:
+                    worksheet.write_url(
+                        row,
+                        STORE_COLUMN,
+                        matching_entity.url,
+                        string=str(entry.selected_store),
+                        cell_format=standard_format)
+                else:
+                    worksheet.write(row, STORE_COLUMN,
+                                    str(entry.selected_store), standard_format)
+            else:
+                worksheet.write(row, STORE_COLUMN, 'N/A', standard_format)
 
             if matching_entity:
                 money_format = currency_to_money_format.get(

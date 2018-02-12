@@ -211,7 +211,7 @@ Se ejecutarán las otras pruebas de compatibilidad
 
         def check_video_card_length(video_card):
             if video_card.length > 0:
-                if max_case_video_card_length > 0:
+                if max_case_video_card_length:
                     if video_card.length > max_case_video_card_length:
                         errors.append("""
 La tarjeta de video excede el largo máximo permitido por el gabinete (La

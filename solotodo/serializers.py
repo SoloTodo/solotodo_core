@@ -89,7 +89,7 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Category
-        fields = ('url', 'id', 'name', 'slug')
+        fields = ('url', 'id', 'name', 'slug', 'budget_ordering')
 
 
 class CategorySpecsFilterChoiceSerializer(

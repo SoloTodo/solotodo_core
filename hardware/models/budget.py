@@ -218,7 +218,7 @@ La tarjeta de video excede el largo máximo permitido por el gabinete (La
 tarjeta mide {} mm. y el gabinete aguanta hasta {} mm.)
                                     """.format(video_card.length,
                                                max_case_video_card_length))
-                elif max_case_video_card_length is not None:
+                elif max_case_video_card_length == 0:
                     warnings.append("""
 No hay información del largo máximo de tarjeta de video que acepta el gabinete
 así que no se puede verificar su compatibilidad.

@@ -1,16 +1,25 @@
+import base64
 import io
 import re
 
+import os
+from io import BytesIO
+
 import xlsxwriter
 from decimal import Decimal
+
+from PIL import Image
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.text import slugify
+from selenium import webdriver
 
+from metamodel.utils import trim, convert_image_to_inmemoryfile
 from solotodo.models import Product, Entity
-from solotodo_core.s3utils import PrivateS3Boto3Storage
+from solotodo_core.s3utils import PrivateS3Boto3Storage, \
+    MediaRootS3Boto3Storage
 
 
 class Budget(models.Model):
@@ -670,6 +679,43 @@ El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
         return budget_url
 
     def _export_as_bbcode(self, product_store_to_cheapest_entity_dict):
+        context = self.__bbcode_and_img_context(
+            product_store_to_cheapest_entity_dict)
+
+        bbcode = render_to_string('budget_export_bbcode.txt', context)
+        bbcode = re.sub(r'\s+', ' ', bbcode)
+
+        return bbcode
+
+    def _export_as_img(self, product_store_to_cheapest_entity_dict):
+        context = self.__bbcode_and_img_context(
+            product_store_to_cheapest_entity_dict)
+        rendered_html = render_to_string('budget_export_img.html', context)
+
+        filename = '/tmp/{}.html'.format(self.id)
+        f = open(filename, 'w')
+        f.write(rendered_html)
+        f.close()
+
+        driver = webdriver.PhantomJS()
+        driver.set_window_size(1000, 1000)
+        driver.get('file://{}'.format(filename))
+
+        image = Image.open(BytesIO(base64.b64decode(
+            driver.get_screenshot_as_base64())))
+        driver.close()
+
+        new_filename = 'budget_screenshots/{}.png'.format(self.id)
+        file_to_upload = convert_image_to_inmemoryfile(trim(image))
+        storage = MediaRootS3Boto3Storage()
+        screenshot_path = storage.save(new_filename, file_to_upload)
+        screenshot_url = storage.url(screenshot_path)
+
+        os.remove(filename)
+
+        return screenshot_url
+
+    def __bbcode_and_img_context(self, product_store_to_cheapest_entity_dict):
         budget_entries = []
 
         currency = None
@@ -718,15 +764,12 @@ El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
             formatted_offer_price_sum = 'N/A'
             formatted_normal_price_sum = 'N/A'
 
-        bbcode = render_to_string('budget_export_bbcode.txt', {
+        return {
+            'budget': self,
             'budget_entries': budget_entries,
             'offer_price_sum': formatted_offer_price_sum,
             'normal_price_sum': formatted_normal_price_sum,
-        })
-
-        bbcode = re.sub(r'\s+', ' ', bbcode)
-
-        return bbcode
+        }
 
     class Meta:
         app_label = 'hardware'

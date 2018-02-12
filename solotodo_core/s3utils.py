@@ -9,6 +9,8 @@ class StaticRootS3Boto3Storage(S3Boto3Storage):
 
 class MediaRootS3Boto3Storage(S3Boto3Storage):
     location = setting('AWS_LOCATION', 'media')
+    file_overwrite = False
+    querystring_auth = False
 
 
 def PrivateS3Boto3Storage():

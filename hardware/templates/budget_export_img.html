@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+  <style type="text/css">
+    .price {
+      font-size: 22px;
+      font-weight: bold;
+      color: #da4f49;
+    }
+  </style>
+
+</head>
+<body>
+<h1>{{ budget }}</h1>
+
+<p>
+  <strong>Identificador de cotización: </strong>{{ budget.id }}
+</p>
+
+<table class="table">
+  <tr>
+    <th>Componente</th>
+    <th>Producto</th>
+    <th>Tienda</th>
+    <th>Precio oferta</th>
+    <th>Precio normal</th>
+  </tr>
+  {% for budget_entry in budget_entries %}
+  <tr>
+    <td>{{ budget_entry.entry.category }}</td>
+    <td>{{ budget_entry.entry.selected_product|default:"N/A"}}</td>
+    <td>{{ budget_entry.entry.selected_store|default:"N/A"}}</td>
+    <td>{{ budget_entry.offer_price|default:"N/A"}}</td>
+    <td>{{ budget_entry.normal_price|default:"N/A"}}</td>
+  </tr>
+  {% endfor %}
+  <tr class="price">
+    <td colspan="2">&nbsp;</td>
+    <td>Total</td>
+    <td>{{ offer_price_sum }}</td>
+    <td>{{ normal_price_sum }}</td>
+  </tr>
+</table>
+
+</body>
+</html>

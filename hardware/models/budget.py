@@ -1,10 +1,12 @@
 import io
+import re
 
 import xlsxwriter
 from decimal import Decimal
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import models
+from django.template.loader import render_to_string
 from django.utils.text import slugify
 
 from solotodo.models import Product, Entity
@@ -206,6 +208,64 @@ class Budget(models.Model):
         budget_url = storage.url(path)
 
         return budget_url
+
+    def _export_as_bbcode(self, product_store_to_cheapest_entity_dict):
+        budget_entries = []
+
+        currency = None
+        number_format = None
+        offer_price_sum = Decimal(0)
+        normal_price_sum = Decimal(0)
+
+        for entry in self.entries.select_related(
+                'selected_product__instance_model', 'selected_store'):
+            key = (entry.selected_product, entry.selected_store)
+            matching_entity = product_store_to_cheapest_entity_dict.get(key)
+
+            if matching_entity:
+                currency = matching_entity.currency
+                number_format = matching_entity.store.country.number_format
+                formatted_offer_price = currency.format_value(
+                    matching_entity.active_registry.offer_price, number_format)
+                formatted_normal_price = currency.format_value(
+                    matching_entity.active_registry.normal_price,
+                    number_format)
+
+                offer_price_sum += matching_entity.active_registry.offer_price
+                normal_price_sum += \
+                    matching_entity.active_registry.normal_price
+            else:
+                formatted_offer_price = 'N/A'
+                formatted_normal_price = 'N/A'
+
+            budget_entries.append({
+                'entry': entry,
+                'entity': matching_entity,
+                'offer_price': formatted_offer_price,
+                'normal_price': formatted_normal_price,
+            })
+
+        # Usually budgets will have the same currency for all components, so
+        # just use the last one seen to format the total.
+
+        if currency:
+            formatted_offer_price_sum = currency.format_value(
+                offer_price_sum, number_format)
+            formatted_normal_price_sum = currency.format_value(
+                normal_price_sum, number_format)
+        else:
+            formatted_offer_price_sum = 'N/A'
+            formatted_normal_price_sum = 'N/A'
+
+        bbcode = render_to_string('budget_export_bbcode.txt', {
+            'budget_entries': budget_entries,
+            'offer_price_sum': formatted_offer_price_sum,
+            'normal_price_sum': formatted_normal_price_sum,
+        })
+
+        bbcode = re.sub(r'\s+', ' ', bbcode)
+
+        return bbcode
 
     class Meta:
         app_label = 'hardware'

@@ -1,0 +1,47 @@
+[table]
+[tr]
+[th]Componente[/th]
+[th]Producto[/th]
+[th]Tienda[/th]
+[th]Precio oferta[/th]
+[th]Precio normal[/th]
+[/tr]
+
+{% for budget_entry in budget_entries %}
+[tr]
+[td]{{ budget_entry.entry.category }}[/td]
+[td]
+    {% if budget_entry.entry.selected_product %}
+        [url={{ budget_entry.entry.selected_product.solotodo_com_url }}]{{budget_entry.entry.selected_product}}[/url]
+    {% else %}
+        N/A
+    {% endif %}
+[/td]
+[td]
+    {% if budget_entry.entry.selected_store %}
+        {% if budget_entry.entity %}
+        [url={{ budget_entry.entity.url }}]{{budget_entry.entry.selected_store}}[/url]
+        {% else %}
+        {{ budget_entry.entry.selected_store }}
+        {% endif %}
+    {% else %}
+        N/A
+    {% endif %}
+[/td]
+[td]
+    {{ budget_entry.offer_price }}
+[/td]
+[td]
+    {{ budget_entry.normal_price }}
+[/td]
+[/tr]
+{% endfor %}
+
+[tr]
+[td]-[/td]
+[td]-[/td]
+[th]Total[/th]
+[th]{{ offer_price_sum }}[/th]
+[th]{{ normal_price_sum }}[/th]
+[/tr]
+[/table]

@@ -6,6 +6,8 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from solotodo.utils import format_currency
+
 
 class Currency(models.Model):
     name = models.CharField(max_length=255)
@@ -33,6 +35,12 @@ class Currency(models.Model):
             return '{}#,##0.{}'.format(self.prefix, '0' * self.decimal_places)
         else:
             return '{}#,###'.format(self.prefix)
+
+    def format_value(self, value, number_format):
+        return format_currency(
+            value, self.prefix, self.decimal_places,
+            number_format.thousands_separator,
+            number_format.decimal_separator)
 
     @classmethod
     def get_default(cls):

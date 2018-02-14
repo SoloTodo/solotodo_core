@@ -133,9 +133,9 @@ def additional_es_fields(instance_model, elastic_search_result):
 
         result['base_model_bundle_internal_storage_ram_key'] = \
             elastic_search_result['base_model_id'] + \
-            elastic_search_result['bundle_id'] + \
-            elastic_search_result['internal_storage_id'] + \
-            elastic_search_result['ram_id']
+            10 * elastic_search_result['bundle_id'] + \
+            100 * elastic_search_result['internal_storage_id'] + \
+            1000 * elastic_search_result['ram_id']
 
         return result
     elif m == 'CellPlan':

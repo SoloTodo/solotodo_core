@@ -36,6 +36,8 @@ class ProductsBrowseForm(forms.Form):
     )
     ordering_date = IsoDateTimeRangeField(required=False)
 
+    search = forms.CharField(required=False)
+
     def get_products(self, request):
         if not self.is_valid():
             return self.errors
@@ -53,8 +55,19 @@ class ProductsBrowseForm(forms.Form):
 
         product_ids = [entry['product'] for entry in entities]
 
-        es_results = Product.es_search().filter(
-            'terms', product_id=product_ids)[:len(product_ids)].execute()
+        es_search = Product.es_search().filter(
+            'terms', product_id=product_ids)
+
+        search = self.cleaned_data['search']
+        if search:
+            es_search = Product.query_es_by_search_string(
+                es_search, search, mode='AND')
+            es_results = es_search[:len(product_ids)].execute()
+            filtered_product_ids = [entry['product_id']
+                                    for entry in es_results]
+            entities = entities.filter(product__in=filtered_product_ids)
+        else:
+            es_results = es_search[:len(product_ids)].execute()
 
         # 6 - 7. Obtain price entries and bucket the results
 

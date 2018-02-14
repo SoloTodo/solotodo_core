@@ -261,8 +261,10 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
             'product__instance_model__model__category',
         )
         stores_with_permission = create_store_filter()(self.request)
+        categories_with_permission = create_category_filter()(self.request)
 
-        return qs.filter(store__in=stores_with_permission)
+        return qs.filter(store__in=stores_with_permission,
+                         category__in=categories_with_permission)
 
     class Meta:
         model = Entity

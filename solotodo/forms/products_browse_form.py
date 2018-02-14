@@ -51,7 +51,12 @@ class ProductsBrowseForm(forms.Form):
         price_ranges = self.entities_price_ranges(entities)
 
         ordering = self.ordering_or_default()
-        entities = self.order_entities_by_db(entities, ordering)
+
+        # 3. DB ordering (if it applies)
+        if ordering in self.DB_ORDERING_CHOICES:
+            # The same parameters will be passed to the specs form, and there
+            # the DB ordering choices are invalid, so pop them.
+            entities = self.order_entities_by_db(entities, ordering)
 
         product_ids = [entry['product'] for entry in entities]
 
@@ -61,7 +66,7 @@ class ProductsBrowseForm(forms.Form):
         search = self.cleaned_data['search']
         if search:
             es_search = Product.query_es_by_search_string(
-                es_search, search, mode='AND')
+                es_search, search, mode='OR')
             es_results = es_search[:len(product_ids)].execute()
             filtered_product_ids = [entry['product_id']
                                     for entry in es_results]
@@ -289,6 +294,9 @@ class ProductsBrowseForm(forms.Form):
         else:
             # Ordering was based on ES
             ordering_field = re.match(r'-?(.+)$', ordering).groups()[0]
+
+            if ordering_field == 'relevance':
+                ordering_field = 'product_id'
 
             for es_product in es_results:
                 product = product_id_to_full_instance[es_product['product_id']]

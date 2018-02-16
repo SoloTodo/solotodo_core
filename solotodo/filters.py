@@ -248,6 +248,12 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
             normal_price_usd=F('active_registry__normal_price') /
             F('currency__exchange_rate')
         )
+
+        cls.base_filters['categories'].queryset = \
+            create_category_filter()(request)
+        cls.base_filters['stores'].queryset = \
+            create_store_filter()(request)
+
         return cls(
             data=request.query_params, queryset=entities, request=request)
 

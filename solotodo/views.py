@@ -288,7 +288,7 @@ class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
     def browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
 
-        cache_json = OrderedDict(request.query_params)
+        cache_json = OrderedDict(dict(request.query_params))
         cache_json['category_id'] = category.id
         stores_with_permission = create_store_filter()(self.request)
         cache_json['store_permissions'] = \
@@ -298,6 +298,7 @@ class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
             json.dumps(cache_json).encode('utf-8')).hexdigest()
 
         serialized_result = cache.get(cache_key)
+
         if serialized_result:
             result = json.loads(serialized_result.decode('utf-8'))
         else:

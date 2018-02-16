@@ -259,8 +259,11 @@ class ProductsBrowseForm(forms.Form):
             entry['_source']['product_id']: entry['_source']
             for entry in es_results.to_dict()['hits']['hits']
         }
+
         product_id_to_instance = iterable_to_dict(
-            Product.objects.filter(pk__in=product_ids))
+            Product.objects.filter(pk__in=product_ids).select_related(
+                'instance_model__model__category'))
+
         product_id_to_full_instance = {}
         for product_id in product_ids:
             full_instance = product_id_to_instance[product_id]

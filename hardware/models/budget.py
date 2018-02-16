@@ -28,6 +28,7 @@ class Budget(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,
                              related_name='budgets')
     creation_date = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
     products_pool = models.ManyToManyField(Product, blank=True)
 
     def __str__(self):

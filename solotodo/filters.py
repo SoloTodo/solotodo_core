@@ -8,7 +8,7 @@ from solotodo.filter_querysets import create_store_filter, \
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
-    Currency, Visit
+    Currency, Visit, Category
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -144,15 +144,43 @@ class EntityFilterSet(rest_framework.FilterSet):
 
 class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
     stores = rest_framework.ModelMultipleChoiceFilter(
-        queryset=create_store_filter('view_store_stocks'),
+        queryset=Store.objects.all(),
         name='store',
         label='Stores'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
-        queryset=create_category_filter('view_category_stocks'),
+        queryset=Category.objects.all(),
         name='category',
         label='Categories'
     )
+    ids = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Entity.objects.all(),
+        method='_ids',
+        label='Entities'
+    )
+
+    @classmethod
+    def create(cls, request):
+        allowed_categories = create_category_filter(
+            'view_category_stocks')(request)
+        allowed_stores = create_store_filter(
+            'view_store_stocks')(request)
+        allowed_entities = Entity.objects.filter(
+            category__in=allowed_categories,
+            store__in=allowed_stores,
+        )
+
+        cls.base_filters['categories'].queryset = allowed_categories
+        cls.base_filters['stores'].queryset = allowed_stores
+        cls.base_filters['ids'].queryset = allowed_entities
+
+        return cls(queryset=allowed_entities, data=request.query_params,
+                   request=request)
+
+    def _ids(self, queryset, name, value):
+        if value:
+            return queryset.filter(pk__in=[x.pk for x in value])
+        return queryset
 
     @property
     def qs(self):

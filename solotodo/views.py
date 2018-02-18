@@ -484,11 +484,10 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def estimated_sales(self, request):
-        filterset = EntityEstimatedSalesFilterSet(
-            queryset=self.get_queryset(),
-            data=request.query_params,
-            request=request)
+        if not request.user.is_authenticated:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
+        filterset = EntityEstimatedSalesFilterSet.create(request)
         form = EntityEstimatedSalesForm(request.query_params)
 
         if form.is_valid():

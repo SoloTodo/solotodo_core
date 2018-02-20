@@ -3,7 +3,6 @@ from rest_framework.permissions import BasePermission
 
 class BudgetPermission(BasePermission):
     def has_permission(self, request, view):
-        print(view.action)
         if view.action in ['list', 'retrieve', 'export']:
             return True
 

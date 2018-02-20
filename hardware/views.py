@@ -1,9 +1,11 @@
-from django.db.models import Q
 from rest_framework import viewsets
 from rest_framework.decorators import detail_route
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from django_filters import rest_framework
+
+from hardware.filters import BudgetFilterSet
 from hardware.forms.budget_export_format_form import BudgetExportFormatForm
 from hardware.models import Budget, BudgetEntry
 from hardware.pagination import BudgetPagination
@@ -19,25 +21,8 @@ class BudgetViewSet(viewsets.ModelViewSet):
     serializer_class = BudgetSerializer
     pagination_class = BudgetPagination
     permission_classes = (BudgetPermission,)
-
-    def get_queryset(self):
-        user = self.request.user
-
-        budgets = Budget.objects.select_related('user').prefetch_related(
-            'products_pool__instance_model',
-            'entries__selected_product__instance_model',
-            'entries__selected_store'
-        )
-
-        if user.is_superuser:
-            return budgets
-
-        filters = Q(is_public=True)
-
-        if user.is_authenticated:
-            filters |= Q(user=user)
-
-        return budgets.filter(filters)
+    filter_backends = (rest_framework.DjangoFilterBackend, )
+    filter_class = BudgetFilterSet
 
     @detail_route(methods=['post'])
     def add_product(self, request, pk, *args, **kwargs):

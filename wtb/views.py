@@ -8,7 +8,7 @@ from rest_framework.response import Response
 
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.forms.category_form import CategoryForm
-from solotodo.models import Entity, Product
+from solotodo.models import Entity
 from wtb.filters import create_wtb_brand_filter, WtbEntityFilterSet, \
     WtbBrandUpdateLogFilterSet, WtbEntityStaffFilterSet
 from wtb.forms import WtbEntityAssociationForm

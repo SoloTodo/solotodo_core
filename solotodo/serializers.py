@@ -41,9 +41,11 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
                   'last_name', 'preferred_language', 'preferred_country',
                   'preferred_currency', 'preferred_number_format',
                   'preferred_store', 'preferred_stores',
-                  'date_joined', 'is_staff', 'permissions', 'budgets')
+                  'date_joined', 'is_staff', 'permissions', 'budgets',
+                  'is_superuser')
         read_only_fields = ('email', 'first_name', 'last_name',
-                            'permissions')
+                            'permissions', 'is_staff', 'is_superuser',
+                            'budgets', 'date_joined')
 
 
 class StoreTypeSerializer(serializers.HyperlinkedModelSerializer):

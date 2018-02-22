@@ -34,7 +34,11 @@ class Budget(models.Model):
     def __str__(self):
         return self.name
 
-    def export(self, stores, export_format):
+    def export(self, export_format):
+        stores = [entry.selected_store for entry in
+                  self.entries.filter(selected_store__isnull=False)
+                      .prefetch_related('selected_store')]
+
         entities = Entity.objects.filter(
             product__in=self.products_pool.all(),
             store__in=stores

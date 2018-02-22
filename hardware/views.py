@@ -62,22 +62,13 @@ class BudgetViewSet(viewsets.ModelViewSet):
     @detail_route()
     def export(self, request, pk, *args, **kwargs):
         budget = self.get_object()
-        form = StoresForm.from_user(request.user, request.query_params)
-
-        if not form.is_valid():
-            return Response(form.errors)
-
-        stores = form.cleaned_data['stores']
-        if not stores:
-            stores = Store.objects.filter_by_user_perms(
-                request.user, 'view_store')
 
         form = BudgetExportFormatForm(request.query_params)
         if not form.is_valid():
             return Response(form.errors)
 
         export_format = form.cleaned_data['export_format']
-        exported_budget = budget.export(stores, export_format)
+        exported_budget = budget.export(export_format)
 
         return Response({'content': exported_budget})
 

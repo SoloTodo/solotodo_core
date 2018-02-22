@@ -73,7 +73,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductPricingHistorySerializer, NestedProductSerializer, \
     ProductAvailableEntitiesSerializer
 from solotodo.tasks import store_update
-from solotodo.utils import get_client_ip, iterable_to_dict
+from solotodo.utils import get_client_ip, iterable_to_dict, generate_cache_key
 from rest_framework_tracking.mixins import LoggingMixin
 
 
@@ -294,8 +294,7 @@ class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
         cache_json['store_permissions'] = \
             [s.id for s in stores_with_permission]
         cache_json['method'] = 'category_browse'
-        cache_key = hashlib.sha1(
-            json.dumps(cache_json).encode('utf-8')).hexdigest()
+        cache_key = generate_cache_key(cache_json)
 
         serialized_result = cache.get(cache_key)
 
@@ -855,18 +854,35 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def available_entities(self, request):
+        cache_json = OrderedDict(dict(request.query_params))
+        categories_with_permission = create_category_filter()(self.request)
+        cache_json['category_permissions'] = \
+            [s.id for s in categories_with_permission]
+        stores_with_permission = create_store_filter()(self.request)
+        cache_json['store_permissions'] = \
+            [s.id for s in stores_with_permission]
+        cache_json['method'] = 'product_available_entities'
+        cache_key = generate_cache_key(cache_json)
+
+        cached_result = cache.get(cache_key)
+
+        if cached_result:
+            result = json.loads(cached_result.decode('utf-8'))
+            return Response(result)
+
         queryset = self.filter_queryset(self.get_queryset())
         products = self.paginate_queryset(queryset)
 
-        entities = Entity.objects\
-            .filter(product__in=products)\
-            .get_available()\
+        entities = Entity.objects \
+            .filter(product__in=products) \
+            .get_available() \
             .order_by('active_registry__offer_price')
 
         entity_query_params = request.query_params.copy()
         entity_query_params.pop('ids', None)
         entity_filterset = EntityFilterSet(data=entity_query_params,
-                                           queryset=entities, request=request)
+                                           queryset=entities,
+                                           request=request)
 
         result_dict = {}
 
@@ -881,12 +897,40 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
         serializer = ProductAvailableEntitiesSerializer(
             result_array, many=True, context={'request': request})
-        return self.paginator.get_paginated_response(serializer.data)
+
+        result = OrderedDict([
+            ('count', self.paginator.page.paginator.count),
+            ('next', self.paginator.get_next_link()),
+            ('previous', self.paginator.get_previous_link()),
+            ('results', serializer.data)
+        ])
+
+        serialized_result = JSONRenderer().render(result)
+        cache.set(cache_key, serialized_result)
+
+        return Response(result)
 
     @list_route()
     def browse(self, request, *args, **kwargs):
-        form = ProductsBrowseForm(request.query_params)
-        result = form.get_products(request)
+        cache_json = OrderedDict(dict(request.query_params))
+        categories_with_permission = create_category_filter()(self.request)
+        cache_json['category_permissions'] = \
+            [s.id for s in categories_with_permission]
+        stores_with_permission = create_store_filter()(self.request)
+        cache_json['store_permissions'] = \
+            [s.id for s in stores_with_permission]
+        cache_json['method'] = 'product_browse'
+        cache_key = generate_cache_key(cache_json)
+
+        serialized_result = cache.get(cache_key)
+
+        if serialized_result:
+            result = json.loads(serialized_result.decode('utf-8'))
+        else:
+            form = ProductsBrowseForm(request.query_params)
+            result = form.get_products(request)
+            serialized_result = JSONRenderer().render(result)
+            cache.set(cache_key, serialized_result)
 
         return Response(result)
 

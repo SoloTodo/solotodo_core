@@ -1,4 +1,6 @@
 import collections
+import hashlib
+import json
 
 from decimal import Decimal
 
@@ -54,3 +56,7 @@ def format_currency(value, curr='$', places=2, sep='.', dp=','):
     build(curr)
 
     return ''.join(reversed(result))
+
+
+def generate_cache_key(cache_dict):
+    return hashlib.sha1(json.dumps(cache_dict).encode('utf-8')).hexdigest()

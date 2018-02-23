@@ -37,6 +37,7 @@ class ProductsBrowseForm(forms.Form):
     ordering_date = IsoDateTimeRangeField(required=False)
 
     search = forms.CharField(required=False)
+    brand = forms.CharField(required=False)
 
     def get_products(self, request):
         if not self.is_valid():
@@ -67,6 +68,12 @@ class ProductsBrowseForm(forms.Form):
         if search:
             es_search = Product.query_es_by_search_string(
                 es_search, search, mode='OR')
+
+        brand = self.cleaned_data['brand']
+        if brand:
+            es_search = es_search.filter('term', brand_unicode=brand.lower())
+
+        if search or brand:
             es_results = es_search[:len(product_ids)].execute()
             filtered_product_ids = [entry['product_id']
                                     for entry in es_results]

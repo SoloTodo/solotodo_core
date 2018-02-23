@@ -8,6 +8,7 @@ from solotodo.models import Website
 class CarouselSlide(models.Model):
     website = models.ForeignKey(Website, on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
+    target_url = models.URLField()
     img_400 = ImageField(upload_to='carousel_slides')
     img_576 = ImageField(upload_to='carousel_slides')
     img_768 = ImageField(upload_to='carousel_slides')

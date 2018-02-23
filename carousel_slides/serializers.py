@@ -7,4 +7,4 @@ class CarouselSlideSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = CarouselSlide
         fields = ('id', 'name', 'website', 'ordering', 'img_400', 'img_576',
-                  'img_768', 'img_992', 'img_1200')
+                  'img_768', 'img_992', 'img_1200', 'target_url')

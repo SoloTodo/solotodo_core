@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     'entity_subscriptions',
     'wtb',
     'navigation',
+    'carousel_slides',
 ]
 
 SITE_ID = 1

@@ -23,6 +23,7 @@ from reports.router import router as reports_router
 from wtb.router import router as wtb_router
 from category_columns.router import router as category_columns_router
 from hardware.router import router as hardware_router
+from carousel_slides.router import router as carousel_slides_router
 from .custom_default_router import CustomDefaultRouter
 
 router = CustomDefaultRouter()
@@ -33,6 +34,7 @@ router.extend(reports_router)
 router.extend(wtb_router)
 router.extend(category_columns_router)
 router.extend(hardware_router)
+router.extend(carousel_slides_router)
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),

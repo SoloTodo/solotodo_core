@@ -305,6 +305,7 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_ADAPTER = 'solotodo.solotodo_account_adapter.SoloTodoAccountAdapter'
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 
 ##############################################################################
 # rest-auth configuration

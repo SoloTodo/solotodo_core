@@ -13,8 +13,11 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
+from allauth.socialaccount.providers.facebook.views import \
+    FacebookOAuth2Adapter
 from django.conf.urls import url, include
 from django.contrib import admin
+from rest_auth.registration.views import SocialLoginView
 from rest_framework.authtoken.views import obtain_auth_token
 from solotodo.router import router as solotodo_router
 from category_templates.router import router as category_templates_router
@@ -36,6 +39,11 @@ router.extend(category_columns_router)
 router.extend(hardware_router)
 router.extend(carousel_slides_router)
 
+
+class FacebookLogin(SocialLoginView):
+    adapter_class = FacebookOAuth2Adapter
+
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^accounts/', include('allauth.urls')),
@@ -43,6 +51,7 @@ urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls')),
     url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
+    url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
     url(r'^obtain-auth-token/$', obtain_auth_token),
     url(r'^', include(router.urls)),
     url(r'^', include('django.contrib.auth.urls')),

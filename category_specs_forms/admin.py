@@ -20,7 +20,7 @@ class CategorySpecsFormFieldsetModelAdmin(admin.ModelAdmin):
 @admin.register(CategorySpecsFormFilter)
 class CategorySpecsFormFilterModelAdmin(admin.ModelAdmin):
     list_display = ('fieldset', 'label', 'ordering', 'country')
-    list_filter = ('fieldset',)
+    list_filter = ('fieldset__layout__website', 'fieldset__layout__category')
 
 
 @admin.register(CategorySpecsFormOrder)

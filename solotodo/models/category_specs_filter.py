@@ -92,11 +92,14 @@ class CategorySpecsFilter(models.Model):
 
         if self.type == 'exact' and form_data[self.name] is not None:
             if self.meta_model.is_primitive():
+                # The only exact primitive filter is BooleanField
                 filter_values = [bool(form_data[self.name])]
             else:
                 filter_values = [getattr(obj, mm_value_field) for obj in
                                  form_data[self.name]]
-            result &= Q('terms', **{es_value_field: filter_values})
+
+            if filter_values:
+                result &= Q('terms', **{es_value_field: filter_values})
 
         if self.type in ['gte', 'range']:
             min_form_field = '{}_0'.format(self.name)

@@ -200,7 +200,7 @@ class ReportCurrentPricesForm(forms.Form):
 
             # Cell monthly payment
             if cell_monthly_payments_in_entities:
-                if e.active_registry.cell_monthly_payment:
+                if e.active_registry.cell_monthly_payment is not None:
                     cell_monthly_payment_text = \
                         e.active_registry.cell_monthly_payment
                 else:

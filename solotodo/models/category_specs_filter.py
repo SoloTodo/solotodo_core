@@ -39,7 +39,11 @@ class CategorySpecsFilter(models.Model):
                 field_names.append('{}_1'.format(self.name))
 
         if self.type == 'exact':
-            if self.meta_model.is_primitive():
+            if self.meta_model.name == 'BooleanField':
+                field = forms.IntegerField(
+                    required=False
+                )
+            elif self.meta_model.is_primitive():
                 raise Exception('Exact query {} not allowed'.format(self.name))
             else:
                 field = forms.ModelMultipleChoiceField(
@@ -86,9 +90,9 @@ class CategorySpecsFilter(models.Model):
         mm_value_field = self.value_field_or_default()
         es_value_field = self.es_value_field()
 
-        if self.type == 'exact' and form_data[self.name]:
+        if self.type == 'exact' and form_data[self.name] is not None:
             if self.meta_model.is_primitive():
-                filter_values = form_data[self.name]
+                filter_values = [bool(form_data[self.name])]
             else:
                 filter_values = [getattr(obj, mm_value_field) for obj in
                                  form_data[self.name]]

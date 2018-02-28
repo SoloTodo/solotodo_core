@@ -61,7 +61,8 @@ class ReportCurrentPricesForm(forms.Form):
                 'product__instance_model',
                 'cell_plan__instance_model',
                 'active_registry',
-                'currency') \
+                'currency',
+                'store') \
             .order_by('product')
 
         if countries:
@@ -114,6 +115,13 @@ class ReportCurrentPricesForm(forms.Form):
             'Precio normal',
             'Precio oferta'
         ])
+
+        cell_monthly_payments_in_entities = es.filter(
+            active_registry__cell_monthly_payment__isnull=False)
+
+        if cell_monthly_payments_in_entities:
+            if cell_plans_in_entities:
+                headers.append('Cuota arriendo')
 
         if currency:
             headers.extend([
@@ -190,6 +198,17 @@ class ReportCurrentPricesForm(forms.Form):
             worksheet.write(row, col, e.active_registry.offer_price)
             col += 1
 
+            # Cell monthly payment
+            if cell_monthly_payments_in_entities:
+                if e.active_registry.cell_monthly_payment:
+                    cell_monthly_payment_text = \
+                        e.active_registry.cell_monthly_payment
+                else:
+                    cell_monthly_payment_text = 'No aplica'
+                worksheet.write(row, col, cell_monthly_payment_text)
+                col += 1
+
+            # Converted prices
             if currency:
                 converted_normal_price = currency.convert_from(
                     e.active_registry.normal_price, e.currency)

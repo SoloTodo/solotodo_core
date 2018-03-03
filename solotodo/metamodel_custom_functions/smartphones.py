@@ -67,30 +67,12 @@ def cell_plan_main_points(elastic_search_result):
         else:
             result.append('{} minutos todo destino'.format(
                 elastic_search_result['minutes_free']))
-    if elastic_search_result['minutes_online']:
-        result.append('{} minutos online'.format(
-            elastic_search_result['minutes_online']))
-    if elastic_search_result['minutes_offline']:
-        result.append('{} minutos offline'.format(
-            elastic_search_result['minutes_offline']))
     if elastic_search_result['sms_free']:
         if elastic_search_result['sms_free'] == -1:
             result.append('SMS ilimitados todo destino')
         else:
             result.append('{} SMS todo destino'.format(
                 elastic_search_result['sms_free']))
-    if elastic_search_result['sms_online']:
-        if elastic_search_result['sms_online'] == -1:
-            result.append('SMS ilimitados online')
-        else:
-            result.append('{} SMS online'.format(
-                elastic_search_result['sms_online']))
-    if elastic_search_result['sms_offline']:
-        if elastic_search_result['sms_offline'] == -1:
-            result.append('SMS ilimitados offline')
-        else:
-            result.append('{} SMS offline'.format(
-                elastic_search_result['sms_offline']))
 
     if elastic_search_result['portability_exclusive']:
         result.append('Plan exclusivo para portabilidad')

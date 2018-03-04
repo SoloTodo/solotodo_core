@@ -1066,9 +1066,15 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
             purpose=form.cleaned_data['purpose'],
         )
 
-        return Response({
-            'result': category_template.render(product)
-        })
+        try:
+            # While we are migrating to Handlebars templates
+            rendered_template = category_template.render(product)
+            return Response({
+                'result': rendered_template
+            })
+        except Exception:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
 
     @detail_route()
     def picture(self, request, pk):

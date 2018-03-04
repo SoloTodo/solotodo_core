@@ -117,8 +117,6 @@ class SoloTodoUser(AbstractEmailUser):
         sender = SoloTodoUser().get_bot().email_recipient_text()
         translation.activate(email_language)
 
-        if self.email != 'vj@solotodo.com':
-            raise Exception('Not my email!')
         email_recipients = [self.email_recipient_text()]
 
         html_message = render_to_string(

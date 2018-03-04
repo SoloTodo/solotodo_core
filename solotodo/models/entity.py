@@ -477,7 +477,7 @@ class Entity(models.Model):
             'cell_plan': None
         }
 
-        if self.last_association_user != user:
+        if reason:
             self.last_association_user.send_entity_dissociation_mail(
                 self, user, reason)
 

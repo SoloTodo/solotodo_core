@@ -86,12 +86,12 @@ class EntityFilterSet(rest_framework.FilterSet):
         label='Entities'
     )
     stores = rest_framework.ModelMultipleChoiceFilter(
-        queryset=create_store_filter(),
+        queryset=Store.objects.all(),
         name='store',
         label='Stores'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
-        queryset=create_category_filter(),
+        queryset=Category.objects.all(),
         name='category',
         label='Categories'
     )
@@ -103,6 +103,25 @@ class EntityFilterSet(rest_framework.FilterSet):
     is_associated = rest_framework.BooleanFilter(
         name='is_associated', method='_is_associated', label='Is associated?')
 
+    def __init__(self, data=None, queryset=None, prefix=None, strict=None,
+                 request=None):
+        super(EntityFilterSet, self).__init__(
+            data=data, queryset=queryset, prefix=prefix, strict=strict,
+            request=request)
+
+        if request:
+            allowed_categories = create_category_filter('view_category')(
+                request)
+            allowed_stores = create_store_filter('view_store')(request)
+            allowed_entities = Entity.objects.filter(
+                category__in=allowed_categories,
+                store__in=allowed_stores
+            )
+
+            self.base_filters['categories'].queryset = allowed_categories
+            self.base_filters['stores'].queryset = allowed_stores
+            self.base_filters['ids'].queryset = allowed_entities
+
     @property
     def qs(self):
         qs = super(EntityFilterSet, self).qs.select_related(
@@ -110,8 +129,8 @@ class EntityFilterSet(rest_framework.FilterSet):
             'product__instance_model',
             'cell_plan'
         )
-        categories_with_permission = create_category_filter()(self.request)
-        stores_with_permission = create_store_filter()(self.request)
+        categories_with_permission = self.base_filters['categories'].queryset
+        stores_with_permission = self.base_filters['stores'].queryset
 
         return qs.filter(
             Q(category__in=categories_with_permission) &
@@ -312,7 +331,7 @@ class ProductFilterSet(rest_framework.FilterSet):
         label='Products'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
-        queryset=create_category_filter(),
+        queryset=Category.objects.all(),
         name='instance_model__model__category',
         label='Categories'
     )
@@ -322,7 +341,7 @@ class ProductFilterSet(rest_framework.FilterSet):
         method='_availability_countries'
     )
     availability_stores = rest_framework.ModelMultipleChoiceFilter(
-        queryset=create_store_filter(),
+        queryset=Store.objects.all(),
         label='Available in stores',
         method='_availability_stores'
     )
@@ -337,11 +356,28 @@ class ProductFilterSet(rest_framework.FilterSet):
         method='_search'
     )
 
+    def __init__(self, data=None, queryset=None, prefix=None, strict=None,
+                 request=None):
+        super(ProductFilterSet, self).__init__(
+            data=data, queryset=queryset, prefix=prefix, strict=strict,
+            request=request)
+
+        if request:
+            allowed_categories = create_category_filter('view_category')(
+                request)
+            allowed_stores = create_store_filter('view_store')(request)
+            allowed_products = Product.objects.filter_by_category(
+                allowed_categories)
+
+            self.base_filters['categories'].queryset = allowed_categories
+            self.base_filters['availability_stores'].queryset = allowed_stores
+            self.base_filters['ids'].queryset = allowed_products
+
     @property
     def qs(self):
         qs = super(ProductFilterSet, self).qs.select_related(
             'instance_model')
-        categories_with_permission = create_category_filter()(self.request)
+        categories_with_permission = self.base_filters['categories'].queryset
         qs = qs.filter_by_category(categories_with_permission)
         return qs.select_related('instance_model__model__category')
 

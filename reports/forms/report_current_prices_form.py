@@ -4,6 +4,7 @@ import xlsxwriter
 from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db.models import Min
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
@@ -58,11 +59,11 @@ class ReportCurrentPricesForm(forms.Form):
             .filter(category=category, store__in=stores) \
             .get_available() \
             .select_related(
-                'product__instance_model',
-                'cell_plan__instance_model',
-                'active_registry',
-                'currency',
-                'store') \
+            'product__instance_model',
+            'cell_plan__instance_model',
+            'active_registry',
+            'currency',
+            'store') \
             .order_by('product')
 
         if countries:
@@ -99,14 +100,25 @@ class ReportCurrentPricesForm(forms.Form):
             purpose=settings.REPORTS_PURPOSE_ID
         )
 
-        cell_plans_in_entities = es.filter(cell_plan__isnull=False)
+        cell_plans_in_entities = [e.cell_plan for e in
+                                  es.filter(cell_plan__isnull=False)]
 
         headers = [
             'Producto',
         ]
 
+        cell_plan_prices_dict = {}
         if cell_plans_in_entities:
             headers.append('Plan celular')
+            headers.append('Precio plan celular')
+
+            cell_plan_entities = Entity.objects.filter(
+                product__in=cell_plans_in_entities).get_available().values(
+                'product').annotate(
+                min_price=Min('active_registry__normal_price'))
+
+            cell_plan_prices_dict = {e['product']: e['min_price']
+                                     for e in cell_plan_entities}
 
         headers.extend([
             'Tienda',
@@ -155,16 +167,21 @@ class ReportCurrentPricesForm(forms.Form):
             if cell_plans_in_entities:
                 cell_plan = e.cell_plan
                 if cell_plan:
+                    cell_plan_price = cell_plan_prices_dict.get(
+                        cell_plan.id, 'N/A')
+
                     worksheet.write_url(
                         row, col,
                         '{}products/{}'.format(settings.BACKEND_HOST,
                                                cell_plan.id),
                         string=str(e.cell_plan),
                         cell_format=url_format)
+                    worksheet.write(row, col + 1, cell_plan_price)
                 else:
                     worksheet.write(row, col, 'N/A')
+                    worksheet.write(row, col + 1, 'N/A')
 
-                col += 1
+                col += 2
 
             # Store
 

@@ -14,6 +14,7 @@ from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
 from geoip2.errors import AddressNotFoundError
+from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import list_route, detail_route
@@ -50,6 +51,7 @@ from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
 from solotodo.forms.product_picture_form import ProductPictureForm
 from solotodo.forms.products_browse_form import ProductsBrowseForm
+from solotodo.forms.resource_names_form import ResourceNamesForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
@@ -1175,3 +1177,37 @@ class VisitViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResourceViewSet(viewsets.ViewSet):
+    def list(self, request):
+        form = ResourceNamesForm(request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        resource_names = form.cleaned_data['names']
+        if not resource_names:
+            resource_names = [choice[0] for choice in
+                              ResourceNamesForm.choices]
+
+        response = []
+
+        for resource_name in resource_names:
+            resource_model_and_serializer = \
+                ResourceNamesForm.model_map[resource_name]
+            model = resource_model_and_serializer['model']
+            serializer = resource_model_and_serializer['serializer']
+
+            if resource_model_and_serializer['permission']:
+                model_objects = get_objects_for_user(
+                    request.user, resource_model_and_serializer['permission'],
+                    klass=model)
+            else:
+                model_objects = model.objects.all()
+
+            resource_entries = serializer(model_objects, many=True,
+                                          context={'request': request})
+            response.extend(resource_entries.data)
+
+        return Response(response)

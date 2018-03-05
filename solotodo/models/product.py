@@ -87,9 +87,8 @@ class Product(models.Model):
 
     @property
     def picture_url(self):
-        specs = self.specs
-        if 'picture' in specs:
-            return default_storage.url(specs['picture'])
+        if 'picture' in self.specs:
+            return default_storage.url(self.specs['picture'])
         return None
 
     @property

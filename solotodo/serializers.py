@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from sorl.thumbnail import get_thumbnail
 
 from hardware.models import Budget
 from metamodel.models import InstanceModel
@@ -123,11 +124,28 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     category = serializers.HyperlinkedRelatedField(
         view_name='category-detail', read_only=True,
         source='category.pk')
+    thumbnail_300_300 = serializers.SerializerMethodField()
+    thumbnail_300_200 = serializers.SerializerMethodField()
+
+    def get_thumbnail(self, product, dimensions):
+        if 'picture' in product.specs:
+            resized_picture = get_thumbnail(product.specs['picture'],
+                                            dimensions)
+            return resized_picture.url
+        else:
+            return None
+
+    def get_thumbnail_300_300(self, obj):
+        return self.get_thumbnail(obj, '300x300')
+
+    def get_thumbnail_300_200(self, obj):
+        return self.get_thumbnail(obj, '300x200')
 
     class Meta:
         model = Product
         fields = ('url', 'id', 'name', 'slug', 'category', 'instance_model_id',
-                  'creation_date', 'last_updated', 'picture_url', 'specs')
+                  'creation_date', 'last_updated', 'picture_url',
+                  'thumbnail_300_300', 'thumbnail_300_200', 'specs')
 
 
 class NestedProductSerializer(serializers.HyperlinkedModelSerializer):

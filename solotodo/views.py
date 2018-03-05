@@ -1075,7 +1075,6 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         except Exception:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-
     @detail_route()
     def picture(self, request, pk):
         product = self.get_object()

@@ -3,14 +3,19 @@ from django import forms
 from category_templates.models import CategoryTemplate
 from category_templates.serializers import CategoryTemplateSerializer
 from solotodo.models import Country, Currency, StoreType, Store, \
-    NumberFormat, Category
+    NumberFormat, Category, Language
 from solotodo.serializers import CountrySerializer, CurrencySerializer, \
     StoreTypeSerializer, StoreSerializer, NumberFormatSerializer, \
-    CategorySerializer
+    CategorySerializer, LanguageSerializer
 
 
 class ResourceNamesForm(forms.Form):
     model_map = {
+        'languages': {
+            'model': Language,
+            'serializer': LanguageSerializer,
+            'permission': None
+        },
         'countries': {
             'model': Country,
             'serializer': CountrySerializer,

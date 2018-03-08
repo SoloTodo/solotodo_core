@@ -102,6 +102,19 @@ class Product(models.Model):
     def es_search(cls):
         return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
 
+    @classmethod
+    def prefetch_specs(cls, products):
+        product_ids = [p.id for p in products]
+
+        search = Product.es_search().filter(
+            'terms', product_id=product_ids)[:len(product_ids)]
+        response = search.execute().to_dict()
+        specs_dict = {e['_source']['product_id']: e['_source'] for e in
+                      response['hits']['hits']}
+
+        for product in products:
+            product._specs = specs_dict[product.id]
+
     def user_has_staff_perms(self, user):
         return user.has_perm('is_category_staff', self.category)
 

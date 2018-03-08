@@ -376,10 +376,10 @@ class ProductFilterSet(rest_framework.FilterSet):
     @property
     def qs(self):
         qs = super(ProductFilterSet, self).qs.select_related(
-            'instance_model')
+            'instance_model__model__category')
         categories_with_permission = self.base_filters['categories'].queryset
         qs = qs.filter_by_category(categories_with_permission)
-        return qs.select_related('instance_model__model__category')
+        return qs
 
     def _ids(self, queryset, name, value):
         if value:

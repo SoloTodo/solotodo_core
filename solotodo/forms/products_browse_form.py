@@ -193,14 +193,16 @@ class ProductsBrowseForm(forms.Form):
             ordering_country = self.cleaned_data['ordering_country']
             ordering_date = self.cleaned_data['ordering_date']
 
-            start_timestamp = ordering_date.start
-            if not start_timestamp:
+            if ordering_date and ordering_date.start:
+                start_timestamp = ordering_date.start
+            else:
                 start_timestamp = timezone.now() - timedelta(
                     days=self.DEFAULT_ORDERING_DATE_DAYS_DELTA)
 
             lead_filter = Q(
                 entityhistory__lead__timestamp__gte=start_timestamp)
-            if ordering_date.stop:
+
+            if ordering_date and ordering_date.stop:
                 lead_filter &= Q(
                     entityhistory__lead__timestamp__lte=ordering_date.stop)
 

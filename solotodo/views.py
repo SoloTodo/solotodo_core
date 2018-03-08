@@ -763,8 +763,8 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
                 'association_name.keyword': entity.cell_plan_name
             }
 
-            matching_cell_plans = cell_plan_category.es_search()\
-                .filter('term', **filter_parameters)\
+            matching_cell_plans = cell_plan_category.es_search() \
+                .filter('term', **filter_parameters) \
                 .execute()
 
             cell_plan_ids = [x.product_id for x in matching_cell_plans]
@@ -874,6 +874,7 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
         queryset = self.filter_queryset(self.get_queryset())
         products = self.paginate_queryset(queryset)
+        Product.prefetch_specs(products)
 
         entities = Entity.objects \
             .filter(product__in=products) \
@@ -967,8 +968,8 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
         filterset = EntityHistoryFilterSet(request.query_params,
                                            entity_histories)
-        entity_histories = filterset.qs\
-            .order_by('entity', 'timestamp')\
+        entity_histories = filterset.qs \
+            .order_by('entity', 'timestamp') \
             .select_related('entity__product__instance_model',
                             'entity__cell_plan__instance_model')
 

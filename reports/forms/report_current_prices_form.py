@@ -123,6 +123,7 @@ class ReportCurrentPricesForm(forms.Form):
         headers.extend([
             'Tienda',
             'SKU',
+            'Fecha muestra',
             'Moneda',
             'Precio normal',
             'Precio oferta'
@@ -202,7 +203,13 @@ class ReportCurrentPricesForm(forms.Form):
                 cell_format=url_format)
             col += 1
 
+            # Date
+
+            worksheet.write(row, col, str(e.active_registry.timestamp.date()))
+            col += 1
+
             # Currency
+
             worksheet.write(row, col, str(e.currency.iso_code))
             col += 1
 

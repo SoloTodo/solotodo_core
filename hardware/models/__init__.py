@@ -1,5 +1,6 @@
 from django.db.models.signals import post_save
 
+from metamodel.signals import instance_model_saved
 from .budget import Budget
 from .budget_entry import BudgetEntry
 
@@ -18,3 +19,15 @@ def create_budget_entries(sender, instance, created, **kwargs):
 
 
 post_save.connect(create_budget_entries, sender=Budget)
+
+
+def handle_instance_model_saved(instance_model, created, creator_id, **kwargs):
+    from hardware.tasks import video_card_gpu_save, processor_save
+
+    if instance_model.model.name == 'VideoCardGpu':
+        video_card_gpu_save.delay(instance_model.pk)
+    elif instance_model.model.name == 'Processor':
+        processor_save.delay(instance_model.pk)
+
+
+instance_model_saved.connect(handle_instance_model_saved)

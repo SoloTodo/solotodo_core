@@ -9,7 +9,7 @@ def post_save(instance_model, created, creator_id, **kwargs):
     if instance_model.model.name == 'NotebookVideoCard':
         es = settings.ES
         document, keywords = instance_model.elasticsearch_document()
-        es.index(index='notebook-videocards',
+        es.index(index='notebook-video-cards',
                  doc_type='NotebookVideoCard',
                  id=instance_model.id,
                  body=document)

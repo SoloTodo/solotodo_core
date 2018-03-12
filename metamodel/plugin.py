@@ -14,11 +14,9 @@ class PluginMeta(type):
         super(PluginMeta, cls).__init__(name, bases, dct)
 
 
-class Plugin(object):
+class Plugin(object, metaclass=PluginMeta):
     registry = {}
 
     @classmethod
     def on_instance_model_detail_view(cls, instance_model):
         pass
-
-    __metaclass__ = PluginMeta

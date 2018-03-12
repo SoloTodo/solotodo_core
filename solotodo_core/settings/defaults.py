@@ -16,6 +16,7 @@ import os
 from decimal import Decimal
 from django_filters import STRICTNESS
 from elasticsearch import Elasticsearch
+from solotodo.metamodel_plugin import MetaModelPlugin
 
 
 def _(s):

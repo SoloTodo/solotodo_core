@@ -60,3 +60,21 @@ def delete_product_from_es(sender, instance, using, **kwargs):
     if instance.model in category_models:
         associated_product = Product.objects.get(instance_model=instance)
         associated_product.delete_from_elasticsearch()
+
+
+@receiver(instance_model_saved)
+def post_save(instance_model, created, creator_id, **kwargs):
+    if instance_model.model.name == 'NotebookVideoCard':
+        es = settings.ES
+        document, keywords = instance_model.elasticsearch_document()
+        es.index(index='notebook-videocards',
+                 doc_type='NotebookVideoCard',
+                 id=instance_model.id,
+                 body=document)
+    elif instance_model.model.name == 'NotebookProcessor':
+        es = settings.ES
+        document, keywords = instance_model.elasticsearch_document()
+        es.index(index='notebook-processors',
+                 doc_type='NotebookProcessor',
+                 id=instance_model.id,
+                 body=document)

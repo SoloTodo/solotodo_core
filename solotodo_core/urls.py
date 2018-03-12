@@ -25,6 +25,7 @@ from category_specs_forms.router import router as category_specs_forms_router
 from reports.router import router as reports_router
 from wtb.router import router as wtb_router
 from category_columns.router import router as category_columns_router
+from notebooks.router import router as notebooks_router
 from hardware.router import router as hardware_router
 from carousel_slides.router import router as carousel_slides_router
 from .custom_default_router import CustomDefaultRouter
@@ -36,6 +37,7 @@ router.extend(category_specs_forms_router)
 router.extend(reports_router)
 router.extend(wtb_router)
 router.extend(category_columns_router)
+router.extend(notebooks_router)
 router.extend(hardware_router)
 router.extend(carousel_slides_router)
 

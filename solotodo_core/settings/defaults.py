@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.facebook',
     'metamodel',
     'solotodo',
+    'notebooks',
     'hardware',
     'category_templates',
     'reports',

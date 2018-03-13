@@ -124,6 +124,15 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
     category = serializers.HyperlinkedRelatedField(
         view_name='category-detail', read_only=True,
         source='category.pk')
+
+    class Meta:
+        model = Product
+        fields = ('url', 'id', 'name', 'category', 'slug', 'instance_model_id',
+                  'creation_date', 'last_updated', 'picture_url',
+                  'specs')
+
+
+class ProductWithThumbnailsSerializer(ProductSerializer):
     thumbnail_300_300 = serializers.SerializerMethodField()
     thumbnail_300_200 = serializers.SerializerMethodField()
 
@@ -376,7 +385,7 @@ class CategoryBrowsePricesSerializer(serializers.Serializer):
 
 
 class CategoryBrowseProductEntrySerializer(serializers.Serializer):
-    product = ProductSerializer()
+    product = ProductWithThumbnailsSerializer()
     ordering_value = serializers.DecimalField(max_digits=10, decimal_places=2)
     prices = CategoryBrowsePricesSerializer(many=True)
 
@@ -398,5 +407,5 @@ class ProductPricingHistorySerializer(serializers.Serializer):
 
 
 class ProductAvailableEntitiesSerializer(serializers.Serializer):
-    product = ProductSerializer()
+    product = ProductWithThumbnailsSerializer()
     entities = EntitySerializer(many=True)

@@ -6,5 +6,5 @@ from hardware.views import BudgetViewSet, BudgetEntryViewSet, \
 router = routers.SimpleRouter()
 router.register(r'budgets', BudgetViewSet)
 router.register(r'budget_entries', BudgetEntryViewSet)
-router.register(r'videocard_gpus', VideoCardGpuViewSet,
-                base_name='videocard_gpus')
+router.register(r'video_card_gpus', VideoCardGpuViewSet,
+                base_name='video_card_gpus')

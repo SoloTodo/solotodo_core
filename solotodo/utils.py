@@ -60,3 +60,15 @@ def format_currency(value, curr='$', places=2, sep='.', dp=','):
 
 def generate_cache_key(cache_dict):
     return hashlib.sha1(json.dumps(cache_dict).encode('utf-8')).hexdigest()
+
+
+class Clock(object):
+    def __init__(self):
+        import time
+        self.time = time.monotonic()
+
+    def tick(self, label):
+        import time
+        new_time = time.monotonic()
+        print('{}: {}'.format(label, new_time - self.time))
+        self.time = new_time

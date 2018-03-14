@@ -105,16 +105,16 @@ class Command(BaseCommand):
                          'http://www.sitemaps.org/schemas/sitemap/0.9')
 
         for local_page in range(page):
-            url = ET.SubElement(sitemapindex, 'url')
-            loc = ET.SubElement(url, 'loc')
+            sitemap = ET.SubElement(sitemapindex, 'sitemap')
+            loc = ET.SubElement(sitemap, 'loc')
             loc.text = 'https://www.solotodo.com/sitemap_products_{}.xml' \
                        ''.format(local_page + 1)
-            lastmod = ET.SubElement(url, 'lastmod')
+            lastmod = ET.SubElement(sitemap, 'lastmod')
             lastmod.text = timezone.now().isoformat()
 
-        url = ET.SubElement(sitemapindex, 'url')
-        loc = ET.SubElement(url, 'loc')
-        lastmod = ET.SubElement(url, 'lastmod')
+        sitemap = ET.SubElement(sitemapindex, 'sitemap')
+        loc = ET.SubElement(sitemap, 'loc')
+        lastmod = ET.SubElement(sitemap, 'lastmod')
         lastmod.text = timezone.now().isoformat()
         loc.text = 'https://www.solotodo.com/sitemap_others.xml'
 

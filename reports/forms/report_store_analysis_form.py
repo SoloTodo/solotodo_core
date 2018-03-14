@@ -36,8 +36,7 @@ class ReportStoreAnalysisForm(forms.Form):
 
         valid_categories = get_objects_for_user(user, 'view_category',
                                                 Category)
-        valid_stores = get_objects_for_user(user, 'view_stores',
-                                            Store)
+        valid_stores = get_objects_for_user(user, 'view_store', Store)
 
         self.base_fields['store'].queryset = valid_stores
         self.base_fields['competing_stores'].queryset = valid_stores

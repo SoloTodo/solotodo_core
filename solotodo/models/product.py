@@ -79,6 +79,10 @@ class Product(models.Model):
         super(Product, self).__init__(*args, **kwargs)
 
     @property
+    def category(self):
+        return self.instance_model.model.category
+
+    @property
     def specs(self):
         if not self._specs:
             self._specs = self.es_search().filter(

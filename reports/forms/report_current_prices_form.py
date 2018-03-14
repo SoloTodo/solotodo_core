@@ -56,7 +56,9 @@ class ReportCurrentPricesForm(forms.Form):
         currency = self.cleaned_data['currency']
 
         es = Entity.objects.filter(product__isnull=False) \
-            .filter(category=category, store__in=stores) \
+            .filter(
+            product__instance_model__model__category=category,
+            store__in=stores) \
             .get_available() \
             .select_related(
             'product__instance_model',

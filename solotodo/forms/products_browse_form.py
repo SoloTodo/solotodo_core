@@ -48,9 +48,6 @@ class ProductsBrowseForm(forms.Form):
             product__isnull=False
         )
 
-        # 2. Get the min, max, and 80th percentile normal and offer price
-        price_ranges = self.entities_price_ranges(entities)
-
         ordering = self.ordering_or_default()
 
         # 3. DB ordering (if it applies)
@@ -81,7 +78,10 @@ class ProductsBrowseForm(forms.Form):
         else:
             es_results = es_search[:len(product_ids)].execute()
 
-        # 6 - 7. Obtain price entries and bucket the results
+        # 6. Get the min, max, and 80th percentile normal and offer price
+        price_ranges = self.entities_price_ranges(entities)
+
+        # 7. Obtain price entries and bucket the results
 
         bucketed_results = self.bucket_results(entities, es_results)
 
@@ -107,9 +107,6 @@ class ProductsBrowseForm(forms.Form):
         entities = self.initial_entities(request).filter(
             product__instance_model__model__category=category
         )
-
-        # 2. Get the min, max, and 80th percentile normal and offer price
-        price_ranges = self.entities_price_ranges(entities)
 
         ordering = self.ordering_or_default()
 
@@ -144,7 +141,10 @@ class ProductsBrowseForm(forms.Form):
 
         filter_aggs = specs_form.process_es_aggs(es_results.aggs)
 
-        # 6 - 7. Obtain price entries and bucket the results
+        # 6. Get the min, max, and 80th percentile normal and offer price
+        price_ranges = self.entities_price_ranges(entities)
+
+        # 7. Obtain price entries and bucket the results
 
         bucket_field = specs_form.cleaned_data['bucket_field']
         bucketed_results = self.bucket_results(
@@ -217,19 +217,31 @@ class ProductsBrowseForm(forms.Form):
             raise Exception('This condition is unreachable')
 
     def entities_price_ranges(self, entities):
-        entities_count = entities.count()
+        prices_usd = {
+            'normal_price_usd': [],
+            'offer_price_usd': []
+        }
 
-        if not entities_count:
+        for entry in entities:
+            prices_usd['normal_price_usd'].append(
+                entry['min_normal_price_usd'])
+            prices_usd['offer_price_usd'].append(
+                entry['min_offer_price_usd'])
+
+        if not prices_usd:
             return None
 
+        entities_count = len(prices_usd['normal_price_usd'])
+
         price_ranges = {}
+
         for price_type in ['normal_price_usd', 'offer_price_usd']:
-            price_field = 'min_' + price_type
-            sorted_entities = entities.order_by(price_field)
+            prices_list = sorted(prices_usd[price_type])
+
             price_ranges[price_type] = {
-                'min': sorted_entities.first()[price_field],
-                'max': sorted_entities.last()[price_field],
-                '80th': sorted_entities[int(entities_count * 0.8)][price_field]
+                'min': prices_list[0],
+                'max': prices_list[-1],
+                '80th': prices_list[int(entities_count * 0.8)]
             }
 
         return price_ranges
@@ -318,7 +330,7 @@ class ProductsBrowseForm(forms.Form):
                     bucketed_results[bucket] = OrderedDict()
 
                 bucketed_results[bucket][product] = {
-                    'ordering_value': product.specs[ordering_field],
+                    'ordering_value': product.specs.get(ordering_field, None),
                     'prices': product_id_to_prices[product.id]
                 }
 

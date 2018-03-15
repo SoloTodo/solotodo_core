@@ -228,10 +228,10 @@ class ProductsBrowseForm(forms.Form):
             prices_usd['offer_price_usd'].append(
                 entry['min_offer_price_usd'])
 
-        if not prices_usd:
-            return None
-
         entities_count = len(prices_usd['normal_price_usd'])
+
+        if not entities_count:
+            return None
 
         price_ranges = {}
 

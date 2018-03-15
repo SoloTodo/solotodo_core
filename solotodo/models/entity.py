@@ -383,10 +383,16 @@ class Entity(models.Model):
 
     def update_pricing(self):
         scraper = self.store.scraper
+
+        if self.store.storescraper_extra_args:
+            extra_args = json.loads(self.store.storescraper_extra_args)
+        else:
+            extra_args = None
+
         scraped_products = scraper.products_for_url(
             self.discovery_url,
             category=self.scraped_category.storescraper_name,
-            extra_args=self.store.storescraper_extra_args
+            extra_args=extra_args
         )
 
         entity_scraped_product = None

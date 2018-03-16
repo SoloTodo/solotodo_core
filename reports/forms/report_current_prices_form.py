@@ -125,6 +125,7 @@ class ReportCurrentPricesForm(forms.Form):
         headers.extend([
             'Tienda',
             'SKU',
+            'Condición',
             'Fecha muestra',
             'Moneda',
             'Precio normal',
@@ -203,6 +204,10 @@ class ReportCurrentPricesForm(forms.Form):
                 '{}entities/{}'.format(settings.BACKEND_HOST, e.id),
                 string=sku_text,
                 cell_format=url_format)
+            col += 1
+
+            # Condition
+            worksheet.write(row, col, str(e.condition_as_text))
             col += 1
 
             # Date

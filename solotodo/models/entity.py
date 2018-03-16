@@ -168,17 +168,20 @@ class EntityQueryset(models.QuerySet):
 
 
 class Entity(models.Model):
+    CONDITION_CHOICES = [
+        ('https://schema.org/DamagedCondition', 'Damaged'),
+        ('https://schema.org/NewCondition', 'New'),
+        ('https://schema.org/RefurbishedCondition', 'Refurbished'),
+        ('https://schema.org/UsedCondition', 'Used')
+    ]
+    CONDITION_CHOICES_DICT = dict(CONDITION_CHOICES)
+
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     scraped_category = models.ForeignKey(Category, on_delete=models.CASCADE,
                                          related_name='+')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
-    condition = models.URLField(choices=[
-        ('https://schema.org/DamagedCondition', 'Damaged'),
-        ('https://schema.org/NewCondition', 'New'),
-        ('https://schema.org/RefurbishedCondition', 'Refurbished'),
-        ('https://schema.org/UsedCondition', 'Used')
-    ])
+    condition = models.URLField(choices=CONDITION_CHOICES)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
                                   related_name='+')
@@ -234,6 +237,10 @@ class Entity(models.Model):
         result += ' ({})'.format(self.category)
 
         return result
+
+    @property
+    def condition_as_text(self):
+        return self.CONDITION_CHOICES_DICT[self.condition]
 
     def is_available(self):
         if self.active_registry:

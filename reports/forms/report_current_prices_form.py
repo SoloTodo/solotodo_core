@@ -30,6 +30,9 @@ class ReportCurrentPricesForm(forms.Form):
         queryset=Currency.objects.all(),
         required=False
     )
+    filename = forms.CharField(
+        required=False
+    )
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -270,8 +273,14 @@ class ReportCurrentPricesForm(forms.Form):
         file_for_upload = ContentFile(output.getvalue())
 
         storage = PrivateS3Boto3Storage()
-        path = storage.save('reports/current_prices_{}.xlsx'.format(
-            timezone.now().strftime('%Y-%m-%d_%H:%M:%S')),
-            file_for_upload)
+
+        filename_template = self.cleaned_data['filename']
+        if not filename_template:
+            filename_template = 'current_prices_%Y-%m-%d_%H:%M:%S'
+
+        filename = timezone.now().strftime(filename_template)
+
+        path = storage.save('reports/{}.xlsx'.format(filename),
+                            file_for_upload)
 
         return path

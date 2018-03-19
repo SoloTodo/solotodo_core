@@ -6,7 +6,7 @@ from hardware.models import Budget
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
-    Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit
+    Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -409,3 +409,33 @@ class ProductPricingHistorySerializer(serializers.Serializer):
 class ProductAvailableEntitiesSerializer(serializers.Serializer):
     product = ProductWithThumbnailsSerializer()
     entities = EntitySerializer(many=True)
+
+
+class RatingSerializer(serializers.ModelSerializer):
+    product = NestedProductSerializer()
+    store = serializers.HyperlinkedRelatedField(
+        view_name='store-detail', read_only=True,
+        source='store.pk')
+
+    class Meta:
+        model = Rating
+        fields = ('id', 'url', 'product', 'product_rating', 'product_comments',
+                  'store', 'store_rating', 'store_comments', 'creation_date',
+                  'approval_date')
+
+
+class RatingFullSerializer(RatingSerializer):
+    user = UserSerializer()
+
+    class Meta:
+        model = Rating
+        fields = ('id', 'url', 'product', 'product_rating', 'product_comments',
+                  'store', 'store_rating', 'store_comments', 'creation_date',
+                  'user', 'ip', 'purchase_proof', 'approval_date')
+
+
+class StoreRatingSerializer(serializers.Serializer):
+    store = serializers.HyperlinkedRelatedField(
+        view_name='store-detail', read_only=True,
+        source='store.pk')
+    rating = serializers.FloatField()

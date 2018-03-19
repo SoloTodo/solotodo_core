@@ -11,7 +11,7 @@ from guardian.admin import GuardedModelAdmin
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
-    CategorySpecsFilter, CategorySpecsOrder, Lead, Visit
+    CategorySpecsFilter, CategorySpecsOrder, Lead, Visit, Rating
 
 
 @admin.register(Permission)
@@ -191,3 +191,11 @@ class VisitModelAdmin(admin.ModelAdmin):
             'website',
             'user'
         )
+
+
+@admin.register(Rating)
+class RatingModelAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'product', 'store', 'creation_date',
+                    'approval_date')
+    list_filter = ('store', )
+    readonly_fields = ('product', 'store', 'user')

@@ -18,6 +18,7 @@ from .category_tier import CategoryTier
 from .store import Store
 from .category import Category
 from .product import Product
+from .rating import Rating
 from .entity import Entity
 from .entity_history import EntityHistory
 from .entity_log import EntityLog

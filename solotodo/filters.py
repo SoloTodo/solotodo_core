@@ -8,7 +8,7 @@ from solotodo.filter_querysets import create_store_filter, \
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
-    Currency, Visit, Category
+    Currency, Visit, Category, Rating
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -44,6 +44,12 @@ class WebsiteFilterSet(rest_framework.FilterSet):
 
 
 class StoreFilterSet(rest_framework.FilterSet):
+    ids = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Store.objects.all(),
+        method='_ids',
+        label='Stores'
+    )
+
     countries = rest_framework.ModelMultipleChoiceFilter(
         queryset=Country.objects.all(),
         name='country',
@@ -59,6 +65,11 @@ class StoreFilterSet(rest_framework.FilterSet):
     def qs(self):
         qs = super(StoreFilterSet, self).qs
         return create_store_filter(qs=qs)(self.request)
+
+    def _ids(self, queryset, name, value):
+        if value:
+            return queryset & value
+        return queryset
 
     class Meta:
         model = Store
@@ -138,7 +149,7 @@ class EntityFilterSet(rest_framework.FilterSet):
 
     def _ids(self, queryset, name, value):
         if value:
-            return queryset.filter(pk__in=[x.pk for x in value])
+            return queryset & value
         return queryset
 
     def _is_available(self, queryset, name, value):
@@ -198,7 +209,7 @@ class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
 
     def _ids(self, queryset, name, value):
         if value:
-            return queryset.filter(pk__in=[x.pk for x in value])
+            return queryset & value
         return queryset
 
     @property
@@ -383,7 +394,7 @@ class ProductFilterSet(rest_framework.FilterSet):
 
     def _ids(self, queryset, name, value):
         if value:
-            return queryset.filter(pk__in=[x.pk for x in value])
+            return queryset & value
         return queryset
 
     def _availability_countries(self, queryset, name, value):
@@ -529,4 +540,43 @@ class VisitFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = Visit
+        fields = []
+
+
+class RatingFilterSet(rest_framework.FilterSet):
+    stores = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Store.objects.all(),
+        name='store',
+        label='Stores'
+    )
+    products = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Product.objects.all(),
+        name='product',
+        label='Products'
+    )
+    categories = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Category.objects.all(),
+        name='product__instance_model__model__category',
+        label='Categories'
+    )
+    pending_only = rest_framework.BooleanFilter(
+        method='_pending_only'
+    )
+
+    @property
+    def qs(self):
+        qs = super(RatingFilterSet, self).qs
+        if self.request and not self.request.user.has_perm(
+                'solotodo.is_ratings_staff'):
+            qs = qs.filter(approval_date__isnull=False)
+
+        return qs
+
+    def _pending_only(self, queryset, name, value):
+        if value:
+            queryset = queryset.filter(approval_date__isnull=True)
+        return queryset
+
+    class Meta:
+        model = Rating
         fields = []

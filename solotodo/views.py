@@ -9,7 +9,9 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
+from django.db.models import Avg
 from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
@@ -24,6 +26,7 @@ from rest_framework.filters import OrderingFilter, \
     SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
+from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -40,7 +43,7 @@ from solotodo.filter_querysets import create_category_filter, \
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
     LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet, \
-    WebsiteFilterSet, VisitFilterSet
+    WebsiteFilterSet, VisitFilterSet, RatingFilterSet
 from solotodo.forms.date_range_form import DateRangeForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
@@ -57,10 +60,12 @@ from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
-    EntityHistory, Visit
+    EntityHistory, Visit, Rating
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
-    EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination
+    EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination, \
+    RatingPagination
+from solotodo.permissions import RatingPermission
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
     StoreTypeSerializer, StoreScraperSerializer, CategorySerializer, \
@@ -73,7 +78,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     CategorySpecsOrderSerializer, EntityHistorySerializer, \
     EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer, \
     ProductPricingHistorySerializer, NestedProductSerializer, \
-    ProductAvailableEntitiesSerializer
+    ProductAvailableEntitiesSerializer, RatingSerializer, \
+    RatingFullSerializer, StoreRatingSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict, generate_cache_key
 from rest_framework_tracking.mixins import LoggingMixin
@@ -356,6 +362,30 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
     filter_class = StoreFilterSet
+
+    @list_route()
+    def average_ratings(self, request, *args, **kwargs):
+        stores = self.filter_queryset(self.get_queryset())
+
+        ratings = Rating.objects.filter(
+            store__in=stores,
+            approval_date__isnull=False
+        ).values('store')\
+            .annotate(rating=Avg('store_rating'))\
+            .order_by('store')
+
+        stores_dict = {s.id: s for s in stores}
+
+        store_ratings = [{
+            'store': stores_dict[rating['store']],
+            'rating': rating['rating']
+        } for rating in ratings]
+
+        print(store_ratings)
+
+        serializer = StoreRatingSerializer(store_ratings, many=True,
+                                           context={'request': request})
+        return Response(serializer.data)
 
     @detail_route()
     @detail_permission('update_store_pricing')
@@ -1212,3 +1242,35 @@ class ResourceViewSet(viewsets.ViewSet):
             response.extend(resource_entries.data)
 
         return Response(response)
+
+
+class RatingViewSet(viewsets.ModelViewSet):
+    queryset = Rating.objects.all()
+    serializer_class = RatingSerializer
+    permission_classes = (RatingPermission, )
+    pagination_class = RatingPagination
+    filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
+    filter_class = RatingFilterSet
+
+    def get_serializer_class(self):
+        if self.request.user.has_perm('solotodo.is_ratings_staff'):
+            return RatingFullSerializer
+        else:
+            return RatingSerializer
+
+    @detail_route(methods=['post'])
+    def approve(self, request, pk, *args, **kwargs):
+        if not request.user.has_perm('solotodo.is_ratings_staff'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        rating = self.get_object()
+
+        try:
+            rating.approve()
+        except ValidationError as err:
+            return Response({'detail': err},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        serializer_class = self.get_serializer_class()
+        serializer = serializer_class(rating, context={'request': request})
+        return Response(serializer.data)

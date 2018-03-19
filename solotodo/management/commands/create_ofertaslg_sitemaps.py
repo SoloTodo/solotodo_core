@@ -18,9 +18,9 @@ class Command(BaseCommand):
         es_results = search[:100000].execute()
 
         product_ids = [e.product_id for e in es_results]
-        all_products = list(Product.objects.filter(pk__in=product_ids)\
-            .filter_by_category(categories)\
-            .select_related('instance_model'))
+        all_products = list(Product.objects.filter(pk__in=product_ids)
+                            .filter_by_category(categories)
+                            .select_related('instance_model'))
 
         # Products
 
@@ -45,7 +45,8 @@ class Command(BaseCommand):
                 lastmod.text = product.last_updated.isoformat()
 
             et = ET.ElementTree(urlset)
-            file = open('ofertaslg_sitemap_products_{}.xml'.format(page + 1), 'wb')
+            file = open('ofertaslg_sitemap_products_{}.xml'.format(page + 1),
+                        'wb')
             et.write(file, encoding='utf-8', xml_declaration=True)
             file.close()
 
@@ -79,7 +80,8 @@ class Command(BaseCommand):
         for local_page in range(page):
             sitemap = ET.SubElement(sitemapindex, 'sitemap')
             loc = ET.SubElement(sitemap, 'loc')
-            loc.text = 'https://www.ofertaslg.cl/ofertaslg_sitemap_products_{}.xml' \
+            loc.text = 'https://www.ofertaslg.cl/' \
+                       'ofertaslg_sitemap_products_{}.xml' \
                        ''.format(local_page + 1)
             lastmod = ET.SubElement(sitemap, 'lastmod')
             lastmod.text = timezone.now().isoformat()

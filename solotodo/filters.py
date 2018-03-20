@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import F
 from django_filters import rest_framework
 
 from solotodo.custom_model_multiple_choice_filter import \
@@ -263,6 +264,18 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
         label='Offer price (USD)',
         name='offer_price_usd'
     )
+
+    @classmethod
+    def create(cls, request):
+        entities = Entity.objects.annotate(
+            offer_price_usd=F('active_registry__offer_price') /
+            F('currency__exchange_rate'),
+            normal_price_usd=F('active_registry__normal_price') /
+            F('currency__exchange_rate')
+        )
+
+        return cls(
+            data=request.query_params, queryset=entities, request=request)
 
     @property
     def qs(self):

@@ -167,7 +167,8 @@ class ProductsBrowseForm(forms.Form):
         }
 
     def initial_entities(self, request):
-        filterset = ProductsBrowseEntityFilterSet.create(request)
+        filterset = ProductsBrowseEntityFilterSet(
+            data=request.query_params, request=request)
 
         # The default ordering below will
         # a. Be overriden (if the final ordering is based on the DB)

@@ -518,7 +518,8 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        filterset = EntityEstimatedSalesFilterSet.create(request)
+        filterset = EntityEstimatedSalesFilterSet(
+            data=request.query_params, request=request)
         form = EntityEstimatedSalesForm(request.query_params)
 
         if form.is_valid():

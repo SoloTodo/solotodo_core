@@ -22,10 +22,15 @@ class VisitQuerySet(models.QuerySet):
         perm_websites = Website.objects.filter_by_user_perms(
             user, permissions['website'])
 
-        return self.filter(
+        qs = self.filter(
             product__instance_model__model__category__in=perm_categories,
             website__in=perm_websites,
         )
+
+        if not user.has_perm('solotodo.is_ratings_staff'):
+            qs = qs.filter(approval_date__isnull=False)
+
+        return qs
 
 
 class Visit(models.Model):

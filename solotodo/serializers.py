@@ -407,7 +407,7 @@ class ProductPricingHistorySerializer(serializers.Serializer):
 
 
 class ProductAvailableEntitiesSerializer(serializers.Serializer):
-    product = ProductWithThumbnailsSerializer()
+    product = ProductSerializer()
     entities = EntitySerializer(many=True)
 
 

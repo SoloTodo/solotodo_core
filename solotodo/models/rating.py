@@ -3,9 +3,34 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import timezone
 
+from solotodo.models import Category
 from solotodo_core.s3utils import MediaRootPrivateS3Boto3Storage
 from .product import Product
 from .store import Store
+
+
+class RatingQuerySet(models.QuerySet):
+    def filter_by_user_perms(self, user, permission):
+        synth_permissions = {
+            'view_rating': {
+                'store': 'view_store',
+                'category': 'view_category',
+            }
+        }
+
+        assert permission in synth_permissions
+
+        permissions = synth_permissions[permission]
+
+        perm_stores = Store.objects.filter_by_user_perms(
+            user, permissions['store'])
+        perm_categories = Category.objects.filter_by_user_perms(
+            user, permissions['category'])
+
+        return self.filter(
+            store__in=perm_stores,
+            product__instance_model__model__category__in=perm_categories,
+        )
 
 
 class Rating(models.Model):
@@ -21,6 +46,8 @@ class Rating(models.Model):
     approval_date = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     ip = models.GenericIPAddressField()
+
+    objects = RatingQuerySet.as_manager()
 
     def __str__(self):
         return '{}: {}'.format(self.product, self.store)

@@ -7,6 +7,7 @@ from rest_framework_tracking.mixins import LoggingMixin
 
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
 from reports.forms.report_store_analysis_form import ReportStoreAnalysisForm
+from reports.forms.report_weekly_prices_form import ReportWeeklyPricesForm
 from reports.models import Report, ReportDownload
 from reports.serializers import ReportSerializer
 from solotodo_core.s3utils import PrivateS3Boto3Storage
@@ -57,6 +58,35 @@ class ReportViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
         form = ReportStoreAnalysisForm(request.user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report()
+
+        ReportDownload.objects.create(
+            report=report,
+            user=user,
+            file=report_path
+        )
+
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
+
+    @list_route()
+    def weekly_prices(self, request):
+        report = Report.objects.get(slug='weekly_prices')
+        user = request.user
+
+        if not user.has_perm('view_report', report):
+            raise PermissionDenied
+
+        form = ReportWeeklyPricesForm(request.user, request.GET)
 
         if not form.is_valid():
             return Response({

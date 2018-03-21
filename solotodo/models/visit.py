@@ -27,9 +27,6 @@ class VisitQuerySet(models.QuerySet):
             website__in=perm_websites,
         )
 
-        if not user.has_perm('solotodo.is_ratings_staff'):
-            qs = qs.filter(approval_date__isnull=False)
-
         return qs
 
 

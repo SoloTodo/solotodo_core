@@ -148,7 +148,7 @@ class Product(models.Model):
         document[u'search_bucket_key'] = self.search_bucket_key(document)
 
         es.index(index=settings.ES_PRODUCTS_INDEX,
-                 doc_type=self.category.storescraper_name,
+                 doc_type=str(self.instance_model.model),
                  id=self.id,
                  body=document)
 

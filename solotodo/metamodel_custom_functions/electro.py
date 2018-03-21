@@ -150,7 +150,7 @@ def additional_es_fields(instance_model, elastic_search_original):
             pretty_dimensions(elastic_search_original)
         return result
 
-    if m == 'Cocina':
+    if m == 'Stove':
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_original)
         result['pretty_weight'] = format_optional_field(

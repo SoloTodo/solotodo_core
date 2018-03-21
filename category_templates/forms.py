@@ -18,6 +18,7 @@ class ProductRenderForm(forms.Form):
         valid_websites = get_objects_for_user(
             user, 'view_website', Website)
 
-        cls.base_fields['website'].queryset = valid_websites
+        form = cls(data)
+        form.fields['website'].queryset = valid_websites
 
-        return cls(data)
+        return form

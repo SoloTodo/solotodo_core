@@ -27,9 +27,10 @@ class StoreUpdatePricingForm(forms.Form):
             user, 'update_category_pricing',
             store.scraper_categories())
 
-        cls.base_fields['categories'].queryset = valid_categories
+        form = cls(data)
+        form.fields['categories'].queryset = valid_categories
 
-        return cls(data)
+        return form
 
     def default_categories(self):
         return self.fields['categories'].queryset

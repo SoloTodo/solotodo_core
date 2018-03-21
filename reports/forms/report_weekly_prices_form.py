@@ -42,17 +42,17 @@ class ReportWeeklyPricesForm(forms.Form):
 
         valid_categories = get_objects_for_user(user, 'view_category',
                                                 Category)
-        self.base_fields['category'].queryset = valid_categories
+        self.fields['category'].queryset = valid_categories
 
         valid_stores = get_objects_for_user(user, 'view_store', Store)
-        self.base_fields['stores'].queryset = valid_stores
+        self.fields['stores'].queryset = valid_stores
 
     def clean_stores(self):
         selected_stores = self.cleaned_data['stores']
         if selected_stores:
             return selected_stores
         else:
-            return self.base_fields['stores'].queryset
+            return self.fields['stores'].queryset
 
     def generate_report(self):
         category = self.cleaned_data['category']

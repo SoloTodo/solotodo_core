@@ -38,23 +38,23 @@ class ReportStoreAnalysisForm(forms.Form):
                                                 Category)
         valid_stores = get_objects_for_user(user, 'view_store', Store)
 
-        self.base_fields['store'].queryset = valid_stores
-        self.base_fields['competing_stores'].queryset = valid_stores
-        self.base_fields['categories'].queryset = valid_categories
+        self.fields['store'].queryset = valid_stores
+        self.fields['competing_stores'].queryset = valid_stores
+        self.fields['categories'].queryset = valid_categories
 
     def clean_competing_stores(self):
         selected_stores = self.cleaned_data['competing_stores']
         if selected_stores:
             return selected_stores
         else:
-            return self.base_fields['competing_stores'].queryset
+            return self.fields['competing_stores'].queryset
 
     def clean_categories(self):
         selected_categories = self.cleaned_data['categories']
         if selected_categories:
             return selected_categories
         else:
-            return self.base_fields['categories'].queryset
+            return self.fields['categories'].queryset
 
     def generate_report(self):
         selected_store = self.cleaned_data['store']

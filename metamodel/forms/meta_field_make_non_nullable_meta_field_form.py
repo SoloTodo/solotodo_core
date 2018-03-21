@@ -7,8 +7,8 @@ class MetaFieldMakeNonNullableMetaFieldForm(forms.Form):
                                      required=True)
 
     def __init__(self, meta_field, data=None, *args, **kwargs):
-        self.base_fields['default'].queryset = InstanceModel.objects.filter(
-            model=meta_field.model)
-
         super(MetaFieldMakeNonNullableMetaFieldForm, self).__init__(
             data, *args, **kwargs)
+
+        self.fields['default'].queryset = InstanceModel.objects.filter(
+            model=meta_field.model)

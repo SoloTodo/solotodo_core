@@ -828,7 +828,7 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
         if form.is_valid():
             website = form.cleaned_data['website']
-            ip = get_client_ip(request)
+            ip = get_client_ip(request) or '127.0.0.1'
 
             lead = Lead.objects.create(
                 entity_history=entity.active_registry,
@@ -1034,7 +1034,7 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
         if form.is_valid():
             website = form.cleaned_data['website']
-            ip = get_client_ip(request)
+            ip = get_client_ip(request) or '127.0.0.1'
 
             visit = Visit.objects.create(
                 product=product,

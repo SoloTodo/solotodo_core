@@ -164,7 +164,10 @@ class LeadGroupingForm(forms.Form):
 
             for grouping in groupings:
                 field = conversion_dict[grouping]['field']
-                cleaned_value = grouping_cleaned_values[grouping][entry[field]]
+                field_value = entry[field]
+                if field_value is None:
+                    continue
+                cleaned_value = grouping_cleaned_values[grouping][field_value]
                 subresult[grouping] = cleaned_value
 
             result.append(subresult)

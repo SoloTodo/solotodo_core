@@ -270,7 +270,8 @@ class ReportCurrentPricesForm(forms.Form):
         workbook.close()
 
         output.seek(0)
-        file_for_upload = ContentFile(output.getvalue())
+        file_value = output.getvalue()
+        file_for_upload = ContentFile(file_value)
 
         storage = PrivateS3Boto3Storage()
 
@@ -283,4 +284,7 @@ class ReportCurrentPricesForm(forms.Form):
         path = storage.save('reports/{}.xlsx'.format(filename),
                             file_for_upload)
 
-        return path
+        return {
+            'file': file_value,
+            'path': path
+        }

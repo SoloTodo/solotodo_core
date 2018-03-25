@@ -4,6 +4,8 @@ import json
 
 from decimal import Decimal
 
+import datetime
+
 
 def iterable_to_dict(iterable_or_model, field='id'):
     if not isinstance(iterable_or_model, collections.Iterable):
@@ -72,3 +74,18 @@ class Clock(object):
         new_time = time.monotonic()
         print('{}: {}'.format(label, new_time - self.time))
         self.time = new_time
+
+
+# REF https://stackoverflow.com/questions/304256/whats-the-best-way-to-
+# find-the-inverse-of-datetime-isocalendar
+def iso_year_start(iso_year):
+    "The gregorian calendar date of the first day of the given ISO year"
+    fourth_jan = datetime.datetime(iso_year, 1, 4)
+    delta = datetime.timedelta(fourth_jan.isoweekday()-1)
+    return fourth_jan - delta
+
+
+def iso_to_gregorian(iso_year, iso_week, iso_day):
+    "Gregorian calendar date for the given ISO year, week and day"
+    year_start = iso_year_start(iso_year)
+    return year_start + datetime.timedelta(days=iso_day-1, weeks=iso_week-1)

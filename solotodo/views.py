@@ -11,7 +11,7 @@ from django.contrib.gis.geoip2 import GeoIP2
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
-from django.db.models import Avg
+from django.db.models import Avg, Count
 from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
@@ -380,8 +380,6 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
             'store': stores_dict[rating['store']],
             'rating': rating['rating']
         } for rating in ratings]
-
-        print(store_ratings)
 
         serializer = StoreRatingSerializer(store_ratings, many=True,
                                            context={'request': request})
@@ -1132,6 +1130,15 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         response = Response(status=status.HTTP_302_FOUND)
         response['Location'] = resized_picture.url
         return response
+
+    @detail_route()
+    def average_rating(self, request, pk):
+        product = self.get_object()
+
+        rating = product.rating_set.filter(approval_date__isnull=False)\
+            .aggregate(average=Avg('product_rating'), count=Count('*'))
+
+        return Response(rating)
 
 
 class LeadViewSet(viewsets.ReadOnlyModelViewSet):

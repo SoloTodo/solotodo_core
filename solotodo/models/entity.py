@@ -288,6 +288,7 @@ class Entity(models.Model):
                 'discovery_url': scraped_product.discovery_url,
                 'picture_urls': scraped_product.picture_urls_as_json(),
                 'description': scraped_product.description,
+                'condition': scraped_product.condition,
                 'active_registry': new_active_registry,
             })
         else:

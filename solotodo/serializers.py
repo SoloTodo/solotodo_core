@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from guardian.utils import get_anonymous_user
 from rest_framework import serializers
 from sorl.thumbnail import get_thumbnail
 
@@ -6,7 +7,11 @@ from hardware.models import Budget
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
-    Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating
+    Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating, \
+    SoloTodoUser
+from solotodo.serializer_utils import StorePrimaryKeyRelatedField, \
+    ProductPrimaryKeyRelatedField
+from solotodo.utils import get_client_ip
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):
@@ -432,6 +437,29 @@ class RatingFullSerializer(RatingSerializer):
         fields = ('id', 'url', 'product', 'product_rating', 'product_comments',
                   'store', 'store_rating', 'store_comments', 'creation_date',
                   'user', 'ip', 'purchase_proof', 'approval_date')
+
+
+class RatingCreateSerializer(serializers.ModelSerializer):
+    store_rating = serializers.IntegerField(min_value=1, max_value=5)
+    product_rating = serializers.IntegerField(min_value=1, max_value=5)
+    store = StorePrimaryKeyRelatedField()
+    product = ProductPrimaryKeyRelatedField()
+
+    def create(self, validated_data):
+        if self.context['request'].user.is_authenticated:
+            user = self.context['request'].user
+        else:
+            user = get_anonymous_user()
+
+        validated_data['user'] = user
+        validated_data['ip'] = \
+            get_client_ip(self.context['request']) or '127.0.0.1'
+        return super(RatingCreateSerializer, self).create(validated_data)
+
+    class Meta:
+        model = Rating
+        fields = ('product', 'product_rating', 'product_comments',
+                  'store', 'store_rating', 'store_comments', 'purchase_proof')
 
 
 class StoreRatingSerializer(serializers.Serializer):

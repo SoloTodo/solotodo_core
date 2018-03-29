@@ -79,7 +79,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer, \
     ProductPricingHistorySerializer, NestedProductSerializer, \
     ProductAvailableEntitiesSerializer, RatingSerializer, \
-    RatingFullSerializer, StoreRatingSerializer
+    RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict, generate_cache_key
 from rest_framework_tracking.mixins import LoggingMixin
@@ -1261,10 +1261,13 @@ class RatingViewSet(viewsets.ModelViewSet):
     filter_class = RatingFilterSet
 
     def get_serializer_class(self):
+        if self.action == 'create':
+            return RatingCreateSerializer
+
         if self.request.user.has_perm('solotodo.is_ratings_staff'):
             return RatingFullSerializer
-        else:
-            return RatingSerializer
+
+        return RatingSerializer
 
     @detail_route(methods=['post'])
     def approve(self, request, pk, *args, **kwargs):

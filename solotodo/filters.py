@@ -10,7 +10,7 @@ from solotodo.filter_querysets import create_store_filter, \
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
-    Currency, Visit, Rating
+    Currency, Visit, Rating, Category
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -219,17 +219,17 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
 
 class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
     products = CustomModelMultipleChoiceFilter(
-        queryset=create_product_filter(),
+        queryset=Product.objects.all(),
         name='product',
         label='Products'
     )
     categories = CustomModelMultipleChoiceFilter(
-        queryset=create_category_filter(),
+        queryset=Category.objects.all(),
         name='category',
         label='Categories'
     )
     stores = CustomModelMultipleChoiceFilter(
-        queryset=create_store_filter(),
+        queryset=Store.objects.all(),
         name='store',
         label='Stores'
     )
@@ -274,8 +274,19 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
             F('currency__exchange_rate')
         )
 
-        return cls(
+        filterset = cls(
             data=request.query_params, queryset=entities, request=request)
+
+        if 'products' in request.query_params:
+            filterset.form.fields['products'].queryset = create_product_filter()(request)
+
+        if 'categories' in request.query_params:
+            filterset.form.fields['categories'].queryset = create_category_filter()(request)
+
+        if 'stores' in request.query_params:
+            filterset.form.fields['stores'].queryset = create_store_filter()(request)
+
+        return filterset
 
     @property
     def qs(self):

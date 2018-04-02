@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import re
 from django import forms
-from django.db.models import Min, Q, Count, Case, When, IntegerField, F
+from django.db.models import Min, Q, Count, F
 from django.utils import timezone
 
 from solotodo.filter_utils import IsoDateTimeRangeField

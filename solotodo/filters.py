@@ -278,13 +278,16 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
             data=request.query_params, queryset=entities, request=request)
 
         if 'products' in request.query_params:
-            filterset.form.fields['products'].queryset = create_product_filter()(request)
+            filterset.form.fields['products'].queryset = \
+                create_product_filter()(request)
 
         if 'categories' in request.query_params:
-            filterset.form.fields['categories'].queryset = create_category_filter()(request)
+            filterset.form.fields['categories'].queryset = \
+                create_category_filter()(request)
 
         if 'stores' in request.query_params:
-            filterset.form.fields['stores'].queryset = create_store_filter()(request)
+            filterset.form.fields['stores'].queryset = \
+                create_store_filter()(request)
 
         return filterset
 

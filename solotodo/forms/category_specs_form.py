@@ -87,15 +87,12 @@ class CategorySpecsForm(forms.Form):
         return es_search
 
     def process_es_aggs(self, aggs):
-        category_fields_specs_dict = iterable_to_dict(
-            self.category_specs_filters, 'name')
-
         new_aggs = {}
 
         for field_name, field_aggs in aggs.to_dict().items():
-            buckets = field_aggs['result']['buckets']
-            field = category_fields_specs_dict[field_name]
-            new_field_aggs = field.process_buckets(buckets)
-            new_aggs[field.name] = new_field_aggs
+            new_aggs[field_name] = [{
+                'id': field_agg['key'],
+                'doc_count': field_agg['doc_count']
+            } for field_agg in field_aggs['result']['buckets']]
 
         return new_aggs

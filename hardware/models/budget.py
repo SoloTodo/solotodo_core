@@ -341,6 +341,22 @@ Si prendes el PC con el procesador en la placa sin actualizar el equipo no
  va a mostrar señal de video, y no va a mostrar BIOS.
 """)
 
+            # Check for non-Summit Ridge processor in current AM4 MB
+            if processor.socket_id == 590711 and processor.core_id != 590715 \
+                    and motherboard.chipset_northbridge_family_socket_id == \
+                    593822:
+                warnings.append("""
+Para usar el procesador {} en la placa madre {} la placa madre necesita
+actualización de BIOS previa. \z\z
+
+Consulta a la tienda donde vayas a comprar la
+placa madre si la venden actualizada (o si la pueden actualizar) para este
+procesador. \z\z
+
+Actualmente no hay placas madres a la venta con soporte de fábrica para
+este procesador.
+ """.format(processor.unicode, motherboard.unicode))
+
         if processor and not processor.includes_cooler and not cooler:
             errors.append("""
 El procesador de tu cotización no incluye cooler de fábrica, y tu cotización

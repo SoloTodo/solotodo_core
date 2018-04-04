@@ -203,6 +203,11 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
         name='category',
         label='Categories'
     )
+    countries = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Country.objects.all(),
+        name='store__country',
+        label='Countries'
+    )
 
     @property
     def qs(self):

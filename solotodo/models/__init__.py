@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.db.models.signals import post_save, pre_delete
+from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.dispatch import receiver
+from django.utils import timezone
 from rest_framework.authtoken.models import Token
 
 from metamodel.models import MetaModel, InstanceModel
@@ -61,3 +62,9 @@ def delete_product_from_es(sender, instance, using, **kwargs):
     if instance.model in category_models:
         associated_product = Product.objects.get(instance_model=instance)
         associated_product.delete_from_elasticsearch()
+
+
+@receiver(m2m_changed, sender=SoloTodoUser.preferred_stores.through)
+def update_preferred_stores_last_updated(sender, instance, *args, **kwargs):
+    instance.preferred_stores_last_updated = timezone.now()
+    instance.save()

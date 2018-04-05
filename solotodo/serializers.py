@@ -46,9 +46,9 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name', 'detail_url', 'email', 'first_name',
                   'last_name', 'preferred_language', 'preferred_country',
                   'preferred_currency', 'preferred_number_format',
-                  'preferred_store', 'preferred_stores',
-                  'date_joined', 'is_staff', 'permissions', 'budgets',
-                  'is_superuser')
+                  'preferred_store', 'preferred_stores_last_updated',
+                  'preferred_stores', 'date_joined', 'is_staff',
+                  'permissions', 'budgets', 'is_superuser')
         read_only_fields = ('email', 'first_name', 'last_name',
                             'permissions', 'is_staff', 'is_superuser',
                             'budgets', 'date_joined')
@@ -90,7 +90,7 @@ class CountrySerializer(serializers.HyperlinkedModelSerializer):
 class StoreSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Store
-        fields = ('url', 'id', 'name', 'country', 'is_active', 'type',
+        fields = ('url', 'id', 'name', 'country', 'last_activation', 'type',
                   'storescraper_class', 'logo')
 
 

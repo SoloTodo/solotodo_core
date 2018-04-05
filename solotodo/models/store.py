@@ -25,7 +25,7 @@ class StoreQuerySet(models.QuerySet):
 class Store(models.Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)
     country = models.ForeignKey(Country, on_delete=models.CASCADE)
-    is_active = models.BooleanField(default=True)
+    last_activation = models.DateTimeField(null=True, blank=True)
     storescraper_class = models.CharField(max_length=255, db_index=True)
     storescraper_extra_args = models.CharField(max_length=255, null=True,
                                                blank=True)
@@ -44,7 +44,7 @@ class Store(models.Model):
                        discover_urls_concurrency=None,
                        products_for_url_concurrency=None,
                        use_async=None, update_log=None):
-        assert self.is_active
+        assert self.last_activation is not None
 
         scraper = self.scraper
 
@@ -138,7 +138,7 @@ class Store(models.Model):
                                           update_log=update_log)
 
     def update_pricing_from_json(self, json_data, update_log=None):
-        assert self.is_active
+        assert self.last_activation is not None
 
         categories = Category.objects.filter(
             storescraper_name__in=json_data['categories'])
@@ -157,7 +157,7 @@ class Store(models.Model):
                                      update_log=None):
         from solotodo.models import Currency, Entity
 
-        assert self.is_active
+        assert self.last_activation is not None
 
         scraped_products_dict = iterable_to_dict(scraped_products, 'key')
         entities_to_be_updated = self.entity_set.filter(

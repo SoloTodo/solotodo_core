@@ -41,6 +41,8 @@ class SoloTodoUser(AbstractEmailUser):
         Store,
         blank=True,
         related_name='+')
+    preferred_stores_last_updated = models.DateTimeField(
+        default=timezone.now)
 
     permissions = property(lambda self: sorted(self.get_all_permissions()))
 

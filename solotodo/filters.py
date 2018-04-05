@@ -78,7 +78,7 @@ class StoreFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = Store
-        fields = ['is_active']
+        fields = []
 
 
 class StoreUpdateLogFilterSet(rest_framework.FilterSet):

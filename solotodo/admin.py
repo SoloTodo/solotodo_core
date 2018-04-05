@@ -108,6 +108,7 @@ class SoloTodoUserAdmin(EmailUserAdmin):
                     'preferred_number_format',
                     'preferred_store',
                     'preferred_stores',
+                    'preferred_stores_last_updated',
                 )}),
                  )
 

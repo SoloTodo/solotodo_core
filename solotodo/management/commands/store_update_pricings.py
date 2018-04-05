@@ -10,7 +10,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         store_names = options['stores']
-        stores = Store.objects.filter(is_active=True)
+        stores = Store.objects.filter(last_activation__isnull=False)
 
         if store_names:
             stores = stores.filter(name__in=store_names)

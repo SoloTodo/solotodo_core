@@ -40,11 +40,11 @@ class ReportWeeklyPricesForm(forms.Form):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        valid_categories = get_objects_for_user(user, 'view_category',
+        valid_categories = get_objects_for_user(user, 'view_category_reports',
                                                 Category)
         self.fields['category'].queryset = valid_categories
 
-        valid_stores = get_objects_for_user(user, 'view_store', Store)
+        valid_stores = get_objects_for_user(user, 'view_store_reports', Store)
         self.fields['stores'].queryset = valid_stores
 
     def clean_stores(self):

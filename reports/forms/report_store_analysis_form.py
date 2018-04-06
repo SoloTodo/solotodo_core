@@ -34,9 +34,9 @@ class ReportStoreAnalysisForm(forms.Form):
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        valid_categories = get_objects_for_user(user, 'view_category',
+        valid_categories = get_objects_for_user(user, 'view_category_reports',
                                                 Category)
-        valid_stores = get_objects_for_user(user, 'view_store', Store)
+        valid_stores = get_objects_for_user(user, 'view_store_reports', Store)
 
         self.fields['store'].queryset = valid_stores
         self.fields['competing_stores'].queryset = valid_stores

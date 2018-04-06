@@ -34,7 +34,7 @@ class Command(BaseCommand):
             iso_to_gregorian(iso_year, iso_week, 1))
 
         categories = Category.objects.filter(pk__in=conversion_dict.keys())
-        stores = get_objects_for_user(user, 'view_store', Store)
+        stores = get_objects_for_user(user, 'view_store_reports', Store)
 
         countries = set([store.country for store in stores])
 

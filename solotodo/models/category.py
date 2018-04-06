@@ -72,5 +72,7 @@ class Category(models.Model):
              'View the leads associated to this category'],
             ['view_category_visits',
              'View the visits associated to this category'],
+            ['view_category_reports',
+             'Download the reports associated to this category'],
             ['backend_list_categories', 'View category list in backend']
         )

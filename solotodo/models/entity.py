@@ -445,8 +445,7 @@ class Entity(models.Model):
 
     def user_has_staff_perms(self, user):
         return user.has_perm('is_category_staff',
-                             self.category) \
-               and user.has_perm('is_store_staff', self.store)
+                             self.category)
 
     def user_can_view_stocks(self, user):
         return user.has_perm('view_category', self.category) \

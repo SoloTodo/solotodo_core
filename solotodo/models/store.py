@@ -262,8 +262,7 @@ class Store(models.Model):
             ['view_store_update_logs', 'Can view the store update logs'],
             ['view_store_stocks', 'Can view the store entities stock'],
             ['update_store_pricing', 'Can update the store pricing'],
-            ['is_store_staff', 'Is staff of the store'],
-            ('view_store_leads', 'View the leads associated to this store'),
+            ['view_store_leads', 'View the leads associated to this store'],
             # "Backend" permissions are used exclusively for UI purposes, they
             # are not used at the API level
             ['backend_list_stores', 'Can view store list in backend'],

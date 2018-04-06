@@ -67,15 +67,10 @@ class Category(models.Model):
         ordering = ['name']
         permissions = (
             ['view_category', 'Can view the category'],
-            ['view_category_stocks', 'Can view the category entities stock '
-                                     '(also requires store permissions)'],
-            ['is_category_staff',
-             'Is staff of the category (may also require other permissions)'],
-            ['update_category_pricing',
-             'Can update the pricing of the category\'s entities'],
+            ['is_category_staff', 'Is staff of the category'],
             ['view_category_leads',
              'View the leads associated to this category'],
             ['view_category_visits',
              'View the visits associated to this category'],
-            ('backend_list_categories', 'View category list in backend')
+            ['backend_list_categories', 'View category list in backend']
         )

@@ -40,10 +40,10 @@ class EntityQueryset(models.QuerySet):
             },
             'view_entity_stocks': {
                 'store': 'view_store_stocks',
-                'category': 'view_category_stocks',
+                'category': 'view_category',
             },
             'is_entity_staff': {
-                'store': 'is_store_staff',
+                'store': 'view_store',
                 'category': 'is_category_staff',
             }
         }
@@ -449,7 +449,7 @@ class Entity(models.Model):
                and user.has_perm('is_store_staff', self.store)
 
     def user_can_view_stocks(self, user):
-        return user.has_perm('view_category_stocks', self.category) \
+        return user.has_perm('view_category', self.category) \
                and user.has_perm('view_store_stocks', self.store)
 
     def associate(self, user, product, cell_plan=None):

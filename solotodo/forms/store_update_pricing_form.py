@@ -24,8 +24,7 @@ class StoreUpdatePricingForm(forms.Form):
     @classmethod
     def from_store_and_user(cls, store, user, data):
         valid_categories = get_objects_for_user(
-            user, 'update_category_pricing',
-            store.scraper_categories())
+            user, 'view_category', store.scraper_categories())
 
         form = cls(data)
         form.fields['categories'].queryset = valid_categories

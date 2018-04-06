@@ -397,7 +397,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
             store,
             context={'request': request})
         available_categories = create_category_filter(
-            'update_category_pricing', store.scraper_categories())(request)
+            qs=store.scraper_categories())(request)
 
         result = serializer.data
         result['categories'] = [

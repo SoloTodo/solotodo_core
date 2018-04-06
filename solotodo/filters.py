@@ -165,7 +165,7 @@ class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
         label='Stores'
     )
     categories = CustomModelMultipleChoiceFilter(
-        queryset=create_category_filter('view_category_stocks'),
+        queryset=create_category_filter(),
         name='category',
         label='Categories'
     )
@@ -194,7 +194,7 @@ class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
 
 class EntityStaffFilterSet(rest_framework.FilterSet):
     stores = CustomModelMultipleChoiceFilter(
-        queryset=create_store_filter('is_store_staff'),
+        queryset=create_store_filter(),
         name='store',
         label='Stores'
     )

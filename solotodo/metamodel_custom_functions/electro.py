@@ -60,10 +60,8 @@ def additional_es_fields(instance_model, elastic_search_original):
         return result
 
     if m == 'MemoryCard':
-        result['pretty_sku'] = format_optional_field(
-            elastic_search_original['sku'])
-        result['part_number'] = format_optional_field(
-            elastic_search_original['sku'])
+        result['pretty_part_number'] = format_optional_field(
+            elastic_search_original['part_number'])
         return result
 
     if m == 'OpticalDiskPlayer':

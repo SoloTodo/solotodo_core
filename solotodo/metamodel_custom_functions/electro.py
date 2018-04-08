@@ -275,8 +275,8 @@ def unicode_function(im):
         elif im.x_speed.value:
             result += u' {}'.format(im.x_speed)
 
-        if im.sku:
-            result += u' ({})'.format(im.sku)
+        if im.part_number:
+            result += u' ({})'.format(im.part_number)
 
         return result
     if m == 'UsbFlashDriveCapacity':

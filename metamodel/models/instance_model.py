@@ -583,11 +583,15 @@ class InstanceModel(models.Model):
 
         InstanceField.objects.bulk_create(new_instance_fields)
 
-        base_name = cloned_instance.name
-        if base_name is None:
-            base_name = ''
+        try:
+            base_name = cloned_instance.name
+            if base_name is None:
+                base_name = ''
 
-        cloned_instance.name = '{0} (clone)'.format(base_name)
+            cloned_instance.name = '{0} (clone)'.format(base_name)
+        except KeyError:
+            # IM has no "name" attribute
+            pass
 
         cloned_instance.save(creator_id=creator_id)
 

@@ -263,12 +263,7 @@ def unicode_function(im):
         else:
             return u'{} GB'.format(im.value)
     if m == 'MemoryCard':
-        name_value = im.name
-        if name_value is None:
-            name_value = ''
-
-        result = u'{} {} {} {}'.format(im.brand, name_value, im.type,
-                                       im.capacity)
+        result = u'{} {} {}'.format(im.line, im.type, im.capacity)
 
         if im.rated_speed.value:
             result += u' {}'.format(im.rated_speed)

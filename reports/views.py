@@ -6,6 +6,7 @@ from rest_framework.response import Response
 from rest_framework_tracking.mixins import LoggingMixin
 
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
+from reports.forms.report_prices_history_form import ReportPricesHistoryForm
 from reports.forms.report_store_analysis_form import ReportStoreAnalysisForm
 from reports.forms.report_weekly_prices_form import ReportWeeklyPricesForm
 from reports.models import Report, ReportDownload
@@ -87,6 +88,35 @@ class ReportViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
         form = ReportWeeklyPricesForm(request.user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report()['path']
+
+        ReportDownload.objects.create(
+            report=report,
+            user=user,
+            file=report_path
+        )
+
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
+
+    @list_route()
+    def prices_history(self, request):
+        report = Report.objects.get(slug='prices_history')
+        user = request.user
+
+        if not user.has_perm('view_report', report):
+            raise PermissionDenied
+
+        form = ReportPricesHistoryForm(request.user, request.GET)
 
         if not form.is_valid():
             return Response({

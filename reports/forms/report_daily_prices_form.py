@@ -33,6 +33,9 @@ class ReportDailyPricesForm(forms.Form):
         queryset=Currency.objects.all(),
         required=False
     )
+    exclude_unavailable = forms.IntegerField(
+        required=False
+    )
     brand = forms.CharField(
         required=False
     )
@@ -64,6 +67,7 @@ class ReportDailyPricesForm(forms.Form):
         store_types = self.cleaned_data['store_types']
         currency = self.cleaned_data['currency']
         timestamp = self.cleaned_data['timestamp']
+        exclude_unavailable = self.cleaned_data['exclude_unavailable']
         brand = self.cleaned_data['brand']
 
         ehs = EntityHistory.objects.filter(
@@ -78,6 +82,9 @@ class ReportDailyPricesForm(forms.Form):
 
         if store_types:
             ehs = ehs.filter(entity__store__type__in=store_types)
+
+        if exclude_unavailable:
+            ehs = ehs.get_available()
 
         ehs = ehs.values('entity', 'date').annotate(
             min_normal_price=Min('normal_price'),

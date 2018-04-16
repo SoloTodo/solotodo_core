@@ -103,8 +103,8 @@ def additional_es_fields(instance_model, elastic_search_original):
     if m == 'UsbFlashDrive':
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_original)
-        result['pretty_sku'] = format_optional_field(
-            elastic_search_original['sku'])
+        result['pretty_part_number'] = format_optional_field(
+            elastic_search_original['pretty_part_number'])
 
         read_speed = elastic_search_original['read_speed']
         result['pretty_read_speed'] = format_optional_field(read_speed, 'MB/s')
@@ -279,10 +279,3 @@ def unicode_function(im):
             return u'{}.5 TB'.format((im.value - 500) / 1000)
         else:
             return u'{} GB'.format(im.value)
-    if m == 'UsbFlashDrive':
-        if im.sku:
-            return u'{} {} {} ({})'.format(
-                im.line, im.name, im.capacity, im.sku)
-        else:
-            return u'{} {} {}'.format(
-                im.line, im.name, im.capacity)

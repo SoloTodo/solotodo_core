@@ -104,7 +104,7 @@ def additional_es_fields(instance_model, elastic_search_original):
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_original)
         result['pretty_part_number'] = format_optional_field(
-            elastic_search_original['pretty_part_number'])
+            elastic_search_original['part_number'])
 
         read_speed = elastic_search_original['read_speed']
         result['pretty_read_speed'] = format_optional_field(read_speed, 'MB/s')

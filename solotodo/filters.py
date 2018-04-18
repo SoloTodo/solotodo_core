@@ -10,7 +10,7 @@ from solotodo.filter_querysets import create_store_filter, \
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
-    Currency, Visit, Rating, Category
+    Currency, Visit, Rating, Category, MaterializedEntity
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -240,7 +240,7 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
     )
     countries = rest_framework.ModelMultipleChoiceFilter(
         queryset=Country.objects.all(),
-        name='store__country',
+        name='country',
         label='Countries'
     )
     currencies = rest_framework.ModelMultipleChoiceFilter(
@@ -250,7 +250,7 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
     )
     store_types = rest_framework.ModelMultipleChoiceFilter(
         queryset=StoreType.objects.all(),
-        name='store__type',
+        name='store_type',
         label='Store types'
     )
     normal_price = rest_framework.RangeFilter(
@@ -272,15 +272,8 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
 
     @classmethod
     def create(cls, request):
-        entities = Entity.objects.annotate(
-            offer_price_usd=F('active_registry__offer_price') /
-            F('currency__exchange_rate'),
-            normal_price_usd=F('active_registry__normal_price') /
-            F('currency__exchange_rate')
-        )
-
         filterset = cls(
-            data=request.query_params, queryset=entities, request=request)
+            data=request.query_params, request=request)
 
         if 'products' in request.query_params:
             filterset.form.fields['products'].queryset = \
@@ -298,21 +291,18 @@ class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
-        qs = super(ProductsBrowseEntityFilterSet, self).qs.get_available() \
-            .filter(active_registry__cell_monthly_payment__isnull=True) \
-            .filter(product__isnull=False) \
-            .select_related(
-            'active_registry',
+        qs = super(ProductsBrowseEntityFilterSet, self).qs.select_related(
             'product__instance_model__model__category',
         )
 
         if self.request:
-            qs = qs.filter_by_user_perms(self.request.user, 'view_entity')
+            qs = qs.filter_by_user_perms(
+                self.request.user, 'view_materialized_entity')
 
         return qs
 
     class Meta:
-        model = Entity
+        model = MaterializedEntity
         fields = []
 
 

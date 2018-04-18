@@ -295,24 +295,8 @@ class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
     @detail_route()
     def browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
-
-        cache_json = OrderedDict(dict(request.query_params))
-        cache_json['category_id'] = category.id
-        stores_with_permission = create_store_filter()(self.request)
-        cache_json['store_permissions'] = \
-            [s.id for s in stores_with_permission]
-        cache_json['method'] = 'category_browse'
-        cache_key = generate_cache_key(cache_json)
-
-        serialized_result = cache.get(cache_key)
-
-        if serialized_result:
-            result = json.loads(serialized_result.decode('utf-8'))
-        else:
-            form = ProductsBrowseForm(request.query_params)
-            result = form.get_category_products(category, request)
-            serialized_result = JSONRenderer().render(result)
-            cache.set(cache_key, serialized_result, timeout=60*60)
+        form = ProductsBrowseForm(request.query_params)
+        result = form.get_category_products(category, request)
 
         return Response(result)
 
@@ -944,26 +928,8 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def browse(self, request, *args, **kwargs):
-        cache_json = OrderedDict(dict(request.query_params))
-        categories_with_permission = create_category_filter()(self.request)
-        cache_json['category_permissions'] = \
-            [s.id for s in categories_with_permission]
-        stores_with_permission = create_store_filter()(self.request)
-        cache_json['store_permissions'] = \
-            [s.id for s in stores_with_permission]
-        cache_json['method'] = 'product_browse'
-        cache_key = generate_cache_key(cache_json)
-
-        serialized_result = cache.get(cache_key)
-
-        if serialized_result:
-            result = json.loads(serialized_result.decode('utf-8'))
-        else:
-            form = ProductsBrowseForm(request.query_params)
-            result = form.get_products(request)
-            serialized_result = JSONRenderer().render(result)
-            cache.set(cache_key, serialized_result)
-
+        form = ProductsBrowseForm(request.query_params)
+        result = form.get_products(request)
         return Response(result)
 
     @detail_route()

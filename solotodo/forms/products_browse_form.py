@@ -3,7 +3,7 @@ from datetime import timedelta
 
 import re
 from django import forms
-from django.db.models import Min, Q, Count, F
+from django.db.models import Min, Q, Count, F, Sum
 from django.utils import timezone
 
 from solotodo.filter_utils import IsoDateTimeRangeField
@@ -176,12 +176,11 @@ class ProductsBrowseForm(forms.Form):
         return filterset.qs \
             .values('product', 'currency') \
             .annotate(
-                min_normal_price=Min('active_registry__normal_price'),
-                min_offer_price=Min('active_registry__offer_price'),
-                min_normal_price_usd=Min(F('active_registry__normal_price') /
-                                         F('currency__exchange_rate')),
-                min_offer_price_usd=Min(F('active_registry__offer_price') /
-                                        F('currency__exchange_rate'))
+                min_normal_price=Min('normal_price'),
+                min_offer_price=Min('offer_price'),
+                min_normal_price_usd=Min('normal_price_usd'),
+                min_offer_price_usd=Min('offer_price_usd'),
+                leads=Sum('leads')
             ).order_by('min_offer_price_usd', 'product', 'currency')
 
     def order_entities_by_db(self, entities, ordering):
@@ -190,28 +189,7 @@ class ProductsBrowseForm(forms.Form):
             return entities.order_by(
                 ordering_field, 'product', 'currency')
         elif ordering == 'leads':
-            ordering_country = self.cleaned_data['ordering_country']
-            ordering_date = self.cleaned_data['ordering_date']
-
-            if ordering_date and ordering_date.start:
-                start_timestamp = ordering_date.start
-            else:
-                start_timestamp = timezone.now() - timedelta(
-                    days=self.DEFAULT_ORDERING_DATE_DAYS_DELTA)
-
-            lead_filter = Q(
-                entityhistory__lead__timestamp__gte=start_timestamp)
-
-            if ordering_date and ordering_date.stop:
-                lead_filter &= Q(
-                    entityhistory__lead__timestamp__lte=ordering_date.stop)
-
-            if ordering_country:
-                lead_filter &= Q(store__country=ordering_country)
-
             return entities \
-                .filter(lead_filter) \
-                .annotate(leads=Count('entityhistory__lead')) \
                 .order_by('-leads', 'product', 'currency')
         else:
             raise Exception('This condition is unreachable')

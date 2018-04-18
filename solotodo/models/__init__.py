@@ -20,6 +20,7 @@ from .store import Store
 from .category import Category
 from .product import Product
 from .rating import Rating
+from .materialized_entity import MaterializedEntity
 from .entity import Entity
 from .entity_history import EntityHistory
 from .entity_log import EntityLog

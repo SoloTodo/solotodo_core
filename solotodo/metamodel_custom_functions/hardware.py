@@ -50,7 +50,7 @@ def additional_es_fields(instance_model, elastic_search_original):
         else:
             result['currents_on_12V_rails_unicode'] = current.split(',')
         return result
-    big_value = 1000 * 1000 * 1000 * 100000
+    big_value = 1000 * 1000 * 1000 * 10
     if m == 'ComputerCase':
         result = {}
         if elastic_search_original['front_usb_3_ports'] > 0:

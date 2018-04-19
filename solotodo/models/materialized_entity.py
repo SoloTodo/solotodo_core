@@ -33,12 +33,12 @@ class MaterializedEntityQueryset(models.QuerySet):
 
 
 class MaterializedEntity(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE)
-    currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    store_type = models.ForeignKey(StoreType, on_delete=models.CASCADE)
-    country = models.ForeignKey(Country, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
+    store = models.ForeignKey(Store, on_delete=models.DO_NOTHING)
+    currency = models.ForeignKey(Currency, on_delete=models.DO_NOTHING)
+    category = models.ForeignKey(Category, on_delete=models.DO_NOTHING)
+    store_type = models.ForeignKey(StoreType, on_delete=models.DO_NOTHING)
+    country = models.ForeignKey(Country, on_delete=models.DO_NOTHING)
     normal_price = models.DecimalField(decimal_places=2, max_digits=12)
     normal_price_usd = models.DecimalField(decimal_places=2, max_digits=12)
     offer_price = models.DecimalField(decimal_places=2, max_digits=12)

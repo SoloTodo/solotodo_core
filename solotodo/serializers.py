@@ -366,7 +366,7 @@ class CategoryBrowsePricesSerializer(serializers.Serializer):
 
 class CategoryBrowseProductEntrySerializer(serializers.Serializer):
     product = ProductSerializer()
-    ordering_value = serializers.DecimalField(max_digits=10, decimal_places=2)
+    ordering_value = serializers.DecimalField(max_digits=20, decimal_places=2)
     prices = CategoryBrowsePricesSerializer(many=True)
 
     class Meta:

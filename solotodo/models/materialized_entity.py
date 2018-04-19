@@ -45,8 +45,12 @@ class MaterializedEntity(models.Model):
     offer_price_usd = models.DecimalField(decimal_places=2, max_digits=12)
     reference_normal_price = models.DecimalField(decimal_places=2,
                                                  max_digits=12, null=True)
+    reference_normal_price_usd = models.DecimalField(decimal_places=2,
+                                                     max_digits=12, null=True)
     reference_offer_price = models.DecimalField(decimal_places=2,
                                                 max_digits=12, null=True)
+    reference_offer_price_usd = models.DecimalField(decimal_places=2,
+                                                    max_digits=12, null=True)
     leads = models.IntegerField()
 
     objects = MaterializedEntityQueryset.as_manager()

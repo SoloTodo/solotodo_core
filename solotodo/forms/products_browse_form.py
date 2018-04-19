@@ -3,7 +3,8 @@ from datetime import timedelta
 
 import re
 from django import forms
-from django.db.models import Min, Q, Count, F, Sum
+from django.db.models import Min, Q, Count, F, Sum, Value
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from solotodo.filter_utils import IsoDateTimeRangeField
@@ -23,7 +24,7 @@ class ProductsBrowseForm(forms.Form):
     ]
     DEFAULT_ORDERING = 'offer_price'
 
-    DB_ORDERING_CHOICES = PRICING_ORDERING_CHOICES + ['leads']
+    DB_ORDERING_CHOICES = PRICING_ORDERING_CHOICES + ['leads', 'discount']
 
     # If a start date is not given for the orderings that use it
     # (visits, leads), use the registries up to x days in the past
@@ -180,6 +181,7 @@ class ProductsBrowseForm(forms.Form):
                 min_offer_price=Min('offer_price'),
                 min_normal_price_usd=Min('normal_price_usd'),
                 min_offer_price_usd=Min('offer_price_usd'),
+                min_reference_offer_price_usd=Min('reference_offer_price_usd'),
                 leads=Sum('leads')
             ).order_by('min_offer_price_usd', 'product', 'currency')
 
@@ -191,6 +193,13 @@ class ProductsBrowseForm(forms.Form):
         elif ordering == 'leads':
             return entities \
                 .order_by('-leads', 'product', 'currency')
+        elif ordering == 'discount':
+            return entities \
+                .annotate(discount=Coalesce(
+                    F('min_reference_offer_price_usd') -
+                    F('min_offer_price_usd'),
+                    Value(0)))\
+                .order_by('-discount', 'product', 'currency')
         else:
             raise Exception('This condition is unreachable')
 

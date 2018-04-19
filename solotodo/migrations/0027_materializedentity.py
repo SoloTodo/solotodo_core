@@ -42,7 +42,9 @@ CREATE MATERIALIZED VIEW solotodo_materializedentity AS SELECT row_number() OVER
        MIN("solotodo_entityhistory"."offer_price") AS "offer_price",
        MIN("solotodo_entityhistory"."offer_price" / "solotodo_currency"."exchange_rate") AS "offer_price_usd",
        MIN(T4."normal_price") AS "reference_normal_price",
+       MIN(T4."normal_price" / "solotodo_currency"."exchange_rate") AS "reference_normal_price_usd",
        MIN(T4."offer_price") AS "reference_offer_price",
+       MIN(T4."offer_price" / "solotodo_currency"."exchange_rate") AS "reference_offer_price_usd",
        COUNT("solotodo_leads"."id") AS "leads"
 FROM "solotodo_entity"
 INNER JOIN "solotodo_entityhistory" ON ("solotodo_entity"."active_registry_id" = "solotodo_entityhistory"."id")
@@ -119,11 +121,19 @@ ORDER BY "solotodo_entity"."product_id",
             reverse_sql=RunSQL.noop
         ),
         migrations.RunSQL(
-            'CREATE INDEX "solotodo_materializedentity_reference_normal_price" ON "solotodo_materializedentity" ("reference_offer_price")',
+            'CREATE INDEX "solotodo_materializedentity_reference_normal_price" ON "solotodo_materializedentity" ("reference_normal_price")',
+            reverse_sql=RunSQL.noop
+        ),
+        migrations.RunSQL(
+            'CREATE INDEX "solotodo_materializedentity_reference_normal_price_usd" ON "solotodo_materializedentity" ("reference_normal_price_usd")',
             reverse_sql=RunSQL.noop
         ),
         migrations.RunSQL(
             'CREATE INDEX "solotodo_materializedentity_reference_offer_price" ON "solotodo_materializedentity" ("reference_offer_price")',
+            reverse_sql=RunSQL.noop
+        ),
+        migrations.RunSQL(
+            'CREATE INDEX "solotodo_materializedentity_reference_offer_price_usd" ON "solotodo_materializedentity" ("reference_offer_price_usd")',
             reverse_sql=RunSQL.noop
         ),
         migrations.RunSQL(

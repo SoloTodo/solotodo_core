@@ -541,7 +541,7 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
             data=request.query_params,
             request=request)
 
-        qs = filterset.qs.get_pending()
+        qs = filterset.qs.get_pending().order_by('-pk')
 
         paginator = self.paginator
         page = paginator.paginate_queryset(qs, request)

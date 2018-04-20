@@ -139,5 +139,9 @@ ORDER BY "solotodo_entity"."product_id",
         migrations.RunSQL(
             'CREATE INDEX "solotodo_materializedentity_leads" ON "solotodo_materializedentity" ("leads")',
             reverse_sql=RunSQL.noop
+        ),
+        migrations.RunSQL(
+            'CREATE UNIQUE INDEX "solotodo_materializedentity_unique_index" ON "solotodo_materializedentity" ("product_id", "store_id", "currency_id", "category_id", "store_type_id", "country_id")',
+            reverse_sql=RunSQL.noop
         )
     ]

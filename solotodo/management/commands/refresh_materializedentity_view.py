@@ -6,4 +6,5 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         with connection.cursor() as cursor:
             cursor.execute(
-                "REFRESH MATERIALIZED VIEW solotodo_materializedentity")
+                "REFRESH MATERIALIZED VIEW CONCURRENTLY "
+                "solotodo_materializedentity")

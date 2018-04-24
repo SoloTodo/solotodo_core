@@ -46,6 +46,7 @@ from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     WebsiteFilterSet, VisitFilterSet, RatingFilterSet
 from solotodo.forms.date_range_form import DateRangeForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
+from solotodo.forms.entity_by_url_form import EntityByUrlForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
@@ -550,6 +551,23 @@ class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
                                       context={'request': request})
 
         return paginator.get_paginated_response(serializer.data)
+
+    @list_route()
+    def by_url(self, request):
+        form = EntityByUrlForm(request.query_params)
+
+        if not form.is_valid():
+            return Response({'errors': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        entity = form.get_entity()
+
+        if not entity:
+            return Response({'errors': 'No matching entity found'},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        serializer = EntitySerializer(entity, context={'request': request})
+        return Response(serializer.data)
 
     @detail_route(methods=['post'])
     def register_staff_access(self, request, *args, **kwargs):

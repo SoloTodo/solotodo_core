@@ -77,13 +77,10 @@ class ReportStoreAnalysisForm(forms.Form):
             'product__instance_model',
             'active_registry',
             'currency',
-            'store') \
-            .values('product', 'store') \
-            .annotate(
-            price=Min('active_registry__{}'.format(price_type)),
-        ).order_by('price')
+            'store'
+        ).order_by('active_registry__{}'.format(price_type))
 
-        product_ids = [e['product'] for e in es]
+        product_ids = list(set([e.product_id for e in es]))
 
         products = Product.objects.filter(pk__in=product_ids).select_related(
             'instance_model__model__category')
@@ -91,29 +88,26 @@ class ReportStoreAnalysisForm(forms.Form):
         product_leads = Product.objects.filter(pk__in=product_ids) \
             .filter(
             entity__entityhistory__lead__timestamp__gte=reference_date,
-        )\
+        ) \
             .annotate(
             leads=Count('entity__entityhistory__lead')
         ).order_by()
 
         products_leads_dict = {product.id: product.leads
                                for product in product_leads}
-        products_dict = {product.id: product for product in products}
-
-        store_ids = [e['store'] for e in es]
-        stores_dict = {store.id: store for store in
-                       Store.objects.filter(pk__in=store_ids)}
 
         data = OrderedDict()
 
-        for entry in es:
-            product = products_dict[entry['product']]
+        for entity in es:
+            product = entity.product
 
             if product not in data:
                 data[product] = OrderedDict()
 
-            store = stores_dict[entry['store']]
-            data[product][store] = entry['price']
+            if entity.store in data[product]:
+                continue
+
+            data[product][entity.store] = entity
 
         output = io.BytesIO()
 
@@ -136,8 +130,10 @@ class ReportStoreAnalysisForm(forms.Form):
             'Estado',
             'Producto',
             'Categoría',
+            'SKU',
             'Leads',
             'Precio {}'.format(selected_store),
+            'Diferencia de precio',
             'Competencia #1',
             'Precio competencia #1',
             'Competencia #2',
@@ -150,19 +146,31 @@ class ReportStoreAnalysisForm(forms.Form):
             worksheet.write(0, idx, header, header_format)
 
         row = 1
-        for product, stores_prices in data.items():
-            price_in_selected_store = stores_prices.pop(selected_store, None)
+        for product, stores_entities in data.items():
+            entity_in_selected_store = stores_entities.pop(
+                selected_store, None)
 
-            if price_in_selected_store:
-                price_in_selected_store_text = price_in_selected_store
+            if entity_in_selected_store:
+                price_in_selected_store_text = getattr(
+                    entity_in_selected_store.active_registry, price_type)
 
-                if not stores_prices or \
-                        list(stores_prices.values())[0] >= \
-                        price_in_selected_store:
+                if not stores_entities:
                     status = 'Precio óptimo'
+                    price_difference = 'N/A'
                 else:
-                    status = 'Precio no óptimo'
+                    entity_in_first_position = list(
+                        stores_entities.values())[0]
+                    price_in_first_position = getattr(
+                        entity_in_first_position.active_registry, price_type)
+                    price_difference = \
+                        price_in_selected_store_text - price_in_first_position
+
+                    if price_difference < 0:
+                        status = 'Precio óptimo'
+                    else:
+                        status = 'Precio no óptimo'
             else:
+                price_difference = 'N/A'
                 price_in_selected_store_text = 'No disponible'
                 status = 'No disponible'
 
@@ -195,6 +203,16 @@ class ReportStoreAnalysisForm(forms.Form):
 
             col += 1
 
+            # SKU
+
+            if entity_in_selected_store:
+                sku = entity_in_selected_store.sku
+            else:
+                sku = 'N/A'
+
+            worksheet.write(row, col, sku)
+            col += 1
+
             # Leads
 
             worksheet.write(row, col, products_leads_dict.get(product.id, 0))
@@ -205,13 +223,19 @@ class ReportStoreAnalysisForm(forms.Form):
             worksheet.write(row, col, price_in_selected_store_text)
             col += 1
 
+            # Diferencia de precio
+
+            worksheet.write(row, col, price_difference)
+            col += 1
+
             # Price in competitors
 
-            for competing_store, competing_price in \
-                    list(stores_prices.items())[:3]:
+            for competing_store, competing_entity in \
+                    list(stores_entities.items())[:3]:
                 worksheet.write(row, col, str(competing_store))
                 col += 1
-                worksheet.write(row, col, competing_price)
+                worksheet.write(row, col, getattr(
+                    competing_entity.active_registry, price_type))
                 col += 1
 
             row += 1

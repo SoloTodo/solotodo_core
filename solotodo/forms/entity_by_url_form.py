@@ -3,6 +3,7 @@ import urllib
 from urllib.parse import parse_qs
 
 from django import forms
+from django.db.models import Q
 
 from solotodo.models import Store, Entity
 
@@ -21,111 +22,167 @@ class EntityByUrlForm(forms.Form):
             sku = m.groups()[0]
         elif url.netloc == 'simple.ripley.cl':
             store = Store.objects.get(name='Ripley')
-            sku = str(int(url.path.split('-')[-1][:-1]))
+            m = re.search('(\d+)p', url.path)
+            if not m:
+                m = re.search('mpm(\d+)', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.paris.cl':
             store = Store.objects.get(name='Paris')
-            sku = re.search(r'-(\d{6,7})-', url.path).groups()[0]
+            m = re.search('(\d+)-ppp', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.abcdin.cl':
             store = Store.objects.get(name='AbcDin')
-            if "productId" in url.path:
+            if 'productId' in url.path:
                 sku = 'productId=' + parse_qs(url.query)['productId'][0]
             else:
-                sku = re.search(r'-(\d{6,7})', url.path).groups()[0]
-        elif url.netloc == 'www.lapolar.cl':
+                m = re.search(r'-(\d{6,7})', url.path)
+                if not m:
+                    return None
+                sku = m.groups()[0]
+        elif url.netloc == 'tienda.lapolar.cl':
             store = Store.objects.get(name='La Polar')
-            sku = re.findall('(\d+)', url.path)[-1]
+            m = re.search(r'/(\d{8})', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.pcfactory.cl':
-            store = Store.objects.get(name='PCFactory')
-            sku = re.findall('(\d+)', url.path)[0] + '-'
+            store = Store.objects.get(name='PC Factory')
+            m = re.search(r'producto/(\d+)', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.corona.cl':
             store = Store.objects.get(name='Corona')
-            sku = url.path
+            m = re.search(r'(.+)/p$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.linio.cl':
             store = Store.objects.get(name='Linio Chile')
-            sku = url.path
+            m = re.search(r'-([a-zA-Z0-9]+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.bip.cl':
             store = Store.objects.get(name='Bip')
-            sku = 'id_producto=' + parse_qs(url.query)['id_producto'][0]
+            parsed_qs = parse_qs(url.query)
+            if 'id_producto' in parsed_qs:
+                sku = parsed_qs['id_producto'][0]
+            else:
+                return None
         elif url.netloc == 'www.hponline.cl':
             store = Store.objects.get(name='HP Online')
-            sku = url.path
+            m = re.search(r'-([a-zA-Z0-9]+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.infor-ingen.com':
             store = Store.objects.get(name='Infor-Ingen')
-            sku = 'product_id={}&'.format(
-                parse_qs(url.query)['product_id'][0])
-        elif url.netloc == 'www.maconline.cl' \
-                or url.netloc == 'www.maconline.com':
-            store = Store.objects.get(name='MacOnline')
-            if 'producto' in url.path:
-                sku = url.path
+            parsed_qs = parse_qs(url.query)
+            if 'product_id' in parsed_qs:
+                sku = parsed_qs['product_id'][0]
             else:
-                raise Exception
+                return None
         elif url.netloc == 'www.magens.cl':
             store = Store.objects.get(name='Magens')
-            sku = url.path
-        elif url.netloc == 'www.pc-express.cl':
+            m = re.search(r'-p-(\d+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
+        elif url.netloc == 'tienda.pc-express.cl':
             store = Store.objects.get(name='PC Express')
-            sku = 'products_id=' + parse_qs(url.query)['products_id'][0]
-        elif url.netloc == 'www.pcofertas.cl':
-            store = Store.objects.get(name='PC Ofertas')
-            sku = url.path
-        elif url.netloc == 'www.peta.cl':
-            store = Store.objects.get(name='Peta')
-            sku = url.path
+            parsed_qs = parse_qs(url.query)
+            if 'product_id' in parsed_qs:
+                sku = parsed_qs['product_id'][0]
+            else:
+                return None
         elif url.netloc == 'www.reifstore.cl':
             store = Store.objects.get(name='Reifschneider')
-            sku = url.path.split('/')[-1]
+            m = re.search(r'/(\d+)-', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.sistemax.cl':
             store = Store.objects.get(name='Sistemax')
-            sku = 'product_id=' + parse_qs(url.query)['product_id'][0]
+            parsed_qs = parse_qs(url.query)
+            if 'product_id' in parsed_qs:
+                sku = parsed_qs['product_id'][0]
+            else:
+                return None
         elif url.netloc == 'www.ttchile.cl':
             store = Store.objects.get(name='TtChile')
-            if url.path != '/producto.php':
-                raise Exception
-            sku = 'i=' + parse_qs(url.query)['i'][0]
+            parsed_qs = parse_qs(url.query)
+            if 'i' in parsed_qs:
+                sku = parsed_qs['i'][0]
+            else:
+                return None
         elif url.netloc == 'www.wei.cl':
             store = Store.objects.get(name='Wei')
-            sku = 'pcode=' + parse_qs(url.query)['pcode'][0]
-        elif url.netloc == 'www.samsungonline.cl':
-            store = Store.objects.get(name='Samsung Online')
+            m = re.search(r'producto/(.+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
+        elif url.netloc == 'www.tiendasmart.cl':
+            store = Store.objects.get(name='Tienda Smart')
             sku = url.path
         elif url.netloc == 'www.easy.cl':
             store = Store.objects.get(name='Easy')
-            sku = re.search(r'-(\d{6,7})', url.path).groups()[0]
-        elif url.netloc == 'www.globalmac.cl':
-            store = Store.objects.get(name='GlobalMac')
-            sku = url.path
+            m = re.search('(\d+)p$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.hites.com':
             store = Store.objects.get(name='Hites')
-            sku = 'productId=' + parse_qs(url.query)['productId'][0]
+            sku = url.path.split('/')[-1]
         elif url.netloc == 'www.lider.cl':
             store = Store.objects.get(name='Lider')
-            sku = 'productId=' + parse_qs(url.query)['productId'][0]
-        elif url.netloc == 'blackfriday.lider.cl':
-            store = Store.objects.get(name='Lider')
-            sku = re.search(r'(PROD_.+)', url.fragment).groups()[0]
+            m = re.search('/(\d+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.netnow.cl':
             store = Store.objects.get(name='NetNow')
-            sku = url.path
-        elif url.netloc == 'www.samsungstore.cl':
-            store = Store.objects.get(name='Samsung Store')
+            m = re.search('/\d+-.+/(\d+)-', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
+        elif url.netloc == 'www.vivelo.cl':
+            store = Store.objects.get(name='Vivelo')
             sku = url.path
         elif url.netloc == 'www.sodimac.cl':
             store = Store.objects.get(name='Sodimac')
-            sku = url.path
+            m = re.search('/product/(\d+)', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'store.sony.cl':
-            store = Store.objects.get(name='SonyStyle')
-            sku = url.path
+            store = Store.objects.get(name='Sony Store')
+            m = re.search('(.+)/p$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         elif url.netloc == 'www.spdigital.cl':
             store = Store.objects.get(name='SpDigital')
-            sku = url.path
+            m = re.search('products/view/(\d+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
+        elif url.netloc == 'www.winpy.cl':
+            store = Store.objects.get(name='Winpy')
+            m = re.search('/venta/(.+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0]
         else:
             return None
 
-        entities = Entity.objects.filter(
-            store=store,
-            sku=sku
-        ).order_by('-id')
+        sku_filter = Q(store=store) & (Q(url__icontains=sku) |
+                                       Q(sku__icontains=sku))
+        entities = Entity.objects.filter(sku_filter).order_by('-id')
 
         if not entities:
             return None

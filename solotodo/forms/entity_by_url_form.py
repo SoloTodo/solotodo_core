@@ -110,7 +110,7 @@ class EntityByUrlForm(forms.Form):
             store = Store.objects.get(name='Sistemax')
             parsed_qs = parse_qs(url.query)
             if 'product_id' in parsed_qs:
-                sku = parsed_qs['product_id'][0]
+                sku = 'product_id=' + parsed_qs['product_id'][0]
             else:
                 return None
         elif url.netloc == 'www.ttchile.cl':

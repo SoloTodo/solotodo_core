@@ -113,6 +113,11 @@ class EntityFilterSet(rest_framework.FilterSet):
         name='category',
         label='Categories'
     )
+    countries = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Country.objects.all(),
+        name='store__country',
+        label='Countries'
+    )
 
     is_available = rest_framework.BooleanFilter(
         name='is_available', method='_is_available', label='Is available?')

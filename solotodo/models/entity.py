@@ -19,8 +19,7 @@ from .store import Store
 
 class EntityQueryset(models.QuerySet):
     def get_available(self):
-        return self.exclude(Q(active_registry__isnull=True) |
-                            Q(active_registry__stock=0))
+        return self.filter(active_registry__stock__ne=0)
 
     def get_unavailable(self):
         return self.filter(Q(active_registry__isnull=True) |

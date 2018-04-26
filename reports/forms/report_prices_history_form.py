@@ -18,7 +18,8 @@ from solotodo_core.s3utils import PrivateS3Boto3Storage
 class ReportPricesHistoryForm(forms.Form):
     timestamp = IsoDateTimeRangeField()
     categories = forms.ModelMultipleChoiceField(
-        queryset=Category.objects.all())
+        queryset=Category.objects.all(),
+        required=False)
     stores = forms.ModelMultipleChoiceField(
         queryset=Store.objects.all(),
         required=False)

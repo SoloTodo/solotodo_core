@@ -3,6 +3,9 @@ from django.contrib.auth.models import Group
 from django.db.models.signals import post_save, pre_delete, m2m_changed
 from django.dispatch import receiver
 from django.utils import timezone
+from django.db.models import Lookup
+from django.db.models.fields import Field
+
 from rest_framework.authtoken.models import Token
 
 from metamodel.models import MetaModel, InstanceModel
@@ -69,3 +72,14 @@ def delete_product_from_es(sender, instance, using, **kwargs):
 def update_preferred_stores_last_updated(sender, instance, *args, **kwargs):
     instance.preferred_stores_last_updated = timezone.now()
     instance.save()
+
+
+@Field.register_lookup
+class NotEqual(Lookup):
+    lookup_name = 'ne'
+
+    def as_sql(self, compiler, connection):
+        lhs, lhs_params = self.process_lhs(compiler, connection)
+        rhs, rhs_params = self.process_rhs(compiler, connection)
+        params = lhs_params + rhs_params
+        return '%s <> %s' % (lhs, rhs), params

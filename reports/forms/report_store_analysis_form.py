@@ -6,7 +6,7 @@ from datetime import timedelta
 from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.db.models import Min, Count
+from django.db.models import Count
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
@@ -82,8 +82,10 @@ class ReportStoreAnalysisForm(forms.Form):
 
         product_ids = list(set([e.product_id for e in es]))
 
-        products = Product.objects.filter(pk__in=product_ids).select_related(
-            'instance_model__model__category')
+        brands_search = Product.es_search().filter(
+            'terms', product_id=product_ids)
+        brands_dict = {e.product_id: getattr(e, 'brand_unicode', None)
+                       for e in brands_search[:100000].execute()}
 
         product_leads = Product.objects.filter(pk__in=product_ids) \
             .filter(
@@ -130,16 +132,14 @@ class ReportStoreAnalysisForm(forms.Form):
             'Estado',
             'Producto',
             'Categoría',
-            'SKU',
-            'Leads',
-            'Precio {}'.format(selected_store),
+            'ID {}'.format(selected_store),
+            'Visitas en SoloTodo',
+            'Precio en tienda',
             'Diferencia de precio',
-            'Competencia #1',
-            'Precio competencia #1',
-            'Competencia #2',
-            'Precio competencia #2',
-            'Competencia #3',
-            'Precio competencia #3',
+            '1a competencia',
+            '2a competencia',
+            '3a competencia',
+            'Marca',
         ]
 
         for idx, header in enumerate(headers):
@@ -232,11 +232,21 @@ class ReportStoreAnalysisForm(forms.Form):
 
             for competing_store, competing_entity in \
                     list(stores_entities.items())[:3]:
-                worksheet.write(row, col, str(competing_store))
+                competitor_string = '{} ({})'.format(
+                    competing_store,
+                    getattr(competing_entity.active_registry, price_type)
+                )
+
+                worksheet.write(row, col, competitor_string)
                 col += 1
-                worksheet.write(row, col, getattr(
-                    competing_entity.active_registry, price_type))
-                col += 1
+
+            if len(stores_entities) < 3:
+                col += 3 - len(stores_entities)
+
+            # Brand
+            brand = brands_dict[product.id]
+            worksheet.write(row, col, brand)
+            col += 1
 
             row += 1
 

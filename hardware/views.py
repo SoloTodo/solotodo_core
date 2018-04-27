@@ -9,6 +9,7 @@ from django_filters import rest_framework
 
 from hardware.filters import BudgetFilterSet
 from hardware.forms.budget_export_format_form import BudgetExportFormatForm
+from hardware.forms.budget_product_form import BudgetProductForm
 from hardware.models import Budget, BudgetEntry
 from hardware.pagination import BudgetPagination
 from hardware.permissions import BudgetPermission
@@ -78,6 +79,21 @@ class BudgetViewSet(viewsets.ModelViewSet):
     def compatibility_issues(self, request, pk, *args, **kwargs):
         budget = self.get_object()
         return Response(budget.compatibility_issues())
+
+    @detail_route(methods=['post'])
+    def remove_product(self, request, pk, *args, **kwargs):
+        budget = self.get_object()
+        form = BudgetProductForm.from_budget(budget, request.data)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        product = form.cleaned_data['product']
+        budget.remove_product(product)
+
+        budget = self.get_object()
+        serializer = BudgetSerializer(budget, context={'request': request})
+        return Response(serializer.data)
 
 
 class BudgetEntryViewSet(viewsets.ModelViewSet):

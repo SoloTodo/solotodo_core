@@ -89,6 +89,13 @@ class Budget(models.Model):
                 budget_entry.selected_store = new_selected_store
                 budget_entry.save()
 
+    def remove_product(self, product):
+        self.products_pool.remove(product)
+        self.entries.filter(selected_product=product).update(
+            selected_product=None,
+            selected_store=None
+        )
+
     def compatibility_issues(self):
         """
         Checks if the selected parts in the budget are compatible between them,

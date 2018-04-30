@@ -16,7 +16,7 @@ import os
 from decimal import Decimal
 from django_filters import STRICTNESS
 from elasticsearch import Elasticsearch
-from solotodo.metamodel_plugin import MetaModelPlugin
+from corsheaders.defaults import default_headers
 
 
 def _(s):
@@ -244,6 +244,11 @@ REST_FRAMEWORK = {
 ##############################################################################
 
 CORS_ORIGIN_WHITELIST = ['localhost:3000', ]
+
+CORS_ALLOW_HEADERS = default_headers + (
+    'cache-control',
+)
+
 
 ###############################################################################
 # Django-guardian Configuration

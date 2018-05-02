@@ -8,7 +8,6 @@ import datetime
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
-from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import models, IntegrityError
 from django.db.models import Avg, Count
@@ -26,7 +25,6 @@ from rest_framework.filters import OrderingFilter, \
     SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
-from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -82,7 +80,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductAvailableEntitiesSerializer, RatingSerializer, \
     RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer
 from solotodo.tasks import store_update
-from solotodo.utils import get_client_ip, iterable_to_dict, generate_cache_key
+from solotodo.utils import get_client_ip, iterable_to_dict
 from rest_framework_tracking.mixins import LoggingMixin
 
 
@@ -887,22 +885,6 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def available_entities(self, request):
-        cache_json = OrderedDict(dict(request.query_params))
-        categories_with_permission = create_category_filter()(self.request)
-        cache_json['category_permissions'] = \
-            [s.id for s in categories_with_permission]
-        stores_with_permission = create_store_filter()(self.request)
-        cache_json['store_permissions'] = \
-            [s.id for s in stores_with_permission]
-        cache_json['method'] = 'product_available_entities'
-        cache_key = generate_cache_key(cache_json)
-
-        cached_result = cache.get(cache_key)
-
-        if cached_result:
-            result = json.loads(cached_result.decode('utf-8'))
-            return Response(result)
-
         queryset = self.filter_queryset(self.get_queryset())
         products = self.paginate_queryset(queryset)
         Product.prefetch_specs(products)
@@ -940,7 +922,6 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
         ])
 
         serialized_result = JSONRenderer().render(result)
-        cache.set(cache_key, serialized_result)
 
         return Response(result)
 

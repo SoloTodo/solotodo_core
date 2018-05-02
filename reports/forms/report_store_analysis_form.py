@@ -30,6 +30,12 @@ class ReportStoreAnalysisForm(forms.Form):
             ('offer_price', 'Offer price'),
         ]
     )
+    layout = forms.ChoiceField(
+        choices=[
+            ('layout_1', 'layout_1'),
+            ('layout_2', 'layout_2'),
+        ]
+    )
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -61,6 +67,7 @@ class ReportStoreAnalysisForm(forms.Form):
         competing_stores = self.cleaned_data['competing_stores']
         categories = self.cleaned_data['categories']
         price_type = self.cleaned_data['price_type']
+        layout = self.cleaned_data['layout']
 
         all_stores = list(competing_stores)
         all_stores.append(selected_store)
@@ -74,7 +81,7 @@ class ReportStoreAnalysisForm(forms.Form):
             active_registry__cell_monthly_payment__isnull=True
         ).get_available() \
             .select_related(
-            'product__instance_model',
+            'product__instance_model__model__category',
             'active_registry',
             'currency',
             'store'
@@ -132,15 +139,28 @@ class ReportStoreAnalysisForm(forms.Form):
             'Estado',
             'Producto',
             'Categoría',
+            'Marca',
             'ID {}'.format(selected_store),
             'Visitas en SoloTodo',
             'Precio en tienda',
             'Diferencia de precio',
-            '1a competencia',
-            '2a competencia',
-            '3a competencia',
-            'Marca',
         ]
+
+        if layout == 'layout_1':
+            headers.extend([
+                '1a competencia',
+                '2a competencia',
+                '3a competencia'
+            ])
+        elif layout == 'layout_2':
+            headers.extend([
+                'Competencia #1',
+                'Precio Competencia #1',
+                'Competencia #2',
+                'Precio Competencia #2',
+                'Competencia #3',
+                'Precio Competencia #3'
+            ])
 
         for idx, header in enumerate(headers):
             worksheet.write(0, idx, header, header_format)
@@ -203,6 +223,12 @@ class ReportStoreAnalysisForm(forms.Form):
 
             col += 1
 
+            # Brand
+
+            brand = brands_dict[product.id]
+            worksheet.write(row, col, brand)
+            col += 1
+
             # SKU
 
             if entity_in_selected_store:
@@ -232,21 +258,21 @@ class ReportStoreAnalysisForm(forms.Form):
 
             for competing_store, competing_entity in \
                     list(stores_entities.items())[:3]:
-                competitor_string = '{} ({})'.format(
-                    competing_store,
-                    getattr(competing_entity.active_registry, price_type)
-                )
+                competitor_price = getattr(competing_entity.active_registry,
+                                           price_type)
 
-                worksheet.write(row, col, competitor_string)
-                col += 1
+                if layout == 'layout_1':
+                    competitor_string = '{} ({})'.format(
+                        competing_store,
+                        competitor_price
+                    )
 
-            if len(stores_entities) < 3:
-                col += 3 - len(stores_entities)
-
-            # Brand
-            brand = brands_dict[product.id]
-            worksheet.write(row, col, brand)
-            col += 1
+                    worksheet.write(row, col, competitor_string)
+                    col += 1
+                elif layout == 'layout_2':
+                    worksheet.write(row, col, str(competing_store))
+                    worksheet.write(row, col + 1, competitor_price)
+                    col += 2
 
             row += 1
 

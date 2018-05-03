@@ -88,6 +88,9 @@ class ReportCurrentPricesForm(forms.Form):
         # Create a workbook and add a worksheet.
         workbook = xlsxwriter.Workbook(output)
         workbook.formats[0].set_font_size(10)
+
+        date_format = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+
         worksheet = workbook.add_worksheet()
 
         url_format = workbook.add_format({
@@ -215,7 +218,8 @@ class ReportCurrentPricesForm(forms.Form):
 
             # Date
 
-            worksheet.write(row, col, str(e.active_registry.timestamp.date()))
+            worksheet.write(row, col, e.active_registry.timestamp.date(),
+                            date_format)
             col += 1
 
             # Currency

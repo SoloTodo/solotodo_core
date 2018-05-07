@@ -92,6 +92,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'querycount.middleware.QueryCountMiddleware',
     'solotodo.middleware.CacheControlMiddleware',
+    'solotodo.middleware.CrawlerMiddleware',
     'metamodel.middleware.CacheControlMiddleware',
 ]
 
@@ -373,3 +374,4 @@ LINIO_AFFILIATE_SETTINGS = {
 }
 
 WTB_TOPTEN_CHILE_BRAND = None
+CHILE_COUNTRY_ID = 1

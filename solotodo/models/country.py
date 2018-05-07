@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from sorl.thumbnail import ImageField
 
@@ -14,6 +15,10 @@ class Country(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_default(cls):
+        return cls.objects.get(pk=settings.CHILE_COUNTRY_ID)
 
     class Meta:
         app_label = 'solotodo'

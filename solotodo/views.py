@@ -306,24 +306,28 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def by_ip(self, request):
-        if 'ip' in request.query_params:
-            form = IpForm(request.query_params)
+        if request.is_crawler:
+            country = Country.get_default()
         else:
-            form = IpForm({'ip': get_client_ip(request)})
+            if 'ip' in request.query_params:
+                form = IpForm(request.query_params)
+            else:
+                form = IpForm({'ip': get_client_ip(request)})
 
-        if form.is_valid():
-            geo_ip2 = GeoIP2()
-            try:
-                country_data = geo_ip2.country(form.cleaned_data['ip'])
-            except AddressNotFoundError as err:
-                raise exceptions.NotFound(err)
-            try:
-                country = Country.objects.get(
-                    iso_code=country_data['country_code'])
-            except Country.DoesNotExist as err:
-                raise exceptions.NotFound(err)
-        else:
-            raise exceptions.ValidationError({'detail': 'Invalid IP address'})
+            if form.is_valid():
+                geo_ip2 = GeoIP2()
+                try:
+                    country_data = geo_ip2.country(form.cleaned_data['ip'])
+                except AddressNotFoundError as err:
+                    raise exceptions.NotFound(err)
+                try:
+                    country = Country.objects.get(
+                        iso_code=country_data['country_code'])
+                except Country.DoesNotExist as err:
+                    raise exceptions.NotFound(err)
+            else:
+                raise exceptions.ValidationError(
+                    {'detail': 'Invalid IP address'})
 
         serializer = CountrySerializer(
             country,

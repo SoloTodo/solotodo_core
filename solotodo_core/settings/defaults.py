@@ -17,6 +17,9 @@ from decimal import Decimal
 from django_filters import STRICTNESS
 from elasticsearch import Elasticsearch
 
+# I know this import is not used, but the plugin gets loaded this way
+from solotodo.metamodel_plugin import MetaModelPlugin
+
 
 def _(s):
     return s

@@ -263,6 +263,34 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
+class EntityWithoutDescriptionSerializer(EntitySerializer):
+    class Meta:
+        model = Entity
+        fields = (
+            'url',
+            'id',
+            'name',
+            'cell_plan_name',
+            'store',
+            'category',
+            'sku',
+            'external_url',
+            'condition',
+            'part_number',
+            'ean',
+            'is_visible',
+            'active_registry',
+            'product',
+            'cell_plan',
+            'currency',
+            'picture_urls',
+            'key',
+            'creation_date',
+            'last_updated',
+            'last_pricing_update',
+        )
+
+
 class EntityStaffInfoSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Entity
@@ -379,6 +407,61 @@ class CategoryBrowseResultSerializer(serializers.Serializer):
 
     class Meta:
         fields = ['bucket', 'product_entries']
+
+
+class CategoryFullBrowseResultEntityHistorySerializer(
+        serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = EntityHistory
+        fields = (
+            'normal_price',
+            'offer_price'
+        )
+
+
+class CategoryFullBrowseResultEntitySerializer(
+        serializers.HyperlinkedModelSerializer):
+    active_registry = CategoryFullBrowseResultEntityHistorySerializer(
+        read_only=True)
+    external_url = serializers.URLField(source='url')
+    normal_price_usd = serializers.DecimalField(
+        max_digits=15, decimal_places=2)
+    offer_price_usd = serializers.DecimalField(
+        max_digits=15, decimal_places=2)
+
+    class Meta:
+        model = Entity
+        fields = (
+            'id',
+            'store',
+            'external_url',
+            'active_registry',
+            'currency',
+            'normal_price_usd',
+            'offer_price_usd',
+        )
+
+
+class CategoryFullBrowseResultProductSerializer(
+        serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(read_only=True, source='__str__')
+
+    class Meta:
+        model = Product
+        fields = (
+            'id',
+            'name',
+            'specs',
+        )
+
+
+class CategoryFullBrowseResultSerializer(serializers.Serializer):
+    product = CategoryFullBrowseResultProductSerializer()
+    cell_plan = NestedProductSerializer()
+    entities = CategoryFullBrowseResultEntitySerializer(many=True)
+
+    class Meta:
+        fields = ['product', 'cell_plan', 'entities']
 
 
 class ProductPricingHistorySerializer(serializers.Serializer):

@@ -163,6 +163,60 @@ class EntityFilterSet(rest_framework.FilterSet):
         fields = ['is_visible', ]
 
 
+class CategoryFullBrowseEntityFilterSet(EntityFilterSet):
+    normal_price_usd = rest_framework.RangeFilter(
+        label='Normal price (USD)',
+        name='normal_price_usd'
+    )
+    offer_price_usd = rest_framework.RangeFilter(
+        label='Offer price (USD)',
+        name='offer_price_usd'
+    )
+
+    @classmethod
+    def get_entities(cls, request, category):
+        entities = Entity.objects.get_available().filter(
+            active_registry__cell_monthly_payment__isnull=True,
+            product__instance_model__model__category=category
+        ).annotate(
+            normal_price_usd=F('active_registry__normal_price') /
+            F('currency__exchange_rate'),
+            offer_price_usd=F('active_registry__offer_price') /
+            F('currency__exchange_rate')
+        ).select_related(
+            'category',
+            'currency',
+            'active_registry',
+            'cell_plan__instance_model__model__category',
+            'product__instance_model__model__category',
+            'store'
+        )
+
+        filterset = cls(
+            data=request.query_params,
+            request=request,
+            queryset=entities
+        )
+
+        if 'products' in request.query_params:
+            filterset.form.fields['products'].queryset = \
+                create_product_filter()(request)
+
+        if 'categories' in request.query_params:
+            filterset.form.fields['categories'].queryset = \
+                create_category_filter()(request)
+
+        if 'stores' in request.query_params:
+            filterset.form.fields['stores'].queryset = \
+                create_store_filter()(request)
+
+        return filterset.qs.order_by('product', 'cell_plan')
+
+    class Meta:
+        model = Entity
+        fields = []
+
+
 class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter('view_store_stocks'),

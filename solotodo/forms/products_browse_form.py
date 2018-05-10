@@ -1,17 +1,18 @@
 from collections import OrderedDict
-from datetime import timedelta
 
 import re
 from django import forms
-from django.db.models import Min, Q, Count, F, Sum, Value
+from django.conf import settings
+from django.db.models import Min, F, Sum, Value
 from django.db.models.functions import Coalesce
-from django.utils import timezone
 
 from solotodo.filter_utils import IsoDateTimeRangeField
-from solotodo.filters import ProductsBrowseEntityFilterSet
+from solotodo.filters import ProductsBrowseEntityFilterSet, \
+    CategoryFullBrowseEntityFilterSet
 from solotodo.models import Country, Product, Currency
 from solotodo.pagination import ProductsBrowsePagination
-from solotodo.serializers import CategoryBrowseResultSerializer
+from solotodo.serializers import CategoryBrowseResultSerializer, \
+    CategoryFullBrowseResultSerializer
 from solotodo.utils import iterable_to_dict
 
 
@@ -39,6 +40,110 @@ class ProductsBrowseForm(forms.Form):
 
     search = forms.CharField(required=False)
     brand = forms.CharField(required=False)
+
+    def get_category_entities(self, category, request):
+        """
+        Returns the available entities of queried products
+        """
+        from category_columns.models import CategoryColumn
+
+        assert self.is_valid()
+
+        # 1. Filtering and annotation of entities
+        entities = CategoryFullBrowseEntityFilterSet.get_entities(
+            request, category)
+
+        query_params = request.query_params.copy()
+
+        # 2. Create ES search that filters based on technical terms.
+        # Also calculates the aggregation count for the form filters
+
+        product_ids = set(entry['product']
+                          for entry in entities.values('product'))
+        es_search = category.es_search().filter(
+            'terms', product_id=list(product_ids))
+
+        specs_form_class = category.specs_form()
+        specs_form = specs_form_class(query_params)
+
+        es_results = specs_form.get_es_products(
+            es_search)[:len(product_ids)].execute()
+
+        filtered_product_ids = [entry['product_id'] for entry in es_results]
+        entities = entities.filter(product__in=filtered_product_ids)
+
+        # 3. Obtain filter aggs
+        filter_aggs = specs_form.process_es_aggs(es_results.aggs)
+
+        # 4. Bucket the results in (product, cell_plan) pairs, also calculate
+        # the price ranges
+        bucketed_entities_dict = {}
+        normal_prices_usd = []
+        offer_prices_usd = []
+
+        for entity in entities:
+            normal_prices_usd.append(entity.normal_price_usd)
+            offer_prices_usd.append(entity.offer_price_usd)
+
+            key = (entity.product, entity.cell_plan)
+            if key not in bucketed_entities_dict:
+                bucketed_entities_dict[key] = []
+
+            bucketed_entities_dict[key].append(entity)
+
+        normal_prices_usd.sort()
+        offer_prices_usd.sort()
+
+        entity_count = len(normal_prices_usd)
+
+        if entity_count:
+            price_ranges = {
+                'normal_price_usd': {
+                    'min': normal_prices_usd[0],
+                    'max': normal_prices_usd[-1],
+                    '80th': normal_prices_usd[int(entity_count * 0.8)]
+                },
+                'offer_price_usd': {
+                    'min': offer_prices_usd[0],
+                    'max': offer_prices_usd[-1],
+                    '80th': offer_prices_usd[int(entity_count * 0.8)]
+                },
+            }
+        else:
+            price_ranges = None
+
+        # 5. Serialization
+        bucketed_results = [{
+            'product': key[0],
+            'cell_plan': key[1],
+            'entities': value
+        } for key, value in bucketed_entities_dict.items()]
+
+        specs_columns = CategoryColumn.objects.filter(
+            field__category=category,
+            purpose=settings.CATEGORY_PURPOSE_BROWSE_ID
+        ).select_related('field')
+
+        desired_spec_fields = \
+            ['brand_unicode'] + \
+            [column.field.es_field for column in specs_columns]
+
+        serialized_data = CategoryFullBrowseResultSerializer(
+            bucketed_results, many=True, context={'request': request}
+        ).data
+
+        for serialized_entry in serialized_data:
+            spec_fields = list(serialized_entry['product']['specs'].keys())
+
+            for spec_field in spec_fields:
+                if spec_field not in desired_spec_fields:
+                    del serialized_entry['product']['specs'][spec_field]
+
+        return {
+            'aggs': filter_aggs,
+            'results': serialized_data,
+            'price_ranges': price_ranges
+        }
 
     def get_products(self, request):
         if not self.is_valid():

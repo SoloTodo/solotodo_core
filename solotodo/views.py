@@ -1,5 +1,3 @@
-import hashlib
-import json
 import traceback
 from collections import OrderedDict
 
@@ -296,6 +294,14 @@ class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
         category = self.get_object()
         form = ProductsBrowseForm(request.query_params)
         result = form.get_category_products(category, request)
+
+        return Response(result)
+
+    @detail_route()
+    def browse_entities(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+        form = ProductsBrowseForm(request.query_params)
+        result = form.get_category_entities(category, request)
 
         return Response(result)
 

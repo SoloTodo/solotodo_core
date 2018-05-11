@@ -54,6 +54,7 @@ class ProductsBrowseForm(forms.Form):
             request, category)
 
         query_params = request.query_params.copy()
+        query_params.pop('ordering', None)
 
         # 2. Create ES search that filters based on technical terms.
         # Also calculates the aggregation count for the form filters
@@ -77,7 +78,7 @@ class ProductsBrowseForm(forms.Form):
 
         # 4. Bucket the results in (product, cell_plan) pairs, also calculate
         # the price ranges
-        bucketed_entities_dict = {}
+        bucketed_entities_dict = OrderedDict()
         normal_prices_usd = []
         offer_prices_usd = []
 

@@ -210,7 +210,7 @@ class CategoryFullBrowseEntityFilterSet(EntityFilterSet):
             filterset.form.fields['stores'].queryset = \
                 create_store_filter()(request)
 
-        return filterset.qs.order_by('product', 'cell_plan')
+        return filterset.qs.order_by('product', 'cell_plan', 'offer_price_usd')
 
     class Meta:
         model = Entity

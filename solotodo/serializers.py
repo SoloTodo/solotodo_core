@@ -433,6 +433,7 @@ class CategoryFullBrowseResultEntitySerializer(
         model = Entity
         fields = (
             'id',
+            'sku',
             'store',
             'external_url',
             'active_registry',

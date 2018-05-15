@@ -84,7 +84,7 @@ def additional_es_fields(instance_model, elastic_search_original):
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_original)
         result['pretty_weight'] = format_optional_field(
-            elastic_search_original['weight'], 'g')
+            elastic_search_original['weight'], 'kg')
 
         consumption = elastic_search_original['consumption']
         result['pretty_consumption'] = format_optional_field(

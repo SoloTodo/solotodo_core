@@ -23,6 +23,7 @@ from rest_framework.filters import OrderingFilter, \
     SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
+from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -39,7 +40,7 @@ from solotodo.filter_querysets import create_category_filter, \
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
     LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet, \
-    WebsiteFilterSet, VisitFilterSet, RatingFilterSet
+    WebsiteFilterSet, VisitFilterSet, RatingFilterSet, ProductPictureFilterSet
 from solotodo.forms.date_range_form import DateRangeForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_by_url_form import EntityByUrlForm
@@ -57,11 +58,11 @@ from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
-    EntityHistory, Visit, Rating
+    EntityHistory, Visit, Rating, ProductPicture
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination, \
-    RatingPagination
+    RatingPagination, ProductPicturePagination
 from solotodo.permissions import RatingPermission
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
@@ -76,7 +77,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     EntityStaffInfoSerializer, VisitSerializer, VisitWithUserDataSerializer, \
     ProductPricingHistorySerializer, NestedProductSerializer, \
     ProductAvailableEntitiesSerializer, RatingSerializer, \
-    RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer
+    RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer, \
+    ProductPictureSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from rest_framework_tracking.mixins import LoggingMixin
@@ -1260,3 +1262,30 @@ class RatingViewSet(viewsets.ModelViewSet):
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(rating, context={'request': request})
         return Response(serializer.data)
+
+
+class ProductPictureViewSet(viewsets.ModelViewSet):
+    queryset = ProductPicture.objects.all()
+    serializer_class = ProductPictureSerializer
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly, )
+    pagination_class = ProductPicturePagination
+    filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
+    filter_class = ProductPictureFilterSet
+
+    @detail_route()
+    def thumbnail(self, request, pk):
+        product_picture = self.get_object()
+
+        form = ProductPictureForm(request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        picture = product_picture.file
+        dimensions = '{}x{}'.format(form.cleaned_data['width'],
+                                    form.cleaned_data['height'])
+        resized_picture = get_thumbnail(picture, dimensions)
+
+        response = Response(status=status.HTTP_302_FOUND)
+        response['Location'] = resized_picture.url
+        return response

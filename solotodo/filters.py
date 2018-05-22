@@ -10,7 +10,7 @@ from solotodo.filter_querysets import create_store_filter, \
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
-    Currency, Visit, Rating, Category, MaterializedEntity
+    Currency, Visit, Rating, Category, MaterializedEntity, ProductPicture
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -605,4 +605,27 @@ class RatingFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = Rating
+        fields = []
+
+
+class ProductPictureFilterSet(rest_framework.FilterSet):
+    products = CustomModelMultipleChoiceFilter(
+        queryset=create_product_filter(),
+        name='product',
+        label='Products'
+    )
+
+    @property
+    def qs(self):
+        qs = super(ProductPictureFilterSet, self).qs.select_related(
+            'product__instance_model__model__category'
+        )
+
+        if self.request:
+            qs = qs.filter_by_user_perms(self.request.user,
+                                         'view_product_picture')
+        return qs
+
+    class Meta:
+        model = ProductPicture
         fields = []

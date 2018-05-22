@@ -22,6 +22,7 @@ from .category_tier import CategoryTier
 from .store import Store
 from .category import Category
 from .product import Product
+from .product_picture import ProductPicture
 from .rating import Rating
 from .materialized_entity import MaterializedEntity
 from .entity import Entity

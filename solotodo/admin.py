@@ -11,7 +11,8 @@ from guardian.admin import GuardedModelAdmin
 from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
-    CategorySpecsFilter, CategorySpecsOrder, Lead, Visit, Rating
+    CategorySpecsFilter, CategorySpecsOrder, Lead, Visit, Rating, \
+    ProductPicture
 
 
 @admin.register(Permission)
@@ -73,6 +74,13 @@ class ProductModelAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return Product.objects.select_related()
+
+
+@admin.register(ProductPicture)
+class ProductPictureModelAdmin(admin.ModelAdmin):
+    list_display = ['id', 'product', 'file', 'ordering']
+    list_filter = ['product__instance_model__model__category']
+    raw_id_fields = ('product',)
 
 
 admin.site.register(CategoryTier)

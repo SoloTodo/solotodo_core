@@ -8,7 +8,7 @@ from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
     Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating, \
-    SoloTodoUser
+    SoloTodoUser, ProductPicture
 from solotodo.serializer_utils import StorePrimaryKeyRelatedField, \
     ProductPrimaryKeyRelatedField
 from solotodo.utils import get_client_ip
@@ -526,3 +526,11 @@ class StoreRatingSerializer(serializers.Serializer):
         view_name='store-detail', read_only=True,
         source='store.pk')
     rating = serializers.FloatField()
+
+
+class ProductPictureSerializer(serializers.HyperlinkedModelSerializer):
+    product = NestedProductSerializer()
+
+    class Meta:
+        model = ProductPicture
+        fields = ('id', 'url', 'product', 'ordering', 'file')

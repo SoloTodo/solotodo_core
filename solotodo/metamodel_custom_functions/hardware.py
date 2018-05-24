@@ -53,10 +53,6 @@ def additional_es_fields(instance_model, elastic_search_original):
     big_value = 1000 * 1000 * 1000 * 10
     if m == 'ComputerCase':
         result = {}
-        if elastic_search_original['front_usb_3_ports'] > 0:
-            result['has_usb_3_ports'] = True
-        else:
-            result['has_usb_3_ports'] = False
         length = elastic_search_original['length']
         height = elastic_search_original['height']
         width = elastic_search_original['width']

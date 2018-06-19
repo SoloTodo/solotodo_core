@@ -63,7 +63,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'django_premailer',
     'gtin_fields',
-    'rest_framework_tracking',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
     'metamodel',

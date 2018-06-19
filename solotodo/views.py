@@ -81,7 +81,6 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductPictureSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
-from rest_framework_tracking.mixins import LoggingMixin
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -212,7 +211,7 @@ class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CurrencySerializer
 
 
-class CategoryViewSet(LoggingMixin, PermissionReadOnlyModelViewSet):
+class CategoryViewSet(PermissionReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
@@ -488,7 +487,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(result)
 
 
-class EntityViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
+class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Entity.objects.all()
     pagination_class = EntityPagination
     serializer_class = EntitySerializer
@@ -880,7 +879,7 @@ class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
 
-class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
+class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
@@ -888,12 +887,6 @@ class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     filter_class = ProductFilterSet
     ordering_fields = None
     pagination_class = ProductPagination
-
-    def _should_log(self, request, response):
-        for keyword in ['browse', 'entities']:
-            if keyword in request.path:
-                return True
-        return False
 
     @list_route()
     def available_entities(self, request):

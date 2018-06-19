@@ -3,7 +3,6 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import list_route
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
-from rest_framework_tracking.mixins import LoggingMixin
 
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
 from reports.forms.report_daily_prices_form import ReportDailyPricesForm
@@ -18,7 +17,7 @@ from reports.serializers import ReportSerializer
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
-class ReportViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
+class ReportViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Report.objects.all()
     serializer_class = ReportSerializer
 

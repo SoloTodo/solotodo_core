@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'wtb',
     'navigation',
     'carousel_slides',
+    'analytics'
 ]
 
 SITE_ID = 1
@@ -128,6 +129,8 @@ DATABASES = {
         'NAME': 'solotodo_core',
     }
 }
+
+DATABASE_ROUTERS = ['solotodo_core.solotodo_database_router.SoloTodoDatabaseRouter',]
 
 
 # Password validation

@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
+from solotodo.models.utils import rs_refresh_model
 from solotodo.utils import format_currency
 
 
@@ -62,6 +63,12 @@ class Currency(models.Model):
             currency.exchange_rate = exchange_rate
             currency.exchange_rate_last_updated = timezone.now()
             currency.save()
+
+    @classmethod
+    def rs_refresh(cls):
+        rs_refresh_model(cls, 'currency',
+                         ['id', 'name', 'iso_code', 'exchange_rate',
+                          'exchange_rate_last_updated'])
 
     class Meta:
         app_label = 'solotodo'

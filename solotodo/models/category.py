@@ -6,6 +6,7 @@ from guardian.shortcuts import get_objects_for_user
 from metamodel.models import MetaModel
 from solotodo.forms.category_specs_form import CategorySpecsForm
 from solotodo.models.category_tier import CategoryTier
+from solotodo.models.utils import rs_refresh_model
 
 
 class CategoryQuerySet(models.QuerySet):
@@ -61,6 +62,10 @@ class Category(models.Model):
             form_class.add_order(category_specs_order)
 
         return form_class
+
+    @classmethod
+    def rs_refresh(cls):
+        rs_refresh_model(cls, 'category', ['id', 'name'])
 
     class Meta:
         app_label = 'solotodo'

@@ -4,6 +4,7 @@ from sorl.thumbnail import ImageField
 
 from solotodo.models.number_format import NumberFormat
 from solotodo.models.currency import Currency
+from solotodo.models.utils import rs_refresh_model
 
 
 class Country(models.Model):
@@ -19,6 +20,10 @@ class Country(models.Model):
     @classmethod
     def get_default(cls):
         return cls.objects.get(pk=settings.CHILE_COUNTRY_ID)
+
+    @classmethod
+    def rs_refresh(cls):
+        rs_refresh_model(cls, 'country', ['id', 'name'])
 
     class Meta:
         app_label = 'solotodo'

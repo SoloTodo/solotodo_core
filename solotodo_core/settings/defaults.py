@@ -77,7 +77,7 @@ INSTALLED_APPS = [
     'entity_subscriptions',
     'wtb',
     'navigation',
-    'carousel_slides',
+    'carousel_slides'
 ]
 
 SITE_ID = 1
@@ -128,7 +128,6 @@ DATABASES = {
         'NAME': 'solotodo_core',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators

@@ -14,7 +14,7 @@ from elasticsearch_dsl import Search
 from sklearn.neighbors import NearestNeighbors
 
 from metamodel.models import InstanceModel
-from solotodo.models.utils import solotodo_com_site
+from solotodo.models.utils import solotodo_com_site, rs_refresh_entries
 
 from .category import Category
 
@@ -73,6 +73,8 @@ class Product(models.Model):
     objects = ProductQuerySet.as_manager()
 
     category = property(lambda self: self.instance_model.model.category)
+    category_id = property(lambda self: self.instance_model.model.category.id)
+    name = property(lambda self: str(self.instance_model))
 
     def __init__(self, *args, **kwargs):
         self._specs = None
@@ -354,6 +356,13 @@ class Product(models.Model):
             [self], stores=stores, brands=brands,
             initial_candidate_entities=initial_candidate_entities,
             results_per_product=results_per_product)[0]
+
+    @classmethod
+    def rs_refresh(cls):
+        qs = cls.objects.select_related('instance_model__model__category')
+        rs_refresh_entries(qs, 'product', 'last_updated',
+                           ['id', 'name', 'creation_date',
+                            'last_updated', 'category_id'])
 
     class Meta:
         app_label = 'solotodo'

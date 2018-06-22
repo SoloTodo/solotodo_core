@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from gtin_fields import fields as gtin_fields
 
+from solotodo.models.utils import rs_refresh_entries
 from solotodo.utils import iterable_to_dict
 from .product import Product
 from .currency import Currency
@@ -575,6 +576,16 @@ class Entity(models.Model):
             return url
 
         return None
+
+    @classmethod
+    def rs_refresh(cls):
+        qs = cls.objects.filter(product__isnull=False)
+        rs_refresh_entries(
+            qs, 'entity', 'last_updated',
+            ['id', 'name', 'condition', 'part_number', 'sku', 'ean', 'key',
+             'url', 'creation_date', 'last_updated', 'active_registry_id',
+             'category_id', 'cell_plan_id', 'currency_id', 'product_id',
+             'store_id'])
 
     class Meta:
         app_label = 'solotodo'

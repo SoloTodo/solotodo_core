@@ -1,6 +1,7 @@
 from django.db import models
 
 from solotodo.models.entity import Entity
+from solotodo.models.utils import rs_refresh_entries
 
 
 class EntityHistoryQueryset(models.QuerySet):
@@ -51,6 +52,14 @@ class EntityHistory(models.Model):
 
     def is_available(self):
         return self.stock != 0
+
+    @classmethod
+    def rs_refresh(cls):
+        qs = cls.objects.all()
+        rs_refresh_entries(
+            qs, 'entity_history', 'timestamp',
+            ['id', 'timestamp', 'stock', 'normal_price', 'offer_price',
+             'cell_monthly_payment', 'entity_id'])
 
     class Meta:
         app_label = 'solotodo'

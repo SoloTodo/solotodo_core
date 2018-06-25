@@ -49,11 +49,10 @@ class EntityHistory(models.Model):
 
     objects = EntityHistoryQueryset.as_manager()
 
+    is_available = property(lambda self: self.stock != 0)
+
     def __str__(self):
         return u'{} - {}'.format(self.entity, self.timestamp)
-
-    def is_available(self):
-        return self.stock != 0
 
     @classmethod
     def rs_refresh(cls):
@@ -61,7 +60,9 @@ class EntityHistory(models.Model):
         rs_refresh_entries(
             qs, 'entity_history', 'timestamp',
             ['id', 'timestamp', 'stock', 'normal_price', 'offer_price',
-             'cell_monthly_payment', 'entity_id'])
+             'cell_monthly_payment', 'entity_id',
+             'estimated_sales_since_previous_registry',
+             'is_available'])
 
     class Meta:
         app_label = 'solotodo'

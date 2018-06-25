@@ -74,6 +74,8 @@ CREATE TABLE "entity" (
 	"currency_id" integer NOT NULL,
 	"product_id" integer NOT NULL,
 	"store_id" integer NOT NULL,
+	"estimated_sales" integer NOT NULL,
+	"is_available" boolean NOT NULL,
 	FOREIGN KEY ("category_id") REFERENCES "category" ("id"),
 	FOREIGN KEY ("cell_plan_id") REFERENCES "product" ("id"),
 	FOREIGN KEY ("currency_id") REFERENCES "currency" ("id"),

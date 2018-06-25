@@ -44,6 +44,8 @@ class EntityHistory(models.Model):
     cell_monthly_payment = models.DecimalField(decimal_places=2, max_digits=12,
                                                null=True, blank=True,
                                                db_index=True)
+    estimated_sales_since_previous_registry = models.PositiveIntegerField(
+        default=0)
 
     objects = EntityHistoryQueryset.as_manager()
 

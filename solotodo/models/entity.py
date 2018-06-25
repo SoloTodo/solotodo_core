@@ -267,6 +267,16 @@ class Entity(models.Model):
                 currency = Currency.objects.get(
                     iso_code=scraped_product.currency)
 
+            estimated_sales = 0
+
+            # If we have a valid stock difference, use it as estimated sales
+            if scraped_product.stock != -1 and \
+                    self.active_registry and \
+                    self.active_registry.stock != -1 and \
+                    scraped_product.stock < self.active_registry.stock:
+                estimated_sales = self.active_registry.stock - \
+                                  scraped_product.stock
+
             new_active_registry = EntityHistory.objects.create(
                 entity=self,
                 stock=scraped_product.stock,
@@ -274,6 +284,7 @@ class Entity(models.Model):
                 offer_price=scraped_product.offer_price,
                 cell_monthly_payment=scraped_product.cell_monthly_payment,
                 timestamp=scraped_product.timestamp,
+                estimated_sales_since_previous_registry=estimated_sales
             )
 
             updated_data.update({

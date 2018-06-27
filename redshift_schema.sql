@@ -74,8 +74,6 @@ CREATE TABLE "entity" (
 	"currency_id" integer NOT NULL,
 	"product_id" integer NOT NULL,
 	"store_id" integer NOT NULL,
-	"estimated_sales" integer NOT NULL,
-	"is_available" boolean NOT NULL,
 	FOREIGN KEY ("category_id") REFERENCES "category" ("id"),
 	FOREIGN KEY ("cell_plan_id") REFERENCES "product" ("id"),
 	FOREIGN KEY ("currency_id") REFERENCES "currency" ("id"),
@@ -93,6 +91,8 @@ CREATE TABLE "entity_history" (
 	"offer_price" numeric(12, 2) NOT NULL,
 	"cell_monthly_payment" numeric(12, 2) NULL,
 	"entity_id" integer NOT NULL distkey,
+	"estimated_sales" integer NOT NULL,
+	"is_available" boolean NOT NULL,
 	FOREIGN KEY ("entity_id") REFERENCES "entity" ("id")
 );
 

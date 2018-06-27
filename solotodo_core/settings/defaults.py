@@ -199,6 +199,24 @@ CACHES = {
     }
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': True,
+    'handlers': {
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'solotodo_core.email_handler.ThrottledAdminEmailHandler'
+        }
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['mail_admins'],
+            'level': 'ERROR',
+            'propagate': True,
+        },
+    }
+}
+
 #############################################################################
 # Celery configurations
 #############################################################################

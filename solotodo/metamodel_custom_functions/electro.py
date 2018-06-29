@@ -173,6 +173,10 @@ def additional_es_fields(instance_model, elastic_search_original):
         result['brand_unicode'] = \
             elastic_search_original['c_model_base_model_family_brand_unicode']
         return result
+    if m == 'AllInOne':
+        result['storage_unicode'] = ' + '.join(
+            elastic_search_original['storage_drives_unicode'])
+        return result
 
 
 def unicode_function(im):

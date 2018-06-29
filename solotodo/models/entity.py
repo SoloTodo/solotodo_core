@@ -251,6 +251,7 @@ class Entity(models.Model):
     def update_with_scraped_product(self, scraped_product,
                                     category=None, currency=None):
         from solotodo.models import EntityHistory
+        from django.conf import settings
 
         assert scraped_product is None or self.key == scraped_product.key
 
@@ -276,6 +277,11 @@ class Entity(models.Model):
                     scraped_product.stock < self.active_registry.stock:
                 estimated_sales = self.active_registry.stock - \
                                   scraped_product.stock
+
+                if self.store_id in settings.UNRELIABLE_STOCK_STORES and \
+                        estimated_sales >= \
+                        settings.UNRELIABLE_STOCK_STORE_SALES_THRESHOLD:
+                    estimated_sales = 0
 
             new_active_registry = EntityHistory.objects.create(
                 entity=self,

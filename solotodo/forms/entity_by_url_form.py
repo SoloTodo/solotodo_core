@@ -30,7 +30,7 @@ class EntityByUrlForm(forms.Form):
             sku = m.groups()[0]
         elif url.netloc == 'www.paris.cl':
             store = Store.objects.get(name='Paris')
-            m = re.search('(\d+)-(ppp|PPP)', url.path)
+            m = re.search('(\d+)-(ppp|PPP|999)', url.path)
             if not m:
                 return None
             sku = m.groups()[0]

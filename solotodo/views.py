@@ -966,7 +966,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         )
 
         filterset = EntityHistoryFilterSet(request.query_params,
-                                           entity_histories)
+                                           entity_histories,
+                                           request=request)
         entity_histories = filterset.qs \
             .order_by('entity', 'timestamp') \
             .select_related('entity__product__instance_model',

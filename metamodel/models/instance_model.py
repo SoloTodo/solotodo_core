@@ -673,7 +673,10 @@ class InstanceModel(models.Model):
                     value = instance_value
                     if value:
                         value = instance_value.value
-                    result[meta_field.name] = sanitize_value(value)
+
+                    sanitized_value = sanitize_value(value)
+                    result[meta_field.name] = sanitized_value
+                    keywords.append(str(sanitized_value))
                 elif instance_value:
                     fk_result = instance_value.elasticsearch_document()
                     for fk_key, fk_value in fk_result[0].items():

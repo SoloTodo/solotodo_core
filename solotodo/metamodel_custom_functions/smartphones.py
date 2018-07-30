@@ -88,7 +88,11 @@ def additional_es_fields(instance_model, elastic_search_result):
             'grouped_networks': cell_grouped_networks(elastic_search_result),
             'model_name': '{} {}'.format(
                 elastic_search_result['line_name'] or '',
-                elastic_search_result['name']).strip()
+                elastic_search_result['name']).strip(),
+            'base_model_with_internal_storage': '{} - {}'.format(
+                elastic_search_result['base_model_unicode'],
+                elastic_search_result['internal_storage_unicode']
+            )
         }
 
         if elastic_search_result['battery_mah']:

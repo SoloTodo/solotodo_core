@@ -89,3 +89,81 @@ def iso_to_gregorian(iso_year, iso_week, iso_day):
     "Gregorian calendar date for the given ISO year, week and day"
     year_start = iso_year_start(iso_year)
     return year_start + datetime.timedelta(days=iso_day-1, weeks=iso_week-1)
+
+
+def convert_hometheater_to_stereosystem(product):
+    from metamodel.models import MetaModel, InstanceModel
+    from metamodel.signals import instance_model_saved
+    from django.db.models import signals
+    from solotodo.models import delete_product_from_es, \
+        create_or_update_product
+
+    signals.pre_delete.disconnect(delete_product_from_es, sender=InstanceModel)
+    instance_model_saved.disconnect(create_or_update_product)
+
+    home_theater = product.instance_model
+
+    stereo_system_model = MetaModel.objects.get(pk=363)
+    stereo_system = InstanceModel(model=stereo_system_model)
+    stereo_system.save(initial=True)
+
+    stereo_system.name = home_theater.name
+    stereo_system.energy_efficiency_cl = home_theater.energy_efficiency_cl
+    stereo_system.standby_monthly_consumption_cl = \
+        home_theater.standby_monthly_consumption_cl or 0
+    stereo_system.picture = home_theater.picture
+
+    # Brand
+    stereo_system_brand_model = MetaModel.objects.get(pk=364)
+    stereo_system_brand = stereo_system_brand_model.instancemodel_set.get(
+        unicode_representation=home_theater.brand.name)
+    stereo_system.brand = stereo_system_brand
+
+    # Category
+    stereo_system_category_model = MetaModel.objects.get(pk=365)
+    stereo_system_category = \
+        stereo_system_category_model.instancemodel_set.get(
+            unicode_representation=home_theater.category.name)
+    stereo_system.category = stereo_system_category
+
+    # RMS Power
+    stereo_system_rms_power_model = MetaModel.objects.get(pk=366)
+    stereo_system_rms_power = \
+        stereo_system_rms_power_model.instancemodel_set.get(
+            unicode_representation=str(home_theater.audio_power))
+    stereo_system.rms_power = stereo_system_rms_power
+
+    # PMPO Power
+    stereo_system_unknown_pmpo_power = InstanceModel.objects.get(pk=372405)
+    stereo_system.pmpo_power = stereo_system_unknown_pmpo_power
+
+    # OpticalDiskFormat
+    stereo_system_optical_drive_model = MetaModel.objects.get(pk=368)
+    stereo_system_optical_drive = \
+        stereo_system_optical_drive_model.instancemodel_set.get(
+            unicode_representation=home_theater.optical_disk_format.name)
+    stereo_system.optical_drive = stereo_system_optical_drive
+
+    stereo_system.has_ipod_connector = home_theater.has_iphone_dock
+    stereo_system.has_android_connector = home_theater.has_android_dock
+    stereo_system.has_fm_radio = home_theater.has_fm_radio
+    stereo_system.has_bluetooth = home_theater.has_bluetooth or False
+    stereo_system.has_wifi = home_theater.has_wifi
+    stereo_system.speaker_format = home_theater.speaker_format
+    stereo_system.ports = home_theater.ports
+
+    # USB Ports
+    usb_1_port = InstanceModel.objects.get(pk=388349)
+    if usb_1_port in home_theater.ports:
+        usb_ports = 1
+    else:
+        usb_ports = 0
+    stereo_system.usb_ports = usb_ports
+
+    stereo_system.save(creator_id=53168)
+
+    product.instance_model = stereo_system
+    product.save()
+    home_theater.delete()
+
+    return product

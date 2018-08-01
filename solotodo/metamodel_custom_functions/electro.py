@@ -95,11 +95,6 @@ def additional_es_fields(instance_model, elastic_search_original):
             result['sorting_consumption'] = big_value
         return result
 
-    if m == 'StereoSystem':
-        result['pretty_usb_ports'] = format_optional_field(
-            elastic_search_original['usb_ports'], value_if_false='No posee')
-        return result
-
     if m == 'UsbFlashDrive':
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_original)

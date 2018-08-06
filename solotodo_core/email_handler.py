@@ -11,7 +11,8 @@ class ThrottledAdminEmailHandler(AdminEmailHandler):
         try:
             cache.incr(self.COUNTER_CACHE_KEY)
         except ValueError:
-            cache.set(self.COUNTER_CACHE_KEY, 1, self.PERIOD_LENGTH_IN_SECONDS)
+            cache.set(':1:' + self.COUNTER_CACHE_KEY, 1,
+                      self.PERIOD_LENGTH_IN_SECONDS)
         return cache.get(self.COUNTER_CACHE_KEY)
 
     def emit(self, record):

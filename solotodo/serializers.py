@@ -472,7 +472,7 @@ class ProductPricingHistorySerializer(serializers.Serializer):
 
 class ProductAvailableEntitiesSerializer(serializers.Serializer):
     product = ProductSerializer()
-    entities = EntitySerializer(many=True)
+    entities = EntityWithoutDescriptionSerializer(many=True)
 
 
 class RatingSerializer(serializers.ModelSerializer):

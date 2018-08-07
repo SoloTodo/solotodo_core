@@ -35,17 +35,26 @@ class Command(BaseCommand):
             product = Product.objects.get(pk=product_entry['productId'])
             print(product)
 
+            os.mkdir('solotodo_core/tmp/')
+
+            # Primary picture
+
+            primary_picture = drive.CreateFile(
+                {'id': product_entry['main_picture_id']})
+            primary_picture.GetContentFile('solotodo_core/tmp/' +
+                                           primary_picture['title'])
+
+            # Secondary pictures
+
             product.pictures.all().delete()
 
             file_list = drive.ListFile({
                 'q': "'{}' in parents".format(secondary_pictures_id)
             }).GetList()
 
-            filenames = []
+            secondary_filenames = []
 
             file_list = sorted(file_list, key=lambda x: x['title'])[1:]
-
-            os.mkdir('solotodo_core/tmp/')
 
             for drive_file in file_list:
                 if drive_file['title'] == '.DS_Store':
@@ -55,14 +64,28 @@ class Command(BaseCommand):
                 drive_file.GetContentFile('solotodo_core/tmp/' +
                                           drive_file['title'])
 
-                filenames.append(drive_file['title'])
+                secondary_filenames.append(drive_file['title'])
 
             time.sleep(2)
 
             subprocess.run(['mogrify', '-trim', '-fuzz', '5%', '-resize',
                             '1000x1000', 'solotodo_core/tmp/*.jpg'])
 
-            for idx, filename in enumerate(filenames):
+            # Upload primary picture
+
+            file_to_upload = open('solotodo_core/tmp/' +
+                                  primary_picture['title'], 'rb')
+            uploaded_file_path = storage.save(
+                'products/' + primary_picture['title'], file_to_upload)
+            print(uploaded_file_path)
+            product.instance_model.picture = uploaded_file_path
+            product.instance_model.save()
+            print('Uploaded: {}'.format(uploaded_file_path))
+            file_to_upload.close()
+
+            # Upload secondary pictures
+
+            for idx, filename in enumerate(secondary_filenames):
                 file_to_upload = open('solotodo_core/tmp/' + filename, 'rb')
                 uploaded_file_path = storage.save(
                     'product_pictures/' + filename, file_to_upload)
@@ -72,5 +95,6 @@ class Command(BaseCommand):
                     ordering=idx+1
                 )
                 print('Uploaded: {}'.format(uploaded_file_path))
+                file_to_upload.close()
 
             shutil.rmtree('solotodo_core/tmp/')

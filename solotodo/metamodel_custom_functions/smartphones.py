@@ -2,25 +2,10 @@ from decimal import Decimal
 
 
 def pretty_cell_battery(cell):
-    additions = []
-    if cell['battery_duration_standby']:
-        battery_duration = int(cell['battery_duration_standby'])
-
-        additions.append(str(battery_duration) + ' horas en reposo')
-    if cell['battery_duration_usage']:
-        battery_duration = int(cell['battery_duration_usage'])
-
-        additions.append(str(battery_duration) + ' horas en uso')
-    result = ' o '.join(additions)
-
     if cell['battery_mah']:
-        if result:
-            result = '(' + result + ')'
-
-        result = '{} mAh {}'.format(cell['battery_mah'], result)
-
-    if not result:
-        result = 'No hay información disponible'
+        result = '{} mAh'.format(cell['battery_mah'])
+    else:
+        result = 'N/A'
 
     return result
 

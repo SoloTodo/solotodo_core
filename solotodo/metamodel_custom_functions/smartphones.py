@@ -108,6 +108,31 @@ def additional_es_fields(instance_model, elastic_search_result):
             100 * elastic_search_result['internal_storage_id'] + \
             1000 * elastic_search_result['ram_id']
 
+        if elastic_search_result['back_camera_value']:
+            back_camera = '{} MP'.format(
+                elastic_search_result['back_camera_value'])
+            if 'back_camera_secondary_value' in elastic_search_result:
+                back_camera += ' + {} MP'.format(
+                    elastic_search_result['back_camera_secondary_value'])
+            if 'back_camera_tertiary_value' in elastic_search_result:
+                back_camera += ' + {} MP'.format(
+                    elastic_search_result['back_camera_tertiary_value'])
+        else:
+            back_camera = 'N/A'
+
+        result['back_camera'] = back_camera
+
+        if elastic_search_result['front_camera_value']:
+            front_camera = '{} MP'.format(
+                elastic_search_result['front_camera_value'])
+            if 'front_camera_secondary_value' in elastic_search_result:
+                front_camera += ' + {} MP'.format(
+                    elastic_search_result['front_camera_secondary_value'])
+        else:
+            front_camera = 'N/A'
+
+        result['front_camera'] = front_camera
+
         return result
     elif m == 'CellPlan':
         result = {

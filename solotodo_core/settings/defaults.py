@@ -77,7 +77,8 @@ INSTALLED_APPS = [
     'entity_subscriptions',
     'wtb',
     'navigation',
-    'carousel_slides'
+    'carousel_slides',
+    'alerts',
 ]
 
 SITE_ID = 1
@@ -399,3 +400,5 @@ CATEGORY_PURPOSE_BROWSE_ID = 1
 
 UNRELIABLE_STOCK_STORES = [9, 11]
 UNRELIABLE_STOCK_STORE_SALES_THRESHOLD = 30
+
+PUBLICAPI_HOST = 'https://publicapi.solotodo.com'

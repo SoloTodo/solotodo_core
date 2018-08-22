@@ -28,6 +28,7 @@ from category_columns.router import router as category_columns_router
 from notebooks.router import router as notebooks_router
 from hardware.router import router as hardware_router
 from carousel_slides.router import router as carousel_slides_router
+from alerts.router import router as alerts_router
 from .custom_default_router import CustomDefaultRouter
 
 router = CustomDefaultRouter()
@@ -40,6 +41,7 @@ router.extend(category_columns_router)
 router.extend(notebooks_router)
 router.extend(hardware_router)
 router.extend(carousel_slides_router)
+router.extend(alerts_router)
 
 
 class FacebookLogin(SocialLoginView):

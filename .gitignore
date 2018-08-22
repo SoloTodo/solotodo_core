@@ -6,3 +6,4 @@ storescraper
 **/*.mo
 ghostdriver.log
 *.xml
+node_modules

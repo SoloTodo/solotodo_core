@@ -32,7 +32,7 @@ class Alert(models.Model):
     @classmethod
     def find_optimum_entity_history(cls, product, stores, pricing_type):
         es = Entity.objects.filter(
-            product=product, store__in=stores.all()).get_available().order_by(
+            product=product, store__in=stores).get_available().order_by(
             'active_registry__{}_price'.format(pricing_type))
 
         if es:
@@ -59,9 +59,9 @@ class Alert(models.Model):
 
     def check_for_changes(self):
         new_normal_price_registry = self.find_optimum_entity_history(
-            self.product, self.stores, 'normal')
+            self.product, self.stores.all(), 'normal')
         new_offer_price_registry = self.find_optimum_entity_history(
-            self.product, self.stores, 'offer')
+            self.product, self.stores.all(), 'offer')
 
         previous_normal_price_registry = self.normal_price_registry
         previous_offer_price_registry = self.offer_price_registry

@@ -3,6 +3,7 @@ from decimal import Decimal
 
 from django.conf import settings
 from django.contrib.sites.models import Site
+from django.core import signing
 from django.core.mail import send_mail
 from django.db import models
 from django.template.loader import render_to_string
@@ -237,6 +238,7 @@ class AlertNotification(models.Model):
 
         html_message = render_to_string(
             'alert_mail.html', {
+                'unsubscribe_key': signing.dumps({'alert_id': self.alert_id}),
                 'product': self.alert.product,
                 'summary': mark_safe(summary),
                 'offer_price_label': mark_safe(offer_price_label),

@@ -36,7 +36,7 @@
     </mj-section>
     <mj-section>
       <mj-column>
-        <mj-text><span class="text-grey">Este correo fue enviado por haberse suscrito a los cambios de precio de este producto en SoloTodo.com. Si no deseas seguir recibiendo estas notificaciones puedes <a class="unsubscribe-link" href="https://{{ solotodo_com_domain }}/alerts/delete?key=foo">eliminar esta suscripción</a>.</span></mj-text>
+        <mj-text><span class="text-grey">Este correo fue enviado por haberse suscrito a los cambios de precio de este producto en SoloTodo.com. Si no deseas seguir recibiendo estas notificaciones puedes <a class="unsubscribe-link" href="https://{{ solotodo_com_domain }}/alerts/delete_by_key?key={{unsubscribe_key}}">eliminar esta suscripción</a>.</span></mj-text>
       </mj-column>
     </mj-section>
   </mj-body>

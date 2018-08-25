@@ -33,8 +33,10 @@ class Alert(models.Model):
     @classmethod
     def find_optimum_entity_history(cls, product, stores, pricing_type):
         es = Entity.objects.filter(
-            product=product, store__in=stores).get_available().order_by(
-            'active_registry__{}_price'.format(pricing_type))
+            product=product, store__in=stores,
+            active_registry__cell_monthly_payment__isnull=True)\
+            .get_available().order_by(
+                'active_registry__{}_price'.format(pricing_type))
 
         if es:
             return es[0].active_registry

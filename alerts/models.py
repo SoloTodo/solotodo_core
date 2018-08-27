@@ -250,9 +250,6 @@ class AlertNotification(models.Model):
                     pk=settings.SOLOTODO_COM_SITE_ID).domain
             })
 
-        with open('email.html', 'w') as f:
-            f.write(html_message)
-
         send_mail('Actualización de tu producto {}'.format(self.alert.product),
                   summary, sender, [self.alert.email],
                   html_message=html_message)

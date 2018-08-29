@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 import time
 import shutil
@@ -11,6 +12,12 @@ from pydrive.drive import GoogleDrive
 
 from solotodo.models import Product, ProductPicture
 from solotodo_core.s3utils import MediaRootS3Boto3Storage
+
+
+def normalize_filename(filename):
+    return re.sub(r'([_|\-])(\d)\.(jpg|png)$',
+                  r'\g<1>0\g<2>.\g<3>',
+                  filename)
 
 
 class Command(BaseCommand):
@@ -39,9 +46,12 @@ class Command(BaseCommand):
             # Primary picture
 
             if primary_picture_id:
-                primary_picture = drive.CreateFile({'id': primary_picture_id})
-                primary_picture.GetContentFile('solotodo_core/tmp/' +
-                                               primary_picture['title'])
+                remote_picture = drive.CreateFile({'id': primary_picture_id})
+                primary_picture = normalize_filename(remote_picture['title'])
+
+                print('Downloading primary: {}'.format(primary_picture))
+                remote_picture.GetContentFile('solotodo_core/tmp/' +
+                                              primary_picture)
             else:
                 primary_picture = None
 
@@ -56,17 +66,23 @@ class Command(BaseCommand):
 
                 secondary_filenames = []
 
-                file_list = sorted(file_list, key=lambda x: x['title'])[1:]
+                file_list = filter(
+                    lambda x: x['title'] != '.DS_Store',
+                    file_list
+                )
+
+                file_list = sorted(
+                    file_list,
+                    key=lambda x: normalize_filename(x['title']))[1:]
 
                 for drive_file in file_list:
-                    if drive_file['title'] == '.DS_Store':
-                        continue
+                    local_filename = normalize_filename(drive_file['title'])
 
-                    print('Downloading: {}'.format(drive_file['title']))
+                    print('Downloading: {}'.format(local_filename))
                     drive_file.GetContentFile('solotodo_core/tmp/' +
-                                              drive_file['title'])
+                                              local_filename)
 
-                    secondary_filenames.append(drive_file['title'])
+                    secondary_filenames.append(local_filename)
             else:
                 secondary_filenames = None
 
@@ -84,13 +100,12 @@ class Command(BaseCommand):
 
             if primary_picture:
                 file_to_upload = open('solotodo_core/tmp/' +
-                                      primary_picture['title'], 'rb')
+                                      primary_picture, 'rb')
                 uploaded_file_path = storage.save(
-                    'products/' + primary_picture['title'], file_to_upload)
-                print(uploaded_file_path)
+                    'products/' + primary_picture, file_to_upload)
                 product.instance_model.picture = uploaded_file_path
                 product.instance_model.save()
-                print('Uploaded: {}'.format(uploaded_file_path))
+                print('Uploaded primary: {}'.format(uploaded_file_path))
                 file_to_upload.close()
 
             # Upload secondary pictures

@@ -43,18 +43,6 @@ class Command(BaseCommand):
 
             os.mkdir('solotodo_core/tmp/')
 
-            # Primary picture
-
-            if primary_picture_id:
-                remote_picture = drive.CreateFile({'id': primary_picture_id})
-                primary_picture = normalize_filename(remote_picture['title'])
-
-                print('Downloading primary: {}'.format(primary_picture))
-                remote_picture.GetContentFile('solotodo_core/tmp/' +
-                                              primary_picture)
-            else:
-                primary_picture = None
-
             # Secondary pictures
 
             if secondary_pictures_id:
@@ -85,6 +73,23 @@ class Command(BaseCommand):
                     secondary_filenames.append(local_filename)
             else:
                 secondary_filenames = None
+
+            # Do the primary picture later to give it priority in case of nama
+            # clashes
+
+            # Primary picture
+
+            if primary_picture_id:
+                remote_picture = drive.CreateFile(
+                    {'id': primary_picture_id})
+                primary_picture = normalize_filename(
+                    remote_picture['title'])
+
+                print('Downloading primary: {}'.format(primary_picture))
+                remote_picture.GetContentFile('solotodo_core/tmp/' +
+                                              primary_picture)
+            else:
+                primary_picture = None
 
             time.sleep(2)
 

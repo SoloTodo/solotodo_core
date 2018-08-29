@@ -72,8 +72,13 @@ class Command(BaseCommand):
 
             time.sleep(2)
 
-            subprocess.run(['mogrify', '-trim', '-fuzz', '5%', '-resize',
-                            '1000x1000', 'solotodo_core/tmp/*.jpg'])
+            subprocess.run(['mogrify', '-trim',
+                            '-fuzz', '5%',
+                            '-resize', '1300x1300',
+                            '-background', 'white',
+                            '-gravity', 'center',
+                            '-extent', '1500x1500',
+                            'solotodo_core/tmp/*.jpg'])
 
             # Upload primary picture
 

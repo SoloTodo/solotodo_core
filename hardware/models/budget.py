@@ -350,8 +350,7 @@ Si prendes el PC con el procesador en la placa sin actualizar el equipo no
 
             # Check for non-Summit Ridge processor in current AM4 MB
             if processor.socket_id == 590711 and processor.core_id != 590715 \
-                    and motherboard.chipset_northbridge_family_socket_id == \
-                    593822:
+                    and motherboard.chipset_id in [644835, 593827, 599473]:
                 warnings.append("""
 Para usar el procesador {} en la placa madre {} la placa madre necesita
 actualización de BIOS previa. \z\z

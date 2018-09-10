@@ -35,8 +35,8 @@ class Command(BaseCommand):
         for product_idx, product_entry in enumerate(product_entries):
             print('Processing: {} / {}'.format(product_idx + 1,
                                                len(product_entries)))
-            primary_picture_id = product_entry['main_picture_id']
-            secondary_pictures_id = product_entry['secondary_pictures_id']
+            primary_picture_id = product_entry['mainPictureId']
+            secondary_pictures_id = product_entry['secondaryPicturesId']
 
             product = Product.objects.get(pk=product_entry['productId'])
             print(product)

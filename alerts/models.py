@@ -109,6 +109,7 @@ class Alert(models.Model):
 
     class Meta:
         ordering = ('-creation_date', )
+        unique_together = ('product', 'email')
 
 
 class AlertNotification(models.Model):

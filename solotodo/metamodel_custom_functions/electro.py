@@ -49,6 +49,8 @@ def additional_es_fields(instance_model, elastic_search_original):
             elastic_search_original['line_name'],
             elastic_search_original['name']).strip()
         result['brand_unicode'] = elastic_search_original['line_brand_unicode']
+        result['family_bundle_key'] = elastic_search_original['family_id'] + \
+            10 * elastic_search_original['bundle_id']
         return result
 
     if m == 'ExternalStorageDrive':

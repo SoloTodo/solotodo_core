@@ -91,10 +91,10 @@ class Command(BaseCommand):
             else:
                 primary_picture = None
 
-            time.sleep(2)
-
-            subprocess.run(['mogrify', '-trim', '-fuzz', '5%', '-resize',
-                            '1500x1500', 'solotodo_core/tmp/*.jpg'])
+            if primary_picture_id or secondary_pictures_id:
+                time.sleep(2)
+                subprocess.run(['mogrify', '-trim', '-fuzz', '5%', '-resize',
+                                '1500x1500', 'solotodo_core/tmp/*.jpg'])
 
             # subprocess.run(['mogrify', '-trim',
             #                 '-fuzz', '5%',

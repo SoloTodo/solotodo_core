@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.core.exceptions import ValidationError
+from django.core.files.base import ContentFile
 from django.db import models, IntegrityError
 from django.db.models import Avg, Count
 from django.http import Http404
@@ -81,6 +82,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductPictureSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
+from solotodo_core.s3utils import MediaRootS3Boto3Storage
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -1283,3 +1285,16 @@ class ProductPictureViewSet(viewsets.ModelViewSet):
         response = Response(status=status.HTTP_302_FOUND)
         response['Location'] = resized_picture.url
         return response
+
+
+class FilesViewSet(viewsets.ViewSet):
+    def create(self, request):
+        request_file = request.FILES['file']
+        upload_file = ContentFile(request_file.read())
+
+        storage = MediaRootS3Boto3Storage(upload_to='invoices')
+        path = storage.save(request_file.name, upload_file)
+
+        return Response({
+            'url': storage.url(path)
+        })

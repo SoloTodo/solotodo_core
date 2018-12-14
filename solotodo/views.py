@@ -890,9 +890,14 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = None
     pagination_class = ProductPagination
 
-    @list_route()
+    @list_route(methods=['GET', 'POST'])
     def available_entities(self, request):
-        queryset = self.filter_queryset(self.get_queryset())
+        if request.method == 'GET':
+            queryset = self.filter_queryset(self.get_queryset())
+        elif request.method == 'POST':
+            queryset = self.filter_class(request.POST).qs
+        else:
+            raise Exception('Invalid method')
         products = self.paginate_queryset(queryset)
         Product.prefetch_specs(products)
 

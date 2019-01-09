@@ -190,7 +190,7 @@ class Entity(models.Model):
                                            related_name='+',
                                            null=True)
     name = models.CharField(max_length=256, db_index=True)
-    cell_plan_name = models.CharField(max_length=50, null=True,
+    cell_plan_name = models.CharField(max_length=60, null=True,
                                       blank=True, db_index=True)
     part_number = models.CharField(max_length=50, null=True, blank=True,
                                    db_index=True)

@@ -29,7 +29,7 @@ class EntityLog(models.Model):
     cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
                                   related_name='+')
     name = models.CharField(max_length=256)
-    cell_plan_name = models.CharField(max_length=50, null=True)
+    cell_plan_name = models.CharField(max_length=60, null=True)
     part_number = models.CharField(max_length=50, null=True)
     sku = models.CharField(max_length=50, null=True)
     ean = gtin_fields.EAN13Field(null=True, blank=True)

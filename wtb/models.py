@@ -203,10 +203,15 @@ class WtbEntity(models.Model):
     def update_with_scraped_product(self, scraped_product):
         assert scraped_product is None or self.key == scraped_product.key
 
+        if scraped_product.picture_urls:
+            picture_url = scraped_product.picture_urls[0]
+        else:
+            picture_url = 'https://via.placeholder.com/200'
+
         if scraped_product:
             self.name = scraped_product.name[:254]
             self.url = scraped_product.url
-            self.picture_url = scraped_product.picture_urls[0]
+            self.picture_url = picture_url
             self.is_active = True
             self.save()
         elif self.is_active:
@@ -225,8 +230,6 @@ class WtbEntity(models.Model):
             raise IntegrityError(
                 'Entities must be associated to products of the same category')
 
-        now = timezone.now()
-
         self.last_association = timezone.now()
         self.last_association_user = user
         self.product = product
@@ -243,13 +246,18 @@ class WtbEntity(models.Model):
 
     @classmethod
     def create_from_scraped_product(cls, scraped_product, brand, category):
+        if scraped_product.picture_urls:
+            picture_url = scraped_product.picture_urls[0]
+        else:
+            picture_url = 'https://via.placeholder.com/200'
+
         cls.objects.create(
             name=scraped_product.name[:254],
             brand=brand,
             category=category,
             key=scraped_product.key,
             url=scraped_product.url,
-            picture_url=scraped_product.picture_urls[0],
+            picture_url=picture_url,
         )
 
     class Meta:

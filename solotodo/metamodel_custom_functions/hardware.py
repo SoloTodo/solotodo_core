@@ -165,6 +165,21 @@ def additional_es_fields(instance_model, elastic_search_original):
             result['sorting_weight'] = big_value
         return result
 
+    if m == 'Ram':
+        result = {}
+        heat_spreader = elastic_search_original['heat_spreader_unicode']
+
+        if heat_spreader == 'Desconocido':
+            segment = 'Desconocido'
+        elif heat_spreader == 'No posee':
+            segment = 'Value'
+        else:
+            segment = 'Gamer'
+
+        result['segment'] = segment
+
+        return result
+
 #
 # def additional_product_details_context(context, get_data, payment_methods,
 #                                        stores, country):

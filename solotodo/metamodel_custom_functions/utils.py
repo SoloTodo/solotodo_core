@@ -6,7 +6,8 @@ def pretty_dimensions(elastic_dict, axes=None, unit='mm'):
     if not axes:
         axes = ['width', 'height', 'depth']
 
-    if elastic_dict.get(axes[0]):
+    if elastic_dict.get(axes[0]) and elastic_dict.get(axes[1]) and \
+            elastic_dict.get(axes[2]):
         result = '{} x {} x {}'.format(*[elastic_dict[axis] for axis in axes])
         result += ' ' + unit
         return result

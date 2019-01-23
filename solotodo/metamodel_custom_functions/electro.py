@@ -1,6 +1,5 @@
 from metamodel.models import MetaModel
-from solotodo.metamodel_custom_functions.utils import pretty_dimensions, \
-    format_optional_field
+from .utils import pretty_dimensions, format_optional_field
 
 
 def pretty_video_ports(elastic_search_original):
@@ -185,6 +184,23 @@ def additional_es_fields(instance_model, elastic_search_original):
             100 * elastic_search_original['internal_storage_id'] + \
             1000 * elastic_search_original['cell_connectivity_id']
         return result
+
+    if m == 'Wearable':
+        if elastic_search_original['weight']:
+            pretty_weight = '{} g.'.format(elastic_search_original['weight'])
+        else:
+            pretty_weight = 'Desconocido'
+
+        result['pretty_weight'] = pretty_weight
+
+        if elastic_search_original['battery_mah']:
+            pretty_battery_mah = '{} mAh'.format(
+                elastic_search_original['battery_mah'])
+        else:
+            pretty_battery_mah = 'Desconocido'
+
+        result['pretty_battery_mah'] = pretty_battery_mah
+        result['pretty_dimensions'] = pretty_dimensions(elastic_search_original)
 
     return result
 

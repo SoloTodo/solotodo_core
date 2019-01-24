@@ -1,8 +1,10 @@
 from django.db.models import Q
 from django_filters import rest_framework
 
+from solotodo.custom_model_multiple_choice_filter import \
+    CustomModelMultipleChoiceFilter
 from solotodo.filter_querysets import create_model_filter, \
-    create_category_filter
+    create_category_filter, create_store_filter
 from wtb.models import WtbBrand, WtbEntity, WtbBrandUpdateLog
 
 create_wtb_brand_filter = create_model_filter(WtbBrand, 'view_wtb_brand')
@@ -84,3 +86,16 @@ class WtbBrandUpdateLogFilterSet(rest_framework.FilterSet):
     class Meta:
         model = WtbBrandUpdateLog
         fields = ('brand',)
+
+
+class WtbStoreFilterSet(rest_framework.FilterSet):
+    stores = CustomModelMultipleChoiceFilter(
+        queryset=create_store_filter(),
+        method='_ids',
+        label='Stores'
+    )
+
+    def _ids(self, queryset, name, value):
+        if value:
+            return queryset & value
+        return queryset

@@ -200,7 +200,8 @@ def additional_es_fields(instance_model, elastic_search_original):
             pretty_battery_mah = 'Desconocido'
 
         result['pretty_battery_mah'] = pretty_battery_mah
-        result['pretty_dimensions'] = pretty_dimensions(elastic_search_original)
+        result['pretty_dimensions'] = pretty_dimensions(
+            elastic_search_original)
 
     return result
 

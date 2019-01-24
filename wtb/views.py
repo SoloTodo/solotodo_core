@@ -10,7 +10,7 @@ from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.forms.category_form import CategoryForm
 from solotodo.models import Entity
 from wtb.filters import create_wtb_brand_filter, WtbEntityFilterSet, \
-    WtbBrandUpdateLogFilterSet, WtbEntityStaffFilterSet
+    WtbBrandUpdateLogFilterSet, WtbEntityStaffFilterSet, WtbStoreFilterSet
 from wtb.forms import WtbEntityAssociationForm
 from wtb.models import WtbBrand, WtbEntity, WtbBrandUpdateLog
 from wtb.pagination import WtbEntityPagination, WtbStoreUpdateLogPagination
@@ -160,7 +160,13 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
                 {'error': 'Please select an associated WTB Entity'})
 
         wtb_brand = wtb_entity.brand
-        stores = wtb_brand.stores.all()
+
+        filterset = WtbStoreFilterSet(
+            queryset=wtb_brand.stores.all(),
+            data=request.query_params,
+            request=request)
+
+        stores = filterset.qs
         product = wtb_entity.product
 
         entities = Entity.objects.filter(

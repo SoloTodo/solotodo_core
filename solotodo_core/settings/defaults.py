@@ -339,6 +339,12 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 
 OLD_PASSWORD_FIELD_ENABLED = True
 
+REST_AUTH_SERIALIZERS = {
+    'PASSWORD_RESET_SERIALIZER':
+        'solotodo_core.custom_password_reset_serializer.'
+        'CustomPasswordResetSerializer'
+}
+
 ##############################################################################
 # SORL Thumbnail settings
 ##############################################################################

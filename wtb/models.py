@@ -203,12 +203,12 @@ class WtbEntity(models.Model):
     def update_with_scraped_product(self, scraped_product):
         assert scraped_product is None or self.key == scraped_product.key
 
-        if scraped_product.picture_urls:
-            picture_url = scraped_product.picture_urls[0]
-        else:
-            picture_url = 'https://via.placeholder.com/200'
-
         if scraped_product:
+            if scraped_product.picture_urls:
+                picture_url = scraped_product.picture_urls[0]
+            else:
+                picture_url = 'https://via.placeholder.com/200'
+
             self.name = scraped_product.name[:254]
             self.url = scraped_product.url
             self.picture_url = picture_url

@@ -12,7 +12,7 @@ from reports.forms.report_store_analysis_form import ReportStoreAnalysisForm
 from reports.forms.report_websites_traffic_form import \
     ReportWebsitesTrafficForm
 from reports.forms.report_weekly_prices_form import ReportWeeklyPricesForm
-from reports.forms.report_wtb_form import  ReportWtbForm
+from reports.forms.report_wtb_form import ReportWtbForm
 from reports.models import Report, ReportDownload
 from reports.serializers import ReportSerializer
 from solotodo_core.s3utils import PrivateS3Boto3Storage
@@ -233,7 +233,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         report = Report.objects.get(slug='wtb_report')
         user = request.user
 
-        if not user.has_perm('vier_report', report):
+        if not user.has_perm('view_report', report):
             raise PermissionDenied
 
         form = ReportWtbForm(request.user, request.GET)

@@ -10,7 +10,8 @@ from guardian.shortcuts import get_objects_for_user
 
 from category_columns.models import CategoryColumn
 from wtb.models import WtbBrand, WtbEntity
-from solotodo.models import Category, Product, Entity
+from solotodo.models import Category, Store, Product, Entity, Country, \
+    StoreType, Currency
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -19,6 +20,18 @@ class ReportWtbForm(forms.Form):
         queryset=WtbBrand.objects.all())
     category = forms.ModelChoiceField(
         queryset=Category.objects.all())
+    stores = forms.ModelMultipleChoiceField(
+        queryset=Store.objects.all(),
+        required=False)
+    countries = forms.ModelMultipleChoiceField(
+        queryset=Country.objects.all(),
+        required=False)
+    store_types = forms.ModelMultipleChoiceField(
+        queryset=StoreType.objects.all(),
+        required=False)
+    currency = forms.ModelChoiceField(
+        queryset=Currency.objects.all(),
+        required=False)
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, *kwargs)
@@ -26,22 +39,36 @@ class ReportWtbForm(forms.Form):
                                                 Category)
         self.fields['category'].queryset = valid_categories
 
+        valid_stores = get_objects_for_user(user, 'view_store_reports', Store)
+        self.fields['stores'].queryset = valid_stores
+
+    def clean_stores(self):
+        selected_stores = self.cleaned_data['stores']
+        if selected_stores:
+            return selected_stores
+        else:
+            return self.fields['stores'].queryset
+
     def generate_report(self):
-        category = self.cleaned_data['category']
         wtb_brand = self.cleaned_data['wtb_brand']
+        category = self.cleaned_data['category']
+        stores = self.cleaned_data['stores']
+        countries = self.cleaned_data['countries']
+        store_types = self.cleaned_data['store_types']
+        currency = self.cleaned_data['currency']
 
         product_ids = []
-        product_dict = {}
+        product_to_wtb_entity_dict = {}
 
         wtb_entities = WtbEntity.objects.filter(brand=wtb_brand,
                                                 category=category)
 
         for wtb_entity in wtb_entities:
-            if wtb_entity.product_id not in product_dict:
-                product_dict[wtb_entity.product_id] = wtb_entity
+            if wtb_entity.product_id not in product_to_wtb_entity_dict:
+                product_to_wtb_entity_dict[wtb_entity.product_id] = wtb_entity
                 product_ids.append(wtb_entity.product_id)
 
-        es = Entity.objects.filter(product__in=product_ids)\
+        es = Entity.objects.filter(product__in=product_ids, store__in=stores)\
             .get_available()\
             .select_related(
             'product__instance_model',
@@ -50,6 +77,12 @@ class ReportWtbForm(forms.Form):
             'currency',
             'store__country')\
             .order_by('product')
+
+        if countries:
+            es = es.filter(store__country__in=countries)
+
+        if store_types:
+            es = es.filter(store__type__in=store_types)
 
         es_search = Product.es_search().filter('terms', product_id=product_ids)
         es_dict = {e.product_id: e.to_dict()
@@ -120,6 +153,12 @@ class ReportWtbForm(forms.Form):
             if cell_plans_in_entities:
                 headers.append('Cuota arriendo')
 
+        if currency:
+            headers.extend([
+                'Precio normal ({})'.format(currency.iso_code),
+                'Precio oferta ({})'.format(currency.iso_code),
+            ])
+
         headers.append('Nombre en tienda')
         headers.extend([column.field.label for column in specs_columns])
 
@@ -136,14 +175,14 @@ class ReportWtbForm(forms.Form):
 
             worksheet.write(
                 row, col,
-                product_dict[e.product.id].key)
+                product_to_wtb_entity_dict[e.product.id].key)
 
             col += 1
 
             worksheet.write_url(
                 row, col,
-                product_dict[e.product.id].url,
-                string=product_dict[e.product.id].name,
+                product_to_wtb_entity_dict[e.product.id].url,
+                string=product_to_wtb_entity_dict[e.product.id].name,
                 cell_format=url_format)
 
             col += 1
@@ -237,6 +276,18 @@ class ReportWtbForm(forms.Form):
                 worksheet.write(row, col, cell_monthly_payment_text)
                 col += 1
 
+            # Converted prices
+            if currency:
+                converted_normal_price = currency.convert_from(
+                    e.active_registry.normal_price, e.currency)
+                worksheet.write(row, col, converted_normal_price)
+                col += 1
+
+                converted_offer_price = currency.convert_from(
+                    e.active_registry.offer_price, e.currency)
+                worksheet.write(row, col, converted_offer_price)
+                col += 1
+
             # Store name
             worksheet.write(row, col, e.name)
             col += 1
@@ -263,8 +314,6 @@ class ReportWtbForm(forms.Form):
 
         path = storage.save('reports/{}.xlsx'.format(filename),
                             file_for_upload)
-
-
 
         return {
             'file': file_value,

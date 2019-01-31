@@ -383,7 +383,7 @@ METAMODEL = {
     ]
 }
 
-ES = Elasticsearch([{"host": "localhost", "port": 9201}])
+ES = Elasticsearch([{"host": "localhost", "port": 9200}])
 ES_PRODUCTS_INDEX = 'products'
 
 CURRENCYLAYER_API_ACCESS_KEY = ''

@@ -5,6 +5,7 @@ from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import Min
+from django.db.models import F
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
@@ -28,8 +29,11 @@ class ReportCurrentPricesForm(forms.Form):
         required=False)
     currency = forms.ModelChoiceField(
         queryset=Currency.objects.all(),
-        required=False
-    )
+        required=False)
+    normal_price_usd_0 = forms.DecimalField(
+        required=False)
+    normal_price_usd_1 = forms.DecimalField(
+        required=False)
     filename = forms.CharField(
         required=False
     )
@@ -51,14 +55,20 @@ class ReportCurrentPricesForm(forms.Form):
         else:
             return self.fields['stores'].queryset
 
-    def generate_report(self):
+    def generate_report(self, es_product_search):
         category = self.cleaned_data['category']
         stores = self.cleaned_data['stores']
         countries = self.cleaned_data['countries']
         store_types = self.cleaned_data['store_types']
         currency = self.cleaned_data['currency']
+        normal_price_usd_0 = self.cleaned_data['normal_price_usd_0']
+        normal_price_usd_1 = self.cleaned_data['normal_price_usd_1']
 
-        es = Entity.objects.filter(product__isnull=False) \
+        specs_products = [e.product_id
+                          for e in es_product_search[:100000].execute()]
+
+        es = Entity.objects.filter(product__isnull=False,
+                                   product__in=specs_products) \
             .filter(
             product__instance_model__model__category=category,
             store__in=stores) \
@@ -69,13 +79,21 @@ class ReportCurrentPricesForm(forms.Form):
             'active_registry',
             'currency',
             'store') \
-            .order_by('product')
+            .order_by('product').annotate(
+            normal_price_usd=F('active_registry__normal_price') /
+            F('currency__exchange_rate'))
 
         if countries:
             es = es.filter(store__country__in=countries)
 
         if store_types:
             es = es.filter(store__type__in=store_types)
+
+        if normal_price_usd_0:
+            es = es.filter(normal_price_usd__gte=normal_price_usd_0)
+
+        if normal_price_usd_1:
+            es = es.filter(normal_price_usd__lte=normal_price_usd_1)
 
         product_ids = [x['product'] for x in es.values('product')]
 

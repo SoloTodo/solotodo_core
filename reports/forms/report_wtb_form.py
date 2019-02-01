@@ -34,7 +34,7 @@ class ReportWtbForm(forms.Form):
         required=False)
 
     def __init__(self, user, *args, **kwargs):
-        super().__init__(*args, *kwargs)
+        super().__init__(*args, **kwargs)
         valid_categories = get_objects_for_user(user, 'view_category_reports',
                                                 Category)
         self.fields['category'].queryset = valid_categories

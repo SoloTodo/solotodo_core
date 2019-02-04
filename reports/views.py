@@ -40,7 +40,19 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
                 'errors': form.errors
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        report_path = form.generate_report()['path']
+        # SPEC FORM
+        category = form.cleaned_data['category']
+        spec_form_class = category.specs_form()
+        spec_form = spec_form_class(request.query_params)
+
+        if not spec_form.is_valid():
+            return Response({
+                'errors': spec_form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        es_products_search = spec_form.get_es_products()
+
+        report_path = form.generate_report(es_products_search)['path']
 
         ReportDownload.objects.create(
             report=report,

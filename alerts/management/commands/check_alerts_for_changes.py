@@ -1,6 +1,6 @@
 from django.core.management import BaseCommand
 
-from alerts.models import Alert
+from alerts.models.alert import Alert
 from alerts.tasks import alert_check_for_changes
 
 

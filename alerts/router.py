@@ -1,6 +1,6 @@
 from rest_framework import routers
 
-from alerts.views import AlertViewSet
+from alerts.views import AnonymousAlertViewSet
 
 router = routers.SimpleRouter()
-router.register(r'alerts', AlertViewSet)
+router.register(r'anonymous_alerts', AnonymousAlertViewSet)

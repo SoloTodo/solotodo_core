@@ -1,6 +1,6 @@
 from celery import shared_task
 
-from alerts.models import Alert
+from .models import Alert
 
 
 @shared_task(queue='general', ignore_result=True)

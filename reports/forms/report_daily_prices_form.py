@@ -187,12 +187,14 @@ class ReportDailyPricesForm(forms.Form):
 
             # Product
 
-            worksheet.write_url(
-                row, col,
-                '{}products/{}'.format(settings.BACKEND_HOST,
-                                       entity.product.id),
-                string=str(entity.product),
-                cell_format=url_format)
+            # worksheet.write_url(
+            #     row, col,
+            #     '{}products/{}'.format(settings.BACKEND_HOST,
+            #                            entity.product.id),
+            #     string=str(entity.product),
+            #     cell_format=url_format)
+
+            worksheet.write(row, col, str(entity.product))
 
             col += 1
 
@@ -224,11 +226,14 @@ class ReportDailyPricesForm(forms.Form):
             else:
                 sku_text = 'N/A'
 
-            worksheet.write_url(
-                row, col,
-                '{}entities/{}'.format(settings.BACKEND_HOST, entity.id),
-                string=sku_text,
-                cell_format=url_format)
+            # worksheet.write_url(
+            #     row, col,
+            #     '{}entities/{}'.format(settings.BACKEND_HOST, entity.id),
+            #     string=sku_text,
+            #     cell_format=url_format)
+
+            worksheet.write(row, col, sku_text)
+
             col += 1
 
             # Condition

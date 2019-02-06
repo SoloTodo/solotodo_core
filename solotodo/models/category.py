@@ -79,5 +79,7 @@ class Category(models.Model):
              'View the visits associated to this category'],
             ['view_category_reports',
              'Download the reports associated to this category'],
+            ['view_category_share_of_shelves',
+             'View share of shelves of the category'],
             ['backend_list_categories', 'View category list in backend']
         )

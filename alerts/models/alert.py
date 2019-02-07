@@ -1,7 +1,6 @@
 from datetime import timedelta
 
 from django.db import models
-from django.utils import timezone
 
 from solotodo.models import Product, EntityHistory, Store, Entity
 

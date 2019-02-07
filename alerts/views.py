@@ -9,9 +9,9 @@ from alerts.serializers import AnonymousAlertSerializer, \
 
 
 class AnonymousAlertViewSet(mixins.CreateModelMixin,
-                   mixins.RetrieveModelMixin,
-                   mixins.ListModelMixin,
-                   viewsets.GenericViewSet):
+                            mixins.RetrieveModelMixin,
+                            mixins.ListModelMixin,
+                            viewsets.GenericViewSet):
     queryset = AnonymousAlert.objects.all()
     serializer_class = AnonymousAlertSerializer
 
@@ -40,7 +40,7 @@ class AnonymousAlertViewSet(mixins.CreateModelMixin,
             }, status=status.HTTP_400_BAD_REQUEST)
 
         payload = form.cleaned_data['payload']
-        alert_id = payload.get('alert_id')
+        alert_id = payload.get('anonymous_alert_id')
 
         if alert_id is None:
             return Response({

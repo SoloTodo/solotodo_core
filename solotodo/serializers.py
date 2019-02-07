@@ -379,13 +379,13 @@ class CategoryBrowsePricesSerializer(serializers.Serializer):
     currency = serializers.HyperlinkedRelatedField(
         view_name='currency-detail', read_only=True, source='currency.id')
     min_normal_price = serializers.DecimalField(
-        max_digits=10, decimal_places=2)
+        max_digits=None, decimal_places=2)
     min_offer_price = serializers.DecimalField(
-        max_digits=10, decimal_places=2)
+        max_digits=None, decimal_places=2)
     min_normal_price_usd = serializers.DecimalField(
-        max_digits=10, decimal_places=2)
+        max_digits=None, decimal_places=2)
     min_offer_price_usd = serializers.DecimalField(
-        max_digits=10, decimal_places=2)
+        max_digits=None, decimal_places=2)
 
     class Meta:
         fields = ['currency', 'min_normal_price', 'min_offer_price',

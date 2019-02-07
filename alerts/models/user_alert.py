@@ -1,37 +1,40 @@
 from decimal import Decimal
 
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-from datetime import timedelta
-from django.utils import timezone
+from django.template.loader import render_to_string
+from django.core import signing
+from django.utils.safestring import mark_safe
 from django.conf import settings
 from django.contrib.sites.models import Site
-from django.core import signing
 from django.core.mail import send_mail
-from django.template.loader import render_to_string
-from django.utils.safestring import mark_safe
 
+from .alert_notification import AlertNotification
+from solotodo.models import Entity, SoloTodoUser
 from .alert import Alert
 from .utils import extract_price, calculate_price_delta, currency_formatter
 
-from solotodo.models import SoloTodoUser
 
-
-class AnonymousAlert(models.Model):
+class UserAlert(models.Model):
     alert = models.OneToOneField(Alert, on_delete=models.CASCADE)
-    email = models.EmailField()
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    entity = models.ForeignKey(Entity, on_delete=models.CASCADE,
+                               null=True, blank=True)
 
     def __str__(self):
-        return '{} - {}'.format(self.alert, self.email)
+        return '{} - {} - {}'.format(self.alert, self.user, self.entity)
 
     def check_for_changes(self):
-        from .alert_notification import AlertNotification
         previous_normal_price_registry = self.alert.normal_price_registry
         previous_offer_price_registry = self.alert.offer_price_registry
 
-        self.alert.update()
-
-        # Check whether to send an email notification
+        if self.entity:
+            self.alert.normal_price_registry = self.entity.active_registry
+            self.alert.offer_price_registry = self.entity.active_registry
+            self.alert.save()
+        else:
+            self.alert.update()
 
         previous_normal_price = extract_price(previous_normal_price_registry,
                                               'normal')
@@ -42,17 +45,8 @@ class AnonymousAlert(models.Model):
         new_offer_price = extract_price(self.alert.offer_price_registry,
                                         'offer')
 
-        notifications = self.alert.notifications.order_by('-creation_date')
-        if notifications:
-            last_interaction = notifications[0].creation_date
-        else:
-            last_interaction = self.alert.creation_date
-
-        # Send a notification if the price has changed or if its been a week
-        # since the last notification (even if the price hasn't changed)
-        if (previous_normal_price != new_normal_price or
-                previous_offer_price != new_offer_price or
-                (timezone.now() - last_interaction) > timedelta(days=7)):
+        if previous_normal_price != new_normal_price or \
+                previous_offer_price != new_offer_price:
             alert_notification = AlertNotification.objects.create(
                 alert=self.alert,
                 previous_normal_price_registry=previous_normal_price_registry,
@@ -76,12 +70,6 @@ class AnonymousAlert(models.Model):
         offer_price_delta = calculate_price_delta(previous_offer_price,
                                                   new_offer_price)
 
-        # We have 12 combinations
-        # normal delta None and offer delta None
-        # normal delta -Inf and offer delta -Inf
-        # normal delta Inf and offer delta Inf
-        # the 9 combinations of (neg, zero, pos) x (neg, zero, pos) for deltas
-
         zero = Decimal(0)
 
         def price_labeler(previous_price, new_price, price_delta):
@@ -104,11 +92,6 @@ class AnonymousAlert(models.Model):
                         currency_formatter(previous_price),
                         currency_formatter(new_price)
                     )
-            elif price_delta == zero:
-                return \
-                    '<span class="text-grey">{}</span>'.format(
-                        currency_formatter(previous_price),
-                    )
             else:
                 return \
                     '<span class="text-red"><span class="old-price">' \
@@ -117,64 +100,63 @@ class AnonymousAlert(models.Model):
                         currency_formatter(new_price)
                     )
 
+        if self.entity:
+            product = self.entity.product
+        else:
+            product = self.alert.product
+
+        product_label = '<span class="product-name">{}</span>'.format(product)
+
         offer_price_label = price_labeler(
             previous_offer_price, new_offer_price, offer_price_delta)
         normal_price_label = price_labeler(
             previous_normal_price, new_normal_price, normal_price_delta)
 
-        product_label = '<span class="product-name">{}</span>'.format(
-            self.alert.product)
-
-        if offer_price_delta is None or \
-                (offer_price_delta == zero and normal_price_delta == zero):
-            summary = 'Sólo te queríamos contar que tu producto {} no ha ' \
-                      'tenido cambios durante la última semana.'\
-                .format(product_label)
-        elif offer_price_delta == Decimal('-Inf'):
-            summary = '¡Tu producto {} ya no está disponible! 😱.'.format(
+        if offer_price_delta == Decimal('-Inf'):
+            summary = 'El producto {} ya no está disponible'.format(
                 product_label)
         elif offer_price_delta == Decimal('Inf'):
-            summary = '¡Tu producto {} volvió a estar disponible! 😊'.format(
+            summary = 'El producto {} volvió a estar disponible'.format(
                 product_label)
         elif offer_price_delta < zero or normal_price_delta < zero:
-            summary = '¡Tu producto {} bajó de precio! 😊'.format(
+            summary = 'El producto {} bajó de precio'.format(
                 product_label)
         else:
-            summary = '¡Tu producto {} subió de precio! 😞'.format(
+            summary = 'El producto {} subió de precio'.format(
                 product_label)
 
         sender = SoloTodoUser().get_bot().email_recipient_text()
 
         html_message = render_to_string(
-            'alert_mail.html', {
+            'user_alert_mail.html', {
                 'unsubscribe_key': signing.dumps({
                     'anonymous_alert_id': self.id
                 }),
-                'product': self.alert.product,
+                'product': product,
                 'summary': mark_safe(summary),
                 'offer_price_label': mark_safe(offer_price_label),
                 'normal_price_label': mark_safe(normal_price_label),
                 'api_host': settings.PUBLICAPI_HOST,
                 'solotodo_com_domain': Site.objects.get(
-                    pk=settings.SOLOTODO_COM_SITE_ID).domain
+                    pk=settings.SOLOTODO_PRICING_SITE_ID).domain
             })
 
-        send_mail('Actualización de tu producto {}'.format(self.alert.product),
-                  summary, sender, [self.email],
+        send_mail('Actualización del producto {}'.format(self.alert.product),
+                  summary, sender, [self.user.email],
                   html_message=html_message)
 
     def clean(self):
-        if not self.alert.product:
-            raise ValidationError('alert does not have an associated product')
+        if not self.entity and not self.alert.product:
+            raise ValidationError('alert does not have a product '
+                                  'nor an entity')
 
-        if AnonymousAlert.objects.filter(email=self.email,
-                                         alert__product=self.alert.product) \
-                .exclude(pk=self.pk):
-            raise ValidationError('email/product combination not unique')
+        if self.entity and self.alert.product:
+            raise ValidationError('alert has both a product and an entity '
+                                  '(only one should be defined)')
 
     def save(self, *args, **kwargs):
         self.clean()
-        super(AnonymousAlert, self).save(*args, **kwargs)
+        super(UserAlert, self).save(*args, **kwargs)
 
     class Meta:
         app_label = 'alerts'

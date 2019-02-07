@@ -1,12 +1,11 @@
-from datetime import timedelta
-
 from django.db import models
 
 from solotodo.models import Product, EntityHistory, Store, Entity
 
 
 class Alert(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE,
+                                null=True, blank=True)
     normal_price_registry = models.ForeignKey(
         EntityHistory, blank=True, null=True, on_delete=models.CASCADE,
         related_name='+')
@@ -33,23 +32,9 @@ class Alert(models.Model):
         else:
             return None
 
-    @classmethod
-    def set_up(cls, product, stores):
-        normal_price_registry = cls.find_optimum_entity_history(
-            product, stores, 'normal')
-        offer_price_registry = cls.find_optimum_entity_history(
-            product, stores, 'offer')
-
-        alert = cls.objects.create(
-            product=product,
-            normal_price_registry=normal_price_registry,
-            offer_price_registry=offer_price_registry,
-        )
-
-        alert.stores.set(stores)
-        return alert
-
     def update(self):
+        assert self.product is not None
+
         new_normal_price_registry = self.find_optimum_entity_history(
             self.product, self.stores.all(), 'normal')
         new_offer_price_registry = self.find_optimum_entity_history(

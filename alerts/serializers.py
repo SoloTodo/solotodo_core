@@ -1,7 +1,7 @@
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 
-from alerts.models import Alert
+from .models import Alert, AnonymousAlert
 from solotodo.models import Product, Store, Category
 from solotodo.serializers import NestedProductSerializer, \
     EntityHistorySerializer
@@ -14,12 +14,20 @@ class AlertSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Alert
-        fields = ('id', 'product', 'stores', 'email',
+        fields = ('id', 'product', 'stores',
                   'normal_price_registry', 'offer_price_registry',
                   'creation_date', 'last_updated')
 
 
-class AlertCreationSerializer(serializers.HyperlinkedModelSerializer):
+class AnonymousAlertSerializer(serializers.HyperlinkedModelSerializer):
+    alert = AlertSerializer()
+
+    class Meta:
+        model = AnonymousAlert
+        fields = ('id', 'alert', 'email')
+
+
+class AnonymousAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
     product = serializers.PrimaryKeyRelatedField(
         queryset=Product.objects.all())
     email = serializers.EmailField()
@@ -28,7 +36,7 @@ class AlertCreationSerializer(serializers.HyperlinkedModelSerializer):
 
     @property
     def data(self):
-        return AlertSerializer(
+        return AnonymousAlertSerializer(
             self.instance, context={'request': self.context['request']}).data
 
     def validate_product(self, value):
@@ -54,11 +62,20 @@ class AlertCreationSerializer(serializers.HyperlinkedModelSerializer):
 
         return value
 
+    def validate(self, attrs):
+        if AnonymousAlert.objects.filter(email=attrs['email'],
+                                         alert__product=attrs['product']):
+            raise serializers.ValidationError(
+                'email/product combination not unique')
+
+        return attrs
+
     def create(self, validated_data):
-        return Alert.set_up(validated_data['product'],
-                            validated_data['stores'],
-                            validated_data['email'])
+        alert = Alert.set_up(validated_data['product'],
+                             validated_data['stores'])
+        return AnonymousAlert.objects.create(alert=alert,
+                                             email=validated_data['email'])
 
     class Meta:
-        model = Alert
+        model = AnonymousAlert
         fields = ('product', 'email', 'stores')

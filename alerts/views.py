@@ -3,32 +3,33 @@ from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
 from alerts.forms import AlertDeleteByKeyForm
-from alerts.models import Alert
-from alerts.serializers import AlertSerializer, AlertCreationSerializer
+from .models import AnonymousAlert
+from alerts.serializers import AnonymousAlertSerializer, \
+    AnonymousAlertCreationSerializer
 
 
-class AlertViewSet(mixins.CreateModelMixin,
-                   mixins.RetrieveModelMixin,
-                   mixins.ListModelMixin,
-                   viewsets.GenericViewSet):
-    queryset = Alert.objects.all()
-    serializer_class = AlertSerializer
+class AnonymousAlertViewSet(mixins.CreateModelMixin,
+                            mixins.RetrieveModelMixin,
+                            mixins.ListModelMixin,
+                            viewsets.GenericViewSet):
+    queryset = AnonymousAlert.objects.all()
+    serializer_class = AnonymousAlertSerializer
 
     def get_queryset(self):
         user = self.request.user
 
         if not user.is_authenticated:
-            return Alert.objects.none()
+            return AnonymousAlert.objects.none()
         elif user.is_superuser:
-            return Alert.objects.all()
+            return AnonymousAlert.objects.all()
         else:
-            return Alert.objects.filter(email=user.email)
+            return AnonymousAlert.objects.filter(email=user.email)
 
     def get_serializer_class(self):
         if self.action == 'create':
-            return AlertCreationSerializer
+            return AnonymousAlertCreationSerializer
         else:
-            return AlertSerializer
+            return AnonymousAlertSerializer
 
     @list_route(methods=['post'])
     def delete_by_key(self, request, *args, **kwargs):
@@ -39,7 +40,7 @@ class AlertViewSet(mixins.CreateModelMixin,
             }, status=status.HTTP_400_BAD_REQUEST)
 
         payload = form.cleaned_data['payload']
-        alert_id = payload.get('alert_id')
+        alert_id = payload.get('anonymous_alert_id')
 
         if alert_id is None:
             return Response({
@@ -47,8 +48,8 @@ class AlertViewSet(mixins.CreateModelMixin,
             }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            alert = Alert.objects.get(pk=alert_id)
-        except Alert.DoesNotExist:
+            alert = AnonymousAlert.objects.get(pk=alert_id)
+        except AnonymousAlert.DoesNotExist:
             return Response({
                 'errors': ['Matching alert not found']
             }, status=status.HTTP_404_NOT_FOUND)

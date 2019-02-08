@@ -144,7 +144,7 @@ class UserAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
 
         requested_stores = Store.objects.filter(
             pk__in=[s.pk for s in value])
-        valid_stores = get_objects_for_user(user, 'view_store',
+        valid_stores = get_objects_for_user(user, 'view_store_reports',
                                             klass=requested_stores)
 
         if len(value) != len(valid_stores):

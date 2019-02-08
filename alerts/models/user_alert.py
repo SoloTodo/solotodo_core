@@ -147,12 +147,16 @@ class UserAlert(models.Model):
 
     def clean(self):
         if not self.entity and not self.alert.product:
-            raise ValidationError('alert does not have a product '
+            raise ValidationError('Alert does not have a product '
                                   'nor an entity')
 
-        if self.entity and self.alert.product:
-            raise ValidationError('alert has both a product and an entity '
-                                  '(only one should be defined)')
+        if self.entity:
+            if self.alert.product:
+                raise ValidationError('Alert has both a product and an entity '
+                                      '(only one should be defined)')
+            if not self.entity.product:
+                raise ValidationError('The entity is not associated '
+                                      'with a product')
 
     def save(self, *args, **kwargs):
         self.clean()

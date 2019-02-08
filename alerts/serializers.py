@@ -96,6 +96,8 @@ class AnonymousAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
             offer_price_registry=offer_price_registry
         )
 
+        alert.stores.set(stores)
+
         return AnonymousAlert.objects.create(alert=alert,
                                              email=validated_data['email'])
 
@@ -151,17 +153,26 @@ class UserAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
         return value
 
     def validate(self, attrs):
+        user = self.context['request'].user
         entity = attrs.get('entity')
         product = attrs.get('product')
 
         if entity and product:
             raise serializers.ValidationError(
-                'alert has both a product and an entity'
+                'Alert has both a product and an entity'
                 '(only one should be defined)')
 
         if not entity and not product:
             raise serializers.ValidationError(
-                'alert does not have a product nor an entity')
+                'Alert does not have a product nor an entity')
+
+        if entity and UserAlert.objects.filter(user=user, entity=entity):
+            raise serializers.ValidationError(
+                'User already has an alert for this entity')
+
+        if entity and not entity.product:
+            raise serializers.ValidationError(
+                'The entity is not associated with a product')
 
         return attrs
 
@@ -186,6 +197,8 @@ class UserAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
             normal_price_registry=normal_price_registry,
             offer_price_registry=offer_price_registry
         )
+
+        alert.stores.set(stores)
 
         return UserAlert.objects.create(alert=alert, user=user, entity=entity)
 

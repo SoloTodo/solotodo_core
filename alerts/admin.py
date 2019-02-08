@@ -1,8 +1,6 @@
 from django.contrib import admin
 
-from .models import Alert
-from .models import AnonymousAlert
-from .models import AlertNotification
+from .models import Alert, AlertNotification, AnonymousAlert, UserAlert
 
 
 @admin.register(Alert)
@@ -30,6 +28,22 @@ class AnonymousAlertModelAdmin(admin.ModelAdmin):
 
     def alert_product(self, obj):
         return obj.alert.product
+
+    def alert_creation_date(self, obj):
+        return obj.alert.creation_date
+
+    def alert_last_updated(self, obj):
+        return obj.alert.last_updated
+
+
+@admin.register(UserAlert)
+class UserAlertModelAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user', 'alert_product', 'entity',
+                    'alert_creation_date', 'alert_last_updated')
+    readonly_fields = ('alert', 'entity', 'user')
+
+    def alert_product(self, obj):
+        return obj.alert.product or 'N/A'
 
     def alert_creation_date(self, obj):
         return obj.alert.creation_date

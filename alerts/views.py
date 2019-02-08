@@ -3,9 +3,10 @@ from rest_framework.decorators import list_route
 from rest_framework.response import Response
 
 from alerts.forms import AlertDeleteByKeyForm
-from .models import AnonymousAlert
+from .models import AnonymousAlert, UserAlert
 from alerts.serializers import AnonymousAlertSerializer, \
-    AnonymousAlertCreationSerializer
+    AnonymousAlertCreationSerializer, UserAlertSerializer,\
+    UserAlertCreationSerializer
 
 
 class AnonymousAlertViewSet(mixins.CreateModelMixin,
@@ -56,3 +57,29 @@ class AnonymousAlertViewSet(mixins.CreateModelMixin,
 
         alert.delete()
         return Response({'status': 'deleted'})
+
+
+class UserAlertViewSet(mixins.CreateModelMixin,
+                       mixins.RetrieveModelMixin,
+                       mixins.ListModelMixin,
+                       mixins.DestroyModelMixin,
+                       viewsets.GenericViewSet):
+
+    queryset = UserAlert.objects.all()
+    serializer_class = UserAlertSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return UserAlert.objects.none()
+        elif user.is_superuser:
+            return UserAlert.objects.all()
+        else:
+            return UserAlert.objects.filter(user=user)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserAlertCreationSerializer
+        else:
+            return UserAlertSerializer

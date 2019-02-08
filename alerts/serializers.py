@@ -119,7 +119,7 @@ class UserAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
 
     def validate_product(self, value):
         user = self.context['request'].user
-        valid_categories = get_objects_for_user(user, 'view_category',
+        valid_categories = get_objects_for_user(user, 'view_category_reports',
                                                 klass=Category)
 
         if value.category not in valid_categories:
@@ -129,7 +129,7 @@ class UserAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
 
     def validate_entity(self, value):
         user = self.context['request'].user
-        valid_categories = get_objects_for_user(user, 'view_category',
+        valid_categories = get_objects_for_user(user, 'view_category_reports',
                                                 klass=Category)
 
         if value.category not in valid_categories:
@@ -151,12 +151,15 @@ class UserAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
         return value
 
     def validate(self, attrs):
-        if attrs['entity'] and attrs['product']:
+        entity = attrs.get('entity')
+        product = attrs.get('product')
+
+        if entity and product:
             raise serializers.ValidationError(
                 'alert has both a product and an entity'
                 '(only one should be defined)')
 
-        if not attrs['entity'] and not attrs['product']:
+        if not entity and not product:
             raise serializers.ValidationError(
                 'alert does not have a product nor an entity')
 
@@ -164,9 +167,10 @@ class UserAlertCreationSerializer(serializers.HyperlinkedModelSerializer):
 
     def create(self, validated_data):
         user = self.context['request'].user
-        product = validated_data['product']
-        entity = validated_data['entity']
         stores = validated_data['stores']
+
+        product = validated_data.get('product')
+        entity = validated_data.get('entity')
 
         if product:
             normal_price_registry = Alert.find_optimum_entity_history(

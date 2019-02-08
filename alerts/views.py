@@ -62,6 +62,7 @@ class AnonymousAlertViewSet(mixins.CreateModelMixin,
 class UserAlertViewSet(mixins.CreateModelMixin,
                        mixins.RetrieveModelMixin,
                        mixins.ListModelMixin,
+                       mixins.DestroyModelMixin,
                        viewsets.GenericViewSet):
 
     queryset = UserAlert.objects.all()

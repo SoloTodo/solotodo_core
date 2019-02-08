@@ -6,7 +6,7 @@ from alerts.models import AnonymousAlert
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        alerts = Alert.objects.all()
+        alerts = Alert.objects.order_by('pk')
         q = len(alerts)
         for i, alert in enumerate(alerts):
             print('{} de {} - {}'.format(i, q, alert.id))

@@ -35,7 +35,7 @@ class UserAlertSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = UserAlert
-        fields = ('id', 'alert', 'entity', 'user')
+        fields = ('id', 'url', 'alert', 'entity', 'user')
 
 
 class AnonymousAlertCreationSerializer(serializers.HyperlinkedModelSerializer):

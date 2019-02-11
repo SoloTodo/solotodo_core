@@ -1,7 +1,7 @@
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import serializers
 
-from .models import Alert, AnonymousAlert, UserAlert
+from .models import Alert, AnonymousAlert, UserAlert, AlertNotification
 from solotodo.models import Product, Store, Category, Entity
 from solotodo.serializers import UserSerializer, EntitySerializer
 from solotodo.serializers import NestedProductSerializer, \
@@ -36,6 +36,17 @@ class UserAlertSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = UserAlert
         fields = ('id', 'url', 'alert', 'entity', 'user')
+
+
+class AlertNotificationSerializer(serializers.HyperlinkedModelSerializer):
+    previous_normal_price_registry = EntityHistorySerializer()
+    previous_offer_price_history = EntityHistorySerializer()
+
+    class Meta:
+        model = AlertNotification
+        fields = ('previous_normal_price_registry',
+                  'previous_offer_price_history',
+                  'creation_date')
 
 
 class AnonymousAlertCreationSerializer(serializers.HyperlinkedModelSerializer):

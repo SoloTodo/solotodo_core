@@ -1,12 +1,15 @@
 from rest_framework import viewsets, mixins, status
-from rest_framework.decorators import list_route
+from rest_framework.decorators import list_route, detail_route
 from rest_framework.response import Response
+from django_filters import rest_framework
+from rest_framework.filters import OrderingFilter, \
+    SearchFilter
 
 from alerts.forms import AlertDeleteByKeyForm
-from .models import AnonymousAlert, UserAlert
+from .models import AnonymousAlert, UserAlert, AlertNotification
 from alerts.serializers import AnonymousAlertSerializer, \
     AnonymousAlertCreationSerializer, UserAlertSerializer,\
-    UserAlertCreationSerializer
+    UserAlertCreationSerializer, AlertNotificationSerializer
 
 
 class AnonymousAlertViewSet(mixins.CreateModelMixin,
@@ -67,6 +70,9 @@ class UserAlertViewSet(mixins.CreateModelMixin,
 
     queryset = UserAlert.objects.all()
     serializer_class = UserAlertSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
+                       OrderingFilter)
+    ordering_fields = ('id', 'alert__creation_date')
 
     def get_queryset(self):
         user = self.request.user
@@ -83,3 +89,13 @@ class UserAlertViewSet(mixins.CreateModelMixin,
             return UserAlertCreationSerializer
         else:
             return UserAlertSerializer
+
+    @detail_route()
+    def alert_notifications(self, request, pk, *args, **kwargs):
+        user_alert = self.get_object()
+
+        alert_notifications = user_alert.alert.notifications.all()
+        serializer = AlertNotificationSerializer(alert_notifications, many=True,
+                                                 context={'request': request})
+
+        return Response(serializer.data)

@@ -20,7 +20,7 @@ class CrawlerMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        user_agent = request.META.get('HTTP_USER_AGENT', None)
+        user_agent = request.META.get('HTTP_USER_AGENT', '')
 
         request.is_crawler = False
 

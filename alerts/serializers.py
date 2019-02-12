@@ -5,7 +5,7 @@ from .models import Alert, AnonymousAlert, UserAlert, AlertNotification
 from solotodo.models import Product, Store, Category, Entity
 from solotodo.serializers import UserSerializer, EntitySerializer
 from solotodo.serializers import NestedProductSerializer, \
-    EntityHistorySerializer
+    EntityHistorySerializer, EntityHistoryWithNestedEntitySerializer
 
 
 class AlertSerializer(serializers.HyperlinkedModelSerializer):
@@ -39,13 +39,13 @@ class UserAlertSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class AlertNotificationSerializer(serializers.HyperlinkedModelSerializer):
-    previous_normal_price_registry = EntityHistorySerializer()
-    previous_offer_price_history = EntityHistorySerializer()
+    previous_normal_price_registry = EntityHistoryWithNestedEntitySerializer()
+    previous_offer_price_registry = EntityHistoryWithNestedEntitySerializer()
 
     class Meta:
         model = AlertNotification
         fields = ('previous_normal_price_registry',
-                  'previous_offer_price_history',
+                  'previous_offer_price_registry',
                   'creation_date')
 
 

@@ -1,14 +1,13 @@
 from django.contrib.auth import get_user_model
 from guardian.utils import get_anonymous_user
 from rest_framework import serializers
-from sorl.thumbnail import get_thumbnail
 
 from hardware.models import Budget
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
     Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating, \
-    SoloTodoUser, ProductPicture
+    ProductPicture
 from solotodo.serializer_utils import StorePrimaryKeyRelatedField, \
     ProductPrimaryKeyRelatedField
 from solotodo.utils import get_client_ip
@@ -261,6 +260,16 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'last_updated',
             'last_pricing_update',
         )
+
+
+class EntityHistoryWithNestedEntitySerializer(
+        serializers.HyperlinkedModelSerializer):
+    entity = EntityMinimalSerializer()
+
+    class Meta:
+        model = EntityHistory
+        fields = ['url', 'id', 'entity', 'timestamp', 'is_available',
+                  'normal_price', 'offer_price', 'cell_monthly_payment']
 
 
 class EntityWithoutDescriptionSerializer(EntitySerializer):

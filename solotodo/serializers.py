@@ -262,16 +262,6 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
         )
 
 
-class EntityHistoryWithNestedEntitySerializer(
-        serializers.HyperlinkedModelSerializer):
-    entity = EntityMinimalSerializer()
-
-    class Meta:
-        model = EntityHistory
-        fields = ['url', 'id', 'entity', 'timestamp', 'is_available',
-                  'normal_price', 'offer_price', 'cell_monthly_payment']
-
-
 class EntityWithoutDescriptionSerializer(EntitySerializer):
     class Meta:
         model = Entity
@@ -298,6 +288,16 @@ class EntityWithoutDescriptionSerializer(EntitySerializer):
             'last_updated',
             'last_pricing_update',
         )
+
+
+class EntityHistoryWithNestedEntitySerializer(
+        serializers.HyperlinkedModelSerializer):
+    entity = EntityWithoutDescriptionSerializer()
+
+    class Meta:
+        model = EntityHistory
+        fields = ['url', 'id', 'entity', 'timestamp', 'is_available',
+                  'normal_price', 'offer_price', 'cell_monthly_payment']
 
 
 class EntityStaffInfoSerializer(serializers.HyperlinkedModelSerializer):

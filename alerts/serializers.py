@@ -10,8 +10,8 @@ from solotodo.serializers import NestedProductSerializer, \
 
 class AlertSerializer(serializers.HyperlinkedModelSerializer):
     product = NestedProductSerializer()
-    normal_price_registry = EntityHistorySerializer()
-    offer_price_registry = EntityHistorySerializer()
+    normal_price_registry = EntityHistoryWithNestedEntitySerializer()
+    offer_price_registry = EntityHistoryWithNestedEntitySerializer()
 
     class Meta:
         model = Alert

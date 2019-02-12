@@ -101,7 +101,7 @@ class EntityByUrlForm(forms.Form):
             else:
                 return None
         elif url.netloc == 'www.reifstore.cl':
-            store = Store.objects.get(name='Reifschneider')
+            store = Store.objects.get(name='ReifStore')
             m = re.search(r'/(\d+)-', url.path)
             if not m:
                 return None

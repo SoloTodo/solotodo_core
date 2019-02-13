@@ -94,7 +94,15 @@ class UserAlertViewSet(mixins.CreateModelMixin,
     def alert_notifications(self, request, pk, *args, **kwargs):
         user_alert = self.get_object()
 
-        alert_notifications = user_alert.alert.notifications.order_by('creation_date')
+        alert_notifications = user_alert.alert.notifications\
+            .order_by('creation_date')\
+            .select_related(
+                'previous_normal_price_registry'
+                '__entity__product__instance_model',
+                'previous_offer_price_registry'
+                '__entity__product__instance_model',
+                'previous_normal_price_registry__entity__active_registry',
+                'previous_offer_price_registry__entity__active_registry')
         serializer = AlertNotificationSerializer(
             alert_notifications, many=True, context={'request': request})
 

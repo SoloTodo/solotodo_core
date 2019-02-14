@@ -32,6 +32,10 @@ class Store(models.Model):
                                                blank=True)
     type = models.ForeignKey(StoreType, on_delete=models.CASCADE)
     logo = ImageField(upload_to='store_logos')
+    active_banner_update = models.OneToOneField('banners.BannerUpdate',
+                                                on_delete=models.CASCADE,
+                                                null=True, blank=True,
+                                                related_name='+')
 
     objects = StoreQuerySet.as_manager()
 
@@ -273,4 +277,5 @@ class Store(models.Model):
             # "Backend" permissions are used exclusively for UI purposes, they
             # are not used at the API level
             ['backend_list_stores', 'Can view store list in backend'],
+            ['view_banners', 'Can view store banners']
         )

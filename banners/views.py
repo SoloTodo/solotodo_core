@@ -1,7 +1,13 @@
-from rest_framework import viewsets, mixins, status
+from django_filters import rest_framework
 
-from .models import Banner
-from .serializers import BannerSerializer
+from rest_framework import viewsets, mixins
+from rest_framework.filters import SearchFilter
+
+from .models import Banner, BannerUpdate, BannerAsset
+from .serializers import BannerSerializer, BannerUpdateSerializer,\
+    BannerAssetSerializer
+from .filters import BannerFilterSet, BannerUpdateFilterSet, \
+    BannerAssetFilterSet
 
 
 class BannerViewSet(mixins.CreateModelMixin,
@@ -10,9 +16,26 @@ class BannerViewSet(mixins.CreateModelMixin,
                     viewsets.GenericViewSet):
     queryset = Banner.objects.all()
     serializer_class = BannerSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_class = BannerFilterSet
 
-    def get_queryset(self):
-        return self.queryset
 
-    def get_serializer_class(self):
-        return self.serializer_class
+class BannerUpdateViewSet(mixins.CreateModelMixin,
+                          mixins.RetrieveModelMixin,
+                          mixins.ListModelMixin,
+                          viewsets.GenericViewSet):
+
+    queryset = BannerUpdate.objects.all()
+    serializer_class = BannerUpdateSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_class = BannerUpdateFilterSet
+
+
+class BannerAssetViewSet(mixins.CreateModelMixin,
+                         mixins.RetrieveModelMixin,
+                         mixins.ListModelMixin,
+                         viewsets.GenericViewSet):
+    queryset = BannerAsset.objects.all()
+    serializer_class = BannerAssetSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_class = BannerAssetFilterSet

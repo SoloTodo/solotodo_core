@@ -128,6 +128,7 @@ admin.site.register(StoreType)
 class StoreModelAdmin(GuardedModelAdmin):
     list_display = ['__str__', 'type', 'country']
     list_filter = ['type', 'country']
+    readonly_fields = ['active_banner_update']
 
 
 admin.site.register(StoreUpdateLog)

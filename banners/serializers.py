@@ -1,12 +1,10 @@
 from rest_framework import serializers
 
 from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent
-from solotodo.serializers import StoreSerializer, CategorySerializer
+from solotodo.serializers import CategorySerializer
 
 
 class BannerUpdateSerializer(serializers.HyperlinkedModelSerializer):
-    store = StoreSerializer()
-
     class Meta:
         model = BannerUpdate
         fields = ('store', 'timestamp')
@@ -15,7 +13,7 @@ class BannerUpdateSerializer(serializers.HyperlinkedModelSerializer):
 class BannerAssetSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BannerAsset
-        fields = ('picture_url',)
+        fields = ('key', 'picture_url', 'creation_date')
 
 
 class BannerAssetContentSerializer(serializers.HyperlinkedModelSerializer):

@@ -31,4 +31,4 @@ class BannerSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Banner
-        fields = ('update', 'asset', 'position')
+        fields = ('update', 'category', 'asset', 'position')

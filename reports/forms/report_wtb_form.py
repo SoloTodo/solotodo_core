@@ -18,8 +18,9 @@ from solotodo_core.s3utils import PrivateS3Boto3Storage
 class ReportWtbForm(forms.Form):
     wtb_brand = forms.ModelChoiceField(
         queryset=WtbBrand.objects.all())
-    category = forms.ModelChoiceField(
-        queryset=Category.objects.all())
+    categories = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        required=False)
     stores = forms.ModelMultipleChoiceField(
         queryset=Store.objects.all(),
         required=False)
@@ -37,7 +38,7 @@ class ReportWtbForm(forms.Form):
         super().__init__(*args, **kwargs)
         valid_categories = get_objects_for_user(user, 'view_category_reports',
                                                 Category)
-        self.fields['category'].queryset = valid_categories
+        self.fields['categories'].queryset = valid_categories
 
         valid_stores = get_objects_for_user(user, 'view_store_reports', Store)
         self.fields['stores'].queryset = valid_stores
@@ -49,9 +50,16 @@ class ReportWtbForm(forms.Form):
         else:
             return self.fields['stores'].queryset
 
+    def clean_categories(self):
+        selected_categories = self.cleaned_data['categories']
+        if selected_categories:
+            return selected_categories
+        else:
+            return self.fields['categories'].queryset
+
     def generate_report(self):
         wtb_brand = self.cleaned_data['wtb_brand']
-        category = self.cleaned_data['category']
+        categories = self.cleaned_data['categories']
         stores = self.cleaned_data['stores']
         countries = self.cleaned_data['countries']
         store_types = self.cleaned_data['store_types']
@@ -61,7 +69,8 @@ class ReportWtbForm(forms.Form):
         product_to_wtb_entity_dict = {}
 
         wtb_entities = WtbEntity.objects.filter(brand=wtb_brand,
-                                                category=category)
+                                                category__in=categories,
+                                                product__isnull=False)
 
         for wtb_entity in wtb_entities:
             if wtb_entity.product_id not in product_to_wtb_entity_dict:
@@ -108,10 +117,13 @@ class ReportWtbForm(forms.Form):
             'font_size': 10
         })
 
-        specs_columns = CategoryColumn.objects.filter(
-            field__category=category,
-            purpose=settings.REPORTS_PURPOSE_ID
-        )
+        if len(categories) == 1:
+            specs_columns = CategoryColumn.objects.filter(
+                field__category=categories[0],
+                purpose=settings.REPORTS_PURPOSE_ID
+            )
+        else:
+            specs_columns = None
 
         cell_plans_in_entities = [e.cell_plan for e in
                                   es.filter(cell_plan__isnull=False)]
@@ -160,7 +172,10 @@ class ReportWtbForm(forms.Form):
             ])
 
         headers.append('Nombre en tienda')
-        headers.extend([column.field.label for column in specs_columns])
+        if specs_columns:
+            headers.extend([column.field.label for column in specs_columns])
+        else:
+            headers.extend(['Categoría'])
 
         for idx, header in enumerate(headers):
             worksheet.write(0, idx, header, header_format)
@@ -292,10 +307,13 @@ class ReportWtbForm(forms.Form):
             worksheet.write(row, col, e.name)
             col += 1
 
-            for column in specs_columns:
-                worksheet.write(row, col, es_entry.get(column.field.es_field,
-                                                       'N/A'))
-                col += 1
+            if specs_columns:
+                for column in specs_columns:
+                    worksheet.write(row, col, es_entry.get(column.field.es_field,
+                                                           'N/A'))
+                    col += 1
+            else:
+                worksheet.write(row, col, str(e.category))
 
             row += 1
 

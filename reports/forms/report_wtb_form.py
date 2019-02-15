@@ -309,8 +309,8 @@ class ReportWtbForm(forms.Form):
 
             if specs_columns:
                 for column in specs_columns:
-                    worksheet.write(row, col, es_entry.get(column.field.es_field,
-                                                           'N/A'))
+                    worksheet.write(row, col, es_entry.get(
+                        column.field.es_field, 'N/A'))
                     col += 1
             else:
                 worksheet.write(row, col, str(e.category))

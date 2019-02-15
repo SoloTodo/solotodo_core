@@ -308,6 +308,24 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
         return Response(result)
 
+    @detail_route()
+    def share_of_shelves(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+
+        user = request.user
+
+        if not user.has_perm('view_share_of_shelves', category):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        form = ProductsBrowseForm(request.query_params)
+
+        try:
+            result = form.get_share_of_shelves(category, request)
+            return Response(result)
+        except KeyError:
+            return Response({'detail': 'Invalid bucketing_field'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Country.objects.all()

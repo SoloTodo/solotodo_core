@@ -9,7 +9,7 @@ from django.db.models.functions import Coalesce
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.filters import ProductsBrowseEntityFilterSet, \
     CategoryFullBrowseEntityFilterSet
-from solotodo.models import Country, Product, Currency
+from solotodo.models import Country, Product, Currency, CategorySpecsFilter
 from solotodo.pagination import ProductsBrowsePagination
 from solotodo.serializers import CategoryBrowseResultSerializer, \
     CategoryFullBrowseResultSerializer
@@ -271,6 +271,62 @@ class ProductsBrowseForm(forms.Form):
             'aggs': filter_aggs,
             'results': serializer.data,
             'price_ranges': price_ranges
+        }
+
+    def get_share_of_shelves(self, category, request):
+        data = self.get_category_entities(category, request)
+        product_ids = [p['product']['id'] for p in data['results']]
+        entities_agg = {}
+
+        es_search = Product.es_search().filter('terms', product_id=product_ids)
+        es_dict = {e.product_id: e.to_dict()
+                   for e in es_search[:len(product_ids)].execute()}
+
+        query_params = request.query_params.copy()
+        bucketing_field = query_params.get('bucketing_field')
+
+        spec_filters = CategorySpecsFilter.objects.filter(
+            category=category,
+            name=bucketing_field)
+
+        if not spec_filters:
+            raise KeyError
+
+        spec_filter = spec_filters[0]
+
+        if spec_filter.meta_model.is_primitive():
+            es_field = spec_filter.es_field
+        else:
+            es_field = spec_filter.es_field + '_unicode'
+
+        for p in data['results']:
+            product_id = p['product']['id']
+            es_entry = es_dict[product_id]
+
+            key = es_entry[es_field]
+
+            if isinstance(key, bool):
+                key = 'Sí' if key else 'No'
+
+            if key in entities_agg:
+                entities_agg[key] += len(p['entities'])
+            else:
+                entities_agg[key] = len(p['entities'])
+
+        result = []
+
+        for key, count in entities_agg.items():
+            result.append({
+                "label": key,
+                "doc_count": count,
+            })
+
+        result = sorted(result, key=lambda k: k['doc_count'], reverse=True)
+
+        return {
+            "aggs": data['aggs'],
+            "results": result,
+            "price_ranges": data['price_ranges']
         }
 
     def initial_entities(self, request):

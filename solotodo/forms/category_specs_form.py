@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.core.exceptions import ValidationError
 from elasticsearch_dsl import Q, A
 
 from solotodo.utils import iterable_to_dict
@@ -32,7 +33,7 @@ class CategorySpecsForm(forms.Form):
         from solotodo.models import Product
 
         if not self.is_valid():
-            raise Exception(self.errors)
+            raise ValidationError(self.errors)
 
         if not es_search:
             es_search = self.category.es_search()

@@ -57,6 +57,7 @@ from solotodo.forms.resource_names_form import ResourceNamesForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
+from solotodo.forms.share_of_shelves_form import ShareOfShelvesForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory, Visit, Rating, ProductPicture
@@ -83,6 +84,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from solotodo_core.s3utils import MediaRootS3Boto3Storage
+
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
@@ -311,20 +314,33 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
     @detail_route()
     def share_of_shelves(self, request, pk, *args, **kwargs):
         category = self.get_object()
-
         user = request.user
 
-        if not user.has_perm('view_share_of_shelves', category):
+        if not user.has_perm('view_category_share_of_shelves', category):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
-        form = ProductsBrowseForm(request.query_params)
+        form = ShareOfShelvesForm(request.query_params)
 
-        try:
-            result = form.get_share_of_shelves(category, request)
-            return Response(result)
-        except KeyError:
-            return Response({'detail': 'Invalid bucketing_field'},
-                            status=status.HTTP_400_BAD_REQUEST)
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        if form.cleaned_data['response_format'] == 'xls':
+            try:
+                report_path = form.generate_xls(category, request)['path']
+                storage = PrivateS3Boto3Storage()
+                report_url = storage.url(report_path)
+                return Response({
+                    'url': report_url
+                })
+
+            except ValidationError as e:
+                return Response(e, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            try:
+                result = form.generate_json(category, request)
+                return Response(result)
+            except ValidationError as e:
+                return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):

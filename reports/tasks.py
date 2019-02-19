@@ -19,7 +19,7 @@ def send_daily_prices_task(user_id, query_string):
 
     report_data = form.generate_report()
 
-    report_filename = report_data['filename']
+    report_filename = '{}.xlsx'.format(report_data['filename'])
     report_file = report_data['file']
     report_path = report_data['path']
 

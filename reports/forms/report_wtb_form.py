@@ -206,7 +206,7 @@ class ReportWtbForm(forms.Form):
 
             worksheet.write_url(
                 row, col,
-                '{}products/{}'.format(settings.BACKEND_HOST, e.product.id),
+                '{}products/{}'.format(settings.PRICING_HOST, e.product.id),
                 string=str(e.product),
                 cell_format=url_format)
 
@@ -222,7 +222,7 @@ class ReportWtbForm(forms.Form):
 
                     worksheet.write_url(
                         row, col,
-                        '{}products/{}'.format(settings.BACKEND_HOST,
+                        '{}products/{}'.format(settings.PRICING_HOST,
                                                cell_plan.id),
                         string=str(e.cell_plan),
                         cell_format=url_format)
@@ -252,7 +252,7 @@ class ReportWtbForm(forms.Form):
 
             worksheet.write_url(
                 row, col,
-                '{}entities/{}'.format(settings.BACKEND_HOST, e.id),
+                '{}skus/{}'.format(settings.PRICING_HOST, e.id),
                 string=sku_text,
                 cell_format=url_format)
             col += 1

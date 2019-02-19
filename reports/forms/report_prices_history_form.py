@@ -195,7 +195,7 @@ class ReportPricesHistoryForm(forms.Form):
 
             worksheet.write_url(
                 row, col,
-                '{}products/{}'.format(settings.BACKEND_HOST,
+                '{}products/{}'.format(settings.PRICING_HOST,
                                        eh.entity.product.id),
                 string=str(eh.entity.product),
                 cell_format=url_format)
@@ -209,7 +209,7 @@ class ReportPricesHistoryForm(forms.Form):
                 if cell_plan:
                     worksheet.write_url(
                         row, col,
-                        '{}products/{}'.format(settings.BACKEND_HOST,
+                        '{}products/{}'.format(settings.PRICING_HOST,
                                                cell_plan.id),
                         string=str(eh.entity.cell_plan),
                         cell_format=url_format)
@@ -232,7 +232,7 @@ class ReportPricesHistoryForm(forms.Form):
 
             worksheet.write_url(
                 row, col,
-                '{}entities/{}'.format(settings.BACKEND_HOST, eh.entity.id),
+                '{}skus/{}'.format(settings.PRICING_HOST, eh.entity.id),
                 string=sku_text,
                 cell_format=url_format)
             col += 1

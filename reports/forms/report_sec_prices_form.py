@@ -145,7 +145,7 @@ class ReportSecPricesForm(forms.Form):
 
             worksheet.write_url(
                 row, col,
-                '{}products/{}'.format(settings.BACKEND_HOST,
+                '{}products/{}'.format(settings.PRICING_HOST,
                                        es_product['product_id']),
                 string=es_product['unicode'],
                 cell_format=url_format)

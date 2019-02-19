@@ -205,7 +205,7 @@ class ReportStoreAnalysisForm(forms.Form):
 
             worksheet.write_url(
                 row, col,
-                '{}products/{}'.format(settings.BACKEND_HOST, product.id),
+                '{}products/{}'.format(settings.PRICING_HOST, product.id),
                 string=str(product),
                 cell_format=url_format)
 
@@ -216,7 +216,7 @@ class ReportStoreAnalysisForm(forms.Form):
             worksheet.write_url(
                 row, col,
                 '{}categories/{}'.format(
-                    settings.BACKEND_HOST,
+                    settings.PRICING_HOST,
                     product.category.id),
                 string=str(product.category),
                 cell_format=url_format)

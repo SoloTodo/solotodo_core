@@ -205,7 +205,7 @@ class ReportDailyPricesForm(forms.Form):
                 if cell_plan:
                     worksheet.write_url(
                         row, col,
-                        '{}products/{}'.format(settings.BACKEND_HOST,
+                        '{}products/{}'.format(settings.PRICING_HOST,
                                                cell_plan.id),
                         string=str(entity.cell_plan),
                         cell_format=url_format)

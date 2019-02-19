@@ -1,7 +1,7 @@
 from django_filters import rest_framework
 
 from rest_framework import viewsets, mixins
-from rest_framework.filters import SearchFilter
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 from .models import Banner, BannerUpdate, BannerAsset
 from .serializers import BannerSerializer, BannerUpdateSerializer,\
@@ -16,8 +16,10 @@ class BannerViewSet(mixins.CreateModelMixin,
                     viewsets.GenericViewSet):
     queryset = Banner.objects.all()
     serializer_class = BannerSerializer
-    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
+                       OrderingFilter)
     filter_class = BannerFilterSet
+    ordering_fields = ('position',)
 
 
 class BannerUpdateViewSet(mixins.CreateModelMixin,

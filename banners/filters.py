@@ -18,6 +18,9 @@ class BannerFilterSet(rest_framework.FilterSet):
         label='Stores'
     )
 
+    is_active = rest_framework.BooleanFilter(
+        name='is_active', method='_is_active', label='Is active?')
+
     @property
     def qs(self):
         qs = super(BannerFilterSet, self).qs
@@ -26,6 +29,12 @@ class BannerFilterSet(rest_framework.FilterSet):
             qs = qs.filter_by_user_perms(self.request.user, 'view_banners')
 
         return qs
+
+    def _is_active(self, queryset, name, value):
+        if value:
+            return queryset.get_active()
+        else:
+            return queryset.get_inactive()
 
     class Meta:
         model = Banner

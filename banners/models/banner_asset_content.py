@@ -5,7 +5,8 @@ from solotodo.models import Brand, Category
 
 
 class BannerAssetContent(models.Model):
-    asset = models.ForeignKey(BannerAsset, on_delete=models.CASCADE)
+    asset = models.ForeignKey(BannerAsset, on_delete=models.CASCADE,
+                              related_name='contents')
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     percentage = models.IntegerField()

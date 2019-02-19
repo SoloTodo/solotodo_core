@@ -7,7 +7,7 @@ from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
     Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating, \
-    ProductPicture
+    ProductPicture, Brand
 from solotodo.serializer_utils import StorePrimaryKeyRelatedField, \
     ProductPrimaryKeyRelatedField
 from solotodo.utils import get_client_ip
@@ -543,3 +543,9 @@ class ProductPictureSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ProductPicture
         fields = ('id', 'url', 'product', 'ordering', 'file')
+
+
+class BrandSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Brand
+        fields = ('name',)

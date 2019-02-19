@@ -25,6 +25,10 @@ class BannerUpdate(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
     objects = BannerUpdateQuerySet.as_manager()
 
+    @property
+    def is_active(self):
+        return self.store.active_banner_update == self
+
     def __str__(self):
         return '{} - {}'.format(self.store, self.timestamp)
 

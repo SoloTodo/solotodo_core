@@ -1,28 +1,30 @@
 from rest_framework import serializers
 
 from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent
-from solotodo.serializers import CategorySerializer
+from solotodo.serializers import CategorySerializer, BrandSerializer
 
 
 class BannerUpdateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BannerUpdate
-        fields = ('store', 'timestamp')
-
-
-class BannerAssetSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = BannerAsset
-        fields = ('key', 'picture_url', 'creation_date')
+        fields = ('store', 'is_active', 'timestamp')
 
 
 class BannerAssetContentSerializer(serializers.HyperlinkedModelSerializer):
-    asset = BannerAssetSerializer()
     category = CategorySerializer()
+    brand = BrandSerializer()
 
     class Meta:
         model = BannerAssetContent
-        fields = ('asset', 'brand', 'category', 'percentage')
+        fields = ('brand', 'category', 'percentage')
+
+
+class BannerAssetSerializer(serializers.HyperlinkedModelSerializer):
+    contents = BannerAssetContentSerializer(many=True)
+
+    class Meta:
+        model = BannerAsset
+        fields = ('key', 'picture_url', 'contents', 'creation_date')
 
 
 class BannerSerializer(serializers.HyperlinkedModelSerializer):

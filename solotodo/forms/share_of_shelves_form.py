@@ -109,6 +109,9 @@ class ShareOfShelvesForm(forms.Form):
             if isinstance(key, bool):
                 key = 'Sí' if key else 'No'
 
+            if isinstance(key, list):
+                key = ' / '.join(key)
+
             if key in entities_agg:
                 entities_agg[key] += len(p['entities'])
             else:

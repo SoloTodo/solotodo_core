@@ -12,8 +12,18 @@ class BannerUpdateQuerySet(models.QuerySet):
         return self.exclude(store__active_banner_update=F('id'))
 
     def filter_by_user_perms(self, user, permission):
+        synth_permissions = {
+            'view_banner_update': {
+                'store': 'view_store_banners'
+            }
+        }
+
+        assert permission in synth_permissions
+
+        permissions = synth_permissions[permission]
+
         stores_with_permissions = Store.objects.filter_by_user_perms(
-            user, permission)
+            user, permissions['store'])
 
         return self.filter(
             store__in=stores_with_permissions

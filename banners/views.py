@@ -41,3 +41,11 @@ class BannerAssetViewSet(mixins.CreateModelMixin,
     serializer_class = BannerAssetSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
     filter_class = BannerAssetFilterSet
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.has_perm('banners.is_staff_of_banner_assets'):
+            return BannerAsset.objects.all()
+        else:
+            return BannerAsset.objects.none()

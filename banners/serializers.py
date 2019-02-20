@@ -24,7 +24,8 @@ class BannerAssetSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BannerAsset
-        fields = ('key', 'picture_url', 'contents', 'creation_date')
+        fields = ('id', 'key', 'picture_url', 'contents', 'is_active',
+                  'is_complete', 'creation_date')
 
 
 class BannerSerializer(serializers.HyperlinkedModelSerializer):
@@ -33,4 +34,4 @@ class BannerSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = Banner
-        fields = ('update', 'category', 'asset', 'position')
+        fields = ('id', 'update', 'category', 'asset', 'position')

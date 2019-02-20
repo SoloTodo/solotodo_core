@@ -26,7 +26,7 @@ class BannerFilterSet(rest_framework.FilterSet):
         qs = super(BannerFilterSet, self).qs
 
         if self.request:
-            qs = qs.filter_by_user_perms(self.request.user, 'view_banners')
+            qs = qs.filter_by_user_perms(self.request.user, 'view_banner')
 
         return qs
 
@@ -60,7 +60,8 @@ class BannerUpdateFilterSet(rest_framework.FilterSet):
         qs = super(BannerUpdateFilterSet, self).qs
 
         if self.request:
-            qs = qs.filter_by_user_perms(self.request.user, 'view_banners')
+            qs = qs.filter_by_user_perms(self.request.user,
+                                         'view_banner_update')
 
         return qs
 
@@ -80,6 +81,13 @@ class BannerAssetFilterSet(rest_framework.FilterSet):
         name='creation_date'
     )
 
+    is_active = rest_framework.BooleanFilter(
+        name='is_active', method='_is_active', label='Is active?')
+
+    is_complete = rest_framework.BooleanFilter(
+        name='is_complete', method='_is_complete', label='Is complete?'
+    )
+
     @property
     def qs(self):
         qs = super(BannerAssetFilterSet, self).qs
@@ -88,6 +96,18 @@ class BannerAssetFilterSet(rest_framework.FilterSet):
             qs = qs.filter_by_user_perms(self.request.user, 'view_banners')
 
         return qs
+
+    def _is_active(self, queryset, name, value):
+        if value:
+            return queryset.get_active()
+        else:
+            return queryset.get_inactive()
+
+    def _is_complete(self, queryset, name, value):
+        if value:
+            return queryset.get_complete()
+        else:
+            return queryset.get_incomplete()
 
     class Meta:
         model = BannerAsset

@@ -259,6 +259,40 @@ class Store(models.Model):
 
         return sanitized_categories
 
+    def update_banners(self):
+        from banners.models import BannerUpdate, Banner, BannerAsset
+
+        scraper = self.scraper
+
+        if self.storescraper_extra_args:
+            extra_args = json.loads(self.storescraper_extra_args)
+        else:
+            extra_args = {}
+
+        scraped_banners_data = scraper.banners(extra_args=extra_args)
+
+        update = BannerUpdate.objects.create(
+            store=self,
+        )
+
+        self.active_banner_update = update
+        self.save()
+
+        for banner_data in scraped_banners_data:
+            try:
+                asset = BannerAsset.objects.get(key=banner_data['key'])
+            except BannerAsset.DoesNotExist:
+                asset = BannerAsset.objects.create(
+                    key=banner_data['key'],
+                    picture_url=banner_data['picture_url']
+                )
+
+            Banner.objects.create(
+                update=update,
+                asset=asset,
+                position=banner_data['position']
+            )
+
     @classmethod
     def rs_refresh(cls):
         rs_refresh_model(cls, 'store', ['id', 'name', 'country_id', 'type_id'])
@@ -277,5 +311,5 @@ class Store(models.Model):
             # "Backend" permissions are used exclusively for UI purposes, they
             # are not used at the API level
             ['backend_list_stores', 'Can view store list in backend'],
-            ['view_banners', 'Can view store banners']
+            ['view_store_banners', 'Can view store banners']
         )

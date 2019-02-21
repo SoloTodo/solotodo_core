@@ -48,12 +48,17 @@ class BannerAsset(models.Model):
         return self.contents.aggregate(
             Sum('percentage'))['percentage__sum'] == 100
 
+    @property
+    def total_percentage(self):
+        return self.contents.aggregate(
+            Sum('percentage'))['percentage__sum']
+
     def __str__(self):
         return '{} - {}'.format(self.picture_url, self.creation_date)
 
     class Meta:
         app_label = 'banners'
-        ordering = ('picture_url',)
+        ordering = ('picture_url', 'id')
         permissions = (
             ['is_staff_of_banner_assets', 'Is staff of all banner assets'],
         )

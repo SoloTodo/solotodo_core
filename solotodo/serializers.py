@@ -548,4 +548,4 @@ class ProductPictureSerializer(serializers.HyperlinkedModelSerializer):
 class BrandSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Brand
-        fields = ('name',)
+        fields = ('id', 'url', 'name')

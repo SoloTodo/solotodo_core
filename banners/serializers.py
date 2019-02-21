@@ -16,7 +16,7 @@ class BannerAssetContentSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BannerAssetContent
-        fields = ('brand', 'category', 'percentage')
+        fields = ('id', 'brand', 'category', 'percentage')
 
 
 class BannerAssetSerializer(serializers.HyperlinkedModelSerializer):
@@ -24,7 +24,7 @@ class BannerAssetSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BannerAsset
-        fields = ('id', 'key', 'picture_url', 'contents', 'is_active',
+        fields = ('url', 'id', 'key', 'picture_url', 'contents', 'is_active',
                   'is_complete', 'creation_date')
 
 

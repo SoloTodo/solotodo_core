@@ -59,7 +59,7 @@ from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
-    EntityHistory, Visit, Rating, ProductPicture
+    EntityHistory, Visit, Rating, ProductPicture, Brand
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination, \
@@ -79,7 +79,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductPricingHistorySerializer, NestedProductSerializer, \
     ProductAvailableEntitiesSerializer, RatingSerializer, \
     RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer, \
-    ProductPictureSerializer
+    ProductPictureSerializer, BrandSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from solotodo_core.s3utils import MediaRootS3Boto3Storage
@@ -1303,3 +1303,8 @@ class FilesViewSet(viewsets.ViewSet):
         return Response({
             'url': storage.url(path)
         })
+
+
+class BrandViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer

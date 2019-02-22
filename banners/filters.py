@@ -55,6 +55,12 @@ class BannerUpdateFilterSet(rest_framework.FilterSet):
     is_active = rest_framework.BooleanFilter(
         name='is_active', method='_is_active', label='Is active?')
 
+    ids = CustomModelMultipleChoiceFilter(
+        queryset=BannerUpdate.objects.all(),
+        method='_ids',
+        label='BannerUpdates'
+    )
+
     @property
     def qs(self):
         qs = super(BannerUpdateFilterSet, self).qs
@@ -65,6 +71,11 @@ class BannerUpdateFilterSet(rest_framework.FilterSet):
 
         return qs
 
+    def _ids(self, queryset, name, value):
+        if value:
+            return queryset & value
+        return queryset
+
     def _is_active(self, queryset, name, value):
         if value:
             return queryset.get_active()
@@ -73,7 +84,7 @@ class BannerUpdateFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = BannerUpdate
-        fields = ['id']
+        fields = ['ids']
 
 
 class BannerAssetFilterSet(rest_framework.FilterSet):

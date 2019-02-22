@@ -12,6 +12,8 @@ from .serializers import BannerSerializer, BannerUpdateSerializer,\
     BannerAssetSerializer
 from .filters import BannerFilterSet, BannerUpdateFilterSet, \
     BannerAssetFilterSet
+from .pagination import BannerPagination, BannerAssetPagination, \
+    BannerUpdatePagination
 from .forms.add_banner_asset_content_form import AddBannerAssetContentForm
 
 
@@ -25,6 +27,7 @@ class BannerViewSet(mixins.CreateModelMixin,
                        OrderingFilter)
     filter_class = BannerFilterSet
     ordering_fields = ('position',)
+    pagination_class = BannerPagination
 
 
 class BannerUpdateViewSet(mixins.CreateModelMixin,
@@ -37,6 +40,7 @@ class BannerUpdateViewSet(mixins.CreateModelMixin,
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
     filter_class = BannerUpdateFilterSet
+    pagination_class = BannerUpdatePagination
 
 
 class BannerAssetViewSet(mixins.CreateModelMixin,
@@ -49,6 +53,7 @@ class BannerAssetViewSet(mixins.CreateModelMixin,
                        OrderingFilter)
     filter_class = BannerAssetFilterSet
     ordering_fields = ('id',)
+    pagination_class = BannerAssetPagination
 
     def get_queryset(self):
         user = self.request.user

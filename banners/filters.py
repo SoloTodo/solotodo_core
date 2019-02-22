@@ -38,7 +38,7 @@ class BannerFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = Banner
-        fields = []
+        fields = ['update_id']
 
 
 class BannerUpdateFilterSet(rest_framework.FilterSet):
@@ -73,7 +73,7 @@ class BannerUpdateFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = BannerUpdate
-        fields = []
+        fields = ['id']
 
 
 class BannerAssetFilterSet(rest_framework.FilterSet):

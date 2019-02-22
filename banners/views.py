@@ -34,7 +34,8 @@ class BannerUpdateViewSet(mixins.CreateModelMixin,
 
     queryset = BannerUpdate.objects.all()
     serializer_class = BannerUpdateSerializer
-    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
+                       OrderingFilter)
     filter_class = BannerUpdateFilterSet
 
 

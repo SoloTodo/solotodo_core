@@ -26,7 +26,7 @@ class BannerViewSet(mixins.CreateModelMixin,
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
     filter_class = BannerFilterSet
-    ordering_fields = ('position',)
+    ordering_fields = ('position', 'update__store', 'update__timestamp')
     pagination_class = BannerPagination
 
 

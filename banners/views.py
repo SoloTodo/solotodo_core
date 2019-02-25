@@ -7,9 +7,10 @@ from rest_framework.decorators import list_route, detail_route
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent
+from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent, \
+    BannerSection
 from .serializers import BannerSerializer, BannerUpdateSerializer,\
-    BannerAssetSerializer
+    BannerAssetSerializer, BannerSectionSerializer
 from .filters import BannerFilterSet, BannerUpdateFilterSet, \
     BannerAssetFilterSet
 from .pagination import BannerPagination, BannerAssetPagination, \
@@ -28,6 +29,13 @@ class BannerViewSet(mixins.CreateModelMixin,
     filter_class = BannerFilterSet
     ordering_fields = ('position', 'update__store', 'update__timestamp')
     pagination_class = BannerPagination
+
+
+class BannerSectionViewSet(mixins.RetrieveModelMixin,
+                           mixins.ListModelMixin,
+                           viewsets.GenericViewSet):
+    queryset = BannerSection.objects.all()
+    serializer_class = BannerSectionSerializer
 
 
 class BannerUpdateViewSet(mixins.CreateModelMixin,

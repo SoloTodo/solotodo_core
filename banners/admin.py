@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent
+from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent, \
+    BannerSection
 
 
 @admin.register(Banner)
@@ -21,3 +22,8 @@ class BannerAssetAdmin(admin.ModelAdmin):
 @admin.register(BannerAssetContent)
 class BannerAssetContentAdmin(admin.ModelAdmin):
     list_display = ('asset', 'brand', 'category', 'percentage')
+
+
+@admin.register(BannerSection)
+class BannerSectionAdmin(admin.ModelAdmin):
+    list_display = ('category',)

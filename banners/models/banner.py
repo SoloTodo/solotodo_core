@@ -1,8 +1,8 @@
 from django.db import models
 from django.db.models import F
 
-from banners.models import BannerUpdate, BannerAsset
-from solotodo.models import Category, Store
+from banners.models import BannerUpdate, BannerAsset, BannerSection
+from solotodo.models import Store
 
 
 class BannerQuerySet(models.QuerySet):
@@ -34,18 +34,18 @@ class BannerQuerySet(models.QuerySet):
 class Banner(models.Model):
     update = models.ForeignKey(BannerUpdate, on_delete=models.CASCADE)
     asset = models.ForeignKey(BannerAsset, on_delete=models.CASCADE)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE,
-                                 null=True, blank=True)
+    section = models.ForeignKey(BannerSection, on_delete=models.CASCADE)
+
     position = models.IntegerField()
     objects = BannerQuerySet.as_manager()
 
     def __str__(self):
         return '{} - {} - {} - {}'.format(self.update, self.asset,
-                                          self.category, self.position)
+                                          self.section, self.position)
 
     class Meta:
         app_label = 'banners'
-        ordering = ('update', 'asset', 'category', 'position')
+        ordering = ('update', 'asset', 'section', 'position')
         permissions = (
             ['backend_list_banners', 'Can see banner list in the backend'],
         )

@@ -33,6 +33,7 @@ from .lead import Lead
 from .category_specs_filter import CategorySpecsFilter
 from .category_specs_order import CategorySpecsOrder
 from .visit import Visit
+from .brand import Brand
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

@@ -4,8 +4,8 @@ from rest_framework import serializers
 from .models import Alert, AnonymousAlert, UserAlert, AlertNotification
 from solotodo.models import Product, Store, Category, Entity
 from solotodo.serializers import UserSerializer, EntitySerializer
-from solotodo.serializers import NestedProductSerializer, \
-    EntityHistorySerializer, EntityHistoryWithNestedEntitySerializer
+from solotodo.serializers import NestedProductSerializer,\
+    EntityHistoryWithNestedEntitySerializer
 
 
 class AlertSerializer(serializers.HyperlinkedModelSerializer):

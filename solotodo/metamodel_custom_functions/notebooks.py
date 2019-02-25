@@ -61,7 +61,8 @@ def get_score_general(elastic_dict):
     """
 
     # Heuristical calculation based on the current scores in the DB
-    processor_rating = min(elastic_dict['processor_speed_score'] / 11000.0, 1.0)
+    processor_rating = min(elastic_dict['processor_speed_score'] / 11000.0,
+                           1.0)
     ram_rating = min(float(elastic_dict['ram_quantity_value']) / 6.0, 1.0)
     return int(800 * processor_rating + 200 * ram_rating)
 
@@ -74,7 +75,8 @@ def get_score_games(elastic_dict):
     """
 
     # Heuristical calculation based on the current scores in the DB
-    processor_rating = min(elastic_dict['processor_speed_score'] / 11000.0, 1.0)
+    processor_rating = min(elastic_dict['processor_speed_score'] / 11000.0,
+                           1.0)
     ram_rating = min(float(elastic_dict['ram_quantity_value']) / 6.0, 1.0)
 
     gpu = elastic_dict.get('processor_gpu_speed_score', 0)

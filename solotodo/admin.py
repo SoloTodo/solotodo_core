@@ -12,7 +12,7 @@ from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
     CategorySpecsFilter, CategorySpecsOrder, Lead, Visit, Rating, \
-    ProductPicture
+    ProductPicture, Brand
 
 
 @admin.register(Permission)
@@ -128,6 +128,7 @@ admin.site.register(StoreType)
 class StoreModelAdmin(GuardedModelAdmin):
     list_display = ['__str__', 'type', 'country']
     list_filter = ['type', 'country']
+    readonly_fields = ['active_banner_update']
 
 
 admin.site.register(StoreUpdateLog)
@@ -208,3 +209,8 @@ class RatingModelAdmin(admin.ModelAdmin):
                     'approval_date')
     list_filter = ('store', )
     readonly_fields = ('product', 'store', 'user')
+
+
+@admin.register(Brand)
+class BrandAModelAdmin(admin.ModelAdmin):
+    list_display = ('name',)

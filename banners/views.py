@@ -3,13 +3,14 @@ from django_filters import rest_framework
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.decorators import list_route, detail_route
+from rest_framework.decorators import detail_route
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
-from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent
+from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent, \
+    BannerSection
 from .serializers import BannerSerializer, BannerUpdateSerializer,\
-    BannerAssetSerializer
+    BannerAssetSerializer, BannerSectionSerializer
 from .filters import BannerFilterSet, BannerUpdateFilterSet, \
     BannerAssetFilterSet
 from .pagination import BannerPagination, BannerAssetPagination, \
@@ -17,8 +18,7 @@ from .pagination import BannerPagination, BannerAssetPagination, \
 from .forms.add_banner_asset_content_form import AddBannerAssetContentForm
 
 
-class BannerViewSet(mixins.CreateModelMixin,
-                    mixins.RetrieveModelMixin,
+class BannerViewSet(mixins.RetrieveModelMixin,
                     mixins.ListModelMixin,
                     viewsets.GenericViewSet):
     queryset = Banner.objects.all()
@@ -26,12 +26,19 @@ class BannerViewSet(mixins.CreateModelMixin,
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
     filter_class = BannerFilterSet
-    ordering_fields = ('position', 'update__store', 'update__timestamp')
+    ordering_fields = ('position', 'update__store', 'update__timestamp',
+                       'subsection')
     pagination_class = BannerPagination
 
 
-class BannerUpdateViewSet(mixins.CreateModelMixin,
-                          mixins.RetrieveModelMixin,
+class BannerSectionViewSet(mixins.RetrieveModelMixin,
+                           mixins.ListModelMixin,
+                           viewsets.GenericViewSet):
+    queryset = BannerSection.objects.all()
+    serializer_class = BannerSectionSerializer
+
+
+class BannerUpdateViewSet(mixins.RetrieveModelMixin,
                           mixins.ListModelMixin,
                           viewsets.GenericViewSet):
 
@@ -43,8 +50,7 @@ class BannerUpdateViewSet(mixins.CreateModelMixin,
     pagination_class = BannerUpdatePagination
 
 
-class BannerAssetViewSet(mixins.CreateModelMixin,
-                         mixins.RetrieveModelMixin,
+class BannerAssetViewSet(mixins.RetrieveModelMixin,
                          mixins.ListModelMixin,
                          viewsets.GenericViewSet):
     queryset = BannerAsset.objects.all()

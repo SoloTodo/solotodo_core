@@ -260,7 +260,8 @@ class Store(models.Model):
         return sanitized_categories
 
     def update_banners(self):
-        from banners.models import BannerUpdate, Banner, BannerAsset
+        from banners.models import BannerUpdate, Banner, BannerAsset, \
+            BannerSection, BannerSubsection, BannerSubsectionType
 
         scraper = self.scraper
 
@@ -271,12 +272,7 @@ class Store(models.Model):
 
         scraped_banners_data = scraper.banners(extra_args=extra_args)
 
-        update = BannerUpdate.objects.create(
-            store=self,
-        )
-
-        self.active_banner_update = update
-        self.save()
+        update = BannerUpdate.objects.create(store=self)
 
         for banner_data in scraped_banners_data:
             try:
@@ -287,11 +283,27 @@ class Store(models.Model):
                     picture_url=banner_data['picture_url']
                 )
 
+            section = BannerSection.objects\
+                .get(name=banner_data['section'])
+            subsection_type = BannerSubsectionType.objects\
+                .get(storescraper_name=banner_data['type'])
+
+            subsection = BannerSubsection.objects.get_or_create(
+                name=banner_data['subsection'],
+                section=section,
+                type=subsection_type
+            )[0]
+
             Banner.objects.create(
                 update=update,
+                url=banner_data['url'],
                 asset=asset,
+                subsection=subsection,
                 position=banner_data['position']
             )
+
+        self.active_banner_update = update
+        self.save()
 
     @classmethod
     def rs_refresh(cls):

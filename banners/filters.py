@@ -4,7 +4,7 @@ from solotodo.custom_model_multiple_choice_filter import \
     CustomModelMultipleChoiceFilter
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.filter_querysets import create_store_filter
-from .models import Banner, BannerUpdate, BannerAsset
+from .models import Banner, BannerUpdate, BannerAsset, BannerSection
 
 
 class BannerFilterSet(rest_framework.FilterSet):
@@ -16,6 +16,12 @@ class BannerFilterSet(rest_framework.FilterSet):
         queryset=create_store_filter('view_banners'),
         name='update__store',
         label='Stores'
+    )
+
+    sections = CustomModelMultipleChoiceFilter(
+        queryset=BannerSection.objects.all(),
+        name='subsection__section',
+        label='Sections'
     )
 
     is_active = rest_framework.BooleanFilter(

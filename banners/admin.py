@@ -1,12 +1,12 @@
 from django.contrib import admin
 
 from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent, \
-    BannerSection
+    BannerSection, BannerSubsection, BannerSubsectionType
 
 
 @admin.register(Banner)
 class BannerAdmin(admin.ModelAdmin):
-    list_display = ('update', 'asset', 'position')
+    list_display = ('update', 'asset', 'subsection', 'position')
 
 
 @admin.register(BannerUpdate)
@@ -26,4 +26,14 @@ class BannerAssetContentAdmin(admin.ModelAdmin):
 
 @admin.register(BannerSection)
 class BannerSectionAdmin(admin.ModelAdmin):
-    list_display = ('category',)
+    list_display = ('name',)
+
+
+@admin.register(BannerSubsection)
+class BannerSubsectionAdmin(admin.ModelAdmin):
+    list_display = ('name', 'section', 'type')
+
+
+@admin.register(BannerSubsectionType)
+class BannerSubsectionType(admin.ModelAdmin):
+    list_display = ('name', 'storescraper_name')

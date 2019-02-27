@@ -3,7 +3,7 @@ from django_filters import rest_framework
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
@@ -16,6 +16,8 @@ from .filters import BannerFilterSet, BannerUpdateFilterSet, \
 from .pagination import BannerPagination, BannerAssetPagination, \
     BannerUpdatePagination
 from .forms.add_banner_asset_content_form import AddBannerAssetContentForm
+from .forms.banner_active_participation_form import \
+    BannerActiveParticipationForm
 
 
 class BannerViewSet(mixins.RetrieveModelMixin,
@@ -29,6 +31,19 @@ class BannerViewSet(mixins.RetrieveModelMixin,
     ordering_fields = ('position', 'update__store', 'update__timestamp',
                        'subsection')
     pagination_class = BannerPagination
+
+    @list_route(methods=['get'])
+    def active_participation(self, request):
+        form = BannerActiveParticipationForm(request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        form.get_banner_participation(request)
+
+        return Response('Pending')
 
 
 class BannerSectionViewSet(mixins.RetrieveModelMixin,

@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from .products_browse_form import ProductsBrowseForm
 from solotodo.models import Product, CategorySpecsFilter
 from solotodo_core.s3utils import PrivateS3Boto3Storage
+from reports.forms.report_current_prices_form import ReportCurrentPricesForm
 
 
 class ShareOfShelvesForm(forms.Form):
@@ -17,7 +18,8 @@ class ShareOfShelvesForm(forms.Form):
     def generate_xls(self, category, request):
         from category_specs_forms.models import CategorySpecsFormFilter
 
-        results = self.generate_json(category, request)['results']
+        data = self.get_data(category, request)
+        results = data['results']
 
         bucketing_field = self.cleaned_data['bucketing_field']
 
@@ -57,6 +59,10 @@ class ShareOfShelvesForm(forms.Form):
 
             row += 1
 
+        ReportCurrentPricesForm \
+            .generate_worksheet(workbook, category, None,
+                                data['entities'], data['es_dict'])
+
         workbook.close()
 
         output.seek(0)
@@ -75,6 +81,14 @@ class ShareOfShelvesForm(forms.Form):
         }
 
     def generate_json(self, category, request):
+        data = self.get_data(category, request)
+        return {
+            "aggs": data['aggs'],
+            "results": data['results'],
+            "price_ranges": data['price_ranges'],
+        }
+
+    def get_data(self, category, request):
         product_browse_form = ProductsBrowseForm(request.query_params)
 
         if not product_browse_form.is_valid():
@@ -130,5 +144,7 @@ class ShareOfShelvesForm(forms.Form):
         return {
             "aggs": data['aggs'],
             "results": result,
-            "price_ranges": data['price_ranges']
+            "price_ranges": data['price_ranges'],
+            "entities": data['entities'],
+            "es_dict": es_dict
         }

@@ -143,7 +143,8 @@ class ProductsBrowseForm(forms.Form):
         return {
             'aggs': filter_aggs,
             'results': serialized_data,
-            'price_ranges': price_ranges
+            'price_ranges': price_ranges,
+            'entities': entities
         }
 
     def get_products(self, request):

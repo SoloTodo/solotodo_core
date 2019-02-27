@@ -107,9 +107,37 @@ class ReportCurrentPricesForm(forms.Form):
         workbook = xlsxwriter.Workbook(output)
         workbook.formats[0].set_font_size(10)
 
-        date_format = workbook.add_format({'num_format': 'yyyy-mm-dd'})
+        self.generate_worksheet(workbook, category, currency, es, es_dict)
 
+        workbook.close()
+
+        output.seek(0)
+        file_value = output.getvalue()
+        file_for_upload = ContentFile(file_value)
+
+        storage = PrivateS3Boto3Storage()
+
+        filename_template = self.cleaned_data['filename']
+        if not filename_template:
+            filename_template = 'current_prices_%Y-%m-%d_%H:%M:%S'
+
+        filename = timezone.now().strftime(filename_template)
+
+        path = storage.save('reports/{}.xlsx'.format(filename),
+                            file_for_upload)
+
+        return {
+            'file': file_value,
+            'path': path
+        }
+
+    @staticmethod
+    def generate_worksheet(workbook, category, currency, es, es_dict):
         worksheet = workbook.add_worksheet()
+
+        date_format = workbook.add_format({
+            'num_format': 'yyyy-mm-dd'
+        })
 
         url_format = workbook.add_format({
             'font_color': 'blue',
@@ -181,7 +209,6 @@ class ReportCurrentPricesForm(forms.Form):
             es_entry = es_dict[e.product_id]
 
             # Product
-
             worksheet.write_url(
                 row, col,
                 '{}products/{}'.format(settings.PRICING_HOST, e.product.id),
@@ -288,25 +315,3 @@ class ReportCurrentPricesForm(forms.Form):
             row += 1
 
         worksheet.autofilter(0, 0, row - 1, len(headers) - 1)
-
-        workbook.close()
-
-        output.seek(0)
-        file_value = output.getvalue()
-        file_for_upload = ContentFile(file_value)
-
-        storage = PrivateS3Boto3Storage()
-
-        filename_template = self.cleaned_data['filename']
-        if not filename_template:
-            filename_template = 'current_prices_%Y-%m-%d_%H:%M:%S'
-
-        filename = timezone.now().strftime(filename_template)
-
-        path = storage.save('reports/{}.xlsx'.format(filename),
-                            file_for_upload)
-
-        return {
-            'file': file_value,
-            'path': path
-        }

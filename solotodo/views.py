@@ -309,7 +309,11 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         form = ProductsBrowseForm(request.query_params)
         result = form.get_category_entities(category, request)
 
-        return Response(result)
+        return Response({
+            'aggs': result['aggs'],
+            'results': result['results'],
+            'price_ranges': result['price_ranges'],
+        })
 
     @detail_route()
     def share_of_shelves(self, request, pk, *args, **kwargs):

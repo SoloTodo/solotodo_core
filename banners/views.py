@@ -41,9 +41,9 @@ class BannerViewSet(mixins.RetrieveModelMixin,
                 'errors': form.errors
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        form.get_banner_participation(request)
+        result = form.get_banner_participation()
 
-        return Response('Pending')
+        return Response(result)
 
 
 class BannerSectionViewSet(mixins.RetrieveModelMixin,

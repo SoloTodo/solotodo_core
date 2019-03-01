@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent, \
-    BannerSection, BannerSubsection
+    BannerSection, BannerSubsection, BannerSubsectionType
 from solotodo.serializers import CategorySerializer, BrandSerializer
 
 
@@ -35,12 +35,19 @@ class BannerSectionSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'url', 'name')
 
 
+class BannerSubsectionTypeSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = BannerSubsectionType
+        fields = ('id', 'url', 'name')
+
+
 class BannerSubsectionSerializer(serializers.HyperlinkedModelSerializer):
     section = BannerSectionSerializer()
+    type = BannerSubsectionTypeSerializer()
 
     class Meta:
         model = BannerSubsection
-        fields = ('id', 'name', 'section')
+        fields = ('id', 'name', 'section', 'type')
 
 
 class BannerSerializer(serializers.HyperlinkedModelSerializer):

@@ -80,7 +80,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductPricingHistorySerializer, NestedProductSerializer, \
     ProductAvailableEntitiesSerializer, RatingSerializer, \
     RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer, \
-    ProductPictureSerializer, BrandSerializer
+    ProductPictureSerializer, BrandSerializer, \
+    ProductAvailableEntitiesMinimalSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from solotodo_core.s3utils import MediaRootS3Boto3Storage
@@ -309,7 +310,11 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         form = ProductsBrowseForm(request.query_params)
         result = form.get_category_entities(category, request)
 
-        return Response(result)
+        return Response({
+            'aggs': result['aggs'],
+            'results': result['results'],
+            'price_ranges': result['price_ranges'],
+        })
 
     @detail_route()
     def share_of_shelves(self, request, pk, *args, **kwargs):
@@ -940,6 +945,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             .get_available() \
             .order_by('active_registry__offer_price')
 
+        if request.query_params.get('exclude_with_monthly_payment'):
+            entities = entities.filter(
+                active_registry__cell_monthly_payment__isnull=True)
+
         entity_query_params = request.query_params.copy()
         entity_query_params.pop('ids', None)
         entity_filterset = EntityFilterSet(data=entity_query_params,
@@ -957,7 +966,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         result_array = [{'product': product, 'entities': entities}
                         for product, entities in result_dict.items()]
 
-        serializer = ProductAvailableEntitiesSerializer(
+        serializer_name = request.query_params.get('serializer')
+
+        serializer_class = ProductAvailableEntitiesMinimalSerializer \
+            if serializer_name == 'minimal' \
+            else ProductAvailableEntitiesSerializer
+
+        serializer = serializer_class(
             result_array, many=True, context={'request': request})
 
         result = OrderedDict([

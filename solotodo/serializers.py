@@ -484,6 +484,30 @@ class ProductAvailableEntitiesSerializer(serializers.Serializer):
     entities = EntityWithoutDescriptionSerializer(many=True)
 
 
+class ProductAvailableEntitiesMinimalSerializer(serializers.Serializer):
+    class CustomEntitySerializer(serializers.HyperlinkedModelSerializer):
+        class EntityHistoryCustomSerializer(
+                serializers.HyperlinkedModelSerializer):
+            class Meta:
+                model = EntityHistory
+                fields = ['normal_price', 'offer_price']
+
+        active_registry = EntityHistoryCustomSerializer()
+        external_url = serializers.URLField(source='url')
+
+        class Meta:
+            model = Entity
+            fields = (
+                'store',
+                'external_url',
+                'active_registry',
+                # 'currency',
+            )
+
+    product = ProductSerializer()
+    entities = CustomEntitySerializer(many=True)
+
+
 class RatingSerializer(serializers.ModelSerializer):
     product = NestedProductSerializer()
     store = serializers.HyperlinkedRelatedField(

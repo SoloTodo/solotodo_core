@@ -8,9 +8,10 @@ from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
 from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent, \
-    BannerSection
-from .serializers import BannerSerializer, BannerUpdateSerializer,\
-    BannerAssetSerializer, BannerSectionSerializer
+    BannerSection, BannerSubsectionType
+from .serializers import BannerSerializer, BannerUpdateSerializer, \
+    BannerAssetSerializer, BannerSectionSerializer, \
+    BannerSubsectionTypeSerializer
 from .filters import BannerFilterSet, BannerUpdateFilterSet, \
     BannerAssetFilterSet
 from .pagination import BannerPagination, BannerAssetPagination, \
@@ -18,6 +19,8 @@ from .pagination import BannerPagination, BannerAssetPagination, \
 from .forms.add_banner_asset_content_form import AddBannerAssetContentForm
 from .forms.banner_active_participation_form import \
     BannerActiveParticipationForm
+
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
 class BannerViewSet(mixins.RetrieveModelMixin,
@@ -34,16 +37,24 @@ class BannerViewSet(mixins.RetrieveModelMixin,
 
     @list_route(methods=['get'])
     def active_participation(self, request):
-        form = BannerActiveParticipationForm(request.GET)
+        user = request.user
+        form = BannerActiveParticipationForm(user, request.GET)
 
         if not form.is_valid():
             return Response({
                 'errors': form.errors
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        result = form.get_banner_participation()
-
-        return Response(result)
+        if form.cleaned_data['response_format'] == 'xls':
+            report_path = form.get_banner_participation_as_xls()['path']
+            storage = PrivateS3Boto3Storage()
+            report_url = storage.url(report_path)
+            return Response({
+                'url': report_url
+            })
+        else:
+            result = form.get_banner_participation_as_json()
+            return Response(result)
 
 
 class BannerSectionViewSet(mixins.RetrieveModelMixin,
@@ -51,6 +62,13 @@ class BannerSectionViewSet(mixins.RetrieveModelMixin,
                            viewsets.GenericViewSet):
     queryset = BannerSection.objects.all()
     serializer_class = BannerSectionSerializer
+
+
+class BannerSubsectionTypeViewSet(mixins.RetrieveModelMixin,
+                                  mixins.ListModelMixin,
+                                  viewsets.GenericViewSet):
+    queryset = BannerSubsectionType.objects.all()
+    serializer_class = BannerSubsectionTypeSerializer
 
 
 class BannerUpdateViewSet(mixins.RetrieveModelMixin,

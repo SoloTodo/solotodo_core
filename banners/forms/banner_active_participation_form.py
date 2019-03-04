@@ -69,7 +69,7 @@ class BannerActiveParticipationForm(forms.Form):
         categories = self.cleaned_data['categories']
         subsection_types = self.cleaned_data['subsection_types']
 
-        banners = Banner.objects.filter(
+        banners = Banner.objects.get_active().filter(
             asset__contents__percentage__isnull=False
         )
 
@@ -208,6 +208,8 @@ class BannerActiveParticipationForm(forms.Form):
             'Sección',
             'Subsección',
             'Tipo de página',
+            'URL subsección',
+            'URL de destino',
             self.fields_data[grouping_field]['label'],
             'Participación (puntaje)',
             'Participación (porcentaje)',
@@ -240,6 +242,13 @@ class BannerActiveParticipationForm(forms.Form):
 
             col += 1
             worksheet.write(row, col, banner.subsection.type.name)
+
+            col += 1
+            worksheet.write_url(row, col, banner.url,
+                                cell_format=url_format)
+
+            col += 1
+            worksheet.write(row, col, banner.destination_urls, url_format)
 
             col += 1
             worksheet.write(row, col, banner_agg['grouping_label'])

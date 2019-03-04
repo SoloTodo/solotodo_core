@@ -270,9 +270,40 @@ class Store(models.Model):
         else:
             extra_args = {}
 
-        scraped_banners_data = scraper.banners(extra_args=extra_args)
-
         update = BannerUpdate.objects.create(store=self)
+
+        try:
+            scraped_banners_data = scraper.banners(extra_args=extra_args)
+        except Exception as e:
+            update.status = BannerUpdate.ERROR
+            update.status_message = str(e)
+            update.save()
+            return
+
+        section_dict = {
+            section.name: section
+            for section in BannerSection.objects.all()
+        }
+
+        subsection_type_dict = {
+            subsection_type.storescraper_name: subsection_type
+            for subsection_type in BannerSubsectionType.objects.all()
+        }
+
+        for banner_data in scraped_banners_data:
+            if banner_data['section'] not in section_dict:
+                update.status = BannerUpdate.ERROR
+                update.status_message = 'Invalid Section {}'\
+                    .format(banner_data['section'])
+                update.save()
+                return
+
+            if banner_data['type'] not in subsection_type_dict:
+                update.status = BannerUpdate.ERROR
+                update.status_message = 'Invalid Subsection Type {}'\
+                    .format(banner_data['type'])
+                update.save()
+                return
 
         for banner_data in scraped_banners_data:
             try:
@@ -283,10 +314,8 @@ class Store(models.Model):
                     picture_url=banner_data['picture_url']
                 )
 
-            section = BannerSection.objects\
-                .get(name=banner_data['section'])
-            subsection_type = BannerSubsectionType.objects\
-                .get(storescraper_name=banner_data['type'])
+            section = section_dict[banner_data['section']]
+            subsection_type = subsection_type_dict[banner_data['type']]
 
             subsection = BannerSubsection.objects.get_or_create(
                 name=banner_data['subsection'],
@@ -294,14 +323,19 @@ class Store(models.Model):
                 type=subsection_type
             )[0]
 
+            destination_urls = ', '.join(banner_data['destination_urls'])
+
             Banner.objects.create(
                 update=update,
                 url=banner_data['url'],
+                destination_urls=destination_urls,
                 asset=asset,
                 subsection=subsection,
                 position=banner_data['position']
             )
 
+        update.status = BannerUpdate.SUCCESS
+        update.save()
         self.active_banner_update = update
         self.save()
 

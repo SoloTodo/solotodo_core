@@ -8,7 +8,8 @@ from solotodo.serializers import CategorySerializer, BrandSerializer
 class BannerUpdateSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BannerUpdate
-        fields = ('id', 'url', 'store', 'is_active', 'timestamp')
+        fields = ('id', 'url', 'store', 'status', 'status_message',
+                  'is_active', 'timestamp')
 
 
 class BannerAssetContentSerializer(serializers.HyperlinkedModelSerializer):

@@ -5,31 +5,46 @@ from solotodo.models import Store
 
 
 class BannerAssetQuerySet(models.QuerySet):
+    # In this class, every method returns as "self.filter(id__in=xxxx)"
+    # where xxxx is the result of another filter (the intended one). This
+    # is done because for some reason (still not really understood), applying
+    # other filters directly to the first filter generates unexpected results.
     def get_active(self):
-        return self.filter(
+        active_assets = self.filter(
             banner__update__store__active_banner_update=F('banner__update'))\
             .distinct()
+
+        return self.filter(id__in=active_assets)
 
     def get_inactive(self):
-        return self.exclude(
+        inactive_assets = self.exclude(
             banner__update__store__active_banner_update=F('banner__update'))\
             .distinct()
 
+        return self.filter(id__in=inactive_assets)
+
     def get_complete(self):
-        return self.annotate(percentage=Sum('contents__percentage'))\
-            .filter(percentage=100)
+        complete_assets = self.annotate(
+            percentage=Sum('contents__percentage')).filter(percentage=100)
+
+        return self.filter(id__in=complete_assets)
 
     def get_incomplete(self):
-        return self.annotate(percentage=Sum('contents__percentage'))\
+        incomplete_assets = self.annotate(
+            percentage=Sum('contents__percentage'))\
             .filter(Q(percentage__isnull=True) | ~Q(percentage=100))
+
+        return self.filter(id__in=incomplete_assets)
 
     def filter_by_user_perms(self, user, permission):
         stores_with_permissions = Store.objects.filter_by_user_perms(
             user, permission)
 
-        return self.filter(
+        filtered_assets = self.filter(
             banner__update__store__in=stores_with_permissions
         ).distinct()
+
+        return self.filter(id__in=filtered_assets)
 
 
 class BannerAsset(models.Model):

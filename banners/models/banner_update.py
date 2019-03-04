@@ -31,8 +31,17 @@ class BannerUpdateQuerySet(models.QuerySet):
 
 
 class BannerUpdate(models.Model):
+    IN_PROCESS, SUCCESS, ERROR = [1, 2, 3]
+
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
+    status = models.IntegerField(choices=[
+        (IN_PROCESS, 'In process'),
+        (SUCCESS, 'Success'),
+        (ERROR, 'Error'),
+    ], default=IN_PROCESS)
+    status_message = models.CharField(max_length=255, blank=True, null=True)
+
     objects = BannerUpdateQuerySet.as_manager()
 
     @property

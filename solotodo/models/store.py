@@ -1,4 +1,6 @@
 import json
+import io
+import base64
 
 from celery.result import allow_join_result
 from django.core.files.base import ContentFile
@@ -13,7 +15,8 @@ from .store_type import StoreType
 from .country import Country
 from .category import Category
 from solotodo.utils import iterable_to_dict
-from solotodo_core.s3utils import PrivateS3Boto3Storage
+from solotodo_core.s3utils import PrivateS3Boto3Storage, \
+    MediaRootS3Boto3Storage
 from storescraper.product import Product as StorescraperProduct
 from storescraper.utils import get_store_class_by_name
 
@@ -309,9 +312,26 @@ class Store(models.Model):
             try:
                 asset = BannerAsset.objects.get(key=banner_data['key'])
             except BannerAsset.DoesNotExist:
+                if 'picture_url' in banner_data:
+                    picture_url = banner_data['picture_url']
+                else:
+                    storage = MediaRootS3Boto3Storage()
+                    image = base64.b64decode(banner_data['picture'])
+                    file = io.BytesIO(image)
+                    file.seek(0)
+                    file_value = file.getvalue()
+                    file_for_upload = ContentFile(file_value)
+
+                    filename_template = 'banner_%Y-%m-%d_%H:%M:%S'
+                    filename = timezone.now().strftime(filename_template)
+
+                    path = storage.save('banners/{}.png'.format(filename),
+                                        file_for_upload)
+                    picture_url = storage.url(path)
+
                 asset = BannerAsset.objects.create(
                     key=banner_data['key'],
-                    picture_url=banner_data['picture_url']
+                    picture_url=picture_url
                 )
 
             section = section_dict[banner_data['section']]

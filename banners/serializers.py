@@ -55,7 +55,10 @@ class BannerSerializer(serializers.HyperlinkedModelSerializer):
     update = BannerUpdateSerializer()
     asset = BannerAssetSerializer()
     subsection = BannerSubsectionSerializer()
+    url = serializers.HyperlinkedIdentityField(view_name='banner-detail')
+    external_url = serializers.URLField(source='url')
 
     class Meta:
         model = Banner
-        fields = ('id', 'update', 'subsection', 'asset', 'position')
+        fields = ('id', 'update', 'external_url', 'url',
+                  'destination_url_list', 'subsection', 'asset', 'position')

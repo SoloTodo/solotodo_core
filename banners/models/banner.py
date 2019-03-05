@@ -41,6 +41,10 @@ class Banner(models.Model):
     position = models.IntegerField()
     objects = BannerQuerySet.as_manager()
 
+    @property
+    def destination_url_list(self):
+        return self.destination_urls.split(',')
+
     def __str__(self):
         return '{} - {} - ({}) - {}'.format(self.update, self.asset,
                                             self.subsection, self.position)

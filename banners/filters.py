@@ -13,7 +13,7 @@ class BannerFilterSet(rest_framework.FilterSet):
     )
 
     stores = CustomModelMultipleChoiceFilter(
-        queryset=create_store_filter('view_banners'),
+        queryset=create_store_filter('view_store_banners'),
         name='update__store',
         label='Stores'
     )

@@ -81,5 +81,7 @@ class Category(models.Model):
              'Download the reports associated to this category'],
             ['view_category_share_of_shelves',
              'View share of shelves of the category'],
+            ['create_category_product_list',
+             'Can create a product list in this category'],
             ['backend_list_categories', 'View category list in backend']
         )

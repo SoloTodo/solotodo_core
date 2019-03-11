@@ -30,6 +30,7 @@ from hardware.router import router as hardware_router
 from carousel_slides.router import router as carousel_slides_router
 from alerts.router import router as alerts_router
 from banners.router import router as banners_router
+from product_lists.router import router as product_lists_router
 from .custom_default_router import CustomDefaultRouter
 
 router = CustomDefaultRouter()
@@ -44,6 +45,7 @@ router.extend(hardware_router)
 router.extend(carousel_slides_router)
 router.extend(alerts_router)
 router.extend(banners_router)
+router.extend(product_lists_router)
 
 
 class FacebookLogin(SocialLoginView):

@@ -26,3 +26,13 @@ class ProductForm(forms.Form):
 
         form.fields['product'].queryset = products
         return form
+
+    @classmethod
+    def from_category(cls, category, data):
+        form = cls(data)
+
+        products = Product.objects \
+            .filter_by_category(category)
+
+        form.fields['product'].queryset = products
+        return form

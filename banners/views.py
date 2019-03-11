@@ -32,7 +32,7 @@ class BannerViewSet(mixins.RetrieveModelMixin,
                        OrderingFilter)
     filter_class = BannerFilterSet
     ordering_fields = ('position', 'update__store', 'update__timestamp',
-                       'subsection')
+                       'subsection', 'id')
     pagination_class = BannerPagination
 
     @list_route(methods=['get'])

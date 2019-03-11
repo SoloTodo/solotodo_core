@@ -43,7 +43,10 @@ class Banner(models.Model):
 
     @property
     def destination_url_list(self):
-        return self.destination_urls.split(',')
+        if self.destination_urls:
+            return self.destination_urls.split(',')
+        else:
+            return []
 
     def __str__(self):
         return '{} - {} - ({}) - {}'.format(self.update, self.asset,

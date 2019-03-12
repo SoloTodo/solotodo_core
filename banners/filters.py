@@ -24,6 +24,12 @@ class BannerFilterSet(rest_framework.FilterSet):
         label='Sections'
     )
 
+    asset = CustomModelMultipleChoiceFilter(
+        queryset=BannerAsset.objects.all(),
+        name='asset',
+        label='Assets'
+    )
+
     is_active = rest_framework.BooleanFilter(
         name='is_active', method='_is_active', label='Is active?')
 

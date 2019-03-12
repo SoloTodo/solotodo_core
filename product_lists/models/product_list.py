@@ -6,7 +6,8 @@ from .product_list_entry import ProductListEntry
 
 
 class ProductList(models.Model):
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,
+                             related_name='product_lists')
     name = models.CharField(max_length=255)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     products = models.ManyToManyField(Product, through=ProductListEntry)

@@ -25,4 +25,5 @@ class ProductListEntry(models.Model):
 
     class Meta:
         app_label = 'product_lists'
+        unique_together = ('product_list', 'product')
         ordering = ('product_list', 'ordering')

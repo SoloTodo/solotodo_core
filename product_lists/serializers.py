@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from .models import ProductList, ProductListEntry
 from solotodo.models import Category
-from solotodo.serializers import ProductSerializer
+from solotodo.serializers import ProductSerializer, NestedProductSerializer
 
 
 class ProductListEntrySerializer(serializers.HyperlinkedModelSerializer):

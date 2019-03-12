@@ -498,10 +498,10 @@ class ProductAvailableEntitiesMinimalSerializer(serializers.Serializer):
         class Meta:
             model = Entity
             fields = (
+                'id',
                 'store',
                 'external_url',
-                'active_registry',
-                # 'currency',
+                'active_registry'
             )
 
     product = ProductSerializer()

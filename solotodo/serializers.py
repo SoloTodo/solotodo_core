@@ -490,7 +490,7 @@ class ProductAvailableEntitiesMinimalSerializer(serializers.Serializer):
                 serializers.HyperlinkedModelSerializer):
             class Meta:
                 model = EntityHistory
-                fields = ['normal_price', 'offer_price']
+                fields = ['id', 'normal_price', 'offer_price']
 
         active_registry = EntityHistoryCustomSerializer()
         external_url = serializers.URLField(source='url')

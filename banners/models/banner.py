@@ -34,7 +34,7 @@ class BannerQuerySet(models.QuerySet):
 class Banner(models.Model):
     update = models.ForeignKey(BannerUpdate, on_delete=models.CASCADE)
     url = models.URLField()
-    destination_urls = models.CharField(max_length=255)
+    destination_urls = models.CharField(max_length=512)
     asset = models.ForeignKey(BannerAsset, on_delete=models.CASCADE)
     subsection = models.ForeignKey(BannerSubsection, on_delete=models.CASCADE)
 

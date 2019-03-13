@@ -68,10 +68,56 @@ class ProductListViewSet(mixins.CreateModelMixin,
                 product=product)
         except IntegrityError as e:
             return Response({
-                'error': str(e)
+                'errors': {'product': [str(e)]}
             }, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = ProductListSerializer(
             product_list, context={'request': request})
 
         return Response(serializer.data)
+
+    @detail_route(methods=['post'])
+    def remove_product(self, request, pk, *args, **kwargs):
+        product_list = self.get_object()
+        form = ProductForm.from_category(product_list.category, request.data)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        product = form.cleaned_data['product']
+
+        try:
+            entry = ProductListEntry.objects.get(
+                product_list=product_list,
+                product=product)
+            entry.delete()
+        except ProductListEntry.DoesNotExist as e:
+            return Response({
+                'errors': {'product': [str(e)]}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ProductListSerializer(
+            product_list, context={'request': request}
+        )
+
+        return Response(serializer.data)
+
+    @detail_route(methods=['post'])
+    def update_entries_ordering(self, request, pk, *args, **kwargs):
+        product_list = self.get_object()
+
+        if 'products' not in request.data:
+            return Response({
+                'errors': {'products': ['product list not received']}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        products_ids = request.data['products']
+
+        if not isinstance(products_ids, list):
+            return Response({
+                'errors': {'products': ['Not a list']}
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        updated_entries = []

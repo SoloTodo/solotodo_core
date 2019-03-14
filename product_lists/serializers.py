@@ -22,6 +22,12 @@ class ProductListSerializer(serializers.HyperlinkedModelSerializer):
                   'creation_date', 'last_updated')
 
 
+class ProductListUpdateSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = ProductList
+        fields = ('name',)
+
+
 class ProductListCreationSerializer(serializers.HyperlinkedModelSerializer):
     name = serializers.CharField()
     category = serializers.PrimaryKeyRelatedField(

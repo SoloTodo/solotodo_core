@@ -10,7 +10,8 @@ from django.db import IntegrityError
 
 from solotodo.forms.product_form import ProductForm
 from .models import ProductList, ProductListEntry
-from .serializers import ProductListSerializer, ProductListCreationSerializer
+from .serializers import ProductListSerializer, ProductListCreationSerializer,\
+    ProductListUpdateSerializer
 from .filters import ProductListFilterSet
 from .pagination import ProductListPagination
 
@@ -18,6 +19,8 @@ from .pagination import ProductListPagination
 class ProductListViewSet(mixins.CreateModelMixin,
                          mixins.RetrieveModelMixin,
                          mixins.ListModelMixin,
+                         mixins.UpdateModelMixin,
+                         mixins.DestroyModelMixin,
                          viewsets.GenericViewSet):
     queryset = ProductList.objects.all()
     serializer_class = ProductListSerializer
@@ -39,6 +42,8 @@ class ProductListViewSet(mixins.CreateModelMixin,
     def get_serializer_class(self):
         if self.action == 'create':
             return ProductListCreationSerializer
+        elif self.action == 'partial_update':
+            return ProductListUpdateSerializer
         else:
             return ProductListSerializer
 

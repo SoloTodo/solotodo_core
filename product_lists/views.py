@@ -108,16 +108,34 @@ class ProductListViewSet(mixins.CreateModelMixin,
     def update_entries_ordering(self, request, pk, *args, **kwargs):
         product_list = self.get_object()
 
-        if 'products' not in request.data:
-            return Response({
-                'errors': {'products': ['product list not received']}
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        products_ids = request.data['products']
+        products_ids = request.data.get('products')
 
         if not isinstance(products_ids, list):
             return Response({
-                'errors': {'products': ['Not a list']}
+                'errors': {'products': [
+                    'Invalid products (no given or not a list)'
+                ]}
             }, status=status.HTTP_400_BAD_REQUEST)
 
         updated_entries = []
+
+        for entry in product_list.entries.all():
+            try:
+                index = products_ids.index(entry.product.id)
+            except ValueError:
+                return Response({
+                    'errors': {'products': ['"{}" not in list'
+                                            .format(entry.product)]}
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            entry.ordering = index
+            updated_entries.append(entry)
+
+        for entry in updated_entries:
+            entry.save()
+
+        serializer = ProductListSerializer(
+            product_list, context={'request': request}
+        )
+
+        return Response(serializer.data)

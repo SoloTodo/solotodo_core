@@ -1150,9 +1150,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                            status=status.HTTP_404_NOT_FOUND)
 
         picture = specs['picture']
-        dimensions = '{}x{}'.format(form.cleaned_data['width'],
-                                    form.cleaned_data['height'])
-        resized_picture = get_thumbnail(picture, dimensions)
+        resized_picture = get_thumbnail(picture, **form.thumbnail_kwargs())
 
         response = Response(status=status.HTTP_302_FOUND)
         response['Location'] = resized_picture.url

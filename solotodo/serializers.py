@@ -2,6 +2,8 @@ from django.contrib.auth import get_user_model
 from guardian.utils import get_anonymous_user
 from rest_framework import serializers
 
+from product_lists.models import ProductList, ProductListEntry
+
 from hardware.models import Budget
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
@@ -29,16 +31,39 @@ class WebsiteSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name', 'external_url')
 
 
-class InlineBudgetSerializer(serializers.HyperlinkedModelSerializer):
+class NestedProductSerializer(serializers.HyperlinkedModelSerializer):
+    name = serializers.CharField(read_only=True, source='__str__')
+
     class Meta:
-        model = Budget
-        fields = ['id', 'name', 'creation_date']
+        model = Product
+        fields = ('url', 'id', 'name')
 
 
 class MyUserSerializer(serializers.HyperlinkedModelSerializer):
+    class InlineBudgetSerializer(serializers.HyperlinkedModelSerializer):
+        class Meta:
+            model = Budget
+            fields = ['id', 'name', 'creation_date']
+
+    class ProductListNestedSerializer(serializers.HyperlinkedModelSerializer):
+        class ProductListEntryNestedSerializer(
+                serializers.HyperlinkedModelSerializer):
+            product = NestedProductSerializer()
+
+            class Meta:
+                model = ProductListEntry
+                fields = ('product', 'ordering')
+        entries = ProductListEntryNestedSerializer(many=True)
+
+        class Meta:
+            model = ProductList
+            fields = ('url', 'id', 'name', 'category', 'entries',
+                      'creation_date', 'last_updated')
+
     detail_url = serializers.HyperlinkedRelatedField(
         view_name='solotodouser-detail', read_only=True, source='pk')
     budgets = InlineBudgetSerializer(many=True)
+    product_lists = ProductListNestedSerializer(many=True)
 
     class Meta:
         model = get_user_model()
@@ -47,7 +72,7 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
                   'preferred_currency', 'preferred_number_format',
                   'preferred_store', 'preferred_stores_last_updated',
                   'preferred_stores', 'date_joined', 'is_staff',
-                  'permissions', 'budgets', 'is_superuser')
+                  'permissions', 'budgets', 'is_superuser', 'product_lists')
         read_only_fields = ('email', 'first_name', 'last_name',
                             'permissions', 'is_staff', 'is_superuser',
                             'budgets', 'date_joined')
@@ -134,14 +159,6 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('url', 'id', 'name', 'category', 'slug', 'instance_model_id',
                   'creation_date', 'last_updated', 'picture_url',
                   'specs')
-
-
-class NestedProductSerializer(serializers.HyperlinkedModelSerializer):
-    name = serializers.CharField(read_only=True, source='__str__')
-
-    class Meta:
-        model = Product
-        fields = ('url', 'id', 'name')
 
 
 class NestedProductSerializerWithCategory(NestedProductSerializer):

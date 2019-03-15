@@ -21,6 +21,9 @@ class ReportCurrentPricesForm(forms.Form):
     stores = forms.ModelMultipleChoiceField(
         queryset=Store.objects.all(),
         required=False)
+    products = forms.ModelMultipleChoiceField(
+        queryset=Product.objects.all(),
+        required=False)
     countries = forms.ModelMultipleChoiceField(
         queryset=Country.objects.all(),
         required=False)
@@ -35,8 +38,7 @@ class ReportCurrentPricesForm(forms.Form):
     normal_price_usd_1 = forms.DecimalField(
         required=False)
     filename = forms.CharField(
-        required=False
-    )
+        required=False)
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -58,6 +60,7 @@ class ReportCurrentPricesForm(forms.Form):
     def generate_report(self, es_product_search):
         category = self.cleaned_data['category']
         stores = self.cleaned_data['stores']
+        products = self.cleaned_data['products']
         countries = self.cleaned_data['countries']
         store_types = self.cleaned_data['store_types']
         currency = self.cleaned_data['currency']
@@ -66,6 +69,10 @@ class ReportCurrentPricesForm(forms.Form):
 
         specs_products = [e.product_id
                           for e in es_product_search[:100000].execute()]
+
+        if products:
+            product_ids = [product.id for product in products]
+            specs_products = list(set(specs_products) & set(product_ids))
 
         es = Entity.objects.filter(product__isnull=False,
                                    product__in=specs_products) \

@@ -108,6 +108,11 @@ class EntityFilterSet(rest_framework.FilterSet):
         name='store',
         label='Stores'
     )
+    products = CustomModelMultipleChoiceFilter(
+        queryset=create_product_filter(),
+        name='product',
+        label='Products'
+    )
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter(),
         name='category',

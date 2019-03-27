@@ -13,6 +13,8 @@ from reports.forms.report_websites_traffic_form import \
     ReportWebsitesTrafficForm
 from reports.forms.report_weekly_prices_form import ReportWeeklyPricesForm
 from reports.forms.report_wtb_form import ReportWtbForm
+from reports.forms.report_historic_share_of_shelves_form import \
+    ReportHistoricShareOfShelvesForm
 from reports.models import Report, ReportDownload
 from reports.serializers import ReportSerializer
 from reports.tasks import send_daily_prices_task
@@ -249,6 +251,35 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         report_path = form.generate_report()['path']
+
+        ReportDownload.objects.create(
+            report=report,
+            user=user,
+            file=report_path
+        )
+
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
+
+    @list_route()
+    def historic_share_of_shelves(self, request):
+        report = Report.objects.get(slug='historic_share_of_shelves')
+        user = request.user
+
+        if not user.has_perm('view_report', report):
+            raise PermissionDenied
+
+        form = ReportHistoricShareOfShelvesForm(request.user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report(request)['path']
 
         ReportDownload.objects.create(
             report=report,

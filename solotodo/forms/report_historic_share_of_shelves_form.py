@@ -1,14 +1,16 @@
 import io
 import xlsxwriter
+from collections import defaultdict
+from datetime import timedelta
 
 from django import forms
 from django.core.files.base import ContentFile
 from django.db.models.functions import ExtractWeek, ExtractYear
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.models import Category, Store, Country, Entity, EntityHistory, \
-    CategorySpecsFilter
+from solotodo.models import Store, Country, Entity, EntityHistory
 from solotodo.filter_utils import IsoDateTimeRangeField
+from solotodo.forms.share_of_shelves_form import ShareOfShelvesForm
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -16,8 +18,6 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
     timestamp = IsoDateTimeRangeField()
     bucketing_field = forms.CharField(
         required=True)
-    category = forms.ModelChoiceField(
-        queryset=Category.objects.all())
     stores = forms.ModelMultipleChoiceField(
         queryset=Store.objects.all(),
         required=False)
@@ -27,7 +27,7 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        valid_stores = get_objects_for_user(user, 'view_store_reports', Store)
+        valid_stores = get_objects_for_user(user, 'view_store', Store)
         self.fields['stores'].queryset = valid_stores
 
     def clean_stores(self):
@@ -37,46 +37,42 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
         else:
             return self.fields['stores'].queryset
 
-    def clean_countries(self):
-        selected_countries = self.cleaned_data['countries']
-        if selected_countries:
-            return selected_countries
-        else:
-            return self.fields['countries'].queryset
-
-    def generate_report(self, request):
+    def generate_report(self, category, request):
         from category_specs_forms.models import CategorySpecsFormFilter
 
         timestamp = self.cleaned_data['timestamp']
-        category = self.cleaned_data['category']
         bucketing_field = self.cleaned_data['bucketing_field']
 
-        data = self.get_data(request)
+        data = self.get_data(category, request.query_params)
         spec_filters = CategorySpecsFormFilter.objects.filter(
             filter__category=category,
             filter__name=bucketing_field)
 
         spec_filter = spec_filters[0]
 
-        start_year = timestamp.start.isocalendar()[0]
-        start_week = timestamp.start.isocalendar()[1]
-        end_year = timestamp.stop.isocalendar()[0]
-        end_week = timestamp.stop.isocalendar()[1]
+        iter_date = timestamp.start
+        one_week = timedelta(days=7)
+        end_year, end_week = timestamp.stop.isocalendar()[:2]
+        year_weeks = []
 
-        dates = []
-        for y in range(start_year, end_year+1):
-            for w in range(start_week, end_week+1):
-                dates.append(str(y)+'-'+str(w))
+        while True:
+            year, week = iter_date.isocalendar()[:2]
+            year_weeks.append('{}-{}'.format(year, week))
+
+            if year == end_year and week == end_week:
+                break
+
+            iter_date += one_week
 
         aggs = data['aggs']
-        aggs_keys = aggs.keys()
-        fields = []
+        bucket_and_year_weeks = aggs.keys()
+        bucketing_values = set()
 
-        for key in aggs_keys:
-            fields.append(key[0])
+        for bucket_and_year_week in bucket_and_year_weeks:
+            bucketing_values.add(bucket_and_year_week[0])
 
-        fields = list(set(fields))
-        fields.sort()
+        bucketing_values = list(bucketing_values)
+        bucketing_values.sort()
 
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output)
@@ -92,36 +88,31 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
             spec_filter.label
         ]
 
-        for date in dates:
-            headers.append(date)
+        for year_week in year_weeks:
+            headers.append(year_week)
 
         for idx, header in enumerate(headers):
             worksheet.write(0, idx, header, header_format)
 
         row = 1
 
-        for field in fields:
+        for bucketing_value in bucketing_values:
             col = 0
-            worksheet.write(row, col, field)
+            worksheet.write(row, col, bucketing_value)
             col += 1
-            for date in dates:
-                if (field, date) in aggs:
-                    value = aggs[(field, date)]
-                else:
-                    value = 0
+            for year_week in year_weeks:
+                value = aggs.get((bucketing_value, year_week), 0)
                 worksheet.write(row, col, value)
                 col += 1
             row += 1
 
         workbook.close()
+
         output.seek(0)
         file_value = output.getvalue()
         file_for_upload = ContentFile(file_value)
-
         storage = PrivateS3Boto3Storage()
-
         filename = "historic_share_of_shelves.xlsx"
-
         path = storage.save(filename, file_for_upload)
 
         return {
@@ -129,17 +120,16 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
             'path': path
         }
 
-    def get_data(self, request):
-        category = self.cleaned_data['category']
+    def get_data(self, category, query_params):
+        stores = self.cleaned_data['stores']
         countries = self.cleaned_data['countries']
         timestamp = self.cleaned_data['timestamp']
         bucketing_field = self.cleaned_data['bucketing_field']
 
-        query_params = request.query_params.copy()
-
         ehs = EntityHistory.objects.filter(
             entity__product__isnull=False,
             entity__category=category,
+            entity__store__in=stores,
             timestamp__gte=timestamp.start,
             timestamp__lte=timestamp.stop) \
             .get_available() \
@@ -149,15 +139,17 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
         if countries:
             ehs = ehs.filter(entity__store__country__in=countries)
 
-        entity_ids = [x['entity']
-                      for x in ehs.order_by('entity').values('entity')]
+        entity_ids = [x['entity'] for x in
+                      ehs.order_by('entity').values('entity').distinct()]
+
         entities = Entity.objects.filter(id__in=entity_ids)
         entity_dict = {e.id: e for e in entities}
 
-        product_ids = set(entry['product']
-                          for entry in entities.values('product'))
+        product_ids = [e['product'] for e in entities.order_by('product')
+                       .values('product').distinct()]
+
         es_search = category.es_search().filter(
-            'terms', product_id=list(product_ids))
+            'terms', product_id=product_ids)
 
         specs_form_class = category.specs_form()
         specs_form = specs_form_class(query_params)
@@ -175,27 +167,23 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
         es_dict = {e.product_id: e.to_dict()
                    for e in es_results}
 
-        spec_filters = CategorySpecsFilter.objects.filter(
-            category=category,
-            name=bucketing_field)
-
-        spec_filter = spec_filters[0]
-
-        if spec_filter.meta_model.is_primitive():
-            es_field = spec_filter.es_field
-        else:
-            es_field = spec_filter.es_field + '_unicode'
-
-        aggs = {}
+        es_field = ShareOfShelvesForm.get_bucketing_es_field(
+            category, bucketing_field)
+        aggs = defaultdict(lambda: 0)
 
         for eh in ehs:
             entity = entity_dict[eh['entity']]
             product = es_dict[entity.product_id]
-            product_bucket = (product[es_field],
-                              str(eh['year']) + '-' + str(eh['week']))
+            bucketing_value = product[es_field]
 
-            if product_bucket not in aggs:
-                aggs[product_bucket] = 0
+            if isinstance(bucketing_value, bool):
+                bucketing_value = 'Sí' if bucketing_value else 'No'
+
+            if isinstance(bucketing_value, list):
+                bucketing_value = ' / '.join(bucketing_value)
+
+            product_bucket = (bucketing_value,
+                              '{}-{}'.format(eh['year'], eh['week']))
 
             aggs[product_bucket] += 1
 

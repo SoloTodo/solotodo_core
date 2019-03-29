@@ -58,6 +58,8 @@ from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.forms.share_of_shelves_form import ShareOfShelvesForm
+from solotodo.forms.report_historic_share_of_shelves_form import \
+    ReportHistoricShareOfShelvesForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory, Visit, Rating, ProductPicture, Brand
@@ -346,6 +348,28 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
                 return Response(result)
             except ValidationError as e:
                 return Response(e, status=status.HTTP_400_BAD_REQUEST)
+
+    @detail_route()
+    def historic_share_of_shelves(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+        user = request.user
+
+        if not user.has_perm('view_category_share_of_shelves', category):
+            raise Response(status=status.HTTP_403_FORBIDDEN)
+
+        form = ReportHistoricShareOfShelvesForm(request.user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report(category, request)['path']
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
 
 
 class CountryViewSet(viewsets.ReadOnlyModelViewSet):

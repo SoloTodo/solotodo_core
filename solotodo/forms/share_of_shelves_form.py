@@ -104,16 +104,7 @@ class ShareOfShelvesForm(forms.Form):
 
         bucketing_field = self.cleaned_data['bucketing_field']
 
-        spec_filters = CategorySpecsFilter.objects.filter(
-            category=category,
-            name=bucketing_field)
-
-        spec_filter = spec_filters[0]
-
-        if spec_filter.meta_model.is_primitive():
-            es_field = spec_filter.es_field
-        else:
-            es_field = spec_filter.es_field + '_unicode'
+        es_field = self.get_bucketing_es_field(category, bucketing_field)
 
         for p in data['results']:
             product_id = p['product']['id']
@@ -148,3 +139,18 @@ class ShareOfShelvesForm(forms.Form):
             "entities": data['entities'],
             "es_dict": es_dict
         }
+
+    @classmethod
+    def get_bucketing_es_field(cls, category, bucketing_field):
+        spec_filters = CategorySpecsFilter.objects.filter(
+            category=category,
+            name=bucketing_field)
+
+        spec_filter = spec_filters[0]
+
+        if spec_filter.meta_model.is_primitive():
+            es_field = spec_filter.es_field
+        else:
+            es_field = spec_filter.es_field + '_unicode'
+
+        return es_field

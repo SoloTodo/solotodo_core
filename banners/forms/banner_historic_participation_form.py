@@ -5,8 +5,8 @@ from datetime import timedelta
 
 from django import forms
 
-from django.db.models import F, Sum, Avg, Count, Value, CharField
-from django.db.models.functions import ExtractWeek, ExtractYear, Concat
+from django.db.models import F, Sum, Avg, Count
+from django.db.models.functions import ExtractWeek, ExtractYear
 from django.core.files.base import ContentFile
 from guardian.shortcuts import get_objects_for_user
 
@@ -96,10 +96,6 @@ class BannerHistoricParticipationForm(forms.Form):
         if categories:
             banners = banners.filter(asset__contents__category__in=categories)
 
-        # banners = Banner.objects.filter(id__in=banners)\
-        #    .annotate(week=ExtractWeek('update__timestamp'),
-        #             year=ExtractYear('update__timestamp'))
-
         return banners
 
     def get_data(self):
@@ -118,19 +114,26 @@ class BannerHistoricParticipationForm(forms.Form):
             for s in store_updates
         }
 
-        banner_aggs = banners\
+        participation_aggs = banners\
             .order_by('year', 'week', 'update__store', db_grouping_field)\
             .values('year', 'week', 'update__store__name', db_grouping_field)\
             .annotate(
                 grouping_label=F(db_grouping_field + '__name'),
-                participation_score=Sum('asset__contents__percentage'),
+                participation_score=Sum('asset__contents__percentage'))\
+            .order_by('grouping_label')
+
+        position_aggs = banners\
+            .order_by('year', 'week', db_grouping_field)\
+            .values('year', 'week', db_grouping_field)\
+            .annotate(
+                grouping_label=F(db_grouping_field + '__name'),
                 position_avg=Avg('position'))\
             .order_by('grouping_label')
 
         banner_aggs_result = defaultdict(lambda: {'participation_score': 0})
         year_week_participation = defaultdict(lambda: 0)
 
-        for agg in banner_aggs:
+        for agg in participation_aggs:
             year_week = '{}-{}'.format(agg['year'], agg['week'])
             grouping_label = agg['grouping_label']
             store_name = agg['update__store__name']
@@ -145,6 +148,13 @@ class BannerHistoricParticipationForm(forms.Form):
 
             year_week_participation[year_week] += \
                 normalized_store_participation_score
+
+        for agg in position_aggs:
+            year_week = '{}-{}'.format(agg['year'], agg['week'])
+            grouping_label = agg['grouping_label']
+
+            banner_aggs_result[(year_week, grouping_label)][
+                'position_avg'] = agg['position_avg']
 
         return {
             'aggs': banner_aggs_result,
@@ -192,6 +202,14 @@ class BannerHistoricParticipationForm(forms.Form):
             'font_size': 10
         })
 
+        decimal_format = workbook.add_format()
+        decimal_format.set_num_format('0.00')
+        decimal_format.set_font_size(10)
+
+        percentage_format = workbook.add_format()
+        percentage_format.set_num_format('0.00%')
+        percentage_format.set_font_size(10)
+
         headers = [
             self.fields_data[grouping_field]['label']
         ]
@@ -206,10 +224,10 @@ class BannerHistoricParticipationForm(forms.Form):
         }
 
         score_worksheet = workbook.add_worksheet()
-        score_worksheet.name = 'Participación(puntaje)'
+        score_worksheet.name = 'Participación (puntaje)'
 
         percentage_worksheet = workbook.add_worksheet()
-        percentage_worksheet.name = 'Participación(%)'
+        percentage_worksheet.name = 'Participación (%)'
 
         position_worksheet = workbook.add_worksheet()
         position_worksheet.name = 'Posición promedio'
@@ -230,17 +248,15 @@ class BannerHistoricParticipationForm(forms.Form):
             for year_week in year_weeks:
                 value = aggs.get((year_week, group_value), default_value)
                 participation = year_week_participation.get(year_week, 1)
-                score_worksheet.write(row, col, value['participation_score'])
+                score_worksheet.write(row, col, value['participation_score'],
+                                      decimal_format)
                 percentage_worksheet.write(
-                    row, col, value['participation_score']*100/participation)
-                # position_worksheet.write(row, col, value['position_avg'])
+                    row, col, value['participation_score']/participation,
+                    percentage_format)
+                position_worksheet.write(row, col, value['position_avg'],
+                                         decimal_format)
                 col += 1
             row += 1
-
-        row += 1
-        col = 0
-        score_worksheet.write(row, col, 'TOTAL')
-        col += 1
 
         workbook.close()
 

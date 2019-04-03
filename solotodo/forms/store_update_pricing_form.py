@@ -15,7 +15,7 @@ class StoreUpdatePricingForm(forms.Form):
         max_value=20,
         required=False
     )
-    async = forms.NullBooleanField()
+    prefer_async = forms.NullBooleanField()
     categories = forms.ModelMultipleChoiceField(
         queryset=Category.objects.none(),
         required=False

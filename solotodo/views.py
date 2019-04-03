@@ -500,7 +500,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                 cleaned_data['discover_urls_concurrency']
             products_for_url_concurrency = \
                 cleaned_data['products_for_url_concurrency']
-            use_async = cleaned_data['async']
+            use_async = cleaned_data['prefer_async']
 
             store_update_log = StoreUpdateLog.objects.create(store=store)
 

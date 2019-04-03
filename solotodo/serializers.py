@@ -178,7 +178,7 @@ class StoreScraperSerializer(serializers.Serializer):
     products_for_url_concurrency = serializers.IntegerField(
         source='scraper.preferred_products_for_url_concurrency',
     )
-    async = serializers.BooleanField(
+    prefer_async = serializers.BooleanField(
         source='scraper.prefer_async',
     )
 

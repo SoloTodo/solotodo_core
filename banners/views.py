@@ -19,6 +19,8 @@ from .pagination import BannerPagination, BannerAssetPagination, \
 from .forms.add_banner_asset_content_form import AddBannerAssetContentForm
 from .forms.banner_active_participation_form import \
     BannerActiveParticipationForm
+from .forms.banner_historic_participation_form import \
+    BannerHistoricParticipationForm
 
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
@@ -55,6 +57,23 @@ class BannerViewSet(mixins.RetrieveModelMixin,
         else:
             result = form.get_banner_participation_as_json()
             return Response(result)
+
+    @list_route(methods=['get'])
+    def historic_active_participation(self, request):
+        user = request.user
+        form = BannerHistoricParticipationForm(user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report()['path']
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
 
 
 class BannerSectionViewSet(mixins.RetrieveModelMixin,

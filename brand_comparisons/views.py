@@ -1,17 +1,22 @@
+from rest_framework import viewsets, mixins
+
 from .models import BrandComparison, BrandComparisonSegment, \
     BrandComparisonSegmentRow
 from .serializers import BrandComparisonSerializer, \
-    FullBrandComparisonSerializer, BrandComparisonSegmentSerializer, \
-    BrandComparisonSegmentRowSerializer
+    FullBrandComparisonSerializer, BrandComparisonCreationSerializer,\
+    BrandComparisonSegmentSerializer, BrandComparisonSegmentRowSerializer
+from .pagination import BrandComparisonPagination
 
-from rest_framework import viewsets, mixins
 
-
-class BrandComparisonViewSet(mixins.RetrieveModelMixin,
+class BrandComparisonViewSet(mixins.CreateModelMixin,
+                             mixins.RetrieveModelMixin,
                              mixins.ListModelMixin,
+                             mixins.UpdateModelMixin,
+                             mixins.DestroyModelMixin,
                              viewsets.GenericViewSet):
     queryset = BrandComparison.objects.all()
     serializer_class = FullBrandComparisonSerializer
+    pagination_class = BrandComparisonPagination
 
     def get_queryset(self):
         user = self.request.user
@@ -26,6 +31,8 @@ class BrandComparisonViewSet(mixins.RetrieveModelMixin,
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return FullBrandComparisonSerializer
+        elif self.action == 'create':
+            return BrandComparisonCreationSerializer
         else:
             return BrandComparisonSerializer
 

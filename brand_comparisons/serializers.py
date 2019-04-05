@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from .models import BrandComparison, BrandComparisonSegment, \
     BrandComparisonSegmentRow
-from solotodo.models import Category, Brand
+from solotodo.models import Category, Brand, Store
 from solotodo.serializers import BrandSerializer, NestedProductSerializer, \
     UserSerializer
 
@@ -46,6 +46,20 @@ class FullBrandComparisonSerializer(serializers.HyperlinkedModelSerializer):
         model = BrandComparison
         fields = ('url', 'id', 'user', 'name', 'category', 'brand_1', 'brand_2',
                   'price_type', 'segments', 'stores')
+
+
+class BrandComparisonUpdateSerializer(serializers.HyperlinkedModelSerializer):
+    stores = serializers.PrimaryKeyRelatedField(
+        queryset=Store.objects.all(), many=True)
+
+    @property
+    def data(self):
+        return FullBrandComparisonSerializer(
+            self.instance, context={'request': self.context['request']}).data
+
+    class Meta:
+        model = BrandComparison
+        fields = ('name', 'price_type', 'stores')
 
 
 class BrandComparisonCreationSerializer(

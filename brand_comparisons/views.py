@@ -4,7 +4,8 @@ from .models import BrandComparison, BrandComparisonSegment, \
     BrandComparisonSegmentRow
 from .serializers import BrandComparisonSerializer, \
     FullBrandComparisonSerializer, BrandComparisonCreationSerializer,\
-    BrandComparisonSegmentSerializer, BrandComparisonSegmentRowSerializer
+    BrandComparisonSegmentSerializer, BrandComparisonSegmentRowSerializer,\
+    BrandComparisonUpdateSerializer
 from .pagination import BrandComparisonPagination
 
 
@@ -33,6 +34,8 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
             return FullBrandComparisonSerializer
         elif self.action == 'create':
             return BrandComparisonCreationSerializer
+        elif self.action == 'partial_update':
+            return BrandComparisonUpdateSerializer
         else:
             return BrandComparisonSerializer
 

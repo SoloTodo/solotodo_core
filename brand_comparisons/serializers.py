@@ -33,7 +33,7 @@ class BrandComparisonSegmentSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BrandComparisonSegment
-        fields = ('name', 'ordering', 'rows', 'comparison')
+        fields = ('id', 'url', 'name', 'ordering', 'rows', 'comparison')
 
 
 class FullBrandComparisonSerializer(serializers.HyperlinkedModelSerializer):

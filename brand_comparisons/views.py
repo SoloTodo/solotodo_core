@@ -1,4 +1,6 @@
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
+from rest_framework.decorators import detail_route
+from rest_framework.response import Response
 
 from .models import BrandComparison, BrandComparisonSegment, \
     BrandComparisonSegmentRow
@@ -39,12 +41,51 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
         else:
             return BrandComparisonSerializer
 
+    @detail_route(methods=['post'])
+    def add_segment(self, request, pk, *args, **kwargs):
+        brand_comparison = self.get_object()
+
+        segment_name = request.data.get('name')
+
+        if not segment_name:
+            return Response({
+                'errors': 'No name'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        next_ordering = brand_comparison.segments.last().ordering + 1
+
+        segment = BrandComparisonSegment.objects.create(
+            name=segment_name,
+            ordering=next_ordering,
+            comparison=brand_comparison)
+
+        BrandComparisonSegmentRow.objects.create(
+            ordering=1,
+            segment=segment)
+
+        serializer = FullBrandComparisonSerializer(
+            brand_comparison, context={'request': request})
+
+        return Response(serializer.data)
+
 
 class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,
                                     mixins.ListModelMixin,
+                                    mixins.UpdateModelMixin,
+                                    mixins.DestroyModelMixin,
                                     viewsets.GenericViewSet):
     queryset = BrandComparisonSegment.objects.all()
     serializer_class = BrandComparisonSegmentSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return BrandComparisonSegment.objects.none()
+        elif user.is_superuser:
+            return BrandComparisonSegment.objects.all()
+        else:
+            return BrandComparisonSegment.objects.filter(comparison__user=user)
 
 
 class BrandComparisonSegmentRowViewSet(mixins.RetrieveModelMixin,

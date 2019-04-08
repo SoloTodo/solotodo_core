@@ -21,6 +21,7 @@ from .store_type import StoreType
 from .category_tier import CategoryTier
 from .store import Store
 from .category import Category
+from .brand import Brand
 from .product import Product
 from .product_picture import ProductPicture
 from .rating import Rating
@@ -33,7 +34,6 @@ from .lead import Lead
 from .category_specs_filter import CategorySpecsFilter
 from .category_specs_order import CategorySpecsOrder
 from .visit import Visit
-from .brand import Brand
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

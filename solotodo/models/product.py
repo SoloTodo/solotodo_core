@@ -17,6 +17,7 @@ from metamodel.models import InstanceModel
 from solotodo.models.utils import solotodo_com_site, rs_refresh_entries
 
 from .category import Category
+from .brand import Brand
 
 
 class ProductQuerySet(models.QuerySet):
@@ -66,6 +67,7 @@ class ProductQuerySet(models.QuerySet):
 
 class Product(models.Model):
     instance_model = models.ForeignKey(InstanceModel, on_delete=models.CASCADE)
+    brand = models.ForeignKey(Brand, on_delete=models.PROTECT)
     creation_date = models.DateTimeField(db_index=True, auto_now_add=True)
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     last_updated = models.DateTimeField(auto_now=True)
@@ -138,16 +140,19 @@ class Product(models.Model):
             raise IntegrityError('Exiting products cannot have a creator '
                                  '(and vice versa)')
 
+        es = settings.ES
+        document, keywords = self.instance_model.elasticsearch_document()
+
+        self.brand = Brand.objects.get_or_create(
+            name=document['brand_unicode'])[0]
+
         if creator_id:
             self.creator_id = creator_id
         super(Product, self).save(*args, **kwargs)
 
-        es = settings.ES
-        document, keywords = self.instance_model.elasticsearch_document()
-
-        document[u'product_id'] = self.id
-        document[u'keywords'] = ' '.join(keywords)
-        document[u'search_bucket_key'] = self.search_bucket_key(document)
+        document['product_id'] = self.id
+        document['keywords'] = ' '.join(keywords)
+        document['search_bucket_key'] = self.search_bucket_key(document)
 
         es.index(index=settings.ES_PRODUCTS_INDEX,
                  doc_type=str(self.instance_model.model),

@@ -1,10 +1,10 @@
 amqp==2.4.2
 appnope==0.1.0
 beautifulsoup4==4.6.0
-billiard==3.6.0.0
+billiard==3.5.0.5
 boto3==1.4.4
 botocore==1.5.82
-celery==4.3.0
+celery==4.1.1
 certifi==2017.4.17
 chardet==3.0.4
 cssselect==1.0.1

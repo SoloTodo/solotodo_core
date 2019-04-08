@@ -7,3 +7,4 @@ storescraper
 ghostdriver.log
 *.xml
 node_modules
+cyber.tsv

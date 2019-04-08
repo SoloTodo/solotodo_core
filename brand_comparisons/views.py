@@ -87,9 +87,49 @@ class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,
         else:
             return BrandComparisonSegment.objects.filter(comparison__user=user)
 
+    @detail_route(methods=['post'])
+    def move(self, request, pk, *args, **kwargs):
+        segment = self.get_object()
+        direction = request.data.get('direction')
+
+        segment.move(direction)
+
+        serializer = BrandComparisonSegmentSerializer(
+            segment, context={'request': request})
+
+        return Response(serializer.data)
+
+    @detail_route(methods=['post'])
+    def add_row(self, request, pk, *args, ** kwargs):
+        segment = self.get_object()
+
+        next_ordering = segment.rows.last().ordering + 1
+
+        BrandComparisonSegmentRow.objects.create(
+            ordering=next_ordering,
+            segment=segment)
+
+        serializer = BrandComparisonSegmentSerializer(
+            segment, context={'request': request})
+
+        return Response(serializer.data)
+
 
 class BrandComparisonSegmentRowViewSet(mixins.RetrieveModelMixin,
                                        mixins.ListModelMixin,
+                                       mixins.DestroyModelMixin,
                                        viewsets.GenericViewSet):
     queryset = BrandComparisonSegmentRow.objects.all()
     serializer_class = BrandComparisonSegmentRowSerializer
+
+    @detail_route(methods=['post'])
+    def move(self, request, pk, *args, **kwargs):
+        row = self.get_object()
+        direction = request.data.get('direction')
+
+        row.move(direction)
+
+        serializer = BrandComparisonSegmentRowSerializer(
+            row, context={'request': request})
+
+        return Response(serializer.data)

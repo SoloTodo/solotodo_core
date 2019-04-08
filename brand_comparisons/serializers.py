@@ -25,7 +25,7 @@ class BrandComparisonSegmentRowSerializer(
 
     class Meta:
         model = BrandComparisonSegmentRow
-        fields = ('ordering', 'product_1', 'product_2', 'segment')
+        fields = ('id', 'ordering', 'product_1', 'product_2', 'segment')
 
 
 class BrandComparisonSegmentSerializer(serializers.HyperlinkedModelSerializer):

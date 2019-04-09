@@ -6,7 +6,9 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import detail_route, list_route
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
+from rest_framework.reverse import reverse
 
+from solotodo.filter_querysets import create_store_filter
 from .models import Banner, BannerUpdate, BannerAsset, BannerAssetContent, \
     BannerSection, BannerSubsectionType
 from .serializers import BannerSerializer, BannerUpdateSerializer, \
@@ -100,6 +102,29 @@ class BannerUpdateViewSet(mixins.RetrieveModelMixin,
                        OrderingFilter)
     filter_class = BannerUpdateFilterSet
     pagination_class = BannerUpdatePagination
+
+    @list_route()
+    def latest(self, request, *args, **kwargs):
+        stores = create_store_filter('view_store_banners')(self.request)\
+            .filter_by_banners_support()
+
+        result = {}
+
+        for store in stores:
+            store_url = reverse('store-detail', kwargs={'pk': store.pk},
+                                request=request)
+            store_latest_log = store.bannerupdate_set.order_by(
+                '-timestamp')[:1]
+
+            if store_latest_log:
+                store_latest_log = BannerUpdateSerializer(
+                    store_latest_log[0], context={'request': request}).data
+            else:
+                store_latest_log = None
+
+            result[store_url] = store_latest_log
+
+        return Response(result)
 
 
 class BannerAssetViewSet(mixins.RetrieveModelMixin,

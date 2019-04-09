@@ -25,6 +25,19 @@ class StoreQuerySet(models.QuerySet):
     def filter_by_user_perms(self, user, permission):
         return get_objects_for_user(user, permission, self)
 
+    def filter_by_banners_support(self):
+        stores_with_banner_compatibility = []
+        for store in self:
+            try:
+                _ = store.scraper.banners
+                stores_with_banner_compatibility.append(store)
+            except AttributeError:
+                # The scraper of the store does not implement banners method
+                pass
+
+        return self.filter(
+            pk__in=[s.id for s in stores_with_banner_compatibility])
+
 
 class Store(models.Model):
     name = models.CharField(max_length=255, db_index=True, unique=True)

@@ -40,7 +40,7 @@ class BannerUpdate(models.Model):
         (SUCCESS, 'Success'),
         (ERROR, 'Error'),
     ], default=IN_PROCESS)
-    status_message = models.CharField(max_length=255, blank=True, null=True)
+    status_message = models.TextField(blank=True, null=True)
 
     objects = BannerUpdateQuerySet.as_manager()
 

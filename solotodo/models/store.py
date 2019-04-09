@@ -49,7 +49,7 @@ class Store(models.Model):
     type = models.ForeignKey(StoreType, on_delete=models.CASCADE)
     logo = ImageField(upload_to='store_logos')
     active_banner_update = models.OneToOneField('banners.BannerUpdate',
-                                                on_delete=models.CASCADE,
+                                                on_delete=models.SET_NULL,
                                                 null=True, blank=True,
                                                 related_name='+')
 

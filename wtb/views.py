@@ -41,7 +41,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
     @list_route()
     def pending(self, request):
         filterset = WtbEntityStaffFilterSet(
-            queryset=self.get_queryset(),
+            queryset=self.filter_queryset(self.get_queryset()),
             data=request.query_params,
             request=request)
 

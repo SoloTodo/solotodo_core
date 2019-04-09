@@ -10,7 +10,8 @@ from solotodo.filter_querysets import create_store_filter, \
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
-    Currency, Visit, Rating, Category, MaterializedEntity, ProductPicture
+    Currency, Visit, Rating, Category, MaterializedEntity, ProductPicture, \
+    Brand
 
 
 class UserFilterSet(rest_framework.FilterSet):
@@ -127,6 +128,11 @@ class EntityFilterSet(rest_framework.FilterSet):
         queryset=StoreType.objects.all(),
         name='store__type',
         label='Store types'
+    )
+    db_brands = rest_framework.ModelMultipleChoiceFilter(
+        queryset=Brand.objects.all(),
+        name='product__brand',
+        label='Brands'
     )
 
     is_available = rest_framework.BooleanFilter(

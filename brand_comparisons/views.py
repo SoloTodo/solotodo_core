@@ -7,7 +7,7 @@ from .models import BrandComparison, BrandComparisonSegment, \
 from .serializers import BrandComparisonSerializer, \
     FullBrandComparisonSerializer, BrandComparisonCreationSerializer,\
     BrandComparisonSegmentSerializer, BrandComparisonSegmentRowSerializer,\
-    BrandComparisonUpdateSerializer
+    BrandComparisonUpdateSerializer, BrandComparisonSegmentRowUpdateSerializer
 from .pagination import BrandComparisonPagination
 
 
@@ -117,10 +117,17 @@ class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,
 
 class BrandComparisonSegmentRowViewSet(mixins.RetrieveModelMixin,
                                        mixins.ListModelMixin,
+                                       mixins.UpdateModelMixin,
                                        mixins.DestroyModelMixin,
                                        viewsets.GenericViewSet):
     queryset = BrandComparisonSegmentRow.objects.all()
     serializer_class = BrandComparisonSegmentRowSerializer
+
+    def get_serializer_class(self):
+        if self.action == 'partial_update':
+            return BrandComparisonSegmentRowUpdateSerializer
+        else:
+            return BrandComparisonSegmentRowSerializer
 
     @detail_route(methods=['post'])
     def move(self, request, pk, *args, **kwargs):

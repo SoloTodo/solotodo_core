@@ -80,7 +80,8 @@ INSTALLED_APPS = [
     'carousel_slides',
     'alerts',
     'banners',
-    'product_lists'
+    'product_lists',
+    'brand_comparisons'
 ]
 
 SITE_ID = 1

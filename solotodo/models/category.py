@@ -83,5 +83,7 @@ class Category(models.Model):
              'View share of shelves of the category'],
             ['create_category_product_list',
              'Can create a product list in this category'],
+            ['create_category_brand_comparison',
+             'Can create a brand comparison for this category'],
             ['backend_list_categories', 'View category list in backend']
         )

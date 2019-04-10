@@ -52,7 +52,12 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
                 'errors': 'No name'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        next_ordering = brand_comparison.segments.last().ordering + 1
+        last_segment = brand_comparison.segments.last()
+
+        if last_segment:
+            next_ordering = last_segment.ordering + 1
+        else:
+            next_ordering = 1
 
         segment = BrandComparisonSegment.objects.create(
             name=segment_name,

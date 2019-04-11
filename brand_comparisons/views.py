@@ -23,13 +23,18 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
     def get_queryset(self):
         user = self.request.user
+        qs = BrandComparison.objects.prefetch_related(
+            'segments__rows__product_1__instance_model',
+            'segments__rows__product_2__instance_model',
+            'stores'
+        ).select_related('user', 'brand_1', 'brand_2', 'category')
 
         if not user.is_authenticated:
-            return BrandComparison.objects.none()
+            return qs.none()
         elif user.is_superuser:
-            return BrandComparison.objects.all()
+            return qs.all()
         else:
-            return BrandComparison.objects.filter(user=user)
+            return qs.filter(user=user)
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -44,6 +49,7 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
     @detail_route(methods=['post'])
     def add_segment(self, request, pk, *args, **kwargs):
         brand_comparison = self.get_object()
+        brand_comparison = BrandComparison.objects.get(id=brand_comparison.id)
 
         segment_name = request.data.get('name')
 

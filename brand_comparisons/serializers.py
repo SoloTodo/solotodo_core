@@ -6,6 +6,8 @@ from solotodo.models import Category, Brand, Store, Product
 from solotodo.serializers import BrandSerializer, NestedProductSerializer, \
     UserSerializer, CategorySerializer
 
+from django.conf import settings
+
 
 class BrandComparisonSerializer(serializers.HyperlinkedModelSerializer):
     user = UserSerializer()
@@ -106,13 +108,27 @@ class BrandComparisonCreationSerializer(
         brand_1 = validated_data['brand_1']
         brand_2 = validated_data['brand_2']
 
-        return BrandComparison.objects.create(
+        brand_comparison = BrandComparison.objects.create(
             user=user,
             name=name,
             category=category,
             brand_1=brand_1,
-            brand_2=brand_2
+            brand_2=brand_2,
         )
+
+        brand_comparison.stores.set(
+            settings.BRAND_COMPARISON_DEFAULT_STORE_IDS)
+
+        segment = BrandComparisonSegment.objects.create(
+            name='Segmento Inicial',
+            ordering=1,
+            comparison=brand_comparison)
+
+        BrandComparisonSegmentRow.objects.create(
+            ordering=1,
+            segment=segment)
+
+        return brand_comparison
 
     class Meta:
         model = BrandComparison

@@ -2,6 +2,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 from .models import BrandComparison, BrandComparisonSegment, \
     BrandComparisonSegmentRow
 from .serializers import BrandComparisonSerializer, \
@@ -78,6 +79,16 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
             brand_comparison, context={'request': request})
 
         return Response(serializer.data)
+
+    @detail_route(methods=['get'])
+    def get_xls(self, request, pk, *args, **kwargs):
+        brand_comparison = self.get_object()
+        report_path = brand_comparison.as_xls()['path']
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
 
 
 class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,

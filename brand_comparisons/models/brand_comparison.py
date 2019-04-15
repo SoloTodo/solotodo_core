@@ -45,11 +45,11 @@ class BrandComparison(models.Model):
         worksheet = workbook.add_worksheet()
 
         stores = self.stores.all()
-        data = ['Promedio', 'Mínimo', 'Moda']
+        data = ['Promedio', 'Mínimo', 'Mediana']
         data_formula = [
             '=IFERROR(AVERAGE({}:{}), "")',
             '=IFERROR(MIN({}:{}), "")',
-            '=IFERROR(MODE({}:{}), "")'
+            '=IFERROR(MEDIAN({}:{}), "")'
         ]
 
         headers = []
@@ -125,8 +125,11 @@ class BrandComparison(models.Model):
                             header_format)
 
                         if entity2 and entity2.active_registry:
+                            entity_currency = entity2.currency
                             price = getattr(entity2.active_registry, '{}_price'
                                             .format(self.price_type))
+                            price = preferred_currency.convert_from(
+                                price, entity_currency)
                             worksheet.write(row, col + brand_2_start, price,
                                             currency_format)
 

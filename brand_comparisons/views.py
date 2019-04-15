@@ -124,12 +124,8 @@ class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,
     @detail_route(methods=['post'])
     def add_row(self, request, pk, *args, ** kwargs):
         segment = self.get_object()
-
-        next_ordering = segment.rows.last().ordering + 1
-
-        BrandComparisonSegmentRow.objects.create(
-            ordering=next_ordering,
-            segment=segment)
+        ordering = request.data.get('ordering')
+        segment.add_row(ordering)
 
         serializer = BrandComparisonSegmentSerializer(
             segment, context={'request': request})

@@ -31,6 +31,22 @@ class BrandComparisonSegment(models.Model):
         self.ordering = segment_ordering
         self.save()
 
+    def add_row(self, ordering):
+        from .brand_comparison_segment_row import BrandComparisonSegmentRow
+        if not ordering:
+            ordering = self.rows.last().ordering + 1
+
+        update_rows = self.rows.filter(ordering__gte=ordering) \
+            .order_by('-ordering')
+
+        for row in update_rows:
+            row.ordering += 1
+            row.save()
+
+        BrandComparisonSegmentRow.objects.create(
+            ordering=ordering,
+            segment=self)
+
     def __str__(self):
         return '{} - {}'.format(self.name, self.comparison.name)
 

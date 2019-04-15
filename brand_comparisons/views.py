@@ -151,6 +151,16 @@ class BrandComparisonSegmentRowViewSet(mixins.RetrieveModelMixin,
         else:
             return BrandComparisonSegmentRowSerializer
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if len(instance.segment.rows.all()) > 1:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            return Response({
+                'errors': 'Cant delete last row of segment.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
     @detail_route(methods=['post'])
     def move(self, request, pk, *args, **kwargs):
         row = self.get_object()

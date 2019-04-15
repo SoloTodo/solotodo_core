@@ -81,7 +81,8 @@ INSTALLED_APPS = [
     'alerts',
     'banners',
     'product_lists',
-    'brand_comparisons'
+    'brand_comparisons',
+    'entity_positions'
 ]
 
 SITE_ID = 1

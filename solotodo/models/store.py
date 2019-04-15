@@ -390,5 +390,7 @@ class Store(models.Model):
             # "Backend" permissions are used exclusively for UI purposes, they
             # are not used at the API level
             ['backend_list_stores', 'Can view store list in backend'],
-            ['view_store_banners', 'Can view store banners']
+            ['view_store_banners', 'Can view store banners'],
+            ['view_store_entity_positions', 'Can view store entity positions'],
+
         )

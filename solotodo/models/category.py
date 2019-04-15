@@ -85,5 +85,7 @@ class Category(models.Model):
              'Can create a product list in this category'],
             ['create_category_brand_comparison',
              'Can create a brand comparison for this category'],
-            ['backend_list_categories', 'View category list in backend']
+            ['backend_list_categories', 'View category list in backend'],
+            ['view_category_entity_positions',
+             'Can view category entity positions']
         )

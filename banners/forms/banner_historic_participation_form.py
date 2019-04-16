@@ -78,8 +78,15 @@ class BannerHistoricParticipationForm(forms.Form):
             asset__contents__percentage__isnull=False,
             update__timestamp__gte=timestamp.start,
             update__timestamp__lte=timestamp.stop
-        ).annotate(week=ExtractWeek('update__timestamp'),
-                   year=ExtractYear('update__timestamp'))
+        ).annotate(
+            week=ExtractWeek('update__timestamp'),
+            year=ExtractYear('update__timestamp')
+        ).prefetch_related(
+            'asset__contents__brand',
+            'asset__contents__category',
+        ).select_related(
+            'update__store'
+        )
 
         if stores:
             banners = banners.filter(update__store__in=stores)
@@ -96,7 +103,7 @@ class BannerHistoricParticipationForm(forms.Form):
         if categories:
             banners = banners.filter(asset__contents__category__in=categories)
 
-        return banners
+        return banners.distinct().order_by('id')
 
     def get_data(self):
         banners = self.get_filtered_banners()
@@ -130,6 +137,29 @@ class BannerHistoricParticipationForm(forms.Form):
                 position_avg=Avg('position'))\
             .order_by('grouping_label')
 
+        contents_data = []
+
+        for banner in banners:
+            asset = banner.asset
+            for content in asset.contents.all():
+                if grouping_field in ['brand', 'category']:
+                    grouping_label = getattr(
+                        content, grouping_field).name
+                elif grouping_field in ['section', 'subsection_type']:
+                    if grouping_field == 'subsection_type':
+                        grouping_field = 'type'
+
+                    grouping_label = getattr(
+                        banner.subsection, grouping_field).name
+                else:
+                    grouping_label = getattr(
+                        banner.update, grouping_field).name
+
+                contents_data.append({
+                    'banner': banner,
+                    'content': content,
+                    'grouping_label': grouping_label})
+
         banner_aggs_result = defaultdict(lambda: {'participation_score': 0})
         year_week_participation = defaultdict(lambda: 0)
 
@@ -158,7 +188,9 @@ class BannerHistoricParticipationForm(forms.Form):
 
         return {
             'aggs': banner_aggs_result,
-            'year_week_participation': year_week_participation
+            'year_week_participation': year_week_participation,
+            'contents_data': contents_data,
+            'store_updates': store_updates
         }
 
     def generate_report(self):
@@ -256,6 +288,55 @@ class BannerHistoricParticipationForm(forms.Form):
                 position_worksheet.write(row, col, value['position_avg'],
                                          decimal_format)
                 col += 1
+            row += 1
+
+        contents_worksheet = workbook.add_worksheet()
+        contents_worksheet.name = 'Contents'
+
+        contents_data = data['contents_data']
+        store_updates = data['store_updates']
+
+        content_headers = [
+            'Banner',
+            'Contenido',
+            'Semana',
+            self.fields_data[grouping_field]['label'],
+            'Puntaje',
+            'Cantidad actualizaciones de tienda',
+            'Puntaje normalizado'
+        ]
+
+        for idx, header in enumerate(content_headers):
+            contents_worksheet.write(0, idx, header, header_format)
+
+        row = 1
+
+        for content_data in contents_data:
+            banner = content_data['banner']
+            content = content_data['content']
+            grouping_label = content_data['grouping_label']
+            year_week = '{}-{}'.format(banner.year, banner.week)
+            store_name = banner.update.store.name
+
+            col = 0
+            contents_worksheet.write(row, col, banner.id)
+
+            col += 1
+            contents_worksheet.write_url(
+                row, col, banner.asset.picture_url, string='Imagen')
+
+            col += 1
+            contents_worksheet.write(row, col, year_week)
+
+            col += 1
+            contents_worksheet.write(row, col, grouping_label)
+
+            col += 1
+            contents_worksheet.write(row, col, content.percentage)
+
+            col += 1
+            contents_worksheet.write(row, col, store_updates[(year_week, store_name)])
+
             row += 1
 
         workbook.close()

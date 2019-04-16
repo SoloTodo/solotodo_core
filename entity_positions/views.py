@@ -5,7 +5,7 @@ from .models import EntityPosition, EntityPositionSection
 from .serializers import EntityPositionSerializer, \
     EntityPositionSectionSerializer
 from .pagination import EntityPositionPagination
-from .filters import EntityPositionFilterSet
+from .filters import EntityPositionFilterSet, EntityPositionSectionFilterSet
 
 
 class EntityPositionViewSet(mixins.CreateModelMixin,
@@ -25,3 +25,5 @@ class EntityPositionSectionViewSet(mixins.CreateModelMixin,
                                    viewsets.GenericViewSet):
     queryset = EntityPositionSection.objects.all()
     serializer_class = EntityPositionSectionSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend,)
+    filter_class = EntityPositionSectionFilterSet

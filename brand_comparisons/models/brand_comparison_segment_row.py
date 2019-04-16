@@ -6,10 +6,10 @@ from solotodo.models import Product
 
 class BrandComparisonSegmentRow(models.Model):
     ordering = models.IntegerField()
-    product_1 = models.ForeignKey(Product, on_delete=models.CASCADE,
+    product_1 = models.ForeignKey(Product, on_delete=models.SET_NULL,
                                   related_name='product_1',
                                   null=True, blank=True)
-    product_2 = models.ForeignKey(Product, on_delete=models.CASCADE,
+    product_2 = models.ForeignKey(Product, on_delete=models.SET_NULL,
                                   related_name='product_2',
                                   null=True, blank=True)
     segment = models.ForeignKey(BrandComparisonSegment,

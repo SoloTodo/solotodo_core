@@ -47,6 +47,20 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
         else:
             return BrandComparisonSerializer
 
+    def retrieve(self, request, *args, **kwargs):
+        export_format = request.GET.get('export_format')
+
+        if export_format == 'xls':
+            brand_comparison = self.get_object()
+            report_path = brand_comparison.as_xls()['path']
+            storage = PrivateS3Boto3Storage()
+            report_url = storage.url(report_path)
+            return Response({
+                'url': report_url
+            })
+
+        return super().retrieve(self, request, *args, **kwargs)
+
     @detail_route(methods=['post'])
     def add_segment(self, request, pk, *args, **kwargs):
         brand_comparison = self.get_object()
@@ -59,36 +73,12 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
                 'errors': 'No name'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        last_segment = brand_comparison.segments.last()
-
-        if last_segment:
-            next_ordering = last_segment.ordering + 1
-        else:
-            next_ordering = 1
-
-        segment = BrandComparisonSegment.objects.create(
-            name=segment_name,
-            ordering=next_ordering,
-            comparison=brand_comparison)
-
-        BrandComparisonSegmentRow.objects.create(
-            ordering=1,
-            segment=segment)
+        brand_comparison.add_segment(segment_name)
 
         serializer = FullBrandComparisonSerializer(
             brand_comparison, context={'request': request})
 
         return Response(serializer.data)
-
-    @detail_route(methods=['get'])
-    def get_xls(self, request, pk, *args, **kwargs):
-        brand_comparison = self.get_object()
-        report_path = brand_comparison.as_xls()['path']
-        storage = PrivateS3Boto3Storage()
-        report_url = storage.url(report_path)
-        return Response({
-            'url': report_url
-        })
 
 
 class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,

@@ -34,6 +34,8 @@ from .lead import Lead
 from .category_specs_filter import CategorySpecsFilter
 from .category_specs_order import CategorySpecsOrder
 from .visit import Visit
+from .store_section import StoreSection
+from .entity_section_position import EntitySectionPosition
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

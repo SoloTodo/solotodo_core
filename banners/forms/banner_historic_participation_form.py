@@ -1,5 +1,6 @@
 import io
 import xlsxwriter
+from xlsxwriter.utility import xl_rowcol_to_cell
 from collections import defaultdict
 from datetime import timedelta
 
@@ -85,7 +86,8 @@ class BannerHistoricParticipationForm(forms.Form):
             'asset__contents__brand',
             'asset__contents__category',
         ).select_related(
-            'update__store'
+            'update__store',
+            'subsection__section'
         )
 
         if stores:
@@ -145,7 +147,7 @@ class BannerHistoricParticipationForm(forms.Form):
                 if grouping_field in ['brand', 'category']:
                     grouping_label = getattr(
                         content, grouping_field).name
-                elif grouping_field in ['section', 'subsection_type']:
+                elif grouping_field in ['section', 'subsection_type', 'type']:
                     if grouping_field == 'subsection_type':
                         grouping_field = 'type'
 
@@ -228,6 +230,7 @@ class BannerHistoricParticipationForm(forms.Form):
 
         workbook = xlsxwriter.Workbook(output)
         workbook.formats[0].set_font_size(10)
+        workbook.remove_timezone = True
 
         header_format = workbook.add_format({
             'bold': True,
@@ -241,6 +244,13 @@ class BannerHistoricParticipationForm(forms.Form):
         percentage_format = workbook.add_format()
         percentage_format.set_num_format('0.00%')
         percentage_format.set_font_size(10)
+
+        datetime_format = workbook.add_format()
+        datetime_format.set_num_format('yyyy-mm-dd hh:mm')
+        datetime_format.set_font_size(10)
+
+        url_format = workbook.add_format()
+        url_format.set_font_size(10)
 
         headers = [
             self.fields_data[grouping_field]['label']
@@ -291,16 +301,22 @@ class BannerHistoricParticipationForm(forms.Form):
             row += 1
 
         contents_worksheet = workbook.add_worksheet()
-        contents_worksheet.name = 'Contents'
+        contents_worksheet.name = 'Datos'
 
         contents_data = data['contents_data']
         store_updates = data['store_updates']
 
         content_headers = [
             'Banner',
+            'Tienda',
             'Contenido',
+            'Fecha',
             'Semana',
+            'Subsección',
             self.fields_data[grouping_field]['label'],
+            'Marca',
+            'Categoría',
+            'Posición',
             'Puntaje',
             'Cantidad actualizaciones de tienda',
             'Puntaje normalizado'
@@ -322,20 +338,53 @@ class BannerHistoricParticipationForm(forms.Form):
             contents_worksheet.write(row, col, banner.id)
 
             col += 1
+            contents_worksheet.write(row, col, store_name)
+
+            col += 1
             contents_worksheet.write_url(
-                row, col, banner.asset.picture_url, string='Imagen')
+                row, col, banner.asset.picture_url, url_format,
+                string=str(banner.asset.id))
+
+            col += 1
+            contents_worksheet.write_datetime(
+                row, col, banner.update.timestamp, datetime_format)
 
             col += 1
             contents_worksheet.write(row, col, year_week)
 
             col += 1
+            contents_worksheet.write(
+                row, col,
+                '{} > {}'.format(
+                    banner.subsection.section.name, banner.subsection.name))
+
+            col += 1
             contents_worksheet.write(row, col, grouping_label)
+
+            col += 1
+            contents_worksheet.write(row, col, content.brand.name)
+
+            col += 1
+            contents_worksheet.write(row, col, content.category.name)
+
+            col += 1
+            contents_worksheet.write(row, col, banner.position)
 
             col += 1
             contents_worksheet.write(row, col, content.percentage)
 
             col += 1
-            contents_worksheet.write(row, col, store_updates[(year_week, store_name)])
+            contents_worksheet.write(row, col,
+                                     store_updates[(year_week, store_name)])
+
+            col += 1
+            score_cell = xl_rowcol_to_cell(row, col-2)
+            updates_cell = xl_rowcol_to_cell(row, col-1)
+            normalized_cell = xl_rowcol_to_cell(row, col)
+            formula = '={}/{}'.format(score_cell, updates_cell)
+
+            contents_worksheet.write_formula(normalized_cell, formula,
+                                             decimal_format)
 
             row += 1
 

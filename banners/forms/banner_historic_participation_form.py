@@ -339,7 +339,7 @@ class BannerHistoricParticipationForm(forms.Form):
             col += 1
             contents_worksheet.write_url(
                 row, col, banner.asset.picture_url, url_format,
-                string=str(banner.asset.id))
+                string='Imagen {}'.format(banner.asset.id))
 
             col += 1
             contents_worksheet.write_datetime(

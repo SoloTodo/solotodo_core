@@ -1,2 +1,0 @@
-from .entity_position import EntityPosition
-from .entity_position_section import EntityPositionSection

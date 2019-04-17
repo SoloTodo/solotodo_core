@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F
 
 from .store_section import StoreSection
 from .entity_history import EntityHistory
@@ -7,6 +8,14 @@ from .category import Category
 
 
 class EntitySectionPositionQuerySet(models.QuerySet):
+    def get_active(self):
+        return self.filter(
+            entity_history__entity__active_registry=F('entity_history'))
+
+    def get_inactive(self):
+        return self.exclude(
+            entity_history__entity__active_registry=F('entity_history'))
+
     def filter_by_user_perms(self, user, permission):
         synth_permissions = {
             'view_entity_positions': {

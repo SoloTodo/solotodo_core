@@ -16,8 +16,8 @@ class BrandComparisonSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BrandComparison
-        fields = ('id', 'url', 'user', 'name', 'category', 'brand_1', 'brand_2',
-                  'price_type', 'stores')
+        fields = ('id', 'url', 'user', 'name', 'category', 'brand_1',
+                  'brand_2', 'price_type', 'stores')
 
 
 class BrandComparisonSegmentRowSerializer(
@@ -59,8 +59,8 @@ class FullBrandComparisonSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = BrandComparison
-        fields = ('url', 'id', 'user', 'name', 'category', 'brand_1', 'brand_2',
-                  'price_type', 'segments', 'stores')
+        fields = ('url', 'id', 'user', 'name', 'category', 'brand_1',
+                  'brand_2', 'price_type', 'segments', 'stores')
 
 
 class BrandComparisonUpdateSerializer(serializers.HyperlinkedModelSerializer):

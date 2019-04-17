@@ -24,6 +24,25 @@ class BrandComparison(models.Model):
         default='offer')
     stores = models.ManyToManyField(Store)
 
+    def add_segment(self, name):
+        from .brand_comparison_segment import BrandComparisonSegment
+        from .brand_comparison_segment_row import BrandComparisonSegmentRow
+        last_segment = self.segments.last()
+
+        if last_segment:
+            next_ordering = last_segment.ordering + 1
+        else:
+            next_ordering = 1
+
+        segment = BrandComparisonSegment.objects.create(
+            name=name,
+            ordering=next_ordering,
+            comparison=self)
+
+        BrandComparisonSegmentRow.objects.create(
+            ordering=1,
+            segment=segment)
+
     def as_xls(self):
         preferred_currency = self.user.preferred_currency
 

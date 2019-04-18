@@ -51,4 +51,5 @@ class EntitySectionPosition(models.Model):
 
     class Meta:
         app_label = 'solotodo'
+        unique_together = ('entity_history', 'section')
         ordering = ('entity_history', 'section', 'value')

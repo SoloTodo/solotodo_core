@@ -23,7 +23,8 @@ class StoreSectionQuerySet(models.QuerySet):
 
 class StoreSection(models.Model):
     name = models.CharField(max_length=512)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE,
+                              related_name='sections')
 
     objects = StoreSectionQuerySet.as_manager()
 

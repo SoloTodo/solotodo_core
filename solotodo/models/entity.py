@@ -298,10 +298,10 @@ class Entity(models.Model):
                 store_section = sections_dict.get(position_data['section_name'])
 
                 if not store_section:
-                    store_section = StoreSection.objects.create(
+                    store_section = StoreSection.objects.get_or_create(
                         store=self.store,
                         name=position_data['section_name']
-                    )
+                    )[0]
 
                 EntitySectionPosition.objects.create(
                     section=store_section,
@@ -373,10 +373,10 @@ class Entity(models.Model):
             store_section = sections_dict.get(position_data['section_name'])
 
             if not store_section:
-                store_section = StoreSection.objects.create(
+                store_section = StoreSection.objects.get_or_create(
                     store=store,
                     name=position_data['section_name']
-                )
+                )[0]
 
             EntitySectionPosition.objects.create(
                 section=store_section,

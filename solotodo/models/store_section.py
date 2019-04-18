@@ -34,3 +34,4 @@ class StoreSection(models.Model):
     class Meta:
         app_label = 'solotodo'
         ordering = ('store', 'name')
+        unique_together = [('store', 'name')]

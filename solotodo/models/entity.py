@@ -305,7 +305,8 @@ class Entity(models.Model):
 
                 EntitySectionPosition.objects.create(
                     section=store_section,
-                    entity_history=new_active_registry
+                    entity_history=new_active_registry,
+                    value=position_data['value']
                 )
 
             updated_data.update({
@@ -379,7 +380,8 @@ class Entity(models.Model):
 
             EntitySectionPosition.objects.create(
                 section=store_section,
-                entity_history=new_entity_history
+                entity_history=new_entity_history,
+                value=position_data['value']
             )
 
     def update_keeping_log(self, updated_data, user=None):

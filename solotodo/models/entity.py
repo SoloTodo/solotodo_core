@@ -294,19 +294,19 @@ class Entity(models.Model):
                 estimated_sales_since_previous_registry=estimated_sales
             )
 
-            for position_data in scraped_product.positions:
-                store_section = sections_dict.get(position_data['section_name'])
+            for section_name, position_value in scraped_product.positions.items():
+                store_section = sections_dict.get(section_name)
 
                 if not store_section:
                     store_section = StoreSection.objects.get_or_create(
                         store=self.store,
-                        name=position_data['section_name']
+                        name=section_name
                     )[0]
 
                 EntitySectionPosition.objects.create(
                     section=store_section,
                     entity_history=new_active_registry,
-                    value=position_data['value']
+                    value=position_value
                 )
 
             updated_data.update({
@@ -369,19 +369,19 @@ class Entity(models.Model):
         new_entity.active_registry = new_entity_history
         new_entity.save()
 
-        for position_data in scraped_product.positions:
-            store_section = sections_dict.get(position_data['section_name'])
+        for section_name, position_value in scraped_product.positions.items():
+            store_section = sections_dict.get(section_name)
 
             if not store_section:
                 store_section = StoreSection.objects.get_or_create(
                     store=store,
-                    name=position_data['section_name']
+                    name=section_name
                 )[0]
 
             EntitySectionPosition.objects.create(
                 section=store_section,
                 entity_history=new_entity_history,
-                value=position_data['value']
+                value=position_value
             )
 
     def update_keeping_log(self, updated_data, user=None):

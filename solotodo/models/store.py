@@ -1,6 +1,7 @@
 import json
 import io
 import base64
+import traceback
 
 from celery.result import allow_join_result
 from django.core.files.base import ContentFile
@@ -84,7 +85,7 @@ class Store(models.Model):
 
         # First pass of product retrieval
 
-        def log_update_error(exception):
+        def log_update_error(local_error_message):
             if update_log:
                 update_log.status = update_log.ERROR
                 desired_filename = 'logs/scrapings/{}_{}.json'.format(
@@ -93,7 +94,7 @@ class Store(models.Model):
                 storage = PrivateS3Boto3Storage()
                 real_filename = storage.save(
                     desired_filename, ContentFile(
-                        str(exception).encode('utf-8')))
+                        local_error_message.encode('utf-8')))
                 update_log.registry_file = real_filename
                 update_log.save()
 
@@ -107,7 +108,8 @@ class Store(models.Model):
 
             )
         except Exception as e:
-            log_update_error(e)
+            error_message = 'Unknown error: {}'.format(traceback.format_exc())
+            log_update_error(error_message)
             raise
 
         # Second pass of product retrieval, for the products mis-catalogued
@@ -123,10 +125,13 @@ class Store(models.Model):
             key__in=[e.key for e in scraped_products_data['products']]
         )
 
-        extra_entities_args = [dict([
-            ('url', e.discovery_url),
-            ('category', e.scraped_category.storescraper_name)])
-            for e in extra_entities]
+        extra_entities_args = {
+            e.discovery_url: {
+                'positions': [],
+                'category': e.scraped_category.storescraper_name,
+                'category_weight': 1
+            } for e in extra_entities
+        }
 
         extra_products_task_signature = scraper.products_for_urls_task.s(
             self.storescraper_class,
@@ -144,7 +149,9 @@ class Store(models.Model):
                 extra_products_data = \
                     extra_products_task_signature.delay().get()
             except Exception as e:
-                log_update_error(e)
+                error_message = 'Unknown error: {}'.format(
+                    traceback.format_exc())
+                log_update_error(error_message)
                 raise
 
         scraped_products = scraped_products_data['products'] + \

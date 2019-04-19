@@ -16,7 +16,7 @@ from django_filters import rest_framework
 from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
-from rest_framework import viewsets, permissions, status
+from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.decorators import list_route, detail_route
 from rest_framework import exceptions
 from rest_framework.exceptions import PermissionDenied
@@ -41,7 +41,9 @@ from solotodo.filter_querysets import create_category_filter, \
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
     ProductFilterSet, UserFilterSet, EntityHistoryFilterSet, StoreFilterSet, \
     LeadFilterSet, EntityEstimatedSalesFilterSet, EntityStaffFilterSet, \
-    WebsiteFilterSet, VisitFilterSet, RatingFilterSet, ProductPictureFilterSet
+    WebsiteFilterSet, VisitFilterSet, RatingFilterSet, \
+    ProductPictureFilterSet, EntitySectionPositionFilterSet, \
+    StoreSectionFilterSet
 from solotodo.forms.date_range_form import DateRangeForm
 from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_by_url_form import EntityByUrlForm
@@ -62,11 +64,12 @@ from solotodo.forms.report_historic_share_of_shelves_form import \
     ReportHistoricShareOfShelvesForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
-    EntityHistory, Visit, Rating, ProductPicture, Brand
+    EntityHistory, Visit, Rating, ProductPicture, Brand, StoreSection, \
+    EntitySectionPosition
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination, \
-    RatingPagination, ProductPicturePagination
+    RatingPagination, ProductPicturePagination, EntitySectionPositionPagination
 from solotodo.permissions import RatingPermission
 from solotodo.serializers import UserSerializer, LanguageSerializer, \
     StoreSerializer, CurrencySerializer, CountrySerializer, \
@@ -83,7 +86,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductAvailableEntitiesSerializer, RatingSerializer, \
     RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer, \
     ProductPictureSerializer, BrandSerializer, \
-    ProductAvailableEntitiesMinimalSerializer
+    ProductAvailableEntitiesMinimalSerializer, StoreSectionSerializer, \
+    EntitySectionPositionSerializer
 from solotodo.tasks import store_update
 from solotodo.utils import get_client_ip, iterable_to_dict
 from solotodo_core.s3utils import MediaRootS3Boto3Storage
@@ -1379,3 +1383,24 @@ class FilesViewSet(viewsets.ViewSet):
 class BrandViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Brand.objects.all()
     serializer_class = BrandSerializer
+
+
+class EntitySectionPositionViewSet(mixins.CreateModelMixin,
+                                   mixins.RetrieveModelMixin,
+                                   mixins.ListModelMixin,
+                                   viewsets.GenericViewSet):
+    queryset = EntitySectionPosition.objects.all()
+    serializer_class = EntitySectionPositionSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend,)
+    filter_class = EntitySectionPositionFilterSet
+    pagination_class = EntitySectionPositionPagination
+
+
+class StoreSectionViewSet(mixins.CreateModelMixin,
+                          mixins.RetrieveModelMixin,
+                          mixins.ListModelMixin,
+                          viewsets.GenericViewSet):
+    queryset = StoreSection.objects.all()
+    serializer_class = StoreSectionSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend,)
+    filter_class = StoreSectionFilterSet

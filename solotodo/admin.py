@@ -12,7 +12,7 @@ from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
     CategorySpecsFilter, CategorySpecsOrder, Lead, Visit, Rating, \
-    ProductPicture, Brand
+    ProductPicture, Brand, StoreSection, EntitySectionPosition
 
 
 @admin.register(Permission)
@@ -214,3 +214,14 @@ class RatingModelAdmin(admin.ModelAdmin):
 @admin.register(Brand)
 class BrandAModelAdmin(admin.ModelAdmin):
     list_display = ('name',)
+
+
+@admin.register(EntitySectionPosition)
+class EntitySectionPositionAdmin(admin.ModelAdmin):
+    list_display = ('entity_history', 'section', 'value')
+    readonly_fields = ('entity_history',)
+
+
+@admin.register(StoreSection)
+class StoreSectionAdmin(admin.ModelAdmin):
+    list_display = ('store', 'name')

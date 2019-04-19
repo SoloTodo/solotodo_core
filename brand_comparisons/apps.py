@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class BrandComparisonConfig(AppConfig):
-    name = 'brand_comparison'
+    name = 'brand_comparisons'

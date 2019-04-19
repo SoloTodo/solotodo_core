@@ -248,9 +248,10 @@ class Entity(models.Model):
 
         return False
 
-    def update_with_scraped_product(self, scraped_product,
+    def update_with_scraped_product(self, scraped_product, sections_dict,
                                     category=None, currency=None):
-        from solotodo.models import EntityHistory
+        from solotodo.models import EntityHistory, StoreSection, \
+            EntitySectionPosition
         from django.conf import settings
 
         assert scraped_product is None or self.key == scraped_product.key
@@ -293,6 +294,21 @@ class Entity(models.Model):
                 estimated_sales_since_previous_registry=estimated_sales
             )
 
+            for position_data in scraped_product.positions:
+                store_section = sections_dict.get(position_data['section_name'])
+
+                if not store_section:
+                    store_section = StoreSection.objects.get_or_create(
+                        store=self.store,
+                        name=position_data['section_name']
+                    )[0]
+
+                EntitySectionPosition.objects.create(
+                    section=store_section,
+                    entity_history=new_active_registry,
+                    value=position_data['value']
+                )
+
             updated_data.update({
                 'name': scraped_product.name,
                 'scraped_category': category,
@@ -317,8 +333,9 @@ class Entity(models.Model):
 
     @classmethod
     def create_from_scraped_product(cls, scraped_product, store, category,
-                                    currency):
-        from solotodo.models import EntityHistory
+                                    currency, sections_dict):
+        from solotodo.models import EntityHistory, StoreSection, \
+            EntitySectionPosition
 
         new_entity = cls.objects.create(
             store=store,
@@ -351,6 +368,21 @@ class Entity(models.Model):
 
         new_entity.active_registry = new_entity_history
         new_entity.save()
+
+        for position_data in scraped_product.positions:
+            store_section = sections_dict.get(position_data['section_name'])
+
+            if not store_section:
+                store_section = StoreSection.objects.get_or_create(
+                    store=store,
+                    name=position_data['section_name']
+                )[0]
+
+            EntitySectionPosition.objects.create(
+                section=store_section,
+                entity_history=new_entity_history,
+                value=position_data['value']
+            )
 
     def update_keeping_log(self, updated_data, user=None):
         from solotodo.models import EntityLog

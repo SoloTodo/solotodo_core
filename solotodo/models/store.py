@@ -187,6 +187,7 @@ class Store(models.Model):
 
         categories_dict = iterable_to_dict(Category, 'storescraper_name')
         currencies_dict = iterable_to_dict(Currency, 'iso_code')
+        sections_dict = iterable_to_dict(self.sections.all(), 'name')
 
         for entity in entities_to_be_updated:
             scraped_product_for_update = scraped_products_dict.pop(
@@ -203,6 +204,7 @@ class Store(models.Model):
 
             entity.update_with_scraped_product(
                 scraped_product_for_update,
+                sections_dict,
                 category,
                 currency)
 
@@ -212,6 +214,7 @@ class Store(models.Model):
                 self,
                 categories_dict[scraped_product.category],
                 currencies_dict[scraped_product.currency],
+                sections_dict
             )
 
         if update_log:
@@ -390,5 +393,7 @@ class Store(models.Model):
             # "Backend" permissions are used exclusively for UI purposes, they
             # are not used at the API level
             ['backend_list_stores', 'Can view store list in backend'],
-            ['view_store_banners', 'Can view store banners']
+            ['view_store_banners', 'Can view store banners'],
+            ['view_store_entity_positions', 'Can view store entity positions'],
+
         )

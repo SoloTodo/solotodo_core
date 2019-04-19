@@ -307,7 +307,6 @@ class BannerHistoricParticipationForm(forms.Form):
         store_updates = data['store_updates']
 
         content_headers = [
-            'Banner',
             'Tienda',
             'Contenido',
             'Fecha',
@@ -335,15 +334,12 @@ class BannerHistoricParticipationForm(forms.Form):
             store_name = banner.update.store.name
 
             col = 0
-            contents_worksheet.write(row, col, banner.id)
-
-            col += 1
             contents_worksheet.write(row, col, store_name)
 
             col += 1
             contents_worksheet.write_url(
                 row, col, banner.asset.picture_url, url_format,
-                string=str(banner.asset.id))
+                string='Imagen {}'.format(banner.asset.id))
 
             col += 1
             contents_worksheet.write_datetime(
@@ -353,9 +349,9 @@ class BannerHistoricParticipationForm(forms.Form):
             contents_worksheet.write(row, col, year_week)
 
             col += 1
-            contents_worksheet.write(
-                row, col,
-                '{} > {}'.format(
+            contents_worksheet.write_url(
+                row, col, banner.url, url_format,
+                string='{} > {}'.format(
                     banner.subsection.section.name, banner.subsection.name))
 
             col += 1

@@ -224,4 +224,35 @@ class EntitySectionPositionAdmin(admin.ModelAdmin):
 
 @admin.register(StoreSection)
 class StoreSectionAdmin(admin.ModelAdmin):
-    list_display = ('store', 'name')
+    class StoreSectionPendingFilter(admin.SimpleListFilter):
+        title = 'Is pending?'  # or use _('country') for translated title
+        parameter_name = 'is_pending'
+
+        def lookups(self, request, model_admin):
+            return [
+                (0, 'No'),
+                (1, 'Yes')
+            ]
+
+        def queryset(self, request, queryset):
+            if not self.value():
+                return queryset
+
+            if int(self.value()):
+                return queryset.get_pending()
+            else:
+                return queryset.get_done()
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+
+        return qs.select_related(
+            'store',
+            'parent',
+            'parent__store',
+            'parent__parent',
+            'parent__parent__store'
+        )
+
+    list_filter = (StoreSectionPendingFilter, 'store')
+    search_fields = ['name']

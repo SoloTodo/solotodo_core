@@ -294,7 +294,8 @@ class Entity(models.Model):
                 estimated_sales_since_previous_registry=estimated_sales
             )
 
-            for section_name, position_value in scraped_product.positions.items():
+            for section_name, position_value in \
+                    scraped_product.positions.items():
                 store_section = sections_dict.get(section_name)
 
                 if not store_section:

@@ -652,13 +652,18 @@ class EntitySectionPositionFilterSet(rest_framework.FilterSet):
     is_active = rest_framework.BooleanFilter(
         name='is_active', method='_is_active', label='Is active?')
 
+    timestamp = IsoDateTimeFromToRangeFilter(
+        name='entity_history__timestamp'
+    )
+
     @property
     def qs(self):
         qs = super(EntitySectionPositionFilterSet, self).qs
 
         if self.request:
-            qs = qs.filter_by_user_perms(self.request.user,
-                                         'view_entity_positions')
+            qs = qs.filter_by_user_perms(
+                self.request.user, 'view_entity_positions')\
+                .select_related('entity_history', 'section')
 
         return qs
 

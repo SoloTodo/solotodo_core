@@ -847,6 +847,30 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @detail_route()
+    def position_history(self, request, pk):
+        entity = self.get_object()
+
+        if not request.user.has_perm(
+                'view_category_entity_positions', entity.category) \
+                or not request.user.has_perm(
+                    'view_store_entity_positions', entity.store):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        serializer_klass = EntitySectionPositionSerializer
+
+        filterset = EntitySectionPositionFilterSet(
+            data=request.query_params,
+            queryset=EntitySectionPosition.objects.filter(
+                entity_history__entity=entity),
+            request=request)
+        serializer = serializer_klass(
+            filterset.qs,
+            many=True,
+            context={'request': request}
+        )
+        return Response(serializer.data)
+
+    @detail_route()
     def staff_info(self, request, pk):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):

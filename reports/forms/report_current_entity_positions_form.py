@@ -82,7 +82,7 @@ class ReportCurrentEntityPositionsForm(forms.Form):
 
         if position_threshold:
             entity_section_positions = entity_section_positions.filter(
-                position__lte=position_threshold
+                value__lte=position_threshold
             )
 
         sections_in_report = StoreSection.objects.filter(pk__in=[

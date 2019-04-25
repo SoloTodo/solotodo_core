@@ -62,6 +62,8 @@ from solotodo.forms.visit_grouping_form import VisitGroupingForm
 from solotodo.forms.share_of_shelves_form import ShareOfShelvesForm
 from solotodo.forms.report_historic_share_of_shelves_form import \
     ReportHistoricShareOfShelvesForm
+from solotodo.forms.store_current_entity_positions_form import \
+    StoreCurrentEntityPositionsForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory, Visit, Rating, ProductPicture, Brand, StoreSection, \
@@ -447,6 +449,26 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         serializer = StoreRatingSerializer(store_ratings, many=True,
                                            context={'request': request})
         return Response(serializer.data)
+
+    @detail_route()
+    def current_entity_positions_report(self, request, *args, **kwargs):
+        user = request.user
+        store = self.get_object()
+
+        form = StoreCurrentEntityPositionsForm(user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report(store)['path']
+
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
 
     @detail_route()
     @detail_permission('update_store_pricing')

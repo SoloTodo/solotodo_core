@@ -64,6 +64,8 @@ from solotodo.forms.report_historic_share_of_shelves_form import \
     ReportHistoricShareOfShelvesForm
 from solotodo.forms.store_current_entity_positions_form import \
     StoreCurrentEntityPositionsForm
+from solotodo.forms.store_historic_entity_positions_form import \
+    StoreHistoricEntityPositionsForm
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory, Visit, Rating, ProductPicture, Brand, StoreSection, \
@@ -456,6 +458,26 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         store = self.get_object()
 
         form = StoreCurrentEntityPositionsForm(user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report(store)['path']
+
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
+
+    @detail_route()
+    def historic_entity_positions_report(self, request, *args, **kwargs):
+        user = request.user
+        store = self.get_object()
+
+        form = StoreHistoricEntityPositionsForm(user, request.GET)
 
         if not form.is_valid():
             return Response({

@@ -1,17 +1,21 @@
 import io
-
 import xlsxwriter
+from datetime import timedelta
+
 from django import forms
 from django.core.files.base import ContentFile
-from django.db.models import Count, F
+from django.db.models import Count
+from django.db.models.functions import ExtractWeek, ExtractYear
 from guardian.shortcuts import get_objects_for_user
 
+from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Category, Brand, EntitySectionPosition, \
     StoreSection
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
-class StoreCurrentEntityPositionsForm(forms.Form):
+class StoreHistoricEntityPositionsForm(forms.Form):
+    timestamp = IsoDateTimeRangeField()
     categories = forms.ModelMultipleChoiceField(
         queryset=Category.objects.all(),
         required=False
@@ -41,17 +45,23 @@ class StoreCurrentEntityPositionsForm(forms.Form):
     def generate_report(self, store):
         categories = self.cleaned_data['categories']
         brands = self.cleaned_data['brands']
+        timestamp = self.cleaned_data['timestamp']
         position_threshold = self.cleaned_data['position_threshold']
 
         entity_section_positions = EntitySectionPosition.objects.filter(
             entity_history__entity__category__in=categories,
-            entity_history__entity__store=store
-        ).get_active().select_related(
+            entity_history__entity__store=store,
+            entity_history__timestamp__gte=timestamp.start,
+            entity_history__timestamp__lte=timestamp.stop
+        ).select_related(
             'section__store',
             'entity_history__entity__product__brand',
             'entity_history__entity__product__instance_model',
             'entity_history__entity__category',
             'entity_history__entity__store',
+        ).annotate(
+            week=ExtractWeek('entity_history__timestamp'),
+            year=ExtractYear('entity_history__timestamp')
         )
 
         if brands:
@@ -75,32 +85,53 @@ class StoreCurrentEntityPositionsForm(forms.Form):
             .values('entity_history__entity__category')
         ])
 
-        section_category_brand_raw_data = entity_section_positions\
+        section_year_week_category_brand_raw_data = entity_section_positions \
             .order_by(
-                'section', 'entity_history__entity__category',
-                'entity_history__entity__product__brand')\
+                'section', 'year', 'week',
+                'entity_history__entity__category',
+                'entity_history__entity__product__brand') \
             .values(
-                'section', 'entity_history__entity__category',
-                'entity_history__entity__product__brand')\
+                'section', 'year', 'week',
+                'entity_history__entity__category',
+                'entity_history__entity__product__brand') \
             .annotate(
-                c=Count('*'),
-            )
+                c=Count('*'))
 
-        section_category_raw_data = entity_section_positions \
-            .order_by('section', 'entity_history__entity__category') \
-            .values('section', 'entity_history__entity__category') \
+        section_year_week_category_raw_data = entity_section_positions \
+            .order_by(
+                'section', 'year', 'week',
+                'entity_history__entity__category') \
+            .values(
+                'section', 'year', 'week',
+                'entity_history__entity__category') \
             .annotate(c=Count('*'))
 
-        section_category_brand_data = {
-            (e['section'], e['entity_history__entity__category'],
+        section_year_week_category_brand_data = {
+            (e['section'], '{}-{}'.format(e['year'], e['week']),
+             e['entity_history__entity__category'],
              e['entity_history__entity__product__brand']): e['c']
-            for e in section_category_brand_raw_data
+            for e in section_year_week_category_brand_raw_data
         }
 
-        section_category_data = {
-            (e['section'], e['entity_history__entity__category']): e['c']
-            for e in section_category_raw_data
+        section_year_week_category_data = {
+            (e['section'], '{}-{}'.format(e['year'], e['week']),
+             e['entity_history__entity__category']): e['c']
+            for e in section_year_week_category_raw_data
         }
+
+        iter_date = timestamp.start
+        one_week = timedelta(days=7)
+        end_year, end_week = timestamp.stop.isocalendar()[:2]
+        year_weeks = []
+
+        while True:
+            year, week = iter_date.isocalendar()[:2]
+            year_weeks.append('{}-{}'.format(year, week))
+
+            if year == end_year and week == end_week:
+                break
+
+            iter_date += one_week
 
         # # # REPORT # # #
         output = io.BytesIO()
@@ -117,16 +148,17 @@ class StoreCurrentEntityPositionsForm(forms.Form):
         percentage_format.set_num_format('0.00%')
         percentage_format.set_font_size(10)
 
-        # # # 1st WORKSHEET: AGGREGATED VALUES # # #
+        # # # 1st WORKSHEET # # #
+
         for category in categories_in_report:
-            entity_section_positions_in_category = entity_section_positions\
+            entity_section_positions_in_category = entity_section_positions \
                 .filter(entity_history__entity__category=category)
 
             sections_in_category = StoreSection.objects.filter(
                 pk__in=[e['section'] for e in
                         entity_section_positions_in_category
                         .order_by('section')
-                        .values('section')])\
+                        .values('section')]) \
                 .select_related('store')
 
             brands_in_category = Brand.objects.filter(
@@ -143,12 +175,13 @@ class StoreCurrentEntityPositionsForm(forms.Form):
                 'Sección'
             ]
 
-            headers.extend([str(brand) for brand in brands_in_category])
+            for year_week in year_weeks:
+                headers.extend([str(brand) for brand in brands_in_category])
 
             for idx, header in enumerate(headers):
-                worksheet.write(0, idx, header, header_format)
+                worksheet.write(1, idx, header, header_format)
 
-            row = 1
+            row = 2
 
             for section in sections_in_category:
                 col = 0
@@ -157,69 +190,25 @@ class StoreCurrentEntityPositionsForm(forms.Form):
                 col += 1
                 worksheet.write(row, col, section.name)
 
-                for brand in brands_in_category:
-                    col += 1
-                    value = section_category_brand_data.get(
-                        (section.id, category.id, brand.id), 0) / \
-                        section_category_data.get(
-                        (section.id, category.id), 1)
+                for year_week in year_weeks:
+                    worksheet.write(0, col+1, year_week, header_format)
+                    for brand in brands_in_category:
+                        col += 1
+                        value = section_year_week_category_brand_data.get(
+                            (section.id, year_week, category.id, brand.id), 0)
+                        total = section_year_week_category_data.get(
+                            (section.id, year_week, category.id), 1)
 
-                    worksheet.write(row, col, value, percentage_format)
-
+                        worksheet.write(row, col, value/total,
+                                        percentage_format)
                 row += 1
-
-        # # # 2nd WORKSHEET: ORIGINAL DATA # # #
-
-        worksheet = workbook.add_worksheet()
-
-        headers = [
-            'Tienda',
-            'Sección',
-            'Posición',
-            'Producto',
-            'Categoría',
-            'SKU',
-            'Nombre en tienda'
-        ]
-
-        for idx, header in enumerate(headers):
-            worksheet.write(0, idx, header, header_format)
-
-        row = 1
-
-        for entity_section_position in entity_section_positions:
-            entity = entity_section_position.entity_history.entity
-
-            col = 0
-            worksheet.write(row, col,
-                            str(entity_section_position.section.store))
-
-            col += 1
-            worksheet.write(row, col, entity_section_position.section.name)
-
-            col += 1
-            worksheet.write(row, col, entity_section_position.value)
-
-            col += 1
-            worksheet.write(row, col, str(entity.product))
-
-            col += 1
-            worksheet.write(row, col, str(entity.category))
-
-            col += 1
-            worksheet.write(row, col, entity.sku)
-
-            col += 1
-            worksheet.write(row, col, entity.name)
-
-            row += 1
 
         workbook.close()
         output.seek(0)
         file_value = output.getvalue()
         file_for_upload = ContentFile(file_value)
         storage = PrivateS3Boto3Storage()
-        filename = 'current_sku_positions.xlsx'
+        filename = 'historic_sku_positions.xlsx'
         path = storage.save(filename, file_for_upload)
 
         return {

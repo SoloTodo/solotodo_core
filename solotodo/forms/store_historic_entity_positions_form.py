@@ -51,6 +51,7 @@ class StoreHistoricEntityPositionsForm(forms.Form):
         entity_section_positions = EntitySectionPosition.objects.filter(
             entity_history__entity__category__in=categories,
             entity_history__entity__store=store,
+            entity_history__entity__product__isnull=False,
             entity_history__timestamp__gte=timestamp.start,
             entity_history__timestamp__lte=timestamp.stop
         ).select_related(
@@ -64,15 +65,6 @@ class StoreHistoricEntityPositionsForm(forms.Form):
             year=ExtractYear('entity_history__timestamp')
         )
 
-        if brands:
-            entity_section_positions = entity_section_positions.filter(
-                entity_history__entity__product__brand__in=brands
-            )
-        else:
-            entity_section_positions = entity_section_positions.filter(
-                entity_history__entity__product__isnull=False
-            )
-
         if position_threshold:
             entity_section_positions = entity_section_positions.filter(
                 value__lte=position_threshold
@@ -84,6 +76,41 @@ class StoreHistoricEntityPositionsForm(forms.Form):
             .order_by('entity_history__entity__category')
             .values('entity_history__entity__category')
         ])
+
+        section_year_week_category_raw_data = entity_section_positions \
+            .order_by(
+                'section', 'year', 'week',
+                'entity_history__entity__category') \
+            .values(
+                'section', 'year', 'week',
+                'entity_history__entity__category') \
+            .annotate(c=Count('*'))
+
+        section_year_week_category_data = {
+            (e['section'], '{}-{}'.format(e['year'], e['week']),
+             e['entity_history__entity__category']): e['c']
+            for e in section_year_week_category_raw_data
+        }
+
+        year_week_category_raw_data = entity_section_positions \
+            .order_by(
+                'year', 'week',
+                'entity_history__entity__category') \
+            .values(
+                'year', 'week',
+                'entity_history__entity__category') \
+            .annotate(c=Count('*'))
+
+        year_week_category_data = {
+            ('{}-{}'.format(e['year'], e['week']),
+             e['entity_history__entity__category']): e['c']
+            for e in year_week_category_raw_data
+        }
+
+        if brands:
+            entity_section_positions = entity_section_positions.filter(
+                entity_history__entity__product__brand__in=brands
+            )
 
         section_year_week_category_brand_raw_data = entity_section_positions \
             .order_by(
@@ -97,15 +124,6 @@ class StoreHistoricEntityPositionsForm(forms.Form):
             .annotate(
                 c=Count('*'))
 
-        section_year_week_category_raw_data = entity_section_positions \
-            .order_by(
-                'section', 'year', 'week',
-                'entity_history__entity__category') \
-            .values(
-                'section', 'year', 'week',
-                'entity_history__entity__category') \
-            .annotate(c=Count('*'))
-
         section_year_week_category_brand_data = {
             (e['section'], '{}-{}'.format(e['year'], e['week']),
              e['entity_history__entity__category'],
@@ -113,10 +131,23 @@ class StoreHistoricEntityPositionsForm(forms.Form):
             for e in section_year_week_category_brand_raw_data
         }
 
-        section_year_week_category_data = {
-            (e['section'], '{}-{}'.format(e['year'], e['week']),
-             e['entity_history__entity__category']): e['c']
-            for e in section_year_week_category_raw_data
+        year_week_category_brand_raw_data = entity_section_positions \
+            .order_by(
+                'year', 'week',
+                'entity_history__entity__category',
+                'entity_history__entity__product__brand') \
+            .values(
+                'year', 'week',
+                'entity_history__entity__category',
+                'entity_history__entity__product__brand') \
+            .annotate(
+                c=Count('*'))
+
+        year_week_category_brand_data = {
+            ('{}-{}'.format(e['year'], e['week']),
+             e['entity_history__entity__category'],
+             e['entity_history__entity__product__brand']): e['c']
+            for e in year_week_category_brand_raw_data
         }
 
         iter_date = timestamp.start
@@ -149,7 +180,6 @@ class StoreHistoricEntityPositionsForm(forms.Form):
         percentage_format.set_font_size(10)
 
         # # # 1st WORKSHEET # # #
-
         for category in categories_in_report:
             entity_section_positions_in_category = entity_section_positions \
                 .filter(entity_history__entity__category=category)
@@ -161,11 +191,14 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                         .values('section')]) \
                 .select_related('store')
 
-            brands_in_category = Brand.objects.filter(
-                pk__in=[e['entity_history__entity__product__brand'] for e in
-                        entity_section_positions_in_category
-                        .order_by('entity_history__entity__product__brand')
-                        .values('entity_history__entity__product__brand')])
+            if brands:
+                brands_in_category = brands
+            else:
+                brands_in_category = Brand.objects.filter(
+                    pk__in=[e['entity_history__entity__product__brand']
+                            for e in entity_section_positions_in_category
+                            .order_by('entity_history__entity__product__brand')
+                            .values('entity_history__entity__product__brand')])
 
             worksheet = workbook.add_worksheet()
             worksheet.name = category.name
@@ -202,6 +235,18 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                         worksheet.write(row, col, value/total,
                                         percentage_format)
                 row += 1
+
+            col = 1
+            for year_week in year_weeks:
+                for brand in brands_in_category:
+                    col += 1
+                    value = year_week_category_brand_data.get(
+                        (year_week, category.id, brand.id), 0)
+                    total = year_week_category_data.get(
+                        (year_week, category.id), 1)
+
+                    worksheet.write(row, col, value / total,
+                                    percentage_format)
 
         workbook.close()
         output.seek(0)

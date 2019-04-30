@@ -170,10 +170,13 @@ class StoreCurrentEntityPositionsForm(forms.Form):
                 'Sección'
             ]
 
-            headers.extend([str(brand) for brand in brands_in_category])
+            brand_headers = [str(brand) for brand in brands_in_category]
 
             for idx, header in enumerate(headers):
                 worksheet.write(0, idx, header, header_format)
+
+            for idx, header in enumerate(brand_headers):
+                worksheet.write(0, (idx+1)*2, header, header_format)
 
             row = 1
 
@@ -190,8 +193,13 @@ class StoreCurrentEntityPositionsForm(forms.Form):
                         (section.id, category.id, brand.id), 0) / \
                         section_category_data.get(
                         (section.id, category.id), 1)
-
+                    worksheet.write(row, col,section_category_brand_data.get(
+                        (section.id, category.id, brand.id), 0))
+                    col += 1
                     worksheet.write(row, col, value, percentage_format)
+
+                worksheet.write(row, col, section_category_data.get(
+                    (section.id, category.id), 0))
 
                 row += 1
 
@@ -201,7 +209,7 @@ class StoreCurrentEntityPositionsForm(forms.Form):
                 value = category_brand_data.get((category.id, brand.id), 0) / \
                     category_data.get(category.id, 1)
 
-                worksheet.write(row, col, value, percentage_format)
+                worksheet.write(row, (col*2)-1, value, percentage_format)
 
         # # # 2nd WORKSHEET: ORIGINAL DATA # # #
 

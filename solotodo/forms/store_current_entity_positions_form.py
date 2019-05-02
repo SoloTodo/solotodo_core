@@ -1,6 +1,7 @@
 import io
 
 import xlsxwriter
+from xlsxwriter.utility import xl_rowcol_to_cell
 from django import forms
 from django.core.files.base import ContentFile
 from django.db.models import Count, F
@@ -59,6 +60,10 @@ class StoreCurrentEntityPositionsForm(forms.Form):
             entity_section_positions = entity_section_positions.filter(
                 value__lte=position_threshold
             )
+
+        relevant_sections = entity_section_positions \
+            .order_by('section') \
+            .values('section')\
 
         categories_in_report = Category.objects.filter(pk__in=[
             e['entity_history__entity__category'] for e in
@@ -134,12 +139,23 @@ class StoreCurrentEntityPositionsForm(forms.Form):
 
         header_format = workbook.add_format({
             'bold': True,
-            'font_size': 10
+            'font_size': 10,
+            'align': 'center',
+            'valign': 'vcenter'
         })
 
         percentage_format = workbook.add_format()
         percentage_format.set_num_format('0.00%')
         percentage_format.set_font_size(10)
+
+        percentage_bold_format = workbook.add_format()
+        percentage_bold_format.set_num_format('0.00%')
+        percentage_bold_format.set_font_size(10)
+        percentage_bold_format.set_bold(True)
+
+        bold_format = workbook.add_format()
+        bold_format.set_font_size(10)
+        bold_format.set_bold(True)
 
         # # # 1st WORKSHEET: AGGREGATED VALUES # # #
         for category in categories_in_report:
@@ -147,10 +163,8 @@ class StoreCurrentEntityPositionsForm(forms.Form):
                 .filter(entity_history__entity__category=category)
 
             sections_in_category = StoreSection.objects.filter(
-                pk__in=[e['section'] for e in
-                        entity_section_positions_in_category
-                        .order_by('section')
-                        .values('section')])\
+                pk__in=[e['section'] for e in relevant_sections
+                        .filter(entity_history__entity__category=category)])\
                 .select_related('store')
 
             if brands:
@@ -176,7 +190,17 @@ class StoreCurrentEntityPositionsForm(forms.Form):
                 worksheet.write(0, idx, header, header_format)
 
             for idx, header in enumerate(brand_headers):
-                worksheet.write(0, (idx+1)*2, header, header_format)
+                header_col = (idx+1)*2
+                worksheet.merge_range(
+                    0, header_col,
+                    0, header_col + 1,
+                    header,
+                    header_format)
+
+            total_col = len(brand_headers)*2 + 2
+            formula = '={}/{}'
+
+            worksheet.write(0, total_col, 'Total', header_format)
 
             row = 1
 
@@ -189,27 +213,45 @@ class StoreCurrentEntityPositionsForm(forms.Form):
 
                 for brand in brands_in_category:
                     col += 1
-                    value = section_category_brand_data.get(
-                        (section.id, category.id, brand.id), 0) / \
-                        section_category_data.get(
-                        (section.id, category.id), 1)
-                    worksheet.write(row, col,section_category_brand_data.get(
+                    worksheet.write(row, col, section_category_brand_data.get(
                         (section.id, category.id, brand.id), 0))
-                    col += 1
-                    worksheet.write(row, col, value, percentage_format)
 
+                    percentage_formula = formula.format(
+                        xl_rowcol_to_cell(row, col),
+                        xl_rowcol_to_cell(row, total_col)
+                    )
+                    col += 1
+                    rowcol = xl_rowcol_to_cell(row, col)
+                    worksheet.write_formula(rowcol, percentage_formula,
+                                            percentage_format)
+
+                col += 1
                 worksheet.write(row, col, section_category_data.get(
                     (section.id, category.id), 0))
 
                 row += 1
 
             col = 1
+            worksheet.write(row, col, 'Total categoría', bold_format)
+
             for brand in brands_in_category:
                 col += 1
-                value = category_brand_data.get((category.id, brand.id), 0) / \
-                    category_data.get(category.id, 1)
+                worksheet.write(row, col, category_brand_data.get(
+                    (category.id, brand.id), 0), bold_format)
 
-                worksheet.write(row, (col*2)-1, value, percentage_format)
+                percentage_formula = formula.format(
+                    xl_rowcol_to_cell(row, col),
+                    xl_rowcol_to_cell(row, total_col)
+                )
+
+                col += 1
+                rowcol = xl_rowcol_to_cell(row, col)
+                worksheet.write_formula(rowcol, percentage_formula,
+                                        percentage_bold_format)
+
+            col += 1
+            worksheet.write(row, col, category_data.get(
+                category.id, 0), bold_format)
 
         # # # 2nd WORKSHEET: ORIGINAL DATA # # #
 

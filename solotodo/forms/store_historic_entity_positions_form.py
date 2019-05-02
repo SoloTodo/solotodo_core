@@ -70,6 +70,10 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                 value__lte=position_threshold
             )
 
+        relevant_sections = entity_section_positions \
+            .order_by('section') \
+            .values('section')
+
         categories_in_report = Category.objects.filter(pk__in=[
             e['entity_history__entity__category'] for e in
             entity_section_positions
@@ -172,12 +176,19 @@ class StoreHistoricEntityPositionsForm(forms.Form):
 
         header_format = workbook.add_format({
             'bold': True,
-            'font_size': 10
+            'font_size': 10,
+            'align': 'center',
+            'valign': 'vcenter'
         })
 
         percentage_format = workbook.add_format()
         percentage_format.set_num_format('0.00%')
         percentage_format.set_font_size(10)
+
+        percentage_bold_format = workbook.add_format()
+        percentage_bold_format.set_num_format('0.00%')
+        percentage_bold_format.set_font_size(10)
+        percentage_bold_format.set_bold(True)
 
         # # # 1st WORKSHEET # # #
         for category in categories_in_report:
@@ -185,10 +196,8 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                 .filter(entity_history__entity__category=category)
 
             sections_in_category = StoreSection.objects.filter(
-                pk__in=[e['section'] for e in
-                        entity_section_positions_in_category
-                        .order_by('section')
-                        .values('section')]) \
+                pk__in=[e['section'] for e in relevant_sections
+                        .filter(entity_history__entity__category=category)]) \
                 .select_related('store')
 
             if brands:
@@ -224,7 +233,12 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                 worksheet.write(row, col, section.name)
 
                 for year_week in year_weeks:
-                    worksheet.write(0, col+1, year_week, header_format)
+                    worksheet.merge_range(
+                        0, col+1,
+                        0, col+len(brands_in_category),
+                        year_week,
+                        header_format)
+
                     for brand in brands_in_category:
                         col += 1
                         value = section_year_week_category_brand_data.get(
@@ -246,7 +260,7 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                         (year_week, category.id), 1)
 
                     worksheet.write(row, col, value / total,
-                                    percentage_format)
+                                    percentage_bold_format)
 
         workbook.close()
         output.seek(0)

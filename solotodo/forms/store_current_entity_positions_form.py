@@ -256,11 +256,13 @@ class StoreCurrentEntityPositionsForm(forms.Form):
         # # # 2nd WORKSHEET: ORIGINAL DATA # # #
 
         worksheet = workbook.add_worksheet()
+        worksheet.name = "Información de posiciones"
 
         headers = [
             'Tienda',
             'Sección',
             'Posición',
+            'Marca',
             'Producto',
             'Categoría',
             'SKU',
@@ -284,6 +286,9 @@ class StoreCurrentEntityPositionsForm(forms.Form):
 
             col += 1
             worksheet.write(row, col, entity_section_position.value)
+
+            col += 1
+            worksheet.write(row, col, str(entity.product.brand))
 
             col += 1
             worksheet.write(row, col, str(entity.product))

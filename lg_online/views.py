@@ -81,7 +81,7 @@ class LgOnlineFeedViewSet(GenericViewSet):
             product = products_dict[entry['productId']]
 
             additional_picture_urls = [
-                get_thumbnail(picture, '1200x1200').url
+                get_thumbnail(picture.file, '1200x1200').url
                 for picture in product.pictures.all()[:5]
             ]
 

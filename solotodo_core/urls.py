@@ -32,6 +32,7 @@ from alerts.router import router as alerts_router
 from banners.router import router as banners_router
 from product_lists.router import router as product_lists_router
 from brand_comparisons.router import router as brand_comparisons_router
+from lg_online.router import router as lg_online_router
 from .custom_default_router import CustomDefaultRouter
 
 router = CustomDefaultRouter()
@@ -48,6 +49,7 @@ router.extend(alerts_router)
 router.extend(banners_router)
 router.extend(product_lists_router)
 router.extend(brand_comparisons_router)
+router.extend(lg_online_router)
 
 
 class FacebookLogin(SocialLoginView):

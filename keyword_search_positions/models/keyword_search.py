@@ -15,3 +15,7 @@ class KeywordSearch(models.Model):
     class Meta:
         app_label = 'keyword_search_positions'
         ordering = ('user', 'store', 'category', 'keyword')
+        permissions = (
+            ['backend_list_keyword_searches',
+             'Can see keyword searches in the backend'],
+        )

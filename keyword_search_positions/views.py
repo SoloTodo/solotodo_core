@@ -1,3 +1,12 @@
-from django.shortcuts import render
+from rest_framework import viewsets, mixins
 
-# Create your views here.
+from .models import KeywordSearch, KeywordSearchUpdate, \
+    KeywordSearchEntityPosition
+from.serializers import KeywordSearchSerializer
+
+
+class KeywordSearchViewSet(mixins.RetrieveModelMixin,
+                           mixins.ListModelMixin,
+                           viewsets.GenericViewSet):
+    queryset = KeywordSearch.objects.all()
+    serializer_class = KeywordSearchSerializer

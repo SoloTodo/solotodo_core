@@ -8,6 +8,7 @@ from .models import KeywordSearch, KeywordSearchUpdate, \
 class KeywordSearchAdmin(admin.ModelAdmin):
     list_display = ('user', 'store', 'category', 'keyword',
                     'threshold', 'creation_date')
+    readonly_fields = ('user',)
 
 
 @admin.register(KeywordSearchUpdate)
@@ -18,3 +19,4 @@ class KeywordSearchUpdateAdmin(admin.ModelAdmin):
 @admin.register(KeywordSearchEntityPosition)
 class KeywordSearchEntityPositionAdmin(admin.ModelAdmin):
     list_display = ('entity', 'update', 'value')
+    readonly_fields = ('entity', )

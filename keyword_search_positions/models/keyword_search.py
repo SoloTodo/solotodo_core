@@ -10,7 +10,7 @@ class KeywordSearch(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     keyword = models.CharField(max_length=512)
     threshold = models.IntegerField()
-    creation_date = models.DateTimeField()
+    creation_date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         app_label = 'keyword_search_positions'

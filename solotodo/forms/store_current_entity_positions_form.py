@@ -65,7 +65,7 @@ class StoreCurrentEntityPositionsForm(forms.Form):
             .order_by('section') \
             .values('section')\
 
-        categories_in_report = Category.objects.filter(pk__in=[
+        category_ids_in_report = Category.objects.filter(pk__in=[
             e['entity_history__entity__category'] for e in
             entity_section_positions
             .order_by('entity_history__entity__category')
@@ -158,7 +158,7 @@ class StoreCurrentEntityPositionsForm(forms.Form):
         bold_format.set_bold(True)
 
         # # # 1st WORKSHEET: AGGREGATED VALUES # # #
-        for category in categories_in_report:
+        for category in category_ids_in_report:
             entity_section_positions_in_category = entity_section_positions\
                 .filter(entity_history__entity__category=category)
 

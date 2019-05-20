@@ -15,6 +15,13 @@ class KeywordSearchUpdate(models.Model):
     ], default=IN_PROCESS)
     message = models.TextField()
 
+    def __str__(self):
+        return '{} - {} - {} - {}'.format(
+            self.search.user,
+            self.search.store,
+            self.search.keyword,
+            self.creation_date)
+
     class Meta:
         app_label = 'keyword_search_positions'
         ordering = ('search',)

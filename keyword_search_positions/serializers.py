@@ -3,7 +3,7 @@ from rest_framework import serializers
 from .models import KeywordSearch, KeywordSearchEntityPosition, \
     KeywordSearchUpdate
 from solotodo.models import Store, Category
-from solotodo.serializers import UserSerializer
+from solotodo.serializers import UserSerializer, EntitySerializer
 
 
 class KeywordSearchSerializer(serializers.HyperlinkedModelSerializer):
@@ -12,7 +12,7 @@ class KeywordSearchSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = KeywordSearch
         fields = ('id', 'url', 'user', 'store', 'category', 'keyword',
-                  'threshold', 'creation_date')
+                  'threshold', 'active_update', 'creation_date')
 
 
 class KeywordSearchCreationSerializer(serializers.HyperlinkedModelSerializer):
@@ -69,16 +69,14 @@ class KeywordSearchCreationSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class KeywordSearchUpdateSerializer(serializers.HyperlinkedModelSerializer):
-    search = KeywordSearchSerializer()
-
     class Meta:
         model = KeywordSearchUpdate
-        fields = ('search', 'creation_date', 'status', 'message')
+        fields = ('url', 'id', 'search', 'creation_date', 'status', 'message')
 
 
 class KeywordSearchEntityPositionSerializer(
         serializers.HyperlinkedModelSerializer):
-    update = KeywordSearchUpdateSerializer()
+    entity = EntitySerializer()
 
     class Meta:
         model = KeywordSearchEntityPosition

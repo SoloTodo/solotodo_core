@@ -59,6 +59,14 @@ class KeywordSearch(models.Model):
         update.status = KeywordSearchUpdate.SUCCESS
         update.save()
 
+    def save(self, *args, **kwargs):
+        from keyword_search_positions.tasks import keyword_search_update
+        should_update = not self.id
+        super(KeywordSearch, self).save(*args, **kwargs)
+
+        if should_update:
+            keyword_search_update.delay(self.id)
+
     class Meta:
         app_label = 'keyword_search_positions'
         ordering = ('-creation_date',)

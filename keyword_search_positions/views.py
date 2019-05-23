@@ -1,11 +1,14 @@
 from django_filters import rest_framework
 
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import list_route, detail_route
 
+from solotodo_core.s3utils import PrivateS3Boto3Storage
+from .forms.keyword_search_current_positions_form import \
+    KeywordSearchCurrentPositionsForm
 from .models import KeywordSearch, KeywordSearchUpdate, \
     KeywordSearchEntityPosition
 from .pagination import KeywordSearchUpdatePagination
@@ -18,6 +21,7 @@ from .filters import KeywordSearchUpdateFilterSet
 class KeywordSearchViewSet(mixins.RetrieveModelMixin,
                            mixins.ListModelMixin,
                            mixins.CreateModelMixin,
+                           mixins.DestroyModelMixin,
                            viewsets.GenericViewSet):
     queryset = KeywordSearch.objects.all()
     serializer_class = KeywordSearchSerializer
@@ -37,6 +41,24 @@ class KeywordSearchViewSet(mixins.RetrieveModelMixin,
             return KeywordSearchCreationSerializer
         else:
             return KeywordSearchSerializer
+
+    @list_route(methods=['get'])
+    def current_positions_report(self, request):
+        user = request.user
+        form = KeywordSearchCurrentPositionsForm(user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report(user)['path']
+
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
 
 
 class KeywordSearchUpdateViewSet(mixins.RetrieveModelMixin,

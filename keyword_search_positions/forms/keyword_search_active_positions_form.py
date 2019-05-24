@@ -7,13 +7,12 @@ from django.db.models import Count, F
 from django.core.files.base import ContentFile
 from guardian.shortcuts import get_objects_for_user
 
-from keyword_search_positions.models import KeywordSearch, \
-    KeywordSearchUpdate, KeywordSearchEntityPosition
+from keyword_search_positions.models import KeywordSearchEntityPosition
 from solotodo.models import Store, Category, Brand
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
-class KeywordSearchCurrentPositionsForm(forms.Form):
+class KeywordSearchActivePositionsForm(forms.Form):
     store = forms.ModelChoiceField(
         queryset=Store.objects.all())
 
@@ -63,10 +62,13 @@ class KeywordSearchCurrentPositionsForm(forms.Form):
                 'update__search__keyword')\
             .annotate(c=Count('*'))
 
-        print(category_keyword_raw_data)
+        category_keyword_data = {
+            (e['update__search__category'],
+             e['update__search__keyword']): e['c']
+            for e in category_keyword_raw_data}
 
         if brands:
-            keyword_search_positions.filter(
+            keyword_search_positions = keyword_search_positions.filter(
                 entity__product__brand__in=brands)
 
         category_keyword_brand_raw_data = keyword_search_positions\
@@ -84,10 +86,7 @@ class KeywordSearchCurrentPositionsForm(forms.Form):
             (e['update__search__category'],
              e['update__search__keyword'],
              e['entity__product__brand']): e['c']
-            for e in category_keyword_brand_raw_data
-        }
-
-        print(category_keyword_brand_raw_data)
+            for e in category_keyword_brand_raw_data}
 
         # # # REPORT # # #
         output = io.BytesIO()
@@ -144,14 +143,14 @@ class KeywordSearchCurrentPositionsForm(forms.Form):
                 worksheet.write(0, idx, header, header_format)
 
             for idx, header in enumerate(brand_headers):
-                header_col = (idx + 1) * 2
+                header_col = (idx * 2) + 1
                 worksheet.merge_range(
                     0, header_col,
                     0, header_col + 1,
                     header,
                     header_format)
 
-            total_col = len(brand_headers) * 2 + 2
+            total_col = len(brand_headers) * 2 + 1
             formula = '={}/{}'
 
             worksheet.write(0, total_col, 'Total', header_format)
@@ -167,16 +166,50 @@ class KeywordSearchCurrentPositionsForm(forms.Form):
                     worksheet.write(row, col, category_keyword_brand_data.get(
                         (category.id, keyword, brand.id), 0))
 
+                    percentage_formula = formula.format(
+                        xl_rowcol_to_cell(row, col),
+                        xl_rowcol_to_cell(row, total_col))
+
                     col += 1
-                    # Aquí va la formula
+                    rowcol = xl_rowcol_to_cell(row, col)
+                    worksheet.write_formula(rowcol, percentage_formula,
+                                            percentage_format)
 
                 col += 1
-                # Aquí va el total
+                worksheet.write(row, col, category_keyword_data.get(
+                    (category.id, keyword), 0))
 
                 row += 1
 
-            col = 1
-            # Aquí va el total de la categoría
+            col = 0
+            worksheet.write(row, col, 'Total categoría', bold_format)
+
+            for brand in brands_in_category:
+                col += 1
+                init_cell = xl_rowcol_to_cell(1, col)
+                end_cell = xl_rowcol_to_cell(row-1, col)
+                write_cell = xl_rowcol_to_cell(row, col)
+                worksheet.write_formula(
+                    write_cell, '=SUM({}:{})'.format(init_cell, end_cell),
+                    bold_format)
+
+                percentage_formula = formula.format(
+                    write_cell,
+                    xl_rowcol_to_cell(row, total_col)
+                )
+
+                col += 1
+                rowcol = xl_rowcol_to_cell(row, col)
+                worksheet.write_formula(rowcol, percentage_formula,
+                                        percentage_bold_format)
+
+            col += 1
+            init_cell = xl_rowcol_to_cell(1, col)
+            end_cell = xl_rowcol_to_cell(row - 1, col)
+            write_cell = xl_rowcol_to_cell(row, col)
+            worksheet.write_formula(
+                write_cell, '=SUM({}:{})'.format(init_cell, end_cell),
+                bold_format)
 
         workbook.close()
         output.seek(0)

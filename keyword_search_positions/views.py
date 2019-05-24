@@ -7,8 +7,8 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.decorators import list_route, detail_route
 
 from solotodo_core.s3utils import PrivateS3Boto3Storage
-from .forms.keyword_search_current_positions_form import \
-    KeywordSearchCurrentPositionsForm
+from .forms.keyword_search_active_positions_form import \
+    KeywordSearchActivePositionsForm
 from .models import KeywordSearch, KeywordSearchUpdate, \
     KeywordSearchEntityPosition
 from .pagination import KeywordSearchUpdatePagination
@@ -43,9 +43,9 @@ class KeywordSearchViewSet(mixins.RetrieveModelMixin,
             return KeywordSearchSerializer
 
     @list_route(methods=['get'])
-    def current_positions_report(self, request):
+    def active_positions_report(self, request):
         user = request.user
-        form = KeywordSearchCurrentPositionsForm(user, request.GET)
+        form = KeywordSearchActivePositionsForm(user, request.GET)
 
         if not form.is_valid():
             return Response({

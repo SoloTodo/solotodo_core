@@ -83,6 +83,7 @@ INSTALLED_APPS = [
     'product_lists',
     'brand_comparisons',
     'lg_online',
+    'keyword_search_positions'
 ]
 
 SITE_ID = 1

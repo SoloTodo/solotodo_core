@@ -87,5 +87,7 @@ class Category(models.Model):
              'Can create a brand comparison for this category'],
             ['backend_list_categories', 'View category list in backend'],
             ['view_category_entity_positions',
-             'Can view category entity positions']
+             'Can view category entity positions'],
+            ['create_category_keyword_search',
+             'Can create keyword searches in this category']
         )

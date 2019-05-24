@@ -402,5 +402,6 @@ class Store(models.Model):
             ['backend_list_stores', 'Can view store list in backend'],
             ['view_store_banners', 'Can view store banners'],
             ['view_store_entity_positions', 'Can view store entity positions'],
-
+            ['create_store_keyword_search',
+             'Can create keyword searches in this store']
         )

@@ -1,4 +1,5 @@
 from celery import shared_task
+from django.utils import timezone
 from django.core.mail import EmailMessage
 from django.http import QueryDict
 
@@ -40,7 +41,11 @@ def send_current_prices_task(user_id, query_string):
     message = 'Se adjunta el reporte de precios actuales para la categoría  ' \
               '"{}"'.format(form.cleaned_data['category'])
 
-    email = EmailMessage('Reporte precios actuales', message, sender,
+    subject = 'Reporte precios actuales {} - %Y-%m-%d'.format(category)
+    subject = timezone.now().strftime(subject)
+
+    email = EmailMessage(subject,
+                         message, sender,
                          [user.email])
     email.attach(
         report_filename, report_file,

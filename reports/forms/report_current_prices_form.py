@@ -135,6 +135,7 @@ class ReportCurrentPricesForm(forms.Form):
 
         return {
             'file': file_value,
+            'filename': filename,
             'path': path
         }
 
@@ -216,11 +217,8 @@ class ReportCurrentPricesForm(forms.Form):
             es_entry = es_dict[e.product_id]
 
             # Product
-            worksheet.write_url(
-                row, col,
-                '{}products/{}'.format(settings.PRICING_HOST, e.product.id),
-                string=str(e.product),
-                cell_format=url_format)
+            worksheet.write(
+                row, col, str(e.product))
 
             col += 1
 
@@ -232,12 +230,8 @@ class ReportCurrentPricesForm(forms.Form):
                     cell_plan_price = cell_plan_prices_dict.get(
                         cell_plan.id, 'N/A')
 
-                    worksheet.write_url(
-                        row, col,
-                        '{}products/{}'.format(settings.PRICING_HOST,
-                                               cell_plan.id),
-                        string=str(e.cell_plan),
-                        cell_format=url_format)
+                    worksheet.write(
+                        row, col, str(e.cell_plan))
                     worksheet.write(row, col + 1, cell_plan_price)
                 else:
                     worksheet.write(row, col, 'N/A')
@@ -257,11 +251,8 @@ class ReportCurrentPricesForm(forms.Form):
             else:
                 sku_text = 'N/A'
 
-            worksheet.write_url(
-                row, col,
-                '{}skus/{}'.format(settings.PRICING_HOST, e.id),
-                string=sku_text,
-                cell_format=url_format)
+            worksheet.write(
+                row, col, sku_text)
             col += 1
 
             # Condition

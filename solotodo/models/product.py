@@ -153,9 +153,10 @@ class Product(models.Model):
         document['product_id'] = self.id
         document['keywords'] = ' '.join(keywords)
         document['search_bucket_key'] = self.search_bucket_key(document)
+        document['category'] = str(self.instance_model.model)
 
         es.index(index=settings.ES_PRODUCTS_INDEX,
-                 doc_type=str(self.instance_model.model),
+                 # doc_type=str(self.instance_model.model),
                  id=self.id,
                  body=document)
 
@@ -173,7 +174,6 @@ class Product(models.Model):
         es = settings.ES
         es.delete(
             index=settings.ES_PRODUCTS_INDEX,
-            doc_type=str(self.instance_model.model),
             id=self.pk)
 
     @staticmethod

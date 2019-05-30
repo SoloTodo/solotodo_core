@@ -10,13 +10,13 @@ def post_save(instance_model, created, creator_id, **kwargs):
         es = settings.ES
         document, keywords = instance_model.elasticsearch_document()
         es.index(index='notebook-video-cards',
-                 doc_type='NotebookVideoCard',
+                 # doc_type='NotebookVideoCard',
                  id=instance_model.id,
                  body=document)
     elif instance_model.model.name == 'NotebookProcessor':
         es = settings.ES
         document, keywords = instance_model.elasticsearch_document()
         es.index(index='notebook-processors',
-                 doc_type='NotebookProcessor',
+                 # doc_type='NotebookProcessor',
                  id=instance_model.id,
                  body=document)

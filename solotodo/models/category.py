@@ -41,8 +41,8 @@ class Category(models.Model):
         return self.name
 
     def es_search(self):
-        return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX,
-                      doc_type=str(self.meta_model))
+        return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX
+                      ).filter('term', **{'category.keyword': str(self.meta_model)})
 
     def specs_form(self):
         form_class = type(

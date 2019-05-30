@@ -297,9 +297,9 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
             # Overall aggregations
 
             aggs = form.process_es_aggs(es_products_page.aggs)
-
+    
             return Response({
-                'count': es_products_page.hits.total,
+                'count': es_products_page.hits.total.to_dict(),
                 'results': serializer.data,
                 'aggs': aggs,
             })

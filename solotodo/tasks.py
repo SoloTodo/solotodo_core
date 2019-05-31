@@ -75,13 +75,20 @@ def product_save(product_id):
 
 
 @shared_task(queue='general', ignore_result=True)
-def es_leads_index(offset):
+def es_leads_index():
     from solotodo.models import Lead
     from solotodo.es_models.es_lead import EsLead
 
-    lead_ids = [
-        x['id'] for x in Lead.objects.all()[offset:offset+10000].values('id')
-    ]
-    leads = Lead.objects.filter(pk__in=lead_ids)
+    bucket_count = Lead.objects.count() // 10000
 
-    EsLead.create_from_db_leads(leads)
+    for i in range(bucket_count):
+        offset = i * 10000
+        print('{} de {}'.format(i, bucket_count))
+
+        lead_ids = [
+            x['id'] for x in Lead.objects.all()[offset:offset+10000].values('id')
+        ]
+
+        leads = Lead.objects.filter(pk__in=lead_ids)
+
+        EsLead.create_from_db_leads(leads)

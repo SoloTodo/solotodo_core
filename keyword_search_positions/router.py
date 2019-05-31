@@ -8,4 +8,3 @@ router.register(r'keyword_searches', KeywordSearchViewSet)
 router.register(r'keyword_search_updates', KeywordSearchUpdateViewSet)
 router.register(r'keyword_search_entity_positions',
                 KeywordSearchEntityPositionViewSet)
-

@@ -72,3 +72,16 @@ def store_update_pricing_from_json(store_id, json_data):
 @shared_task(queue='general', ignore_result=True)
 def product_save(product_id):
     Product.objects.get(pk=product_id).save()
+
+
+@shared_task(queue='general', ignore_result=True)
+def es_leads_index(offset):
+    from solotodo.models import Lead
+    from solotodo.es_models.es_lead import EsLead
+
+    lead_ids = [
+        x['id'] for x in Lead.objects.all()[offset:offset+10000].values('id')
+    ]
+    leads = Lead.objects.filter(pk__in=lead_ids)
+
+    EsLead.create_from_db_leads(leads)

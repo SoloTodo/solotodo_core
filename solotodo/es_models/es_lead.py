@@ -19,6 +19,8 @@ class EsLead(object):
             'offer_price_usd':
                 entity_history.offer_price /
                 entity_history.entity.currency.exchange_rate,
+            'entity_id': entity_history.entity.id,
+            'entity_history_id': entity_history.id,
             'store_id': entity_history.entity.store.id,
             'store_name': entity_history.entity.store.name,
             'category_id': entity_history.entity.category.id,
@@ -53,6 +55,8 @@ class EsLead(object):
             'offer_price_usd':
                 db_lead.entity_history.offer_price /
                 db_lead.entity_history.entity.currency.exchange_rate,
+            'entity_id': db_lead.entity_history.entity.id,
+            'entity_history_id': db_lead.entity_history.id,
             'store_id': db_lead.entity_history.entity.store.id,
             'store_name': db_lead.entity_history.entity.store.name,
             'category_id': db_lead.entity_history.entity.category.id,

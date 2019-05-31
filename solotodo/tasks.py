@@ -86,7 +86,8 @@ def es_leads_index():
         print('{} de {}'.format(i, bucket_count))
 
         lead_ids = [
-            x['id'] for x in Lead.objects.all()[offset:offset+10000].values('id')
+            x['id'] for x in
+            Lead.objects.all()[offset:offset+10000].values('id')
         ]
 
         leads = Lead.objects.filter(pk__in=lead_ids)

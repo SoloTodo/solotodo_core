@@ -966,6 +966,12 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                           'associated registry, so it can\'t register leads'},
                 status=status.HTTP_400_BAD_REQUEST)
 
+        if not entity.product:
+            return Response(
+                {'error': 'Then requested entity does not have an '
+                          'associated product, so it can\'t register leads'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         if request.user.is_authenticated:
             user = request.user
         else:

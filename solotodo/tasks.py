@@ -79,15 +79,15 @@ def es_leads_index():
     from solotodo.models import Lead
     from solotodo.es_models.es_lead import EsLead
 
-    bucket_count = Lead.objects.count() // 10000
+    bucket_count = Lead.objects.count() // 5000
 
     for i in range(bucket_count):
-        offset = i * 10000
+        offset = i * 5000
         print('{} de {}'.format(i, bucket_count))
 
         lead_ids = [
             x['id'] for x in
-            Lead.objects.all()[offset:offset+10000].values('id')
+            Lead.objects.all()[offset:offset+5000].values('id')
         ]
 
         leads = Lead.objects.filter(pk__in=lead_ids)

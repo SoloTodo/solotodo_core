@@ -13,8 +13,12 @@ class EsLead(object):
             'website_name': website.name,
             'normal_price': entity_history.normal_price,
             'offer_price': entity_history.offer_price,
-            'normal_price_usd': entity_history.normal_price / entity_history.entity.currency.exchange_rate,
-            'offer_price_usd': entity_history.offer_price / entity_history.entity.currency.exchange_rate,
+            'normal_price_usd':
+                entity_history.normal_price /
+                entity_history.entity.currency.exchange_rate,
+            'offer_price_usd':
+                entity_history.offer_price /
+                entity_history.entity.currency.exchange_rate,
             'store_id': entity_history.entity.store.id,
             'store_name': entity_history.entity.store.name,
             'category_id': entity_history.entity.category.id,
@@ -29,7 +33,8 @@ class EsLead(object):
 
         settings.ES.index(
             index='leads',
-            body=document
+            body=document,
+            id=uuid
         )
 
         return document
@@ -42,14 +47,19 @@ class EsLead(object):
             'website_name': db_lead.website.name,
             'normal_price': db_lead.entity_history.normal_price,
             'offer_price': db_lead.entity_history.offer_price,
-            'normal_price_usd': db_lead.entity_history.normal_price / db_lead.entity_history.entity.currency.exchange_rate,
-            'offer_price_usd': db_lead.entity_history.offer_price / db_lead.entity_history.entity.currency.exchange_rate,
+            'normal_price_usd':
+                db_lead.entity_history.normal_price /
+                db_lead.entity_history.entity.currency.exchange_rate,
+            'offer_price_usd':
+                db_lead.entity_history.offer_price /
+                db_lead.entity_history.entity.currency.exchange_rate,
             'store_id': db_lead.entity_history.entity.store.id,
             'store_name': db_lead.entity_history.entity.store.name,
             'category_id': db_lead.entity_history.entity.category.id,
             'category_name': db_lead.entity_history.entity.category.name,
             'currency_id': db_lead.entity_history.entity.currency.id,
-            'currency_iso_code': db_lead.entity_history.entity.currency.iso_code,
+            'currency_iso_code':
+                db_lead.entity_history.entity.currency.iso_code,
             'currency_name': db_lead.entity_history.entity.currency.name,
             'sku': db_lead.entity_history.entity.sku,
             'url': db_lead.entity_history.entity.url,
@@ -70,7 +80,7 @@ class EsLead(object):
             document = cls.document_from_db_lead(db_lead)
             yield {
                 '_index': 'leads',
-                'doc': document
+                '_source': document
             }
 
     @classmethod

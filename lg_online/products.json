@@ -3550,5 +3550,21 @@
         "lgUrl": "https://www.lg.com/cl/celular/lg-LMQ850EA",
         "categoryId": 6,
         "productId": 57939
+    },
+    {
+        "customTitle": "Smartphone 5,7'' HD",
+        "subcategory": "Smartphone",
+        "secondaryPicturesId": null,
+        "mainPictureId": null,
+        "custom_1": "",
+        "custom_2": "",
+        "custom_3": "",
+        "categoryOrdering": null,
+        "frontpageOrdering": null,
+        "customDescription": "",
+        "flixmediaMpn": "LMX420HM",
+        "lgUrl": "https://www.lg.com/cl/celular/lg-LMX420HM",
+        "categoryId": 6,
+        "productId": 61367
     }
 ]

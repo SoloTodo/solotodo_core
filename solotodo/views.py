@@ -298,7 +298,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
             # Overall aggregations
 
             aggs = form.process_es_aggs(es_products_page.aggs)
-    
+
             return Response({
                 'count': es_products_page.hits.total.to_dict(),
                 'results': serializer.data,
@@ -1086,8 +1086,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             ('previous', self.paginator.get_previous_link()),
             ('results', serializer.data)
         ])
-
-        serialized_result = JSONRenderer().render(result)
 
         return Response(result)
 

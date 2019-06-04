@@ -17,7 +17,7 @@ from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 from rest_framework import viewsets, permissions, status, mixins
-from rest_framework.decorators import list_route, detail_route
+from rest_framework.decorators import list_route, detail_route, action
 from rest_framework import exceptions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, \
@@ -25,14 +25,12 @@ from rest_framework.filters import OrderingFilter, \
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
 from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
-from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from sorl.thumbnail import get_thumbnail
 
 from navigation.models import NavDepartment
 from navigation.serializers import NavDepartmentSerializer
-from solotodo.decorators import detail_permission
 from solotodo.drf_custom_ordering import CustomProductOrderingFilter, \
     CustomEntityOrderingFilter
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
@@ -493,10 +491,13 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @detail_route()
-    @detail_permission('update_store_pricing')
+    @action(detail=True)
     def scraper(self, request, pk):
         store = self.get_object()
+
+        if not request.user.has_perm('update_store_pricing', store):
+            raise PermissionDenied
+
         try:
             store.scraper
         except AttributeError:
@@ -516,9 +517,12 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         return Response(result)
 
     @detail_route(methods=['post'])
-    @detail_permission('update_store_pricing')
     def update_pricing(self, request, pk):
         store = self.get_object()
+
+        if not request.user.has_perm('update_store_pricing', store):
+            raise PermissionDenied
+
         form = StoreUpdatePricingForm.from_store_and_user(
             store, request.user, request.data)
 

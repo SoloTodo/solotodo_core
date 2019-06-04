@@ -153,6 +153,11 @@ class Product(models.Model):
         document['product_id'] = self.id
         document['keywords'] = ' '.join(keywords)
         document['search_bucket_key'] = self.search_bucket_key(document)
+        document['category_id'] = self.category.id
+        document['category_name'] = self.category.name
+        document['metamodel_name'] = str(self.instance_model.model)
+
+        # remove after products in production are reindexed
         document['category'] = str(self.instance_model.model)
 
         es.index(index=settings.ES_PRODUCTS_INDEX,

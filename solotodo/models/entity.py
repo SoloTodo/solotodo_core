@@ -251,7 +251,7 @@ class Entity(models.Model):
 
         return False
 
-    def update_with_scraped_product(self, scraped_product, sections_dict,
+    def update_with_scraped_product(self, scraped_product, sections_dict={},
                                     category=None, currency=None):
         from solotodo.models import EntityHistory, StoreSection, \
             EntitySectionPosition

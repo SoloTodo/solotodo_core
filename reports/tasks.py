@@ -32,6 +32,8 @@ def send_current_prices_task(user_id, query_string):
     report_file = report_data['file']
     report_path = report_data['path']
 
+    print(report_filename)
+
     ReportDownload.objects.create(
         report=report,
         user=user,

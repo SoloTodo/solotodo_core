@@ -201,6 +201,9 @@ class Entity(models.Model):
     discovery_url = models.URLField(max_length=512, db_index=True)
     picture_urls = models.TextField(blank=True, null=True)
     description = models.TextField(null=True)
+    video_urls = models.TextField(blank=True, null=True)
+    flixmedia_id = models.CharField(max_length=256, blank=True, null=True)
+    review_count = models.IntegerField(blank=True, null=True)
     is_visible = models.BooleanField(default=True)
 
     # Metadata
@@ -321,8 +324,11 @@ class Entity(models.Model):
                 'url': scraped_product.url,
                 'discovery_url': scraped_product.discovery_url,
                 'picture_urls': scraped_product.picture_urls_as_json(),
+                'video_urls': scraped_product.video_urls_as_json(),
                 'description': scraped_product.description,
                 'condition': scraped_product.condition,
+                'flixmedia_id': scraped_product.flixmedia_id,
+                'review_count': scraped_product.review_count,
                 'active_registry': new_active_registry,
             })
         else:
@@ -353,7 +359,10 @@ class Entity(models.Model):
             url=scraped_product.url,
             discovery_url=scraped_product.discovery_url,
             picture_urls=scraped_product.picture_urls_as_json(),
+            video_urls=scraped_product.video_urls_as_json(),
             description=scraped_product.description,
+            flixmedia_id=scraped_product.flixmedia_id,
+            review_count=scraped_product.review_count,
             is_visible=True,
             last_pricing_update=timezone.now(),
         )
@@ -602,6 +611,11 @@ class Entity(models.Model):
         if not self.picture_urls:
             return None
         return json.loads(self.picture_urls)
+
+    def video_urls_as_list(self):
+        if not self.video_urls:
+            return None
+        return json.loads(self.video_urls)
 
     def affiliate_url(self):
         from django.conf import settings

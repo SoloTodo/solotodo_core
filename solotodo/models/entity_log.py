@@ -38,6 +38,9 @@ class EntityLog(models.Model):
     picture_urls = models.TextField(null=True)
     description = models.TextField(null=True)
     is_visible = models.BooleanField()
+    video_urls = models.TextField(blank=True, null=True)
+    flixmedia_id = models.CharField(max_length=256, blank=True, null=True)
+    review_count = models.IntegerField(blank=True, null=True)
 
     DATA_FIELDS = [
         'category',
@@ -56,6 +59,9 @@ class EntityLog(models.Model):
         'picture_urls',
         'description',
         'is_visible',
+        'video_urls',
+        'flixmedia_id',
+        'review_count'
     ]
 
     def __str__(self):

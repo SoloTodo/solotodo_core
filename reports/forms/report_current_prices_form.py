@@ -147,11 +147,6 @@ class ReportCurrentPricesForm(forms.Form):
             'num_format': 'yyyy-mm-dd'
         })
 
-        url_format = workbook.add_format({
-            'font_color': 'blue',
-            'font_size': 10
-        })
-
         header_format = workbook.add_format({
             'bold': True,
             'font_size': 10
@@ -205,7 +200,14 @@ class ReportCurrentPricesForm(forms.Form):
                 'Precio oferta ({})'.format(currency.iso_code),
             ])
 
-        headers.append('Nombre en tienda')
+        headers.extend([
+            'Nombre en tienda',
+            'ID Flixmedia',
+            'Número imágenes',
+            'Número videos',
+            'Número reviews'
+        ])
+
         headers.extend([column.field.label for column in specs_columns])
 
         for idx, header in enumerate(headers):
@@ -303,6 +305,26 @@ class ReportCurrentPricesForm(forms.Form):
 
             # Store name
             worksheet.write(row, col, e.name)
+            col += 1
+
+            # Flixmedia ID
+            worksheet.write(row, col, e.flixmedia_id or 'N/A')
+            col += 1
+
+            # Picture count
+            pictures = e.picture_urls_as_list()
+            picture_count = len(pictures) if pictures else 'N/A'
+            worksheet.write(row, col, picture_count)
+            col += 1
+
+            # Video count
+            videos = e.video_urls_as_list()
+            video_count = len(videos) if videos else 'N/A'
+            worksheet.write(row, col, video_count)
+            col += 1
+
+            # Review count
+            worksheet.write(row, col, e.review_count or 'N/A')
             col += 1
 
             for column in specs_columns:

@@ -133,6 +133,7 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         from django.conf import settings
+        from solotodo.serializers import EntityESSerializer
 
         creator_id = kwargs.pop('creator_id', None)
 
@@ -148,6 +149,7 @@ class Product(models.Model):
 
         if creator_id:
             self.creator_id = creator_id
+
         super(Product, self).save(*args, **kwargs)
 
         document['product_id'] = self.id
@@ -160,8 +162,13 @@ class Product(models.Model):
         # remove after products in production are reindexed
         document['category'] = str(self.instance_model.model)
 
+        entities = self.entity_set.get_available().filter(
+            active_registry__cell_monthly_payment__isnull=True
+        ).select_related('active_registry', 'currency', 'store')
+
+        document['entities'] = EntityESSerializer(entities, many=True).data
+
         es.index(index=settings.ES_PRODUCTS_INDEX,
-                 # doc_type=str(self.instance_model.model),
                  id=self.id,
                  body=document)
 

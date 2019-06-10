@@ -242,6 +242,20 @@ class Entity(models.Model):
     def condition_as_text(self):
         return self.CONDITION_CHOICES_DICT[self.condition]
 
+    @property
+    def normal_price_usd(self):
+        if not self.active_registry:
+            return None
+
+        return self.active_registry.normal_price / self.currency.exchange_rate
+
+    @property
+    def offer_price_usd(self):
+        if not self.active_registry:
+            return None
+
+        return self.active_registry.offer_price / self.currency.exchange_rate
+
     def is_available(self):
         if self.active_registry:
             return self.active_registry.stock != 0

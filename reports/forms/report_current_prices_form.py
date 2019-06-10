@@ -313,18 +313,20 @@ class ReportCurrentPricesForm(forms.Form):
 
             # Picture count
             pictures = e.picture_urls_as_list()
-            picture_count = len(pictures) if pictures else 'N/A'
+            picture_count = len(pictures) if pictures is not None else 'N/A'
             worksheet.write(row, col, picture_count)
             col += 1
 
             # Video count
             videos = e.video_urls_as_list()
-            video_count = len(videos) if videos else 'N/A'
+            video_count = len(videos) if videos is not None else 'N/A'
             worksheet.write(row, col, video_count)
             col += 1
 
             # Review count
-            worksheet.write(row, col, e.review_count or 'N/A')
+            review_count = e.review_count \
+                if e.review_count is not None else 'N/A'
+            worksheet.write(row, col, review_count)
             col += 1
 
             for column in specs_columns:

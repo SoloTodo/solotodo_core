@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from elasticsearch_dsl import Q, A
 
 
-class CategorySpecsForm(forms.Form):
+class EsCategorySpecsForm(forms.Form):
     ordering = forms.ChoiceField(choices=[], required=False)
     search = forms.CharField(required=False)
     bucket_field = forms.CharField(required=False)
@@ -27,30 +27,30 @@ class CategorySpecsForm(forms.Form):
             cls.ordering_value_to_es_field_dict[new_ordering_name] = \
                 new_ordering_field
 
-    def get_es_products(self, es_search=None):
-        from solotodo.models import Product
-
+    def get_es_products(self, search):
         if not self.is_valid():
             raise ValidationError(self.errors)
 
-        if not es_search:
-            es_search = self.category.es_search()
+        product_aggs = A('parent', type='entity')
 
-        search = self.cleaned_data['search']
-        if search:
-            es_search = Product.query_es_by_search_string(
-                es_search, search, mode='AND')
+        keywords = self.cleaned_data['search']
 
-        fields_es_filters_dict = {
-            field: field.es_filter(self.cleaned_data)
-            for field in self.category_specs_filters
-        }
+        if keywords:
+            keywords_query = Q('simple_query_string', fields=['keywords'], default_operator='and', query=keywords)
+            search = search.filter('has_parent', parent_type='product', query=keywords_query)
 
         bucket_field = self.cleaned_data['bucket_field']
 
         search_bucket_agg = None
         if bucket_field:
             search_bucket_agg = A('terms', field=bucket_field, size=10000)
+
+        fields_es_filters_dict = {
+            field: field.es_filter(self.cleaned_data, prefix='specs.')
+            for field in self.category_specs_filters
+        }
+
+        all_filters = Q()
 
         for field in self.category_specs_filters:
             aggs_filters = Q()
@@ -60,35 +60,35 @@ class CategorySpecsForm(forms.Form):
             for other_field in other_fields:
                 aggs_filters &= fields_es_filters_dict[other_field]
 
-            field_agg = A('terms', field=field.es_id_field(), size=1000)
+            field_bucket = A('terms', field='specs.' + field.es_id_field(), size=1000)
 
             if search_bucket_agg:
                 # 'search_bucket' is just a name, just need to be consistent
                 # later
-                field_agg.bucket('search_bucket', search_bucket_agg)
+                field_bucket.bucket('search_bucket', search_bucket_agg)
 
-            agg = A('filter', aggs_filters)
+            agg = A('filter', filter=aggs_filters)
+            agg.bucket('result', field_bucket)
 
-            # "result" is also just an arbitrary name
-            agg.bucket('result', field_agg)
+            product_aggs.bucket(field.name, agg)
 
-            es_search.aggs.bucket(field.name, agg)
-            es_search = es_search.post_filter(fields_es_filters_dict[field])
+            all_filters &= fields_es_filters_dict[field]
 
-        ordering = self.cleaned_data['ordering']
+        product_aggs\
+            .bucket('filtered_products', 'filter', filter=all_filters)\
+            .bucket('product_ids', 'terms', field='product_id', size=10000)
 
-        if ordering:
-            es_search = es_search.sort(
-                self.ordering_value_to_es_field_dict[ordering])
-        else:
-            es_search = es_search.sort('unicode.keyword')
+        search.aggs.bucket('products', product_aggs)
 
-        return es_search
+        return search
 
     def process_es_aggs(self, aggs):
         new_aggs = {}
 
-        for field_name, field_aggs in aggs.to_dict().items():
+        for field_name, field_aggs in aggs.to_dict()['products'].items():
+            if field_name == 'doc_count':
+                continue
+
             new_aggs[field_name] = [{
                 'id': field_agg['key'],
                 'doc_count': field_agg['doc_count']

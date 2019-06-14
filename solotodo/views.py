@@ -48,6 +48,7 @@ from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_by_url_form import EntityByUrlForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
+from solotodo.forms.es_products_browse_form import EsProductsBrowseForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
@@ -307,8 +308,21 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
     @detail_route()
     def browse(self, request, pk, *args, **kwargs):
+        # TODO: Remove client usage of this method and delete it
         category = self.get_object()
         form = ProductsBrowseForm(request.query_params)
+        result = form.get_category_products(category, request)
+
+        return Response(result)
+
+    @detail_route()
+    def es_browse(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+        form = EsProductsBrowseForm(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = form.get_category_products(category, request)
 
         return Response(result)

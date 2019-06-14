@@ -33,6 +33,7 @@ class MaterializedEntityQueryset(models.QuerySet):
 
 
 class MaterializedEntity(models.Model):
+    # TODO: Remove this model once the browse code path is migrated to ES
     product = models.ForeignKey(Product, on_delete=models.DO_NOTHING)
     store = models.ForeignKey(Store, on_delete=models.DO_NOTHING)
     currency = models.ForeignKey(Currency, on_delete=models.DO_NOTHING)

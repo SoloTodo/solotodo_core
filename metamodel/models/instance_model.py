@@ -614,9 +614,6 @@ class InstanceModel(models.Model):
             if type(value) == Decimal:
                 serialized_value = float(value)
 
-            if type(value) == FieldFile:
-                serialized_value = value.name
-
             try:
                 json.dumps(serialized_value)
                 return serialized_value
@@ -669,7 +666,10 @@ class InstanceModel(models.Model):
                 except KeyError:
                     instance_value = None
 
-                if meta_field.model.is_primitive():
+                if meta_field.model.name == 'FileField':
+                    if instance_value:
+                        result[meta_field.name] = instance_value.unicode_value
+                elif meta_field.model.is_primitive():
                     value = instance_value
                     if value:
                         value = instance_value.value

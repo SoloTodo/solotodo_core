@@ -108,7 +108,7 @@ class Product(models.Model):
 
     @classmethod
     def es_search(cls):
-        return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
+        return Search(index='products')
 
     @classmethod
     def prefetch_specs(cls, products):
@@ -133,7 +133,7 @@ class Product(models.Model):
 
     def save(self, *args, **kwargs):
         from django.conf import settings
-        from solotodo.serializers import EntityESSerializer
+        from solotodo.es_models.es_product import EsProduct
 
         creator_id = kwargs.pop('creator_id', None)
 
@@ -141,36 +141,17 @@ class Product(models.Model):
             raise IntegrityError('Exiting products cannot have a creator '
                                  '(and vice versa)')
 
-        es = settings.ES
-        document, keywords = self.instance_model.elasticsearch_document()
+        es_document = self.instance_model.elasticsearch_document()
 
         self.brand = Brand.objects.get_or_create(
-            name=document['brand_unicode'])[0]
+            name=es_document[0]['brand_unicode'])[0]
 
         if creator_id:
             self.creator_id = creator_id
 
         super(Product, self).save(*args, **kwargs)
 
-        document['product_id'] = self.id
-        document['keywords'] = ' '.join(keywords)
-        document['search_bucket_key'] = self.search_bucket_key(document)
-        document['category_id'] = self.category.id
-        document['category_name'] = self.category.name
-        document['metamodel_name'] = str(self.instance_model.model)
-
-        # remove after products in production are reindexed
-        document['category'] = str(self.instance_model.model)
-
-        entities = self.entity_set.get_available().filter(
-            active_registry__cell_monthly_payment__isnull=True
-        ).select_related('active_registry', 'currency', 'store')
-
-        document['entities'] = EntityESSerializer(entities, many=True).data
-
-        es.index(index=settings.ES_PRODUCTS_INDEX,
-                 id=self.id,
-                 body=document)
+        EsProduct.from_product(self, es_document).save()
 
     def search_bucket_key(self, es_document):
         bucket_fields = self.category.search_bucket_key_fields
@@ -185,7 +166,7 @@ class Product(models.Model):
 
         es = settings.ES
         es.delete(
-            index=settings.ES_PRODUCTS_INDEX,
+            index='products',
             id=self.pk)
 
     @staticmethod

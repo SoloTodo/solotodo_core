@@ -20,7 +20,7 @@ class EsCategorySpecsForm(forms.Form):
         ordering_field = category_specs_order.es_field
         for prefix in ['', '-']:
             new_ordering_name = prefix + category_specs_order.name
-            new_ordering_field = prefix + ordering_field
+            new_ordering_field = '{}specs.{}'.format(prefix, ordering_field)
 
             cls.base_fields['ordering'].choices.append(
                 (new_ordering_name, new_ordering_field))
@@ -31,13 +31,11 @@ class EsCategorySpecsForm(forms.Form):
         if not self.is_valid():
             raise ValidationError(self.errors)
 
-        product_aggs = A('parent', type='entity')
-
         keywords = self.cleaned_data['search']
 
         if keywords:
             keywords_query = Q('simple_query_string', fields=['keywords'], default_operator='and', query=keywords)
-            search = search.filter('has_parent', parent_type='product', query=keywords_query)
+            search = search.filter(keywords_query)
 
         bucket_field = self.cleaned_data['bucket_field']
 
@@ -70,28 +68,30 @@ class EsCategorySpecsForm(forms.Form):
             agg = A('filter', filter=aggs_filters)
             agg.bucket('result', field_bucket)
 
-            product_aggs.bucket(field.name, agg)
+            search.aggs.bucket(field.name, agg)
+            search = search.post_filter(fields_es_filters_dict[field])
 
             all_filters &= fields_es_filters_dict[field]
 
-        product_aggs\
-            .bucket('filtered_products', 'filter', filter=all_filters)\
-            .bucket('product_ids', 'terms', field='product_id', size=10000)
+        search.aggs.bucket('filtered_products', 'filter', filter=all_filters)
 
-        search.aggs.bucket('products', product_aggs)
+        ordering = self.cleaned_data['ordering']
+
+        if ordering:
+            search = search.sort(
+                self.ordering_value_to_es_field_dict[ordering])
 
         return search
 
     def process_es_aggs(self, aggs):
         new_aggs = {}
 
-        for field_name, field_aggs in aggs.to_dict()['products'].items():
-            if field_name == 'doc_count':
-                continue
+        for field in self.category_specs_filters:
+            field_name = field.name
 
             new_aggs[field_name] = [{
                 'id': field_agg['key'],
                 'doc_count': field_agg['doc_count']
-            } for field_agg in field_aggs['result']['buckets']]
+            } for field_agg in aggs[field_name]['result']['buckets']]
 
         return new_aggs

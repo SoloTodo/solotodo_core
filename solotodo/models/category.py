@@ -46,6 +46,8 @@ class Category(models.Model):
                       ).filter('term', category_id=self.id)
 
     def specs_form(self, form_type='db'):
+        # TODO Remove DB form type once browse code path is eliminated
+
         if form_type == 'db':
             base_class = CategorySpecsForm
             prefix = 'DB'

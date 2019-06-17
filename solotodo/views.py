@@ -1109,7 +1109,18 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def browse(self, request, *args, **kwargs):
+        # TODO Delete this endpoint once clients are migrated to es_browse
         form = ProductsBrowseForm(request.query_params)
+        result = form.get_products(request)
+        return Response(result)
+
+    @list_route()
+    def es_browse(self, request, *args, **kwargs):
+        form = EsProductsBrowseForm(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = form.get_products(request)
         return Response(result)
 

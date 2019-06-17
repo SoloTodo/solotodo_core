@@ -9,6 +9,7 @@ class EsProduct(EsProductEntity):
     category_name = Text(fields={'raw': Keyword()})
     brand_id = Integer()
     brand_name = Text(fields={'raw': Keyword()})
+    instance_model_id = Integer()
     creation_date = Date()
     last_updated = Date()
     keywords = Text()
@@ -32,10 +33,11 @@ class EsProduct(EsProductEntity):
             category_name=str(product.category),
             brand_id=product.brand_id,
             brand_name=str(product.brand),
+            instance_model_id=product.instance_model_id,
             creation_date=product.creation_date,
             last_updated=product.last_updated,
-            specs=specs,
             keywords=' '.join(keywords),
+            specs=specs,
             product_entity='product',
             meta={'id': 'PRODUCT_{}'.format(product.id)}
         )

@@ -207,7 +207,7 @@ class EsProductsBrowseForm(forms.Form):
         }
 
     def get_products(self, request):
-        from solotodo.es_models import EsEntity, EsProduct
+        from solotodo.models import EsEntity, EsProduct
 
         search = EsEntity.search()
 
@@ -308,7 +308,7 @@ class EsProductsBrowseForm(forms.Form):
         }
 
     def get_category_products(self, category, request):
-        from solotodo.es_models import EsProduct
+        from solotodo.models import EsProduct
 
         assert self.is_valid()
 
@@ -606,15 +606,13 @@ class EsProductsBrowseForm(forms.Form):
         return price_stats
 
     def bucket_results(self, product_entries, bucket_field=None):
-        if bucket_field:
-            bucket_field = 'specs.{}'.format(bucket_field)
-        else:
-            bucket_field = 'id'
-
         bucketed_results_dict = OrderedDict()
 
         for product_entry in product_entries:
-            key = str(product_entry['product'][bucket_field])
+            if bucket_field:
+                key = str(product_entry['product']['specs'][bucket_field])
+            else:
+                key = str(product_entry['product']['id'])
             if key not in bucketed_results_dict:
                 bucketed_results_dict[key] = []
 

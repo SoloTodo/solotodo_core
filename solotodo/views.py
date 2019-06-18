@@ -1278,7 +1278,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         specs = product.specs
 
         if 'picture' not in specs:
-            raise Response({'detail': 'No picture found for product'},
+            return Response({'detail': 'No picture found for product'},
                            status=status.HTTP_404_NOT_FOUND)
 
         picture = specs['picture']

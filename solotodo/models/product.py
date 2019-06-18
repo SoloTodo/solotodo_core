@@ -99,7 +99,7 @@ class Product(models.Model):
     def specs(self):
         if not self._specs:
             self._specs = EsProduct.search().filter(
-                'term', product_id=self.id).execute()[0].to_dict()
+                'term', product_id=self.id).execute()[0].to_dict()['specs']
         return self._specs
 
     @property

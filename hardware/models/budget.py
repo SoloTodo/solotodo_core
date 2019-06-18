@@ -17,7 +17,7 @@ from django.utils.text import slugify
 from selenium import webdriver
 
 from metamodel.utils import trim, convert_image_to_inmemoryfile
-from solotodo.models import Product, Entity
+from solotodo.models import Product, Entity, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage, \
     MediaRootS3Boto3Storage
 
@@ -121,7 +121,7 @@ class Budget(models.Model):
 
         selected_products = [e.selected_product for e in entries]
 
-        s = Product.es_search().filter(
+        s = EsProduct.search().filter(
                 'terms', product_id=[e.id for e in selected_products])[
             :len(selected_products)]
 

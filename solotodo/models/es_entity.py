@@ -1,7 +1,7 @@
 from datetime import timedelta
 from django.db.models import Min
 from elasticsearch_dsl import Text, Keyword, Integer, Date, ScaledFloat
-from solotodo.es_models.es_product_entity import EsProductEntity
+from .es_product_entity import EsProductEntity
 from solotodo.models import Lead
 
 
@@ -45,30 +45,42 @@ class EsEntity(EsProductEntity):
 
     @classmethod
     def search(cls, **kwargs):
-        return cls._index.search(**kwargs).exclude('term', product_entity='product')
+        return cls._index.search(**kwargs).exclude('term',
+                                                   product_entity='product')
+
+    @classmethod
+    def get_by_entity_id(cls, entity_id):
+        return cls.get('ENTITY_{}'.format(entity_id))
+
+    @classmethod
+    def should_entity_be_indexed(cls, entity):
+        return entity.is_available() and entity.product and \
+               entity.active_registry.cell_monthly_payment is None
 
     @classmethod
     def from_entity(cls, entity):
-        assert entity.is_available()
-        assert entity.product
-        assert entity.active_registry.cell_monthly_payment is None
+        assert cls.should_entity_be_indexed(entity)
+
+        timestamp = entity.active_registry.timestamp
 
         reference_prices = entity.entityhistory_set.filter(
-            timestamp__gte=entity.active_registry.timestamp - timedelta(hours=84),
-            timestamp__lte=entity.active_registry.timestamp - timedelta(hours=36)
+            timestamp__gte=timestamp - timedelta(hours=84),
+            timestamp__lte=timestamp - timedelta(hours=36)
         ).aggregate(
             min_normal_price=Min('normal_price'),
             min_offer_price=Min('offer_price')
         )
 
-        reference_normal_price = reference_prices['min_normal_price'] or entity.active_registry.normal_price
-        reference_offer_price = reference_prices['min_offer_price'] or entity.active_registry.offer_price
+        reference_normal_price = reference_prices['min_normal_price'] or \
+            entity.active_registry.normal_price
+        reference_offer_price = reference_prices['min_offer_price'] or \
+            entity.active_registry.offer_price
 
         exchange_rate = entity.currency.exchange_rate
 
         leads = Lead.objects.filter(
             entity_history__entity=entity,
-            timestamp__gte=entity.active_registry.timestamp - timedelta(hours=72)
+            timestamp__gte=timestamp - timedelta(hours=72)
         ).count()
 
         return cls(
@@ -88,10 +100,10 @@ class EsEntity(EsProductEntity):
             country_name=str(entity.store.country),
             normal_price=entity.active_registry.normal_price,
             offer_price=entity.active_registry.offer_price,
-            normal_price_usd=entity.active_registry.normal_price
-            / exchange_rate,
-            offer_price_usd=entity.active_registry.offer_price
-            / exchange_rate,
+            normal_price_usd=entity.active_registry.normal_price /
+            exchange_rate,
+            offer_price_usd=entity.active_registry.offer_price /
+            exchange_rate,
             reference_normal_price=reference_normal_price,
             reference_offer_price=reference_offer_price,
             reference_normal_price_usd=reference_normal_price / exchange_rate,

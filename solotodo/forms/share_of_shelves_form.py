@@ -6,7 +6,7 @@ from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 
 from .products_browse_form import ProductsBrowseForm
-from solotodo.models import Product, CategorySpecsFilter
+from solotodo.models import CategorySpecsFilter, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
 
@@ -98,7 +98,7 @@ class ShareOfShelvesForm(forms.Form):
         product_ids = [p['product']['id'] for p in data['results']]
         entities_agg = {}
 
-        es_search = Product.es_search().filter('terms', product_id=product_ids)
+        es_search = EsProduct.search().filter('terms', product_id=product_ids)
         es_dict = {e.product_id: e.to_dict()
                    for e in es_search[:len(product_ids)].execute()}
 

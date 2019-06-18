@@ -69,7 +69,7 @@ from solotodo.forms.store_historic_entity_positions_form import \
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory, Visit, Rating, ProductPicture, Brand, StoreSection, \
-    EntitySectionPosition
+    EntitySectionPosition, EsProduct
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination, \
@@ -959,8 +959,8 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                 'association_name.keyword': entity.cell_plan_name
             }
 
-            matching_cell_plans = cell_plan_category.es_search() \
-                .filter('term', **filter_parameters) \
+            matching_cell_plans = EsProduct.category_search(
+                cell_plan_category).filter('term', **filter_parameters) \
                 .execute()
 
             cell_plan_ids = [x.product_id for x in matching_cell_plans]
@@ -1216,7 +1216,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         fields = form.cleaned_data['fields'].split(',')
         product_specs = product.specs
-        search = product.category.es_search()
+        search = EsProduct.category_search(product.category)
 
         for field in fields:
             field_value = product_specs.get(field)

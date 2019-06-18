@@ -12,7 +12,7 @@ from guardian.shortcuts import get_objects_for_user
 from category_columns.models import CategoryColumn
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Category, Store, Country, StoreType, Currency, \
-    Entity, Product, EntityHistory
+    Entity, EntityHistory, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -104,7 +104,7 @@ class ReportDailyPricesForm(forms.Form):
 
         product_ids = [x['product'] for x in entities.values('product')]
 
-        es_search = Product.es_search().filter('terms', product_id=product_ids)
+        es_search = EsProduct.search().filter('terms', product_id=product_ids)
 
         if brand:
             es_search = es_search.filter(

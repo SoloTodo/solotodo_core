@@ -4,16 +4,16 @@ import re
 
 from decimal import Decimal
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
 from django.db.models import Q
 from django.utils.text import slugify
-from elasticsearch_dsl import Search
 from sklearn.neighbors import NearestNeighbors
 
 from metamodel.models import InstanceModel
+from .es_product import EsProduct
+from solotodo.signals import product_saved
 from solotodo.models.utils import solotodo_com_site, rs_refresh_entries
 
 from .category import Category
@@ -43,7 +43,7 @@ class ProductQuerySet(models.QuerySet):
         ).distinct()
 
     def filter_by_search_string(self, search):
-        es_search = Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
+        es_search = EsProduct.search()
         es_search = es_search.filter('terms', product_id=[p.id for p in self])
         es_search = Product.query_es_by_search_string(
             es_search, search, mode='AND')
@@ -63,6 +63,15 @@ class ProductQuerySet(models.QuerySet):
             Category.objects.filter_by_user_perms(
                 user, synth_permissions[permission])
         )
+
+    def update(self, *args, **kwargs):
+        raise Exception('Queryset level update is disabled on Product as it '
+                        'does not call save() or emit pre_save / post_save '
+                        'signals')
+
+    def delete(self):
+        raise Exception('Delete should not be called on product querysets, '
+                        'delete the associated instance models instead')
 
 
 class Product(models.Model):
@@ -89,7 +98,7 @@ class Product(models.Model):
     @property
     def specs(self):
         if not self._specs:
-            self._specs = self.es_search().filter(
+            self._specs = EsProduct.search().filter(
                 'term', product_id=self.id).execute()[0].to_dict()
         return self._specs
 
@@ -107,14 +116,10 @@ class Product(models.Model):
         return str(self.instance_model)
 
     @classmethod
-    def es_search(cls):
-        return Search(index='products')
-
-    @classmethod
     def prefetch_specs(cls, products):
         product_ids = [p.id for p in products]
 
-        search = Product.es_search().filter(
+        search = EsProduct.search().filter(
             'terms', product_id=product_ids)[:len(product_ids)]
         response = search.execute().to_dict()
         specs_dict = {e['_source']['product_id']: e['_source'] for e in
@@ -132,9 +137,6 @@ class Product(models.Model):
                                                   slugify(str(self)))
 
     def save(self, *args, **kwargs):
-        from django.conf import settings
-        from solotodo.es_models.es_product import EsProduct
-
         creator_id = kwargs.pop('creator_id', None)
 
         if bool(creator_id) == bool(self.id):
@@ -151,7 +153,12 @@ class Product(models.Model):
 
         super(Product, self).save(*args, **kwargs)
 
-        EsProduct.from_product(self, es_document).save()
+        product_saved.send(sender=self.__class__, product=self,
+                           es_document=es_document)
+
+    def delete(self, *args, **kwargs):
+        raise Exception('Delete should not be called on product instances, '
+                        'delete the associated instance model instead')
 
     def search_bucket_key(self, es_document):
         bucket_fields = self.category.search_bucket_key_fields
@@ -160,14 +167,6 @@ class Product(models.Model):
                              for field in bucket_fields.split(',')])
         else:
             return ''
-
-    def delete_from_elasticsearch(self):
-        from django.conf import settings
-
-        es = settings.ES
-        es.delete(
-            index='products',
-            id=self.pk)
 
     @staticmethod
     def query_es_by_search_string(es_search, search, mode='OR'):
@@ -223,7 +222,7 @@ class Product(models.Model):
         candidates = []
 
         product_ids = [e.product_id for e in candidates_query]
-        es_brand_products = category.es_search().filter(
+        es_brand_products = EsProduct.category_search(category).filter(
             'terms', product_id=product_ids)
 
         if brands is not None:

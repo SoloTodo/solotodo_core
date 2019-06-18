@@ -9,8 +9,8 @@ from rest_framework.reverse import reverse
 from elasticsearch_dsl import A, Q
 
 from solotodo.filters import CategoryFullBrowseEntityFilterSet
-from solotodo.models import Country, Product, Currency, CategorySpecsFilter, \
-    Entity, Store, Category, Brand
+from solotodo.models import Country, Product, CategorySpecsFilter, Entity, \
+    Store, Category, Brand, EsProduct
 from solotodo.pagination import ProductsBrowsePagination
 from solotodo.serializers import CategoryFullBrowseResultSerializer
 
@@ -70,21 +70,26 @@ class EsProductsBrowseForm(forms.Form):
         if not requested_stores:
             return Store.objects.filter_by_user_perms(self.user, 'view_store')
 
-        valid_stores = requested_stores.filter_by_user_perms(self.user, 'view_store')
-        invalid_stores = requested_stores.exclude(pk__in=[x.id for x in valid_stores])
+        valid_stores = requested_stores.filter_by_user_perms(self.user,
+                                                             'view_store')
+        invalid_stores = requested_stores.exclude(
+            pk__in=[x.id for x in valid_stores])
 
         if not invalid_stores:
             return requested_stores
 
-        raise forms.ValidationError('Invalid stores: {}'.format([x.id for x in invalid_stores]))
+        raise forms.ValidationError('Invalid stores: {}'.format(
+            [x.id for x in invalid_stores]))
 
     def clean_categories(self):
         requested_categories = self.cleaned_data['categories']
 
         if not requested_categories:
-            return Category.objects.filter_by_user_perms(self.user, 'view_category')
+            return Category.objects.filter_by_user_perms(
+                self.user, 'view_category')
 
-        valid_categories = requested_categories.filter_by_user_perms(self.user, 'view_category')
+        valid_categories = requested_categories.filter_by_user_perms(
+            self.user, 'view_category')
         invalid_categories = requested_categories.exclude(
             pk__in=[x.id for x in valid_categories])
 
@@ -92,7 +97,8 @@ class EsProductsBrowseForm(forms.Form):
             return requested_categories
 
         raise forms.ValidationError(
-            'Invalid categories: {}'.format([x.id for x in invalid_categories]))
+            'Invalid categories: {}'.format(
+                [x.id for x in invalid_categories]))
 
     def get_category_entities(self, category, request):
         """
@@ -114,7 +120,7 @@ class EsProductsBrowseForm(forms.Form):
 
         product_ids = set(entry['product']
                           for entry in entities.values('product'))
-        es_search = category.es_search().filter(
+        es_search = EsProduct.category_search(category).filter(
             'terms', product_id=list(product_ids))
 
         specs_form_class = category.specs_form()
@@ -218,13 +224,15 @@ class EsProductsBrowseForm(forms.Form):
         if keywords:
             keywords_query = Q('simple_query_string', fields=['keywords'],
                                default_operator='or', query=keywords)
-            search = search.query('has_parent', parent_type='product', query=keywords_query)
+            search = search.query('has_parent', parent_type='product',
+                                  query=keywords_query)
 
         # Add the metrics to the query (prices, leads).
         product_stats_bucket = self.pricing_metrics()
         search.aggs\
             .bucket('product_stats', product_stats_bucket)
-        search.aggs.pipeline('offer_price_usd', 'stats_bucket', buckets_path='product_stats>offer_price_usd')
+        search.aggs.pipeline('offer_price_usd', 'stats_bucket',
+                             buckets_path='product_stats>offer_price_usd')
 
         # Obtain the results
         es_result = search.execute().to_dict()
@@ -234,21 +242,25 @@ class EsProductsBrowseForm(forms.Form):
             request
         )
         count = len(products_metadata)
-        is_ordering_leads_or_dioscount = ordering not in self.PRICING_ORDERING_CHOICES
+        is_ordering_leads_or_discount = ordering not in \
+            self.PRICING_ORDERING_CHOICES
         products_metadata = sorted(products_metadata,
                                    key=lambda x: x[ordering],
-                                   reverse=is_ordering_leads_or_dioscount)
+                                   reverse=is_ordering_leads_or_discount)
         product_ids = [x['product_id'] for x in products_metadata]
 
         es_products_search = EsProduct.search()\
             .filter('terms', product_id=product_ids)
 
-        es_products_search.aggs.bucket('categories', 'terms', field='category_id', size=50)
-        es_products_search.aggs.bucket('brands', 'terms', field='brand_id', size=50)
+        es_products_search.aggs.bucket(
+            'categories', 'terms', field='category_id', size=50)
+        es_products_search.aggs.bucket(
+            'brands', 'terms', field='brand_id', size=50)
 
         es_products = es_products_search[:len(product_ids)].execute().to_dict()
 
-        es_products_dict = {x['_source']['product_id']: x['_source'] for x in es_products['hits']['hits']}
+        es_products_dict = {x['_source']['product_id']: x['_source']
+                            for x in es_products['hits']['hits']}
 
         pagination_params = self.pagination_params(request)
         products_metadata = products_metadata[
@@ -258,7 +270,8 @@ class EsProductsBrowseForm(forms.Form):
 
         product_entries = []
         for product_metadata in products_metadata:
-            serialized_product = self.serialize_product(es_products_dict[product_metadata['product_id']], request)
+            serialized_product = self.serialize_product(
+                es_products_dict[product_metadata['product_id']], request)
             del product_metadata['product_id']
 
             product_entries.append({
@@ -303,7 +316,8 @@ class EsProductsBrowseForm(forms.Form):
 
         # Filter entities based on our form fields
         entities_filter = self.filter_entities()
-        search = search.filter('has_child', type='entity', query=entities_filter)
+        search = search.filter('has_child', type='entity',
+                               query=entities_filter)
 
         specs_query_params = request.query_params.copy()
 
@@ -350,7 +364,8 @@ class EsProductsBrowseForm(forms.Form):
         )
 
         # Create the product_entries (product + metadata)
-        products_metadata_dict = {x['product_id']: x for x in products_metadata}
+        products_metadata_dict = {x['product_id']: x
+                                  for x in products_metadata}
 
         products = [entry['_source'] for entry in es_result['hits']['hits']]
         product_entries = []
@@ -362,7 +377,8 @@ class EsProductsBrowseForm(forms.Form):
             })
 
         # Sort based on DB (if given)
-        product_entries = self.order_entries_by_db(product_entries, db_ordering)
+        product_entries = self.order_entries_by_db(product_entries,
+                                                   db_ordering)
 
         # Obtain the price ranges for the matchign products
         price_ranges = self.calculate_price_ranges(product_entries)
@@ -373,7 +389,9 @@ class EsProductsBrowseForm(forms.Form):
 
         # Paginate
         pagination_params = self.pagination_params(request)
-        bucketed_results_page = bucketed_results[pagination_params['offset']:pagination_params['upper_bound']]
+        bucketed_results_page = \
+            bucketed_results[pagination_params['offset']:
+                             pagination_params['upper_bound']]
 
         filter_aggs = specs_form.process_es_aggs(es_result['aggregations'])
 
@@ -389,7 +407,7 @@ class EsProductsBrowseForm(forms.Form):
         product_ids = [p['product']['id'] for p in data['results']]
         entities_agg = {}
 
-        es_search = Product.es_search().filter('terms', product_id=product_ids)
+        es_search = EsProduct.search().filter('terms', product_id=product_ids)
         es_dict = {e.product_id: e.to_dict()
                    for e in es_search[:len(product_ids)].execute()}
 
@@ -454,9 +472,12 @@ class EsProductsBrowseForm(forms.Form):
 
         for field_name, es_field in filter_fields:
             if self.cleaned_data[field_name]:
-                entities_filter &= Q('terms', **{es_field: [x.id for x in self.cleaned_data[field_name]]})
+                entity_filter = {es_field: [x.id for x in
+                                            self.cleaned_data[field_name]]}
+                entities_filter &= Q('terms', **entity_filter)
 
-        range_fields = ['normal_price', 'offer_price', 'normal_price_usd', 'offer_price_usd']
+        range_fields = ['normal_price', 'offer_price',
+                        'normal_price_usd', 'offer_price_usd']
 
         for range_field in range_fields:
             start_value = self.cleaned_data[range_field + '_0']
@@ -573,7 +594,8 @@ class EsProductsBrowseForm(forms.Form):
         price_stats = {}
 
         for price_field in ['normal_price_usd', 'offer_price_usd']:
-            prices = sorted([x['metadata'][price_field] for x in product_entries])
+            prices = sorted([x['metadata'][price_field]
+                             for x in product_entries])
 
             price_stats[price_field] = {
                 'min': prices[0],

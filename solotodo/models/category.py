@@ -1,11 +1,7 @@
-from django.conf import settings
 from django.db import models
-from elasticsearch_dsl import Search
 from guardian.shortcuts import get_objects_for_user
 
 from metamodel.models import MetaModel
-from solotodo.forms.category_specs_form import CategorySpecsForm
-from solotodo.forms.es_category_specs_form import EsCategorySpecsForm
 from solotodo.models.category_tier import CategoryTier
 from solotodo.models.utils import rs_refresh_model
 
@@ -41,11 +37,10 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-    def es_search(self):
-        return Search(index='products'
-                      ).filter('term', category_id=self.id)
-
     def specs_form(self, form_type='db'):
+        from solotodo.forms.category_specs_form import CategorySpecsForm
+        from solotodo.forms.es_category_specs_form import EsCategorySpecsForm
+
         # TODO Remove DB form type once browse code path is eliminated
 
         if form_type == 'db':

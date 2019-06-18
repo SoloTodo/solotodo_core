@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.db.models.functions import ExtractWeek, ExtractYear
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.models import Store, Country, Entity, EntityHistory
+from solotodo.models import Store, Country, Entity, EntityHistory, EsProduct
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.forms.share_of_shelves_form import ShareOfShelvesForm
 from solotodo_core.s3utils import PrivateS3Boto3Storage
@@ -148,7 +148,7 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
         product_ids = [e['product'] for e in entities.order_by('product')
                        .values('product').distinct()]
 
-        es_search = category.es_search().filter(
+        es_search = EsProduct.category_search(category).filter(
             'terms', product_id=product_ids)
 
         specs_form_class = category.specs_form()

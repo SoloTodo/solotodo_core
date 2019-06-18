@@ -11,7 +11,7 @@ from guardian.shortcuts import get_objects_for_user
 from category_columns.models import CategoryColumn
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Category, Store, Country, StoreType, Currency, \
-    Product, EntityHistory
+    EntityHistory, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -110,7 +110,7 @@ class ReportPricesHistoryForm(forms.Form):
 
             product_ids = [x['entity__product']
                            for x in ehs.values('entity__product')]
-            es_search = Product.es_search().filter(
+            es_search = EsProduct.search().filter(
                 'terms', product_id=product_ids)
             es_dict = {e.product_id: e.to_dict()
                        for e in es_search[:100000].execute()}

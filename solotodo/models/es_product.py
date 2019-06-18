@@ -1,5 +1,5 @@
 from elasticsearch_dsl import Text, Keyword, Object, Integer, Date
-from solotodo.es_models.es_product_entity import EsProductEntity
+from .es_product_entity import EsProductEntity
 
 
 class EsProduct(EsProductEntity):
@@ -17,7 +17,16 @@ class EsProduct(EsProductEntity):
 
     @classmethod
     def search(cls, **kwargs):
-        return cls._index.search(**kwargs).filter('term', product_entity='product')
+        return cls._index.search(**kwargs).filter('term',
+                                                  product_entity='product')
+
+    @classmethod
+    def category_search(cls, category, **kwargs):
+        return cls.search(**kwargs).filter('term', category_id=category.id)
+
+    @classmethod
+    def get_by_product_id(cls, product_id):
+        return cls.get('PRODUCT_{}'.format(product_id))
 
     @classmethod
     def from_product(cls, product, es_document=None):

@@ -34,7 +34,8 @@ class EsCategorySpecsForm(forms.Form):
         keywords = self.cleaned_data['search']
 
         if keywords:
-            keywords_query = Q('simple_query_string', fields=['keywords'], default_operator='and', query=keywords)
+            keywords_query = Q('simple_query_string', fields=['keywords'],
+                               default_operator='and', query=keywords)
             search = search.filter(keywords_query)
 
         bucket_field = self.cleaned_data['bucket_field']
@@ -58,7 +59,8 @@ class EsCategorySpecsForm(forms.Form):
             for other_field in other_fields:
                 aggs_filters &= fields_es_filters_dict[other_field]
 
-            field_bucket = A('terms', field='specs.' + field.es_id_field(), size=1000)
+            field_bucket = A('terms', field='specs.' + field.es_id_field(),
+                             size=1000)
 
             if search_bucket_agg:
                 # 'search_bucket' is just a name, just need to be consistent

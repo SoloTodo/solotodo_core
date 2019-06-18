@@ -4,6 +4,8 @@ from django import forms
 from django.core.exceptions import ValidationError
 from elasticsearch_dsl import Q, A
 
+from solotodo.models import EsProduct
+
 
 class CategorySpecsForm(forms.Form):
     ordering = forms.ChoiceField(choices=[], required=False)
@@ -34,7 +36,7 @@ class CategorySpecsForm(forms.Form):
             raise ValidationError(self.errors)
 
         if not es_search:
-            es_search = self.category.es_search()
+            es_search = EsProduct.category_search(self.category)
 
         search = self.cleaned_data['search']
         if search:

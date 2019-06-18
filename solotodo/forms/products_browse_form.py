@@ -11,7 +11,8 @@ from django.db.models.functions import Coalesce
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.filters import ProductsBrowseEntityFilterSet, \
     CategoryFullBrowseEntityFilterSet
-from solotodo.models import Country, Product, Currency, CategorySpecsFilter
+from solotodo.models import Country, Product, Currency, CategorySpecsFilter, \
+    EsProduct
 from solotodo.pagination import ProductsBrowsePagination
 from solotodo.serializers import CategoryBrowseResultSerializer, \
     CategoryFullBrowseResultSerializer
@@ -62,7 +63,7 @@ class ProductsBrowseForm(forms.Form):
 
         product_ids = set(entry['product']
                           for entry in entities.values('product'))
-        es_search = category.es_search().filter(
+        es_search = EsProduct.category_search(category).filter(
             'terms', product_id=list(product_ids))
 
         specs_form_class = category.specs_form()
@@ -167,8 +168,7 @@ class ProductsBrowseForm(forms.Form):
 
         product_ids = [entry['product'] for entry in entities]
 
-        es_search = Product.es_search().filter(
-            'terms', product_id=product_ids)
+        es_search = EsProduct.search().filter('terms', product_id=product_ids)
 
         search = self.cleaned_data['search']
         if search:
@@ -230,7 +230,7 @@ class ProductsBrowseForm(forms.Form):
 
         product_ids = set(entry['product']
                           for entry in entities.values('product'))
-        es_search = category.es_search().filter(
+        es_search = EsProduct.category_search(category).filter(
             'terms', product_id=list(product_ids))
 
         specs_form_class = category.specs_form()
@@ -276,7 +276,7 @@ class ProductsBrowseForm(forms.Form):
         product_ids = [p['product']['id'] for p in data['results']]
         entities_agg = {}
 
-        es_search = Product.es_search().filter('terms', product_id=product_ids)
+        es_search = EsProduct.search().filter('terms', product_id=product_ids)
         es_dict = {e.product_id: e.to_dict()
                    for e in es_search[:len(product_ids)].execute()}
 

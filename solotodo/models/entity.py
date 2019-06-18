@@ -16,6 +16,7 @@ from .product import Product
 from .currency import Currency
 from .category import Category
 from .store import Store
+from .es_product import EsProduct
 
 
 class EntityQueryset(models.QuerySet):
@@ -65,6 +66,10 @@ class EntityQueryset(models.QuerySet):
     def get_pending(self):
         return self.get_available().filter(product__isnull=True,
                                            is_visible=True)
+
+    def update(self, *args, **kwargs):
+        raise Exception('Queryset level update is disabled on Entity as it '
+                        'does not emit pre_save / post_save signals')
 
     def estimated_sales(self, start_date=None, end_date=None,
                         sorting='normal_price_sum'):
@@ -585,7 +590,7 @@ class Entity(models.Model):
             'association_name.keyword': other_entities_cell_plan_names
         }
 
-        matching_cell_plans = cell_plan_category.es_search()\
+        matching_cell_plans = EsProduct.category_search(cell_plan_category)\
             .filter('terms', **filter_parameters)[:100] \
             .execute()
 

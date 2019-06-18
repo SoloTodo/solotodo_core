@@ -17,6 +17,8 @@ from decimal import Decimal
 from django_filters import STRICTNESS
 
 # I know this import is not used, but the plugin gets loaded this way
+from elasticsearch import Elasticsearch
+
 from solotodo.metamodel_plugin import MetaModelPlugin
 
 
@@ -387,6 +389,8 @@ METAMODEL = {
         'solotodo.metamodel_custom_functions.notebooks.ordering_value'
     ]
 }
+
+ES = Elasticsearch([{"host": "localhost", "port": 9200}])
 
 CURRENCYLAYER_API_ACCESS_KEY = ''
 

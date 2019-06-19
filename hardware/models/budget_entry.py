@@ -20,4 +20,4 @@ class BudgetEntry(models.Model):
 
     class Meta:
         app_label = 'hardware'
-        ordering = ['budget', 'category__budget_ordering']
+        ordering = ['budget', 'category__budget_ordering', 'id']

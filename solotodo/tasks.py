@@ -96,8 +96,5 @@ def es_leads_index():
 
 
 @shared_task(queue='general', ignore_result=True)
-def es_entity_save(entity_id):
-    from solotodo.models import EsEntity
-
-    e = Entity.objects.get(pk=entity_id)
-    EsEntity.from_entity(e).save()
+def entity_save(entity_id):
+    Entity.objects.get(pk=entity_id).save()

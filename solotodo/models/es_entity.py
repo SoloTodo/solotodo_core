@@ -45,8 +45,9 @@ class EsEntity(EsProductEntity):
 
     @classmethod
     def search(cls, **kwargs):
-        return cls._index.search(**kwargs).exclude('term',
-                                                   product_entity='product')
+        return cls._index.search(**kwargs).exclude(
+            'term',
+            product_relationships='product')
 
     @classmethod
     def get_by_entity_id(cls, entity_id):
@@ -117,7 +118,7 @@ class EsEntity(EsProductEntity):
             leads=leads,
             creation_date=entity.creation_date,
             last_updated=entity.last_updated,
-            product_entity={
+            product_relationships={
                 'name': 'entity',
                 'parent': 'PRODUCT_{}'.format(entity.product_id)
             },

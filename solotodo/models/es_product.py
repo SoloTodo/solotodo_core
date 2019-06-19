@@ -17,8 +17,9 @@ class EsProduct(EsProductEntity):
 
     @classmethod
     def search(cls, **kwargs):
-        return cls._index.search(**kwargs).filter('term',
-                                                  product_entity='product')
+        return cls._index.search(**kwargs).filter(
+            'term',
+            product_relationships='product')
 
     @classmethod
     def category_search(cls, category, **kwargs):
@@ -47,6 +48,6 @@ class EsProduct(EsProductEntity):
             last_updated=product.last_updated,
             keywords=' '.join(keywords),
             specs=specs,
-            product_entity='product',
+            product_relationships='product',
             meta={'id': 'PRODUCT_{}'.format(product.id)}
         )

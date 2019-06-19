@@ -2,7 +2,7 @@ from elasticsearch_dsl import Document, Join
 
 
 class EsProductEntity(Document):
-    product_entity = Join(relations={'product': 'entity'})
+    product_relationships = Join(relations={'product': 'entity'})
 
     @classmethod
     def _matches(cls, hit):
@@ -11,7 +11,7 @@ class EsProductEntity(Document):
         return False
 
     class Index:
-        name = 'products_entities'
+        name = 'products_metadata'
         settings = {
             'index.mapping.total_fields.limit': 10000,
             'index.max_result_window': 100000

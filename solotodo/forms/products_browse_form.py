@@ -471,7 +471,11 @@ class ProductsBrowseForm(forms.Form):
 
             for es_product in es_results:
                 product = product_id_to_full_instance[es_product['product_id']]
-                bucket = product.specs[bucket_field]
+
+                if bucket_field:
+                    bucket = product.specs[bucket_field]
+                else:
+                    bucket = product.id
 
                 if bucket not in bucketed_results:
                     bucketed_results[bucket] = OrderedDict()

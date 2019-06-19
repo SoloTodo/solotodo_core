@@ -582,7 +582,7 @@ class EsProductsBrowseForm(forms.Form):
         product['picture_url'] = picture_url
 
         for key in ['product_id', 'category_id', 'category_name',
-                    'product_entity']:
+                    'product_relationships']:
             del product[key]
 
         return product

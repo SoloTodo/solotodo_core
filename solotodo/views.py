@@ -34,7 +34,6 @@ from navigation.serializers import NavDepartmentSerializer
 from solotodo.drf_custom_ordering import CustomProductOrderingFilter, \
     CustomEntityOrderingFilter
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
-from solotodo.es_models.es_lead import EsLead
 from solotodo.filter_querysets import create_category_filter, \
     create_store_filter
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
@@ -1001,17 +1000,15 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             website = form.cleaned_data['website']
             ip = get_client_ip(request) or '127.0.0.1'
 
-            Lead.objects.create(
+            lead = Lead.objects.create(
                 entity_history=entity.active_registry,
                 website=website,
                 user=user,
                 ip=ip
             )
 
-            uuid = request.data.get('uuid')
-            es_lead = EsLead.create(entity.active_registry, website, uuid)
-
-            return Response(es_lead)
+            serializer = LeadSerializer(lead, context={'request': request})
+            return Response(serializer.data)
         else:
             return Response(form.errors)
 

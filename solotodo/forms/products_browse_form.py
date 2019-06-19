@@ -417,14 +417,14 @@ class ProductsBrowseForm(forms.Form):
 
         return product_id_to_prices
 
-    def bucket_results(self, entities, es_results, bucket_field='product_id'):
+    def bucket_results(self, entities, es_results, bucket_field=None):
         ordering = self.ordering_or_default()
         product_id_to_prices = self.product_prices_dict(entities)
 
         product_ids = [entity['product'] for entity in entities]
 
         product_id_to_specs = {
-            entry['_source']['product_id']: entry['_source']
+            entry['_source']['product_id']: entry['_source']['specs']
             for entry in es_results.to_dict()['hits']['hits']
         }
 
@@ -438,9 +438,6 @@ class ProductsBrowseForm(forms.Form):
             full_instance._specs = product_id_to_specs[product_id]
             product_id_to_full_instance[product_id] = full_instance
 
-        if not bucket_field:
-            bucket_field = 'product_id'
-
         bucketed_results = OrderedDict()
 
         if ordering in self.DB_ORDERING_CHOICES:
@@ -452,7 +449,10 @@ class ProductsBrowseForm(forms.Form):
             for entry in entities:
                 product = product_id_to_full_instance[entry['product']]
 
-                bucket = product.specs[bucket_field]
+                if bucket_field:
+                    bucket = product.specs[bucket_field]
+                else:
+                    bucket = product.id
 
                 if bucket not in bucketed_results:
                     bucketed_results[bucket] = OrderedDict()

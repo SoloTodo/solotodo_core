@@ -22,7 +22,7 @@ class CategorySpecsForm(forms.Form):
         ordering_field = category_specs_order.es_field
         for prefix in ['', '-']:
             new_ordering_name = prefix + category_specs_order.name
-            new_ordering_field = prefix + ordering_field
+            new_ordering_field = prefix + 'specs.' + ordering_field
 
             cls.base_fields['ordering'].choices.append(
                 (new_ordering_name, new_ordering_field))
@@ -44,7 +44,7 @@ class CategorySpecsForm(forms.Form):
                 es_search, search, mode='AND')
 
         fields_es_filters_dict = {
-            field: field.es_filter(self.cleaned_data)
+            field: field.es_filter(self.cleaned_data, prefix='specs.')
             for field in self.category_specs_filters
         }
 
@@ -52,7 +52,7 @@ class CategorySpecsForm(forms.Form):
 
         search_bucket_agg = None
         if bucket_field:
-            search_bucket_agg = A('terms', field=bucket_field, size=10000)
+            search_bucket_agg = A('terms', field='specs.' + bucket_field, size=10000)
 
         for field in self.category_specs_filters:
             aggs_filters = Q()
@@ -62,7 +62,7 @@ class CategorySpecsForm(forms.Form):
             for other_field in other_fields:
                 aggs_filters &= fields_es_filters_dict[other_field]
 
-            field_agg = A('terms', field=field.es_id_field(), size=1000)
+            field_agg = A('terms', field='specs.' + field.es_id_field(), size=1000)
 
             if search_bucket_agg:
                 # 'search_bucket' is just a name, just need to be consistent
@@ -83,7 +83,7 @@ class CategorySpecsForm(forms.Form):
             es_search = es_search.sort(
                 self.ordering_value_to_es_field_dict[ordering])
         else:
-            es_search = es_search.sort('unicode.keyword')
+            es_search = es_search.sort('name.raw')
 
         return es_search
 

@@ -6,7 +6,7 @@ from django.db.models import Min
 from django.http import HttpResponse
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ViewSet
+from rest_framework.viewsets import ViewSet
 from sorl.thumbnail import get_thumbnail
 
 from solotodo.models import Entity, Product
@@ -19,7 +19,7 @@ class LgOnlineFeedViewSet(ViewSet):
             json_entries = json.loads(f.read())
 
         store_ids = [9, 18, 11, 5, 30, 60, 67, 37, 38, 61, 12, 85, 43, 23,
-                     97, 87, 167, 86, 181, 195, 197]
+                     97, 87, 167, 86, 181, 195, 197, 224]
         product_ids = [entry['productId'] for entry in json_entries]
 
         product_prices = Entity.objects.get_available().filter(

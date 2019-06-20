@@ -36,7 +36,6 @@ class EsEntity(EsProductEntity):
     sku = Text(fields={'raw': Keyword()})
     key = Text(fields={'raw': Keyword()})
     url = Text(fields={'raw': Keyword()})
-    description = Text(fields={'raw': Keyword()})
 
     leads = Integer()
 
@@ -114,7 +113,6 @@ class EsEntity(EsProductEntity):
             sku=entity.sku,
             key=entity.key,
             url=entity.url,
-            description=entity.description,
             leads=leads,
             creation_date=entity.creation_date,
             last_updated=entity.last_updated,

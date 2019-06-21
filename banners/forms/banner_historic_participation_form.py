@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from django import forms
 
-from django.db.models import F, Sum, Avg, Count
+from django.db.models import F, Sum, Avg, Count, When, Case
 from django.db.models.functions import ExtractWeek, ExtractYear
 from django.core.files.base import ContentFile
 from guardian.shortcuts import get_objects_for_user
@@ -123,14 +123,6 @@ class BannerHistoricParticipationForm(forms.Form):
             for s in store_updates
         }
 
-        participation_aggs = banners\
-            .order_by('year', 'week', 'update__store', db_grouping_field)\
-            .values('year', 'week', 'update__store__name', db_grouping_field)\
-            .annotate(
-                grouping_label=F(db_grouping_field + '__name'),
-                participation_score=Sum('asset__contents__percentage'))\
-            .order_by('grouping_label')
-
         position_aggs = banners\
             .order_by('year', 'week', db_grouping_field)\
             .values('year', 'week', db_grouping_field)\
@@ -165,21 +157,24 @@ class BannerHistoricParticipationForm(forms.Form):
         banner_aggs_result = defaultdict(lambda: {'participation_score': 0})
         year_week_participation = defaultdict(lambda: 0)
 
-        for agg in participation_aggs:
-            year_week = '{}-{}'.format(agg['year'], agg['week'])
-            grouping_label = agg['grouping_label']
-            store_name = agg['update__store__name']
-
+        for banner in banners:
+            year_week = '{}-{}'.format(banner.year, banner.week)
+            store_name = banner.update.store.name
             year_week_store_update_count = \
                 store_updates[(year_week, store_name)]
-            normalized_store_participation_score = \
-                agg['participation_score'] / year_week_store_update_count
 
-            banner_aggs_result[(year_week, grouping_label)][
-                'participation_score'] += normalized_store_participation_score
+            for content in banner.asset.contents.all():
+                grouping_label = content.brand.name
 
-            year_week_participation[year_week] += \
-                normalized_store_participation_score
+                normalized_store_participation_score = \
+                    content.percentage / year_week_store_update_count
+
+                banner_aggs_result[(year_week, grouping_label)][
+                    'participation_score'] += \
+                    normalized_store_participation_score
+
+                year_week_participation[year_week] += \
+                    normalized_store_participation_score
 
         for agg in position_aggs:
             year_week = '{}-{}'.format(agg['year'], agg['week'])

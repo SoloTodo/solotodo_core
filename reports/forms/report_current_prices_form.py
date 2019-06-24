@@ -74,8 +74,8 @@ class ReportCurrentPricesForm(forms.Form):
             product_ids = [product.id for product in products]
             specs_products = list(set(specs_products) & set(product_ids))
 
-        es = Entity.objects.filter(product__isnull=False,
-                                   product__in=specs_products) \
+        entities = Entity.objects.filter(product__isnull=False,
+                                         product__in=specs_products) \
             .filter(
             product__instance_model__model__category=category,
             store__in=stores) \
@@ -86,27 +86,27 @@ class ReportCurrentPricesForm(forms.Form):
             'active_registry',
             'currency',
             'store') \
-            .order_by('product').annotate(
-            normal_price_usd=F('active_registry__normal_price') /
-            F('currency__exchange_rate'))
+            .order_by('product')
 
         if countries:
-            es = es.filter(store__country__in=countries)
+            entities = entities.filter(store__country__in=countries)
 
         if store_types:
-            es = es.filter(store__type__in=store_types)
+            entities = entities.filter(store__type__in=store_types)
 
         if normal_price_usd_0:
-            es = es.filter(normal_price_usd__gte=normal_price_usd_0)
+            entities = entities.filter(
+                normal_price_usd__gte=normal_price_usd_0)
 
         if normal_price_usd_1:
-            es = es.filter(normal_price_usd__lte=normal_price_usd_1)
+            entities = entities.filter(
+                normal_price_usd__lte=normal_price_usd_1)
 
-        product_ids = [x['product'] for x in es.values('product')]
+        product_ids = [x['product'] for x in entities.values('product')]
 
         es_search = EsProduct.search().filter('terms', product_id=product_ids)
         es_dict = {e.product_id: e.to_dict()
-                   for e in es_search[:100000].execute()}
+                   for e in es_search.scan()}
 
         output = io.BytesIO()
 
@@ -114,7 +114,8 @@ class ReportCurrentPricesForm(forms.Form):
         workbook = xlsxwriter.Workbook(output)
         workbook.formats[0].set_font_size(10)
 
-        self.generate_worksheet(workbook, category, currency, es, es_dict)
+        self.generate_worksheet(workbook, category, currency, entities,
+                                es_dict)
 
         workbook.close()
 
@@ -145,11 +146,6 @@ class ReportCurrentPricesForm(forms.Form):
 
         date_format = workbook.add_format({
             'num_format': 'yyyy-mm-dd'
-        })
-
-        url_format = workbook.add_format({
-            'font_color': 'blue',
-            'font_size': 10
         })
 
         header_format = workbook.add_format({
@@ -306,8 +302,9 @@ class ReportCurrentPricesForm(forms.Form):
             col += 1
 
             for column in specs_columns:
-                worksheet.write(row, col, es_entry.get(column.field.es_field,
-                                                       'N/A'))
+                worksheet.write(
+                    row, col,
+                    es_entry['specs'].get(column.field.es_field, 'N/A'))
                 col += 1
 
             row += 1

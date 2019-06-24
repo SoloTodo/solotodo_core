@@ -88,7 +88,7 @@ class ReportSecPricesForm(forms.Form):
 
         es_search = EsProduct.search().filter('terms', product_id=product_ids)
         es_dict = {e.product_id: e.to_dict()
-                   for e in es_search[:100000].execute()}
+                   for e in es_search.scan()}
 
         output = io.BytesIO()
 
@@ -147,7 +147,7 @@ class ReportSecPricesForm(forms.Form):
                 row, col,
                 '{}products/{}'.format(settings.PRICING_HOST,
                                        es_product['product_id']),
-                string=es_product['unicode'],
+                string=es_product['name'],
                 cell_format=url_format)
 
             col += 1
@@ -166,8 +166,9 @@ class ReportSecPricesForm(forms.Form):
             # Specs
 
             for column in specs_columns:
-                worksheet.write(row, col,
-                                es_product.get(column.field.es_field, 'N/A'))
+                worksheet.write(
+                    row, col,
+                    es_product['specs'].get(column.field.es_field, 'N/A'))
                 col += 1
 
             for store in stores:

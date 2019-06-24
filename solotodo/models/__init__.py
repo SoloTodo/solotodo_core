@@ -41,7 +41,7 @@ from .store_section import StoreSection
 from .entity_section_position import EntitySectionPosition
 
 # ElasticSearch DSL persistence models
-from .es_product_entity import EsProductEntity
+from .es_product_relationship import EsProductRelationship
 from .es_product import EsProduct
 from .es_entity import EsEntity
 

@@ -111,7 +111,7 @@ class ReportDailyPricesForm(forms.Form):
                 'term', **{'brand_unicode.keyword': brand})
 
         es_dict = {e.product_id: e.to_dict()
-                   for e in es_search[:100000].execute()}
+                   for e in es_search.scan()}
 
         output = io.BytesIO()
 
@@ -186,13 +186,6 @@ class ReportDailyPricesForm(forms.Form):
             es_entry = es_dict[entity.product_id]
 
             # Product
-
-            # worksheet.write_url(
-            #     row, col,
-            #     '{}products/{}'.format(settings.BACKEND_HOST,
-            #                            entity.product.id),
-            #     string=str(entity.product),
-            #     cell_format=url_format)
 
             worksheet.write(row, col, str(entity.product))
 
@@ -282,8 +275,9 @@ class ReportDailyPricesForm(forms.Form):
             col += 1
 
             for column in specs_columns:
-                worksheet.write(row, col, es_entry.get(column.field.es_field,
-                                                       'N/A'))
+                worksheet.write(
+                    row, col,
+                    es_entry['specs'].get(column.field.es_field, 'N/A'))
                 col += 1
 
             row += 1

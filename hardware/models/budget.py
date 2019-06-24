@@ -173,9 +173,9 @@ Tu cotización no incluye procesador, que es necesario para un PC.
 Se ejecutarán las otras pruebas de compatibilidad
             """)
 
-        motherboard = None
+        mb = None
         if motherboards:
-            motherboard = motherboards[0]
+            mb = motherboards[0]
         else:
             warnings.append("""
 Tu cotización no incluye placa madre, que es necesaria para un PC.
@@ -186,7 +186,7 @@ Se ejecutarán las otras pruebas de compatibilidad
         max_case_video_card_length = None
         if cases:
             case = cases[0]
-            max_case_video_card_length = case.max_video_card_length
+            max_case_video_card_length = case.specs.max_video_card_length
         else:
             warnings.append("""
 Tu cotización no incluye gabinete, que es necesario para un PC.
@@ -196,7 +196,7 @@ Se ejecutarán las otras pruebas de compatibilidad
         psu = None
         if psus:
             psu = psus[0]
-        elif not case or case and not case.power_supply_power:
+        elif not case or case and not case.specs.power_supply_power:
             warnings.append("""
 Tu cotización no incluye fuente de poder, que es necesaria para un PC.
 Se ejecutarán las otras pruebas de compatibilidad
@@ -222,13 +222,13 @@ Se ejecutarán las otras pruebas de compatibilidad
         # TODO: Check that the power supply has the necessary connectors
 
         def check_video_card_length(video_card):
-            if video_card.length > 0:
+            if video_card.specs.length > 0:
                 if max_case_video_card_length:
-                    if video_card.length > max_case_video_card_length:
+                    if video_card.specs.length > max_case_video_card_length:
                         errors.append("""
 La tarjeta de video excede el largo máximo permitido por el gabinete (La
 tarjeta mide {} mm. y el gabinete aguanta hasta {} mm.)
-                                    """.format(video_card.length,
+                                    """.format(video_card.specs.length,
                                                max_case_video_card_length))
                 elif max_case_video_card_length == 0:
                     warnings.append("""
@@ -245,14 +245,14 @@ verificar su compatibilidad con el gabinete.
             processor_has_integrated_graphics = None
             if processor:
                 processor_has_integrated_graphics = \
-                    processor.graphics_id != 105914
+                    processor.specs.graphics_id != 105914
 
             motherboard_has_integrated_graphics = None
-            if motherboard:
+            if mb:
                 # 130455 is No Posee, 130507 is
                 # "redirige graficos del procesador"
                 motherboard_has_integrated_graphics = \
-                    motherboard.chipset_northbridge_graphics_id not in [
+                    mb.specs.chipset_northbridge_graphics_id not in [
                         130455, 130507]
 
             if processor_has_integrated_graphics is False and \
@@ -270,23 +270,23 @@ placa madre) no tiene gráficos integrados
             vc2 = video_cards[1]
 
             # Check that the cards have the same GPU
-            if vc1.gpu_id != vc2.gpu_id:
+            if vc1.specs.gpu_id != vc2.specs.gpu_id:
                 errors.append("""
 Para un arreglo SLI / CrossFire las tarjetas tienen que tener la misma GPU
                 """)
-            elif not vc1.gpu_has_multi_gpu_support:
+            elif not vc1.specs.gpu_has_multi_gpu_support:
                 errors.append("""
 La {} no permite SLI / Crossfire
                 """.format(vc1.gpu_unicode))
             else:
-                gpu_brand = vc1.gpu_brand_unicode
-                if gpu_brand == 'NVIDIA' and motherboard and \
-                        not motherboard.allows_sli:
+                gpu_brand = vc1.specs.gpu_brand_unicode
+                if gpu_brand == 'NVIDIA' and mb and \
+                        not mb.specs.allows_sli:
                     errors.append("""
 La placa madre no permite SLI
                     """)
-                elif gpu_brand == 'AMD' and motherboard and \
-                        not motherboard.allows_cf:
+                elif gpu_brand == 'AMD' and mb and \
+                        not mb.specs.allows_cf:
                     errors.append("""
                 La placa madre no permite CrossFireX
                                     """)
@@ -306,22 +306,22 @@ El sistema solo puede verificar la compatibilidad de 0, 1 o 2 tarjetas de video
         # Processor check
         # TODO Check if the processor / motherboard is for overclocking
 
-        if processor and motherboard:
-            if processor.socket_socket_id != \
-                    motherboard.chipset_northbridge_family_socket_socket_id:
+        if processor and mb:
+            if processor.specs.socket_socket_id != \
+                    mb.specs.chipset_northbridge_family_socket_socket_id:
                 errors.append("""El procesador tiene que ser del mismo socket
 que la placa madre. En tu cotización el procesador es socket {} y la placa
 madre es socket {}
 """.format(
-                    processor.socket_socket_unicode,
-                    motherboard.
+                    processor.specs.socket_socket_unicode,
+                    mb.specs.
                     chipset_northbridge_family_socket_socket_unicode))
 
             # Check for Kaby Lake processor in Skylake motherboard
 
-            if processor.core_id == 566207 and motherboard.chipset_id in \
+            if processor.specs.core_id == 566207 and mb.specs.chipset_id in \
                     [134521, 508999, 504945, 134630, 134639, 134847]:
-                if motherboard.product_id == 31746:
+                if mb.product_id == 31746:
                     warnings.append("""
 La MSI H110M PRO-VH PLUS viene actualizada para usar procesadores Intel de
  séptima generación en las tiendas AllTec, SpDigital, y Winpy. No es seguro si
@@ -349,8 +349,9 @@ Si prendes el PC con el procesador en la placa sin actualizar el equipo no
 """)
 
             # Check for non-Summit Ridge processor in current AM4 MB
-            if processor.socket_id == 590711 and processor.core_id != 590715 \
-                    and motherboard.chipset_id in [644835, 593827, 599473]:
+            if processor.specs.socket_id == 590711 \
+                    and processor.specs.core_id != 590715 \
+                    and mb.specs.chipset_id in [644835, 593827, 599473]:
                 warnings.append("""
 Para usar el procesador {} en la placa madre {} la placa madre necesita
 actualización de BIOS previa. \z\z
@@ -361,9 +362,9 @@ procesador. \z\z
 
 Actualmente no hay placas madres a la venta con soporte de fábrica para
 este procesador.
- """.format(processor.unicode, motherboard.unicode))
+ """.format(processor.name, mb.name))
 
-        if processor and not processor.includes_cooler and not cooler:
+        if processor and not processor.specs.includes_cooler and not cooler:
             errors.append("""
 El procesador de tu cotización no incluye cooler de fábrica, y tu cotización
 no considera un cooler dedicado.
@@ -382,12 +383,12 @@ no considera un cooler dedicado.
             itx_format, micro_atx_format, atx_format, eatx_format
         ]
 
-        if motherboard and case:
+        if mb and case:
             try:
                 motherboard_size_index = motherboard_formats_by_size.index(
-                    motherboard.format_format_id)
+                    mb.specs.format_format_id)
                 case_size_index = motherboard_formats_by_size.index(
-                    case.largest_motherboard_format_format_id)
+                    case.specs.largest_motherboard_format_format_id)
 
                 if motherboard_size_index > case_size_index:
                     errors.append("""
@@ -404,45 +405,45 @@ verificar si son compatibles.
         # RAM check
 
         for ram in rams:
-            if ram.is_ecc or ram.is_fully_buffered:
+            if ram.specs.is_ecc or ram.specs.is_fully_buffered:
                 errors.append("""
 La RAM {} es de servidor, no de PC desktop
-                """.format(ram.unicode))
+                """.format(ram.name))
 
-        if motherboard:
+        if mb:
             total_dimm_count = 0
             for ram in rams:
-                total_dimm_count += ram.capacity_dimm_quantity_value
+                total_dimm_count += ram.specs.capacity_dimm_quantity_value
 
-            if total_dimm_count > motherboard.memory_slots_quantity:
+            if total_dimm_count > mb.specs.memory_slots_quantity:
                 errors.append("""
 Tu cotización incluye {} sticks de RAM, pero la placa madre solo aguanta {}
                 """.format(total_dimm_count,
-                           motherboard.memory_slots_quantity))
+                           mb.specs.memory_slots_quantity))
 
             for ram in rams:
-                if ram.bus_bus_bus_format_id != \
-                        motherboard.memory_slots_mtype_itype_format_id:
+                if ram.specs.bus_bus_bus_format_id != \
+                        mb.specs.memory_slots_mtype_itype_format_id:
                     errors.append("""
 La RAM {} es de formato {} pero la placa madre usa RAMs {}
                     """.format(
-                        ram.unicode, ram.bus_bus_bus_format_unicode,
-                        motherboard.memory_slots_mtype_itype_format_unicode))
+                        ram.name, ram.specs.bus_bus_bus_format_unicode,
+                        mb.specs.memory_slots_mtype_itype_format_unicode))
 
-                if ram.bus_bus_bus_type_id != \
-                        motherboard.memory_slots_mtype_itype_type_id:
+                if ram.specs.bus_bus_bus_type_id != \
+                        mb.specs.memory_slots_mtype_itype_type_id:
                     errors.append("""
             La RAM {} es de tipo {} pero la placa madre usa RAMs {}
                                 """.format(
-                        ram.unicode, ram.bus_bus_bus_type_unicode,
-                        motherboard.memory_slots_mtype_itype_type_unicode))
+                        ram.name, ram.specs.bus_bus_bus_type_unicode,
+                        mb.specs.memory_slots_mtype_itype_type_unicode))
 
             # If the motherboard is socket 1151 DDR3, warn the use of DDR3L
             # memory
 
-            if motherboard.chipset_northbridge_family_socket_socket_id == \
+            if mb.specs.chipset_northbridge_family_socket_socket_id == \
                     106523 and \
-                    motherboard.memory_slots_mtype_itype_type_id == 130770:
+                    mb.specs.memory_slots_mtype_itype_type_id == 130770:
                 warnings.append("""
 Para las plataformas Intel socket 1151 DDR3 se recomienda el uso de RAM DDR3L
 (DDR3 de 1.35V). El uso de RAM DDR3 estándar (DDR3 de 1.5V) puede afectar el
@@ -452,41 +453,41 @@ procesador con el paso del tiempo.
         # HDD
 
         if case:
-            if len(hdds) > case.internal_3_1_2_bays:
+            if len(hdds) > case.specs.internal_3_1_2_bays:
                 errors.append("""
 Tu cotización include {} discos duros pero el gabinete solo aguanta {}
-                """.format(len(hdds), case.internal_3_1_2_bays))
+                """.format(len(hdds), case.specs.internal_3_1_2_bays))
 
         for hdd in hdds:
             # If it is not SATA 1, 2 or 3, error
-            if hdd.bus_bus_id not in [130996, 131002, 131011]:
+            if hdd.specs.bus_bus_id not in [130996, 131002, 131011]:
                 errors.append("""
 El disco duro {} no es para PCs desktop
-                """.format(hdd.unicode))
+                """.format(hdd.name))
 
-            if hdd.size_id == 204414:
+            if hdd.specs.size_id == 204414:
                 errors.append("""
 El disco duro {} es para notebooks. Sirven en PCs desktop pero son más lentos
 y tienen precios similares.
-                """.format(hdd.unicode))
+                """.format(hdd.name))
 
             # If it has less than 7200 RPM, warning
-            if hdd.rpm_value < 7200:
+            if hdd.specs.rpm_value < 7200:
                 warnings.append("""
 El disco duro {} es de {} rpm. Por rendimiento es preferible usar uno de
  7200 rpm, además que usualmente tienen casi el mismo precio.
-""".format(hdd.unicode, hdd.rpm_value))
+""".format(hdd.name, hdd.specs.rpm_value))
 
         # PSU
 
-        if psu and case and case.power_supply_power:
+        if psu and case and case.specs.power_supply_power:
             warnings.append("""
 Tu cotización incluye una fuente de poder, pero el gabinete ya incluye una.
 Para gabinetes ATX estándar puedes cambiar la fuente incluida por otra, esto
 es una observación solamente.
             """)
 
-        if case and case.power_supply_power and video_cards and not psu:
+        if case and case.specs.power_supply_power and video_cards and not psu:
             warnings.append("""
 Para equipos con tarjeta de video dedicada se recomienda comprar una fuente de
 poder de buena calidad, las incluidas con los gabinetes usualmente no son
@@ -501,28 +502,28 @@ buenas.
 
         if cooler:
             cooler_socket_ids = []
-            for socket_ids in cooler.grouped_sockets_sockets_socket_id:
+            for socket_ids in cooler.specs.grouped_sockets_sockets_socket_id:
                 cooler_socket_ids.extend(list(socket_ids))
 
-            if motherboard:
-                if motherboard.chipset_northbridge_family_socket_socket_id \
+            if mb:
+                if mb.specs.chipset_northbridge_family_socket_socket_id \
                         not in cooler_socket_ids:
                     errors.append("""
 El cooler no es compatible con el socket de la placa madre.
                     """)
-            if processor and processor.socket_socket_id not in \
+            if processor and processor.specs.socket_socket_id not in \
                     cooler_socket_ids:
                 errors.append("""
 El cooler no es compatible con el socket del procesador.
                 """)
 
-            if case and case.max_cpu_cooler_height:
-                if cooler.height > case.max_cpu_cooler_height:
+            if case and case.specs.max_cpu_cooler_height:
+                if cooler.specs.height > case.specs.max_cpu_cooler_height:
                     errors.append("""
 El cooler no entra en el gabinete.
                 """)
 
-            if processor and processor.includes_cooler:
+            if processor and processor.specs.includes_cooler:
                 warnings.append("""
 Tu cotización incluye un cooler pero el procesador viene con un cooler
 incluido. Puedes usar un cooler distinto al de fábrica pero usualmente no es
@@ -549,7 +550,7 @@ necesario.
         for monitor in monitors:
             has_digital_input = False
             for port_id in digital_video_port_ids:
-                if port_id in monitor.video_ports_port_port_id:
+                if port_id in monitor.specs.video_ports_port_port_id:
                     has_digital_input = True
                     break
 
@@ -557,7 +558,7 @@ necesario.
                 warnings.append("""
 El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
  DisplayPort). Las tarjetas de video actuales solo funcionan con esas entradas
- y no son compatibles con el puerto VGA.""".format(monitor.unicode))
+ y no son compatibles con el puerto VGA.""".format(monitor.name))
 
         warnings = [' '.join(e.split()).replace('\z', '\n') for e in
                     warnings]

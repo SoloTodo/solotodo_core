@@ -52,7 +52,8 @@ class CategorySpecsForm(forms.Form):
 
         search_bucket_agg = None
         if bucket_field:
-            search_bucket_agg = A('terms', field='specs.' + bucket_field, size=10000)
+            search_bucket_agg = A('terms', field='specs.' + bucket_field,
+                                  size=10000)
 
         for field in self.category_specs_filters:
             aggs_filters = Q()
@@ -62,7 +63,8 @@ class CategorySpecsForm(forms.Form):
             for other_field in other_fields:
                 aggs_filters &= fields_es_filters_dict[other_field]
 
-            field_agg = A('terms', field='specs.' + field.es_id_field(), size=1000)
+            field_agg = A('terms', field='specs.' + field.es_id_field(),
+                          size=1000)
 
             if search_bucket_agg:
                 # 'search_bucket' is just a name, just need to be consistent

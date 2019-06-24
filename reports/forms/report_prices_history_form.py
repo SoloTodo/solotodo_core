@@ -113,7 +113,7 @@ class ReportPricesHistoryForm(forms.Form):
             es_search = EsProduct.search().filter(
                 'terms', product_id=product_ids)
             es_dict = {e.product_id: e.to_dict()
-                       for e in es_search[:100000].execute()}
+                       for e in es_search.scan()}
 
             specs_columns = CategoryColumn.objects.filter(
                 field__category=category,
@@ -298,7 +298,7 @@ class ReportPricesHistoryForm(forms.Form):
             if category:
                 es_entry = es_dict[eh.entity.product_id]
                 for column in specs_columns:
-                    worksheet.write(row, col, es_entry.get(
+                    worksheet.write(row, col, es_entry['specs'].get(
                         column.field.es_field, 'N/A'))
                     col += 1
             else:

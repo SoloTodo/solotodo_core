@@ -1276,7 +1276,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         if 'picture' not in specs:
             return Response({'detail': 'No picture found for product'},
-                           status=status.HTTP_404_NOT_FOUND)
+                            status=status.HTTP_404_NOT_FOUND)
 
         picture = specs['picture']
         resized_picture = get_thumbnail(picture, **form.thumbnail_kwargs())

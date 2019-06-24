@@ -95,8 +95,7 @@ class ReportWeeklyPricesForm(forms.Form):
         product_ids = [x['product'] for x in entities.values('product')]
 
         es_search = EsProduct.search().filter('terms', product_id=product_ids)
-        es_dict = {e.product_id: e.to_dict()
-                   for e in es_search[:100000].execute()}
+        es_dict = {e.product_id: e.to_dict() for e in es_search.scan()}
 
         output = io.BytesIO()
 
@@ -295,8 +294,8 @@ class ReportWeeklyPricesForm(forms.Form):
             col += 1
 
             for column in specs_columns:
-                worksheet.write(row, col, es_entry.get(column.field.es_field,
-                                                       'N/A'))
+                worksheet.write(row, col, es_entry['specs'].get(
+                    column.field.es_field, 'N/A'))
                 col += 1
 
             row += 1

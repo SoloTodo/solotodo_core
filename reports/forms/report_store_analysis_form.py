@@ -10,7 +10,7 @@ from django.db.models import Count
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.models import Category, Store, Entity, Product, EsProduct
+from solotodo.models import Category, Store, Entity, Product
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -88,11 +88,6 @@ class ReportStoreAnalysisForm(forms.Form):
         ).order_by('active_registry__{}'.format(price_type))
 
         product_ids = list(set([e.product_id for e in es]))
-
-        brands_search = EsProduct.search().filter(
-            'terms', product_id=product_ids)
-        brands_dict = {e.product_id: getattr(e, 'brand_unicode', None)
-                       for e in brands_search[:100000].execute()}
 
         product_leads = Product.objects.filter(pk__in=product_ids) \
             .filter(
@@ -225,8 +220,7 @@ class ReportStoreAnalysisForm(forms.Form):
 
             # Brand
 
-            brand = brands_dict[product.id]
-            worksheet.write(row, col, brand)
+            worksheet.write(row, col, str(product.brand))
             col += 1
 
             # SKU

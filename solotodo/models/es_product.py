@@ -1,8 +1,8 @@
 from elasticsearch_dsl import Text, Keyword, Object, Integer, Date
-from .es_product_entity import EsProductEntity
+from .es_product_relationship import EsProductRelationship
 
 
-class EsProduct(EsProductEntity):
+class EsProduct(EsProductRelationship):
     product_id = Integer()
     name = Text(fields={'raw': Keyword()})
     category_id = Integer()

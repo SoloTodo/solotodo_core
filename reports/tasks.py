@@ -6,7 +6,7 @@ from django.http import QueryDict
 from reports.forms.report_daily_prices_form import ReportDailyPricesForm
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
 from reports.models import Report, ReportDownload
-from solotodo.models import SoloTodoUser
+from solotodo.models import SoloTodoUser, EsProduct
 
 
 @shared_task(queue='general', ignore_result=True, task_time_limit=1800)
@@ -20,12 +20,13 @@ def send_current_prices_task(user_id, query_string):
     assert form.is_valid()
 
     category = form.cleaned_data['category']
-    spec_form_class = category.specs_form()
+    spec_form_class = category.specs_form(form_type='es')
     spec_form = spec_form_class(q_dict)
 
     assert spec_form.is_valid()
 
-    es_products_search = spec_form.get_es_products()
+    es_products_search = EsProduct.category_search(category)
+    es_products_search = spec_form.get_es_products(es_products_search)
     report_data = form.generate_report(es_products_search)
 
     report_filename = '{}.xlsx'.format(report_data['filename'])

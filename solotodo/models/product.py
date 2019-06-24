@@ -122,8 +122,8 @@ class Product(models.Model):
         search = EsProduct.search().filter(
             'terms', product_id=product_ids)[:len(product_ids)]
         response = search.execute().to_dict()
-        specs_dict = {e['_source']['product_id']: e['_source'] for e in
-                      response['hits']['hits']}
+        specs_dict = {e['_source']['product_id']: e['_source']['specs']
+                      for e in response['hits']['hits']}
 
         for product in products:
             product._specs = specs_dict[product.id]

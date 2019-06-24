@@ -1,11 +1,11 @@
 from datetime import timedelta
 from django.db.models import Min
 from elasticsearch_dsl import Text, Keyword, Integer, Date, ScaledFloat
-from .es_product_entity import EsProductEntity
+from .es_product_relationship import EsProductRelationship
 from solotodo.models import Lead
 
 
-class EsEntity(EsProductEntity):
+class EsEntity(EsProductRelationship):
     entity_id = Integer()
     store_id = Integer()
     store_name = Text(fields={'raw': Keyword()})

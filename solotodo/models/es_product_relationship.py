@@ -1,13 +1,13 @@
 from elasticsearch_dsl import Document, Join
 
 
-class EsProductEntity(Document):
+class EsProductRelationship(Document):
     product_relationships = Join(relations={'product': 'entity'})
 
     @classmethod
     def _matches(cls, hit):
-        # EsProductEntity is an abstract class, make sure it never gets used
-        # for deserialization
+        # EsProductRelationship is an abstract class, make sure it never
+        # gets used for deserialization
         return False
 
     class Index:

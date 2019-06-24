@@ -1215,7 +1215,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         for field in fields:
             field_value = product_specs.get(field)
-            search = search.filter('term', **{field: field_value})
+            search = search.filter('term', **{'specs.' + field: field_value})
 
         es_products_dict = {
             es_product.product_id: es_product.to_dict()

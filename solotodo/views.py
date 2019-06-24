@@ -954,12 +954,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         if entity.category != cell_category:
             cell_plan_choices = Product.objects.none()
         elif entity.cell_plan_name:
-            filter_parameters = {
-                'association_name.keyword': entity.cell_plan_name
-            }
-
             matching_cell_plans = EsProduct.category_search(
-                cell_plan_category).filter('term', **filter_parameters) \
+                cell_plan_category).filter(
+                'term',
+                specs__association_name__keyword=entity.cell_plan_name)\
                 .execute()
 
             cell_plan_ids = [x.product_id for x in matching_cell_plans]

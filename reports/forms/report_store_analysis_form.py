@@ -89,11 +89,6 @@ class ReportStoreAnalysisForm(forms.Form):
 
         product_ids = list(set([e.product_id for e in es]))
 
-        brands_search = Product.es_search().filter(
-            'terms', product_id=product_ids)
-        brands_dict = {e.product_id: getattr(e, 'brand_unicode', None)
-                       for e in brands_search[:100000].execute()}
-
         product_leads = Product.objects.filter(pk__in=product_ids) \
             .filter(
             entity__entityhistory__lead__timestamp__gte=reference_date,
@@ -225,8 +220,7 @@ class ReportStoreAnalysisForm(forms.Form):
 
             # Brand
 
-            brand = brands_dict[product.id]
-            worksheet.write(row, col, brand)
+            worksheet.write(row, col, str(product.brand))
             col += 1
 
             # SKU

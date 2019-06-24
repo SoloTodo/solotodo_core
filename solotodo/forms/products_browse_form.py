@@ -1,3 +1,5 @@
+# TODO: Delete this class in favor of EsProductsBrowseForm
+
 from collections import OrderedDict
 
 import re
@@ -9,7 +11,8 @@ from django.db.models.functions import Coalesce
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.filters import ProductsBrowseEntityFilterSet, \
     CategoryFullBrowseEntityFilterSet
-from solotodo.models import Country, Product, Currency, CategorySpecsFilter
+from solotodo.models import Country, Product, Currency, CategorySpecsFilter, \
+    EsProduct
 from solotodo.pagination import ProductsBrowsePagination
 from solotodo.serializers import CategoryBrowseResultSerializer, \
     CategoryFullBrowseResultSerializer
@@ -60,7 +63,7 @@ class ProductsBrowseForm(forms.Form):
 
         product_ids = set(entry['product']
                           for entry in entities.values('product'))
-        es_search = category.es_search().filter(
+        es_search = EsProduct.category_search(category).filter(
             'terms', product_id=list(product_ids))
 
         specs_form_class = category.specs_form()
@@ -165,8 +168,7 @@ class ProductsBrowseForm(forms.Form):
 
         product_ids = [entry['product'] for entry in entities]
 
-        es_search = Product.es_search().filter(
-            'terms', product_id=product_ids)
+        es_search = EsProduct.search().filter('terms', product_id=product_ids)
 
         search = self.cleaned_data['search']
         if search:
@@ -228,7 +230,7 @@ class ProductsBrowseForm(forms.Form):
 
         product_ids = set(entry['product']
                           for entry in entities.values('product'))
-        es_search = category.es_search().filter(
+        es_search = EsProduct.category_search(category).filter(
             'terms', product_id=list(product_ids))
 
         specs_form_class = category.specs_form()
@@ -267,62 +269,6 @@ class ProductsBrowseForm(forms.Form):
             'aggs': filter_aggs,
             'results': serializer.data,
             'price_ranges': price_ranges
-        }
-
-    def get_share_of_shelves(self, category, request):
-        data = self.get_category_entities(category, request)
-        product_ids = [p['product']['id'] for p in data['results']]
-        entities_agg = {}
-
-        es_search = Product.es_search().filter('terms', product_id=product_ids)
-        es_dict = {e.product_id: e.to_dict()
-                   for e in es_search[:len(product_ids)].execute()}
-
-        query_params = request.query_params.copy()
-        bucketing_field = query_params.get('bucketing_field')
-
-        spec_filters = CategorySpecsFilter.objects.filter(
-            category=category,
-            name=bucketing_field)
-
-        if not spec_filters:
-            raise KeyError
-
-        spec_filter = spec_filters[0]
-
-        if spec_filter.meta_model.is_primitive():
-            es_field = spec_filter.es_field
-        else:
-            es_field = spec_filter.es_field + '_unicode'
-
-        for p in data['results']:
-            product_id = p['product']['id']
-            es_entry = es_dict[product_id]
-
-            key = es_entry[es_field]
-
-            if isinstance(key, bool):
-                key = 'Sí' if key else 'No'
-
-            if key in entities_agg:
-                entities_agg[key] += len(p['entities'])
-            else:
-                entities_agg[key] = len(p['entities'])
-
-        result = []
-
-        for key, count in entities_agg.items():
-            result.append({
-                "label": key,
-                "doc_count": count,
-            })
-
-        result = sorted(result, key=lambda k: k['doc_count'], reverse=True)
-
-        return {
-            "aggs": data['aggs'],
-            "results": result,
-            "price_ranges": data['price_ranges']
         }
 
     def initial_entities(self, request):
@@ -415,14 +361,14 @@ class ProductsBrowseForm(forms.Form):
 
         return product_id_to_prices
 
-    def bucket_results(self, entities, es_results, bucket_field='product_id'):
+    def bucket_results(self, entities, es_results, bucket_field=None):
         ordering = self.ordering_or_default()
         product_id_to_prices = self.product_prices_dict(entities)
 
         product_ids = [entity['product'] for entity in entities]
 
         product_id_to_specs = {
-            entry['_source']['product_id']: entry['_source']
+            entry['_source']['product_id']: entry['_source']['specs']
             for entry in es_results.to_dict()['hits']['hits']
         }
 
@@ -436,9 +382,6 @@ class ProductsBrowseForm(forms.Form):
             full_instance._specs = product_id_to_specs[product_id]
             product_id_to_full_instance[product_id] = full_instance
 
-        if not bucket_field:
-            bucket_field = 'product_id'
-
         bucketed_results = OrderedDict()
 
         if ordering in self.DB_ORDERING_CHOICES:
@@ -450,7 +393,10 @@ class ProductsBrowseForm(forms.Form):
             for entry in entities:
                 product = product_id_to_full_instance[entry['product']]
 
-                bucket = product.specs[bucket_field]
+                if bucket_field:
+                    bucket = product.specs[bucket_field]
+                else:
+                    bucket = product.id
 
                 if bucket not in bucketed_results:
                     bucketed_results[bucket] = OrderedDict()
@@ -469,7 +415,11 @@ class ProductsBrowseForm(forms.Form):
 
             for es_product in es_results:
                 product = product_id_to_full_instance[es_product['product_id']]
-                bucket = product.specs[bucket_field]
+
+                if bucket_field:
+                    bucket = product.specs[bucket_field]
+                else:
+                    bucket = product.id
 
                 if bucket not in bucketed_results:
                     bucketed_results[bucket] = OrderedDict()

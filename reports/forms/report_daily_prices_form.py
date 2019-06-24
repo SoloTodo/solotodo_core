@@ -12,7 +12,7 @@ from guardian.shortcuts import get_objects_for_user
 from category_columns.models import CategoryColumn
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Category, Store, Country, StoreType, Currency, \
-    Entity, Product, EntityHistory
+    Entity, EntityHistory, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -104,14 +104,14 @@ class ReportDailyPricesForm(forms.Form):
 
         product_ids = [x['product'] for x in entities.values('product')]
 
-        es_search = Product.es_search().filter('terms', product_id=product_ids)
+        es_search = EsProduct.search().filter('terms', product_id=product_ids)
 
         if brand:
             es_search = es_search.filter(
                 'term', **{'brand_unicode.keyword': brand})
 
         es_dict = {e.product_id: e.to_dict()
-                   for e in es_search[:100000].execute()}
+                   for e in es_search.scan()}
 
         output = io.BytesIO()
 
@@ -186,13 +186,6 @@ class ReportDailyPricesForm(forms.Form):
             es_entry = es_dict[entity.product_id]
 
             # Product
-
-            # worksheet.write_url(
-            #     row, col,
-            #     '{}products/{}'.format(settings.BACKEND_HOST,
-            #                            entity.product.id),
-            #     string=str(entity.product),
-            #     cell_format=url_format)
 
             worksheet.write(row, col, str(entity.product))
 
@@ -282,8 +275,9 @@ class ReportDailyPricesForm(forms.Form):
             col += 1
 
             for column in specs_columns:
-                worksheet.write(row, col, es_entry.get(column.field.es_field,
-                                                       'N/A'))
+                worksheet.write(
+                    row, col,
+                    es_entry['specs'].get(column.field.es_field, 'N/A'))
                 col += 1
 
             row += 1

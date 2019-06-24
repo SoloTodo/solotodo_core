@@ -1,10 +1,7 @@
-from django.conf import settings
 from django.db import models
-from elasticsearch_dsl import Search
 from guardian.shortcuts import get_objects_for_user
 
 from metamodel.models import MetaModel
-from solotodo.forms.category_specs_form import CategorySpecsForm
 from solotodo.models.category_tier import CategoryTier
 from solotodo.models.utils import rs_refresh_model
 
@@ -40,24 +37,33 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-    def es_search(self):
-        return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX
-                      ).filter('term',
-                               **{'category.keyword': str(self.meta_model)})
+    def specs_form(self, form_type='db'):
+        from solotodo.forms.category_specs_form import CategorySpecsForm
+        from solotodo.forms.es_category_specs_form import EsCategorySpecsForm
 
-    def specs_form(self):
+        # TODO Remove DB form type once browse code path is eliminated
+
+        if form_type == 'db':
+            base_class = CategorySpecsForm
+            prefix = 'DB'
+        elif form_type == 'es':
+            base_class = EsCategorySpecsForm
+            prefix = 'ES'
+        else:
+            raise Exception('Invalid form type')
+
         form_class = type(
-            '{}SpecsForm'.format(self.meta_model.name),
-            (CategorySpecsForm,),
+            '{}{}SpecsForm'.format(self.meta_model.name, prefix),
+            (base_class,),
             {
                 'category': self,
                 'category_specs_filters': [],
                 'ordering_value_to_es_field_dict': {}
             })
 
-        for category_specs_order in self.categoryspecsfilter_set.\
+        for category_specs_filter in self.categoryspecsfilter_set.\
                 select_related('meta_model'):
-            form_class.add_filter(category_specs_order)
+            form_class.add_filter(category_specs_filter)
 
         for category_specs_order in self.categoryspecsorder_set.all():
             form_class.add_order(category_specs_order)

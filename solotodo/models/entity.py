@@ -575,18 +575,15 @@ class Entity(models.Model):
             pk=self.pk
         )
 
-        other_entities_cell_plan_names = [e.cell_plan_name
-                                          for e in other_entities]
+        other_cell_plan_names = [e.cell_plan_name for e in other_entities]
 
         cell_plan_category = Category.objects.get(
             pk=settings.CELL_PLAN_CATEGORY)
 
-        filter_parameters = {
-            'association_name.keyword': other_entities_cell_plan_names
-        }
-
         matching_cell_plans = EsProduct.category_search(cell_plan_category)\
-            .filter('terms', **filter_parameters)[:100] \
+            .filter(
+            'terms',
+            specs__association_name__keyword=other_cell_plan_names)[:100] \
             .execute()
 
         cell_plan_ids = [cell_plan.product_id
@@ -595,7 +592,8 @@ class Entity(models.Model):
         cell_plans_dict = iterable_to_dict(cell_plans)
 
         cell_plans_dict = {
-            cell_plan.association_name: cell_plans_dict[cell_plan.product_id]
+            cell_plan.specs['association_name']:
+                cell_plans_dict[cell_plan.product_id]
             for cell_plan in matching_cell_plans
         }
 

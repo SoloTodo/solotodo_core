@@ -70,8 +70,6 @@ class BannerHistoricParticipationForm(forms.Form):
     def get_filtered_banners(self):
         stores = self.cleaned_data['stores']
         sections = self.cleaned_data['sections']
-        brands = self.cleaned_data['brands']
-        categories = self.cleaned_data['categories']
         subsection_types = self.cleaned_data['subsection_types']
         timestamp = self.cleaned_data['timestamp']
 
@@ -99,16 +97,12 @@ class BannerHistoricParticipationForm(forms.Form):
         if subsection_types:
             banners = banners.filter(subsection__type__in=subsection_types)
 
-        if brands:
-            banners = banners.filter(asset__contents__brand__in=brands)
-
-        if categories:
-            banners = banners.filter(asset__contents__category__in=categories)
-
         return banners.distinct().order_by('id')
 
     def get_data(self):
         banners = self.get_filtered_banners()
+        brands = self.cleaned_data['brands']
+        categories = self.cleaned_data['categories']
 
         grouping_field = self.cleaned_data['grouping_field']
         db_grouping_field = self.fields_data[grouping_field]['db_name']
@@ -136,6 +130,12 @@ class BannerHistoricParticipationForm(forms.Form):
         for banner in banners:
             asset = banner.asset
             for content in asset.contents.all():
+                if categories and content.category not in categories:
+                    continue
+
+                if brands and content.brand not in brands:
+                    continue
+
                 if grouping_field in ['brand', 'category']:
                     grouping_label = getattr(
                         content, grouping_field).name
@@ -156,6 +156,7 @@ class BannerHistoricParticipationForm(forms.Form):
 
         banner_aggs_result = defaultdict(lambda: {'participation_score': 0})
         year_week_participation = defaultdict(lambda: 0)
+        grouping_labels = []
 
         for banner in banners:
             year_week = '{}-{}'.format(banner.year, banner.week)
@@ -164,7 +165,26 @@ class BannerHistoricParticipationForm(forms.Form):
                 store_updates[(year_week, store_name)]
 
             for content in banner.asset.contents.all():
-                grouping_label = content.brand.name
+                if categories and content.category not in categories:
+                    continue
+
+                if brands and content.brand not in brands:
+                    continue
+
+                if grouping_field in ['brand', 'category']:
+                    grouping_label = getattr(
+                        content, grouping_field).name
+                elif grouping_field in ['section', 'subsection_type', 'type']:
+                    if grouping_field == 'subsection_type':
+                        grouping_field = 'type'
+
+                    grouping_label = getattr(
+                        banner.subsection, grouping_field).name
+                else:
+                    grouping_label = getattr(
+                        banner.update, grouping_field).name
+
+                grouping_labels.append(grouping_label)
 
                 normalized_store_participation_score = \
                     content.percentage / year_week_store_update_count
@@ -179,6 +199,9 @@ class BannerHistoricParticipationForm(forms.Form):
         for agg in position_aggs:
             year_week = '{}-{}'.format(agg['year'], agg['week'])
             grouping_label = agg['grouping_label']
+
+            if grouping_label not in grouping_labels:
+                continue
 
             banner_aggs_result[(year_week, grouping_label)][
                 'position_avg'] = agg['position_avg']

@@ -1,5 +1,6 @@
 import io
 import xlsxwriter
+from collections import defaultdict
 
 from django import forms
 from django.core.files.base import ContentFile
@@ -34,6 +35,15 @@ class BannerActiveParticipationForm(forms.Form):
             'db_name': 'update__store'
         }
     }
+
+    label_getters = {
+        'brand': lambda x: x['content'].brand.name,
+        'category': lambda x: x['content'].category.name,
+        'section': lambda x: x['banner'].subsection.section.name,
+        'subsection_type': lambda x: x['banner'].subsection.type.name,
+        'type': lambda x: x['banner'].subsection.type.name,
+        'store': lambda x: x['banner'].update.store.name}
+
     stores = forms.ModelMultipleChoiceField(
         queryset=Store.objects.all(),
         required=False)
@@ -65,8 +75,6 @@ class BannerActiveParticipationForm(forms.Form):
     def get_filtered_banners(self):
         stores = self.cleaned_data['stores']
         sections = self.cleaned_data['sections']
-        brands = self.cleaned_data['brands']
-        categories = self.cleaned_data['categories']
         subsection_types = self.cleaned_data['subsection_types']
 
         banners = Banner.objects.get_active().filter(
@@ -82,39 +90,51 @@ class BannerActiveParticipationForm(forms.Form):
         if subsection_types:
             banners = banners.filter(subsection__type__in=subsection_types)
 
-        if brands:
-            banners = banners.filter(asset__contents__brand__in=brands)
-
-        if categories:
-            banners = banners.filter(asset__contents__category__in=categories)
-
-        return banners
+        return banners.distinct()
 
     def get_common_aggs(self, banners):
+        brands = self.cleaned_data['brands']
+        categories = self.cleaned_data['categories']
+
+        contents_data = banners.get_contents_data(brands, categories)
+
         grouping_field = self.cleaned_data['grouping_field']
         db_grouping_field = self.fields_data[grouping_field]['db_name']
-        total_participation = banners.aggregate(
-            Sum('asset__contents__percentage'))[
-            'asset__contents__percentage__sum']
 
-        banner_aggs = banners.order_by(db_grouping_field) \
+        total_participation = 0
+        participation_aggs = defaultdict(lambda: 0)
+        grouping_labels = []
+
+        for content_data in contents_data:
+            total_participation += content_data['content'].percentage
+            label = self.label_getters[grouping_field](content_data)
+            if label not in grouping_labels:
+                grouping_labels.append(label)
+            participation_aggs[label] += content_data['content'].percentage
+
+        position_raw_aggs = banners.order_by(db_grouping_field) \
             .values(db_grouping_field) \
             .annotate(
             grouping_label=F(db_grouping_field + '__name'),
-            participation_score=Sum('asset__contents__percentage'),
-            position_avg=Avg('position')
-        ).order_by('-participation_score')
+            position_avg=Avg('position'))
+
+        position_aggs = {p['grouping_label']: p['position_avg']
+                         for p in position_raw_aggs}
 
         banner_aggs_result = []
 
-        for agg in banner_aggs:
+        for label in grouping_labels:
             banner_aggs_result.append({
-                'grouping_label': agg['grouping_label'],
-                'participation_score': agg['participation_score'],
+                'grouping_label': label,
+                'participation_score': participation_aggs[label],
                 'participation_percentage':
-                    agg['participation_score'] * 100 / total_participation,
-                'position_avg': agg['position_avg']
+                    participation_aggs[label] * 100 / total_participation,
+                'position_avg': position_aggs[label]
             })
+
+        banner_aggs_result = sorted(
+            banner_aggs_result, key=lambda x: x['participation_score'],
+            reverse=True)
 
         return banner_aggs_result
 
@@ -125,28 +145,16 @@ class BannerActiveParticipationForm(forms.Form):
         return banner_aggs_result
 
     def get_banner_participation_as_xls(self):
+        brands = self.cleaned_data['brands']
+        categories = self.cleaned_data['categories']
+
         banners = self.get_filtered_banners()\
             .select_related(
             'update__store',
             'subsection__section',
             'subsection__type')
 
-        # # # XLS  SPECIFIC AGGS # # #
         grouping_field = self.cleaned_data['grouping_field']
-        db_grouping_field = self.fields_data[grouping_field]['db_name']
-
-        total_participation = banners.aggregate(
-            Sum('asset__contents__percentage'))[
-            'asset__contents__percentage__sum']
-
-        banner_aggs = banners.order_by('id', db_grouping_field)\
-            .values('id', db_grouping_field+'__name') \
-            .annotate(
-            grouping_label=F(db_grouping_field + '__name'),
-            participation_score=Sum('asset__contents__percentage')
-        )
-
-        banners_dict = {b.id: b for b in banners}
 
         # # # COMMON AGGS # # #
         global_aggs = self.get_common_aggs(banners)
@@ -220,9 +228,13 @@ class BannerActiveParticipationForm(forms.Form):
             worksheet.write(0, idx, header, header_format)
 
         row = 1
+        contents_data = banners.get_contents_data(brands, categories)
+        total_participation = 1
 
-        for banner_agg in banner_aggs:
-            banner = banners_dict[banner_agg['id']]
+        for content_data in contents_data:
+            banner = content_data['banner']
+            content = content_data['content']
+            grouping_label = self.label_getters[grouping_field](content_data)
 
             col = 0
             worksheet.write(row, col, banner.id)
@@ -238,8 +250,8 @@ class BannerActiveParticipationForm(forms.Form):
             worksheet.write(row, col, banner.subsection.section.name)
 
             col += 1
-            worksheet.write(row, col, banner.subsection.name)
 
+            worksheet.write(row, col, banner.subsection.name)
             col += 1
             worksheet.write(row, col, banner.subsection.type.name)
 
@@ -251,20 +263,21 @@ class BannerActiveParticipationForm(forms.Form):
             worksheet.write(row, col, banner.destination_urls, url_format)
 
             col += 1
-            worksheet.write(row, col, banner_agg['grouping_label'])
+            worksheet.write(row, col, grouping_label)
 
             col += 1
-            worksheet.write(row, col, banner_agg['participation_score'])
+            worksheet.write(row, col, content.percentage)
 
             col += 1
             worksheet.write(
                 row, col,
-                (banner_agg['participation_score']*100)/total_participation)
+                (content.percentage * 100) / total_participation)
 
             col += 1
             worksheet.write(row, col, banner.position)
 
             row += 1
+
 
         workbook.close()
         output.seek(0)

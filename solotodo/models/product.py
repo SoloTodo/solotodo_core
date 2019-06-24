@@ -226,21 +226,18 @@ class Product(models.Model):
             'terms', product_id=product_ids)
 
         if brands is not None:
-            filter_parameters = {
-                'brand_unicode': brands
-            }
             es_brand_products = es_brand_products.filter(
-                'terms', **filter_parameters)
+                'terms', specs__brand_unicode=brands)
 
         es_results_dict = {e.product_id: e.to_dict()
-                           for e in es_brand_products[:100000].execute()}
+                           for e in es_brand_products.scan()}
 
         for entity in candidates_query:
             product = entity.product
             candidate_specs = es_results_dict.get(entity.product_id)
             if not candidate_specs:
                 continue
-            product._specs = candidate_specs
+            product._specs = candidate_specs['specs']
             candidates.append(product)
 
         # Obtain the (field_name, weight) pairs

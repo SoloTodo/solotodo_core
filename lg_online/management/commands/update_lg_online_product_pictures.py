@@ -21,8 +21,13 @@ def normalize_filename(filename):
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('--products', nargs='*', type=int)
+
     def handle(self, *args, **options):
-        f = open('lg_online_products.json')
+        product_ids = options['products']
+
+        f = open('lg_online/products.json')
         product_entries = json.loads(f.read())
         f.close()
 
@@ -35,6 +40,11 @@ class Command(BaseCommand):
         for product_idx, product_entry in enumerate(product_entries):
             print('Processing: {} / {}'.format(product_idx + 1,
                                                len(product_entries)))
+
+            if product_ids and product_entry['productId'] not in product_ids:
+                print('Skipping')
+                continue
+
             primary_picture_id = product_entry['mainPictureId']
             secondary_pictures_id = product_entry['secondaryPicturesId']
 

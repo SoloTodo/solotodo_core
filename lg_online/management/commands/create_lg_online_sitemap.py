@@ -9,7 +9,7 @@ from solotodo.models import Product
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        f = open('lg_online_products.json')
+        f = open('lg_online/products.json')
         product_entries = json.loads(f.read())
         f.close()
 

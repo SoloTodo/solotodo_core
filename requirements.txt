@@ -4,6 +4,7 @@ beautifulsoup4==4.6.0
 billiard==3.5.0.5
 boto3==1.4.4
 botocore==1.5.82
+cachetools==3.1.1
 celery==4.1.1
 certifi==2017.4.17
 chardet==3.0.4
@@ -34,7 +35,11 @@ docutils==0.13.1
 elasticsearch==7.0.2
 elasticsearch-dsl==7.0.0
 geoip2==2.5.0
+google-api-python-client==1.7.9
+google-auth==1.6.3
+google-auth-httplib2==0.0.3
 html2text==2016.9.19
+httplib2==0.13.0
 idna==2.5
 ipdb==0.10.3
 ipython==6.1.0
@@ -46,6 +51,7 @@ lxml==4.3.3
 maxminddb==1.3.0
 mock==2.0.0
 numpy==1.16.2
+oauth2client==4.1.3
 oauthlib==2.0.6
 olefile==0.44
 pandas==0.24.2
@@ -59,7 +65,10 @@ prompt-toolkit==1.0.14
 psycopg2==2.7.1
 ptyprocess==0.5.2
 pubnub==4.1.3
+pyasn1==0.4.5
+pyasn1-modules==0.2.5
 pycryptodomex==3.4.7
+PyDrive==1.3.1
 Pygments==2.2.0
 PyMeta3==0.5.1
 pynliner3==0.6
@@ -68,8 +77,10 @@ python-memcached==1.59
 python-stdnum==1.7
 python3-openid==3.1.0
 pytz==2018.3
+PyYAML==5.1.1
 requests==2.18.1
 requests-oauthlib==0.8.0
+rsa==4.0
 s3transfer==0.1.10
 scikit-learn==0.20.3
 scipy==1.2.1
@@ -78,6 +89,7 @@ simplegeneric==0.8.1
 six==1.10.0
 sorl-thumbnail==12.4.1
 traitlets==4.3.2
+uritemplate==3.0.0
 urllib3==1.21.1
 validators==0.12.0
 vine==1.3.0

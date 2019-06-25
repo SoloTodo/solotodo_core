@@ -6,9 +6,10 @@ from django.core.management import BaseCommand
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        with open('cyber.tsv') as f:
+        d = []
+        with open('lg_online/products.tsv') as f:
             reader = csv.reader(f, delimiter='\t')
-            d = []
+
             for idx, row in enumerate(reader):
                 if idx == 0:
                     continue
@@ -17,6 +18,11 @@ class Command(BaseCommand):
                     custom_title, custom_description, custom_1, custom_2, \
                     custom_3, main_picture_str, secondary_pictures_str, \
                     lg_url_str, flixmedia_mpn = row
+
+                if not product_id:
+                    print('Unavailable product ID: {}'.format(product))
+                    continue
+
                 if frontpage_ordering_str.strip():
                     frontpage_ordering = int(frontpage_ordering_str)
                 else:
@@ -53,4 +59,6 @@ class Command(BaseCommand):
                     'lgUrl': lg_url,
                     'subcategory': subcategory,
                     'flixmediaMpn': flixmedia_mpn.strip() or None})
-            print(json.dumps(d, indent=4))
+
+        with open('lg_online/products.json', 'w') as f:
+            f.write(json.dumps(d, indent=4))

@@ -27,7 +27,7 @@ class ProductPictureQuerySet(models.QuerySet):
 class ProductPicture(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
                                 related_name='pictures')
-    file = ImageField(upload_to='product_pictures')
+    file = ImageField(upload_to='product_pictures', max_length=512)
     ordering = models.PositiveIntegerField()
 
     objects = ProductPictureQuerySet.as_manager()

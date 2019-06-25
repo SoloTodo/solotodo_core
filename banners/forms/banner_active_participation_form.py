@@ -4,12 +4,20 @@ from collections import defaultdict
 
 from django import forms
 from django.core.files.base import ContentFile
-from django.db.models import F, Sum, Avg
+from django.db.models import F, Avg
 from guardian.shortcuts import get_objects_for_user
 
 from solotodo.models import Store, Brand, Category
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 from banners.models import Banner, BannerSection, BannerSubsectionType
+
+label_getters = {
+        'brand': lambda x: x['content'].brand.name,
+        'category': lambda x: x['content'].category.name,
+        'section': lambda x: x['banner'].subsection.section.name,
+        'subsection_type': lambda x: x['banner'].subsection.type.name,
+        'type': lambda x: x['banner'].subsection.type.name,
+        'store': lambda x: x['banner'].update.store.name}
 
 
 class BannerActiveParticipationForm(forms.Form):
@@ -35,14 +43,6 @@ class BannerActiveParticipationForm(forms.Form):
             'db_name': 'update__store'
         }
     }
-
-    label_getters = {
-        'brand': lambda x: x['content'].brand.name,
-        'category': lambda x: x['content'].category.name,
-        'section': lambda x: x['banner'].subsection.section.name,
-        'subsection_type': lambda x: x['banner'].subsection.type.name,
-        'type': lambda x: x['banner'].subsection.type.name,
-        'store': lambda x: x['banner'].update.store.name}
 
     stores = forms.ModelMultipleChoiceField(
         queryset=Store.objects.all(),
@@ -107,7 +107,7 @@ class BannerActiveParticipationForm(forms.Form):
 
         for content_data in contents_data:
             total_participation += content_data['content'].percentage
-            label = self.label_getters[grouping_field](content_data)
+            label = label_getters[grouping_field](content_data)
             if label not in grouping_labels:
                 grouping_labels.append(label)
             participation_aggs[label] += content_data['content'].percentage
@@ -229,12 +229,15 @@ class BannerActiveParticipationForm(forms.Form):
 
         row = 1
         contents_data = banners.get_contents_data(brands, categories)
-        total_participation = 1
+        total_participation = 0
+
+        for content_data in contents_data:
+            total_participation += content_data['content'].percentage
 
         for content_data in contents_data:
             banner = content_data['banner']
             content = content_data['content']
-            grouping_label = self.label_getters[grouping_field](content_data)
+            grouping_label = label_getters[grouping_field](content_data)
 
             col = 0
             worksheet.write(row, col, banner.id)
@@ -277,7 +280,6 @@ class BannerActiveParticipationForm(forms.Form):
             worksheet.write(row, col, banner.position)
 
             row += 1
-
 
         workbook.close()
         output.seek(0)

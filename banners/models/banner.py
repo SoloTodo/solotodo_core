@@ -1,7 +1,8 @@
 from django.db import models
 from django.db.models import F
 
-from banners.models import BannerUpdate, BannerAsset, BannerAssetContent, BannerSubsection
+from banners.models import BannerUpdate, BannerAsset, BannerAssetContent, \
+    BannerSubsection
 from solotodo.models import Store
 
 

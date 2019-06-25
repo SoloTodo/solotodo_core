@@ -74,19 +74,20 @@ class ReportCurrentPricesForm(forms.Form):
             product_ids = [product.id for product in products]
             specs_products = list(set(specs_products) & set(product_ids))
 
-        entities = Entity.objects.filter(product__isnull=False,
-                                         product__in=specs_products) \
-            .filter(
-            product__instance_model__model__category=category,
-            store__in=stores) \
+        entities = Entity.objects\
+            .filter(product__isnull=False,
+                    product__in=specs_products) \
+            .filter(product__instance_model__model__category=category,
+                    store__in=stores) \
             .get_available() \
-            .select_related(
-            'product__instance_model',
-            'cell_plan__instance_model',
-            'active_registry',
-            'currency',
-            'store') \
-            .order_by('product')
+            .select_related('product__instance_model',
+                            'cell_plan__instance_model',
+                            'active_registry',
+                            'currency',
+                            'store') \
+            .order_by('product') \
+            .annotate(normal_price_usd=F('active_registry__normal_price')
+                      / F('currency__exchange_rate'))
 
         if countries:
             entities = entities.filter(store__country__in=countries)

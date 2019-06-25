@@ -15,9 +15,10 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from decimal import Decimal
 from django_filters import STRICTNESS
-from elasticsearch import Elasticsearch
 
 # I know this import is not used, but the plugin gets loaded this way
+from elasticsearch import Elasticsearch
+
 from solotodo.metamodel_plugin import MetaModelPlugin
 
 
@@ -390,7 +391,6 @@ METAMODEL = {
 }
 
 ES = Elasticsearch([{"host": "localhost", "port": 9200}])
-ES_PRODUCTS_INDEX = 'products'
 
 CURRENCYLAYER_API_ACCESS_KEY = ''
 

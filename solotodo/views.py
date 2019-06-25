@@ -34,7 +34,6 @@ from navigation.serializers import NavDepartmentSerializer
 from solotodo.drf_custom_ordering import CustomProductOrderingFilter, \
     CustomEntityOrderingFilter
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
-from solotodo.es_models.es_lead import EsLead
 from solotodo.filter_querysets import create_category_filter, \
     create_store_filter
 from solotodo.filters import EntityFilterSet, StoreUpdateLogFilterSet, \
@@ -48,6 +47,7 @@ from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_by_url_form import EntityByUrlForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
+from solotodo.forms.es_products_browse_form import EsProductsBrowseForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
@@ -68,7 +68,7 @@ from solotodo.forms.store_historic_entity_positions_form import \
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory, Visit, Rating, ProductPicture, Brand, StoreSection, \
-    EntitySectionPosition
+    EntitySectionPosition, EsProduct
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination, \
@@ -307,8 +307,21 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
     @detail_route()
     def browse(self, request, pk, *args, **kwargs):
+        # TODO: Remove client usage of this method and delete it
         category = self.get_object()
         form = ProductsBrowseForm(request.query_params)
+        result = form.get_category_products(category, request)
+
+        return Response(result)
+
+    @detail_route()
+    def es_browse(self, request, pk, *args, **kwargs):
+        category = self.get_object()
+        form = EsProductsBrowseForm(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = form.get_category_products(category, request)
 
         return Response(result)
@@ -941,12 +954,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         if entity.category != cell_category:
             cell_plan_choices = Product.objects.none()
         elif entity.cell_plan_name:
-            filter_parameters = {
-                'association_name.keyword': entity.cell_plan_name
-            }
-
-            matching_cell_plans = cell_plan_category.es_search() \
-                .filter('term', **filter_parameters) \
+            matching_cell_plans = EsProduct.category_search(
+                cell_plan_category).filter(
+                'term',
+                specs__association_name__keyword=entity.cell_plan_name)\
                 .execute()
 
             cell_plan_ids = [x.product_id for x in matching_cell_plans]
@@ -987,17 +998,15 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             website = form.cleaned_data['website']
             ip = get_client_ip(request) or '127.0.0.1'
 
-            Lead.objects.create(
+            lead = Lead.objects.create(
                 entity_history=entity.active_registry,
                 website=website,
                 user=user,
                 ip=ip
             )
 
-            uuid = request.data.get('uuid')
-            es_lead = EsLead.create(entity.active_registry, website, uuid)
-
-            return Response(es_lead)
+            serializer = LeadSerializer(lead, context={'request': request})
+            return Response(serializer.data)
         else:
             return Response(form.errors)
 
@@ -1095,7 +1104,18 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def browse(self, request, *args, **kwargs):
+        # TODO Delete this endpoint once clients are migrated to es_browse
         form = ProductsBrowseForm(request.query_params)
+        result = form.get_products(request)
+        return Response(result)
+
+    @list_route()
+    def es_browse(self, request, *args, **kwargs):
+        form = EsProductsBrowseForm(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = form.get_products(request)
         return Response(result)
 
@@ -1191,11 +1211,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         fields = form.cleaned_data['fields'].split(',')
         product_specs = product.specs
-        search = product.category.es_search()
+        search = EsProduct.category_search(product.category)
 
         for field in fields:
             field_value = product_specs.get(field)
-            search = search.filter('term', **{field: field_value})
+            search = search.filter('term', **{'specs.' + field: field_value})
 
         es_products_dict = {
             es_product.product_id: es_product.to_dict()
@@ -1253,8 +1273,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         specs = product.specs
 
         if 'picture' not in specs:
-            raise Response({'detail': 'No picture found for product'},
-                           status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'No picture found for product'},
+                            status=status.HTTP_404_NOT_FOUND)
 
         picture = specs['picture']
         resized_picture = get_thumbnail(picture, **form.thumbnail_kwargs())

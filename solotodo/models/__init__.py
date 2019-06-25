@@ -1,15 +1,18 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
-from django.db.models.signals import post_save, pre_delete, m2m_changed
+from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
 from django.utils import timezone
 from django.db.models import Lookup
 from django.db.models.fields import Field
+from elasticsearch import NotFoundError
 
 from rest_framework.authtoken.models import Token
 
-from metamodel.models import MetaModel, InstanceModel
+from metamodel.models import MetaModel
 from metamodel.signals import instance_model_saved
+
+from solotodo.signals import product_saved
 
 from .website import Website
 from .number_format import NumberFormat
@@ -37,6 +40,11 @@ from .visit import Visit
 from .store_section import StoreSection
 from .entity_section_position import EntitySectionPosition
 
+# ElasticSearch DSL persistence models
+from .es_product_relationship import EsProductRelationship
+from .es_product import EsProduct
+from .es_entity import EsEntity
+
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def handle_user_creation(sender, instance=None, created=False, **kwargs):
@@ -50,7 +58,7 @@ def handle_user_creation(sender, instance=None, created=False, **kwargs):
 
 @receiver(instance_model_saved)
 def create_or_update_product(instance_model, created, creator_id, **kwargs):
-    category_models = [c.meta_model for c in Category.objects.all()]
+    category_models = MetaModel.objects.filter(category__isnull=False)
 
     if instance_model.model in category_models:
         try:
@@ -63,19 +71,39 @@ def create_or_update_product(instance_model, created, creator_id, **kwargs):
             new_product.save(creator_id=creator_id)
 
 
-@receiver(pre_delete, sender=InstanceModel)
-def delete_product_from_es(sender, instance, using, **kwargs):
-    category_models = MetaModel.objects.filter(category__isnull=False)
+@receiver(product_saved)
+def update_product_in_es(product, es_document, **kwargs):
+    EsProduct.from_product(product, es_document).save()
 
-    if instance.model in category_models:
-        associated_product = Product.objects.get(instance_model=instance)
-        associated_product.delete_from_elasticsearch()
+
+@receiver(post_delete, sender=Product)
+def delete_product_from_es(sender, instance, using, **kwargs):
+    EsProduct.get_by_product_id(instance.id).delete()
 
 
 @receiver(m2m_changed, sender=SoloTodoUser.preferred_stores.through)
 def update_preferred_stores_last_updated(sender, instance, *args, **kwargs):
     instance.preferred_stores_last_updated = timezone.now()
     instance.save()
+
+
+@receiver(post_save, sender=Entity)
+def update_entity_in_es(sender, instance, **kwargs):
+    if EsEntity.should_entity_be_indexed(instance):
+        EsEntity.from_entity(instance).save()
+    else:
+        try:
+            EsEntity.get_by_entity_id(instance.id).delete()
+        except NotFoundError:
+            pass
+
+
+@receiver(post_delete, sender=Entity)
+def delete_entity_from_es(sender, instance, using, **kwargs):
+    try:
+        EsEntity.get_by_entity_id(instance.id).delete()
+    except NotFoundError:
+        pass
 
 
 @Field.register_lookup

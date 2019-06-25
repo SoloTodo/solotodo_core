@@ -84,11 +84,12 @@ class CategorySpecsFilter(models.Model):
         else:
             return '{}_id'.format(self.es_field)
 
-    def es_filter(self, form_data):
+    def es_filter(self, form_data, prefix=''):
+        # TODO: Remove unnecesary prefix parameter once browse codepath is gone
         result = Q()
 
         mm_value_field = self.value_field_or_default()
-        es_value_field = self.es_value_field()
+        es_value_field = '{}{}'.format(prefix, self.es_value_field())
 
         if self.type == 'exact' and form_data[self.name] is not None:
             if self.meta_model.is_primitive():

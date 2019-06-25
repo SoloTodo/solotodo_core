@@ -297,6 +297,8 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
         return qs
 
 
+# TODO: Remove this FilterSet once the original browse method is migrated
+
 class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
     products = CustomModelMultipleChoiceFilter(
         queryset=Product.objects.all(),

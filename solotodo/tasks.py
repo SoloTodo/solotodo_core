@@ -1,6 +1,6 @@
 from celery import shared_task
 
-from solotodo.models import Store, Category, StoreUpdateLog, Product
+from solotodo.models import Store, Category, StoreUpdateLog, Product, Entity
 
 
 @shared_task(queue='store_update', ignore_result=True,
@@ -93,3 +93,8 @@ def es_leads_index():
         leads = Lead.objects.filter(pk__in=lead_ids)
 
         EsLead.create_from_db_leads(leads)
+
+
+@shared_task(queue='general', ignore_result=True)
+def entity_save(entity_id):
+    Entity.objects.get(pk=entity_id).save()

@@ -355,6 +355,26 @@ class EntityEventUserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'full_name']
 
 
+class EntityESSerializer(serializers.ModelSerializer):
+    normal_price = serializers.DecimalField(
+        decimal_places=2, max_digits=20, source='active_registry.normal_price')
+    offer_price = serializers.DecimalField(
+        decimal_places=2, max_digits=20, source='active_registry.offer_price')
+    normal_price_usd = serializers.DecimalField(
+        decimal_places=2, max_digits=20)
+    offer_price_usd = serializers.DecimalField(
+        decimal_places=2, max_digits=20)
+    currency_id = serializers.IntegerField()
+    country_id = serializers.IntegerField(source='store.country_id')
+    store_type_id = serializers.IntegerField(source='store.type_id')
+
+    class Meta:
+        model = Entity
+        fields = ['id', 'store_id', 'normal_price', 'normal_price_usd',
+                  'offer_price', 'offer_price_usd', 'currency_id',
+                  'country_id', 'store_type_id']
+
+
 class LeadSerializer(serializers.HyperlinkedModelSerializer):
     normal_price = serializers.DecimalField(
         source='entity_history.normal_price',

@@ -4,16 +4,16 @@ import re
 
 from decimal import Decimal
 
-from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
 from django.db.models import Q
 from django.utils.text import slugify
-from elasticsearch_dsl import Search
 from sklearn.neighbors import NearestNeighbors
 
 from metamodel.models import InstanceModel
+from .es_product import EsProduct
+from solotodo.signals import product_saved
 from solotodo.models.utils import solotodo_com_site, rs_refresh_entries
 
 from .category import Category
@@ -43,7 +43,7 @@ class ProductQuerySet(models.QuerySet):
         ).distinct()
 
     def filter_by_search_string(self, search):
-        es_search = Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
+        es_search = EsProduct.search()
         es_search = es_search.filter('terms', product_id=[p.id for p in self])
         es_search = Product.query_es_by_search_string(
             es_search, search, mode='AND')
@@ -63,6 +63,15 @@ class ProductQuerySet(models.QuerySet):
             Category.objects.filter_by_user_perms(
                 user, synth_permissions[permission])
         )
+
+    def update(self, *args, **kwargs):
+        raise Exception('Queryset level update is disabled on Product as it '
+                        'does not call save() or emit pre_save / post_save '
+                        'signals')
+
+    def delete(self):
+        raise Exception('Delete should not be called on product querysets, '
+                        'delete the associated instance models instead')
 
 
 class Product(models.Model):
@@ -89,8 +98,8 @@ class Product(models.Model):
     @property
     def specs(self):
         if not self._specs:
-            self._specs = self.es_search().filter(
-                'term', product_id=self.id).execute()[0].to_dict()
+            self._specs = EsProduct.search().filter(
+                'term', product_id=self.id).execute()[0].to_dict()['specs']
         return self._specs
 
     @property
@@ -107,18 +116,14 @@ class Product(models.Model):
         return str(self.instance_model)
 
     @classmethod
-    def es_search(cls):
-        return Search(using=settings.ES, index=settings.ES_PRODUCTS_INDEX)
-
-    @classmethod
     def prefetch_specs(cls, products):
         product_ids = [p.id for p in products]
 
-        search = Product.es_search().filter(
+        search = EsProduct.search().filter(
             'terms', product_id=product_ids)[:len(product_ids)]
         response = search.execute().to_dict()
-        specs_dict = {e['_source']['product_id']: e['_source'] for e in
-                      response['hits']['hits']}
+        specs_dict = {e['_source']['product_id']: e['_source']['specs']
+                      for e in response['hits']['hits']}
 
         for product in products:
             product._specs = specs_dict[product.id]
@@ -132,38 +137,28 @@ class Product(models.Model):
                                                   slugify(str(self)))
 
     def save(self, *args, **kwargs):
-        from django.conf import settings
-
         creator_id = kwargs.pop('creator_id', None)
 
         if bool(creator_id) == bool(self.id):
             raise IntegrityError('Exiting products cannot have a creator '
                                  '(and vice versa)')
 
-        es = settings.ES
-        document, keywords = self.instance_model.elasticsearch_document()
+        es_document = self.instance_model.elasticsearch_document()
 
         self.brand = Brand.objects.get_or_create(
-            name=document['brand_unicode'])[0]
+            name=es_document[0]['brand_unicode'])[0]
 
         if creator_id:
             self.creator_id = creator_id
+
         super(Product, self).save(*args, **kwargs)
 
-        document['product_id'] = self.id
-        document['keywords'] = ' '.join(keywords)
-        document['search_bucket_key'] = self.search_bucket_key(document)
-        document['category_id'] = self.category.id
-        document['category_name'] = self.category.name
-        document['metamodel_name'] = str(self.instance_model.model)
+        product_saved.send(sender=self.__class__, product=self,
+                           es_document=es_document)
 
-        # remove after products in production are reindexed
-        document['category'] = str(self.instance_model.model)
-
-        es.index(index=settings.ES_PRODUCTS_INDEX,
-                 # doc_type=str(self.instance_model.model),
-                 id=self.id,
-                 body=document)
+    def delete(self, *args, **kwargs):
+        raise Exception('Delete should not be called on product instances, '
+                        'delete the associated instance model instead')
 
     def search_bucket_key(self, es_document):
         bucket_fields = self.category.search_bucket_key_fields
@@ -172,14 +167,6 @@ class Product(models.Model):
                              for field in bucket_fields.split(',')])
         else:
             return ''
-
-    def delete_from_elasticsearch(self):
-        from django.conf import settings
-
-        es = settings.ES
-        es.delete(
-            index=settings.ES_PRODUCTS_INDEX,
-            id=self.pk)
 
     @staticmethod
     def query_es_by_search_string(es_search, search, mode='OR'):
@@ -235,25 +222,22 @@ class Product(models.Model):
         candidates = []
 
         product_ids = [e.product_id for e in candidates_query]
-        es_brand_products = category.es_search().filter(
+        es_brand_products = EsProduct.category_search(category).filter(
             'terms', product_id=product_ids)
 
         if brands is not None:
-            filter_parameters = {
-                'brand_unicode': brands
-            }
             es_brand_products = es_brand_products.filter(
-                'terms', **filter_parameters)
+                'terms', specs__brand_unicode=brands)
 
         es_results_dict = {e.product_id: e.to_dict()
-                           for e in es_brand_products[:100000].execute()}
+                           for e in es_brand_products.scan()}
 
         for entity in candidates_query:
             product = entity.product
             candidate_specs = es_results_dict.get(entity.product_id)
             if not candidate_specs:
                 continue
-            product._specs = candidate_specs
+            product._specs = candidate_specs['specs']
             candidates.append(product)
 
         # Obtain the (field_name, weight) pairs

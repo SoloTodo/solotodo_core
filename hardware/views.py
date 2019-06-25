@@ -122,14 +122,14 @@ class BudgetEntryViewSet(viewsets.ModelViewSet):
 
 class VideoCardGpuViewSet(viewsets.ViewSet):
     def list(self, request, *args, **kwargs):
-        search = Search(using=settings.ES, index='videocard-gpus')
+        search = Search(index='videocard-gpus')
         response = search[:1000].execute()
         serialized_result = [
             e['_source'] for e in response.to_dict()['hits']['hits']]
         return Response(serialized_result)
 
     def retrieve(self, request, pk=None, *args, **kwargs):
-        search = Search(using=settings.ES, index='videocard-gpus')
+        search = Search(index='videocard-gpus')
         response = search.filter('term', id=pk).execute()
 
         if not response.hits:

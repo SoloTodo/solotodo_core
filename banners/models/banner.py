@@ -1,7 +1,8 @@
 from django.db import models
 from django.db.models import F
 
-from banners.models import BannerUpdate, BannerAsset, BannerSubsection
+from banners.models import BannerUpdate, BannerAsset, BannerAssetContent, \
+    BannerSubsection
 from solotodo.models import Store
 
 
@@ -11,6 +12,26 @@ class BannerQuerySet(models.QuerySet):
 
     def get_inactive(self):
         return self.exclude(update__store__active_banner_update=F('update'))
+
+    def get_contents_data(self, brands, categories):
+        contents_data = []
+        contents = BannerAssetContent.objects.filter(asset__banner__in=self)
+
+        if brands:
+            contents = contents.filter(brand__in=brands)
+        if categories:
+            contents = contents.filter(category__in=categories)
+
+        contents = contents.distinct()
+
+        for banner in self:
+            for content in banner.asset.contents.all():
+                if content in contents:
+                    contents_data.append({
+                        'banner': banner,
+                        'content': content})
+
+        return contents_data
 
     def filter_by_user_perms(self, user, permission):
         synth_permissions = {

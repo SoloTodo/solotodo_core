@@ -41,6 +41,7 @@ class EntityLog(models.Model):
     video_urls = models.TextField(blank=True, null=True)
     flixmedia_id = models.CharField(max_length=256, blank=True, null=True)
     review_count = models.IntegerField(blank=True, null=True)
+    review_avg_score = models.FloatField(blank=True, null=True)
 
     DATA_FIELDS = [
         'category',
@@ -61,7 +62,8 @@ class EntityLog(models.Model):
         'is_visible',
         'video_urls',
         'flixmedia_id',
-        'review_count'
+        'review_count',
+        'review_avg_score'
     ]
 
     def __str__(self):

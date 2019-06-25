@@ -207,7 +207,8 @@ class ReportCurrentPricesForm(forms.Form):
             'ID Flixmedia',
             'Número imágenes',
             'Número videos',
-            'Número reviews'
+            'Número reviews',
+            'Puntaje promedio reviews',
         ])
 
         headers.extend([column.field.label for column in specs_columns])
@@ -329,6 +330,12 @@ class ReportCurrentPricesForm(forms.Form):
             review_count = e.review_count \
                 if e.review_count is not None else 'N/A'
             worksheet.write(row, col, review_count)
+            col += 1
+
+            # Review score
+            review_avg_score = e.review_avg_score \
+                if e.review_avg_score is not None else 'N/A'
+            worksheet.write(row, col, review_avg_score)
             col += 1
 
             for column in specs_columns:

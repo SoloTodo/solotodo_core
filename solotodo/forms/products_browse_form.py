@@ -11,7 +11,7 @@ from django.db.models.functions import Coalesce
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.filters import ProductsBrowseEntityFilterSet, \
     CategoryFullBrowseEntityFilterSet
-from solotodo.models import Country, Product, Currency, CategorySpecsFilter, \
+from solotodo.models import Country, Product, Currency, \
     EsProduct
 from solotodo.pagination import ProductsBrowsePagination
 from solotodo.serializers import CategoryBrowseResultSerializer, \

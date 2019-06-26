@@ -309,7 +309,8 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
     def browse(self, request, pk, *args, **kwargs):
         # TODO: Remove client usage of this method and delete it
         category = self.get_object()
-        form = ProductsBrowseForm(request.query_params)
+        form = \
+            ProductsBrowseForm(request.query_params)
         result = form.get_category_products(category, request)
 
         return Response(result)
@@ -329,7 +330,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
     @detail_route()
     def full_browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
-        form = ProductsBrowseForm(request.query_params)
+        form = EsProductsBrowseForm(request.user, request.query_params)
         result = form.get_category_entities(category, request)
 
         return Response({
@@ -1104,13 +1105,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def browse(self, request, *args, **kwargs):
-        # TODO Delete this endpoint once clients are migrated to es_browse
-        form = ProductsBrowseForm(request.query_params)
-        result = form.get_products(request)
-        return Response(result)
-
-    @list_route()
-    def es_browse(self, request, *args, **kwargs):
         form = EsProductsBrowseForm(request.user, request.query_params)
 
         if not form.is_valid():

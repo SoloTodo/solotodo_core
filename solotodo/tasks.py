@@ -1,4 +1,6 @@
 from celery import shared_task
+from django.core.mail import EmailMessage
+from django.http import QueryDict
 
 from solotodo.models import Store, Category, StoreUpdateLog, Product, Entity
 
@@ -98,3 +100,54 @@ def es_leads_index():
 @shared_task(queue='general', ignore_result=True)
 def entity_save(entity_id):
     Entity.objects.get(pk=entity_id).save()
+
+
+@shared_task(queue='general', ignore_result=True, task_time_limit=60*30)
+def send_historic_entity_positions_report_task(store_id, user_id,
+                                               query_string):
+    from django.contrib.auth import get_user_model
+    from solotodo.forms.store_historic_entity_positions_form import \
+        StoreHistoricEntityPositionsForm
+
+    user = get_user_model().objects.get(pk=user_id)
+    store = Store.objects.get(pk=store_id)
+
+    q_dict = QueryDict(query_string)
+    form = StoreHistoricEntityPositionsForm(user, q_dict)
+
+    if not form.is_valid():
+        return
+
+    report_data = form.generate_report(store)
+    report_filename = '{}.xlsx'.format(report_data['filename'])
+    report_file = report_data['file']
+
+    formatted_start_date = form.cleaned_data['timestamp'].start.strftime(
+        '%Y-%m-%d')
+    formatted_end_date = form.cleaned_data['timestamp'].stop.strftime(
+        '%Y-%m-%d')
+
+    selected_categories = form.cleaned_data['categories']
+    available_categories = form.fields['categories'].queryset
+
+    if len(selected_categories) == len(available_categories):
+        formatted_categories = 'Todas las categorias'
+    else:
+        formatted_categories = ', '.join([str(x) for x in selected_categories])
+
+    sender = get_user_model().get_bot().email_recipient_text()
+    message = 'Se adjunta el reporte de posicionamiento histórico para la ' \
+              'tienda {} entre {} y {} para las categorias: {}' \
+              ''.format(store, formatted_start_date, formatted_end_date,
+                        formatted_categories)
+
+    subject = 'Reporte posicionamiento histórico {} - {} al {} - {}'.format(
+        store, formatted_start_date, formatted_end_date, formatted_categories)
+
+    email = EmailMessage(subject,
+                         message, sender,
+                         [user.email])
+    email.attach(
+        report_filename, report_file,
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    email.send()

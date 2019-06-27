@@ -86,8 +86,8 @@ class ReportCurrentPricesForm(forms.Form):
                             'currency',
                             'store') \
             .order_by('product') \
-            .annotate(normal_price_usd=F('active_registry__normal_price')
-                      / F('currency__exchange_rate'))
+            .annotate(normal_price_usd=F('active_registry__normal_price') /
+                      F('currency__exchange_rate'))
 
         if countries:
             entities = entities.filter(store__country__in=countries)

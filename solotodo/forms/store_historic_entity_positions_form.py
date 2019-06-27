@@ -60,7 +60,8 @@ class StoreHistoricEntityPositionsForm(forms.Form):
         result = defaultdict(int)
 
         for entity_section_position in entity_section_positions:
-            key = tuple([entity_section_position[field] for field in converted_fields])
+            key = tuple([entity_section_position[field]
+                         for field in converted_fields])
             result[key] += entity_section_position['c']
 
         return result
@@ -105,14 +106,11 @@ class StoreHistoricEntityPositionsForm(forms.Form):
         year_week_category_data = self.group_entity_section_positions(
             entity_section_positions, ['year', 'week', 'category'])
 
-        # TODO de we really need to filter by brands?
-        if brands:
-            entity_section_positions = entity_section_positions.filter(
-                entity_history__entity__product__brand__in=brands
+        section_year_week_category_brand_data = \
+            self.group_entity_section_positions(
+                entity_section_positions,
+                ['section', 'year', 'week', 'category', 'brand']
             )
-
-        section_year_week_category_brand_data = self.group_entity_section_positions(
-            entity_section_positions, ['section', 'year', 'week', 'category', 'brand'])
 
         year_week_category_brand_data = self.group_entity_section_positions(
             entity_section_positions, ['year', 'week', 'category', 'brand'])
@@ -124,7 +122,8 @@ class StoreHistoricEntityPositionsForm(forms.Form):
         sections_dict = iterable_to_dict(StoreSection)
 
         for category_id, section_id in category_section_data.keys():
-            sections_per_category[category_id].append(sections_dict[section_id])
+            sections_per_category[category_id].append(
+                sections_dict[section_id])
 
         category_brand_data = self.group_entity_section_positions(
             entity_section_positions, ['category', 'brand'])
@@ -252,5 +251,6 @@ class StoreHistoricEntityPositionsForm(forms.Form):
 
         return {
             'file': file_value,
+            'filename': filename,
             'path': path
         }

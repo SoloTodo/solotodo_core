@@ -91,7 +91,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductPictureSerializer, BrandSerializer, \
     ProductAvailableEntitiesMinimalSerializer, StoreSectionSerializer, \
     EntitySectionPositionSerializer
-from solotodo.tasks import store_update
+from solotodo.tasks import store_update, \
+    send_historic_entity_positions_report_task
 from solotodo.utils import get_client_ip, iterable_to_dict
 from solotodo_core.s3utils import MediaRootS3Boto3Storage
 
@@ -497,13 +498,13 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                 'errors': form.errors
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        report_path = form.generate_report(store)['path']
+        send_historic_entity_positions_report_task.delay(
+            store.id, user.id, request.META['QUERY_STRING']
+        )
 
-        storage = PrivateS3Boto3Storage()
-        report_url = storage.url(report_path)
         return Response({
-            'url': report_url
-        })
+            'message': 'ok'
+        }, status=status.HTTP_200_OK)
 
     @action(detail=True)
     def scraper(self, request, pk):

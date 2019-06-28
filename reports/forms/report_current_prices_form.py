@@ -209,6 +209,7 @@ class ReportCurrentPricesForm(forms.Form):
             'Número videos',
             'Número reviews',
             'Puntaje promedio reviews',
+            '¿Posee promotor virtual?',
         ])
 
         headers.extend([column.field.label for column in specs_columns])
@@ -336,6 +337,12 @@ class ReportCurrentPricesForm(forms.Form):
             review_avg_score = e.review_avg_score \
                 if e.review_avg_score is not None else 'N/A'
             worksheet.write(row, col, review_avg_score)
+            col += 1
+
+            # Has virtual assistant
+            has_virtual_assistant = e.has_virtual_assistant \
+                if e.has_virtual_assistant is not None else 'N/A'
+            worksheet.write(row, col, has_virtual_assistant)
             col += 1
 
             for column in specs_columns:

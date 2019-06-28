@@ -210,6 +210,7 @@ class Entity(models.Model):
     flixmedia_id = models.CharField(max_length=256, blank=True, null=True)
     review_count = models.IntegerField(blank=True, null=True)
     review_avg_score = models.FloatField(blank=True, null=True)
+    has_virtual_assistant = models.NullBooleanField(blank=True)
     is_visible = models.BooleanField(default=True)
 
     # Metadata
@@ -336,6 +337,7 @@ class Entity(models.Model):
                 'flixmedia_id': scraped_product.flixmedia_id,
                 'review_count': scraped_product.review_count,
                 'review_avg_score': scraped_product.review_avg_score,
+                'has_virtual_assistant': scraped_product.has_virtual_assistant,
                 'active_registry': new_active_registry,
             })
         else:
@@ -371,6 +373,7 @@ class Entity(models.Model):
             flixmedia_id=scraped_product.flixmedia_id,
             review_count=scraped_product.review_count,
             review_avg_score=scraped_product.review_avg_score,
+            has_virtual_assistant=scraped_product.has_virtual_assistant,
             is_visible=True,
             last_pricing_update=timezone.now(),
         )

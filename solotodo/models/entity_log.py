@@ -42,6 +42,7 @@ class EntityLog(models.Model):
     flixmedia_id = models.CharField(max_length=256, blank=True, null=True)
     review_count = models.IntegerField(blank=True, null=True)
     review_avg_score = models.FloatField(blank=True, null=True)
+    has_virtual_assistant = models.NullBooleanField(blank=True)
 
     DATA_FIELDS = [
         'category',
@@ -63,7 +64,8 @@ class EntityLog(models.Model):
         'video_urls',
         'flixmedia_id',
         'review_count',
-        'review_avg_score'
+        'review_avg_score',
+        'has_virtual_assistant',
     ]
 
     def __str__(self):

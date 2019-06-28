@@ -35,7 +35,7 @@ class EntityHistoryQueryset(models.QuerySet):
 
 class EntityHistory(models.Model):
     entity = models.ForeignKey(Entity, on_delete=models.CASCADE)
-    timestamp = models.DateTimeField()
+    timestamp = models.DateTimeField(db_index=True)
     stock = models.IntegerField(db_index=True)
     normal_price = models.DecimalField(decimal_places=2, max_digits=12,
                                        db_index=True)

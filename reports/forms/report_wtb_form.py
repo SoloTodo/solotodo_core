@@ -1,4 +1,5 @@
 import io
+from collections import defaultdict
 
 import xlsxwriter
 from django import forms
@@ -65,19 +66,18 @@ class ReportWtbForm(forms.Form):
         store_types = self.cleaned_data['store_types']
         currency = self.cleaned_data['currency']
 
-        product_ids = []
-        product_to_wtb_entity_dict = {}
+        brand = wtb_brand.brand
+        product_to_wtb_entity_dict = defaultdict(lambda: [])
 
         wtb_entities = WtbEntity.objects.filter(brand=wtb_brand,
                                                 category__in=categories,
                                                 product__isnull=False)
 
         for wtb_entity in wtb_entities:
-            if wtb_entity.product_id not in product_to_wtb_entity_dict:
-                product_to_wtb_entity_dict[wtb_entity.product_id] = wtb_entity
-                product_ids.append(wtb_entity.product_id)
+            product_to_wtb_entity_dict[wtb_entity.product_id]\
+                .append(wtb_entity)
 
-        es = Entity.objects.filter(product__in=product_ids, store__in=stores)\
+        es = Entity.objects.filter(product__brand=brand, store__in=stores)\
             .get_available()\
             .select_related(
             'product__instance_model',

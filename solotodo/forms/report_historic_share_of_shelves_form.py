@@ -136,9 +136,6 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
             .annotate(week=ExtractWeek('timestamp'),
                       year=ExtractYear('timestamp'))
 
-        import ipdb
-        ipdb.set_trace()
-
         if countries:
             ehs = ehs.filter(entity__store__country__in=countries)
 

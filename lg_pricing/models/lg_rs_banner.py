@@ -41,7 +41,7 @@ class LgRsBanner(models.Model):
         return self.id
 
     @classmethod
-    def load_from_banners(cls, banners=None):
+    def synchronize_with_db_banners(cls, banners=None):
         from banners.models import Banner, BannerUpdate
 
         if not banners:

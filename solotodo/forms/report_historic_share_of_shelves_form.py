@@ -174,7 +174,7 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
         for eh in ehs:
             entity = entity_dict[eh['entity']]
             product = es_dict[entity.product_id]
-            bucketing_value = product[es_field]
+            bucketing_value = product['specs'][es_field]
 
             if isinstance(bucketing_value, bool):
                 bucketing_value = 'Sí' if bucketing_value else 'No'

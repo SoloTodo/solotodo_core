@@ -6,7 +6,7 @@ from django.db import models, IntegrityError
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.models import Store, Product, Category, Website
+from solotodo.models import Store, Product, Category, Website, Brand
 from solotodo.utils import iterable_to_dict
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 from storescraper.utils import get_store_class_by_name
@@ -24,6 +24,7 @@ class WtbBrand(models.Model):
                                           null=True)
     website = models.ForeignKey(Website, on_delete=models.CASCADE)
     stores = models.ManyToManyField(Store)
+    brand = models.ForeignKey(Brand, on_delete=models.PROTECT)
 
     objects = WtbBrandQuerySet.as_manager()
 

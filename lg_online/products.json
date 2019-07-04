@@ -476,7 +476,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CK57",
-        "subcategory": "",
+        "subcategory": "Minicomponente",
         "flixmediaMpn": null
     },
     {
@@ -1036,7 +1036,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/celular/lg-LMG710EM",
-        "subcategory": "",
+        "subcategory": "Smartphone",
         "flixmediaMpn": null
     },
     {
@@ -1052,7 +1052,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/celular/lg-LMX420HM",
-        "subcategory": "",
+        "subcategory": "Smartphone",
         "flixmediaMpn": null
     },
     {
@@ -1708,7 +1708,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/lavadoras/lg-WD9WE6",
-        "subcategory": "",
+        "subcategory": "Lavadora y secadora",
         "flixmediaMpn": null
     },
     {
@@ -1724,7 +1724,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/lavadoras/lg-WT13DSBP",
-        "subcategory": "",
+        "subcategory": "Lavadora carga superior",
         "flixmediaMpn": null
     },
     {
@@ -1740,7 +1740,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/lavadoras/lg-WT13WPB",
-        "subcategory": "",
+        "subcategory": "Lavadora carga superior",
         "flixmediaMpn": null
     },
     {
@@ -1756,7 +1756,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/lavadoras/lg-WT17DSB",
-        "subcategory": "",
+        "subcategory": "Lavadora carga superior",
         "flixmediaMpn": null
     },
     {
@@ -1788,7 +1788,7 @@
         "mainPictureId": "1SI8buQ80r1P5sk6wcIrXJXkgxGcXhoSi",
         "secondaryPicturesId": "1YD56pVLeFhNKxXpcBk1OviLA_bd1w7QL",
         "lgUrl": "https://www.lg.com/cl/microondas/lg-MH6596DIR-2",
-        "subcategory": "",
+        "subcategory": "Microondas",
         "flixmediaMpn": "MH6596DIR"
     },
     {
@@ -2092,7 +2092,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/monitores/lg-27UL500-W",
-        "subcategory": "",
+        "subcategory": "Profesional",
         "flixmediaMpn": null
     },
     {
@@ -2108,7 +2108,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/monitores/lg-24GL600F-B",
-        "subcategory": "",
+        "subcategory": "Gamer",
         "flixmediaMpn": null
     },
     {
@@ -2124,7 +2124,7 @@
         "mainPictureId": "1P4bTtXItpHdA4Z5oJHJ912cZj08AODr7",
         "secondaryPicturesId": "19efDjR-9wY3lvSJy0cQ66tfD97IDeuvD",
         "lgUrl": "https://www.lg.com/cl/proyectores/lg-PF1000UG",
-        "subcategory": "",
+        "subcategory": "Proyector",
         "flixmediaMpn": "PF1000UG"
     },
     {
@@ -2140,7 +2140,7 @@
         "mainPictureId": "1J40HPNvdHTLUzU466Usy51JtRbgXr-e6",
         "secondaryPicturesId": "1RK_CWH4AH8GODsYJGbQcXEKKpQepDPsC",
         "lgUrl": "https://www.lg.com/cl/proyectores/lg-PH150G",
-        "subcategory": "",
+        "subcategory": "Proyector",
         "flixmediaMpn": "PH150G"
     },
     {
@@ -2156,7 +2156,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/proyectores/lg-PH30JG",
-        "subcategory": "",
+        "subcategory": "Proyector",
         "flixmediaMpn": "PH30JG"
     },
     {
@@ -2172,7 +2172,7 @@
         "mainPictureId": "1jvNA5UoisCQjYugsjLtgfIWmYxIcgMos",
         "secondaryPicturesId": "11815X-WJ4RQ-AmLz5a0Rbhd8hvjGcfjq",
         "lgUrl": "https://www.lg.com/cl/proyectores/lg-PH450UG",
-        "subcategory": "",
+        "subcategory": "Proyector",
         "flixmediaMpn": "PH450UG"
     },
     {
@@ -2188,7 +2188,7 @@
         "mainPictureId": "1FAEPx_YiMvcgvB0vD1JICO8tF6G0vjEP",
         "secondaryPicturesId": "17PiV_JKE56F-Bh118-ypv0kA4e7KuCvL",
         "lgUrl": "https://www.lg.com/cl/proyectores/lg-PH550G",
-        "subcategory": "",
+        "subcategory": "Proyector",
         "flixmediaMpn": "PH550G"
     },
     {
@@ -2204,7 +2204,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/proyectores/lg-HF65LG",
-        "subcategory": "",
+        "subcategory": "Proyector",
         "flixmediaMpn": null
     },
     {
@@ -2220,7 +2220,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/proyectores/lg-HF80JG",
-        "subcategory": "",
+        "subcategory": "Proyector",
         "flixmediaMpn": null
     },
     {
@@ -2236,7 +2236,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/proyectores/lg-PF50KG",
-        "subcategory": "",
+        "subcategory": "Proyector",
         "flixmediaMpn": null
     },
     {
@@ -2844,7 +2844,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LB37MPGK",
-        "subcategory": "",
+        "subcategory": "Bottom freezer",
         "flixmediaMpn": null
     },
     {
@@ -2860,7 +2860,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LB37MPP",
-        "subcategory": "",
+        "subcategory": "Bottom freezer",
         "flixmediaMpn": null
     },
     {
@@ -2876,7 +2876,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LB37SPGK",
-        "subcategory": "",
+        "subcategory": "Bottom freezer",
         "flixmediaMpn": null
     },
     {
@@ -2892,7 +2892,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LB45SGP",
-        "subcategory": "",
+        "subcategory": "Bottom freezer",
         "flixmediaMpn": null
     },
     {
@@ -2908,7 +2908,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LB45TGT",
-        "subcategory": "",
+        "subcategory": "Bottom freezer",
         "flixmediaMpn": null
     },
     {
@@ -2924,7 +2924,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LM78SDSAF",
-        "subcategory": "",
+        "subcategory": "Door-in-Door",
         "flixmediaMpn": null
     },
     {
@@ -2940,7 +2940,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LS65SDP",
-        "subcategory": "",
+        "subcategory": "Door-in-Door",
         "flixmediaMpn": null
     },
     {
@@ -2956,7 +2956,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LT29BPPX",
-        "subcategory": "",
+        "subcategory": "Top freezer",
         "flixmediaMpn": null
     },
     {
@@ -2972,7 +2972,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/refrigeradores/lg-LT44AGP",
-        "subcategory": "",
+        "subcategory": "Top freezer",
         "flixmediaMpn": null
     },
     {
@@ -3292,7 +3292,7 @@
         "mainPictureId": "1_FaWh6AZMPnXKdfr2qLfzQibvoUALgYp",
         "secondaryPicturesId": "1CsAZCZ9os9603xNAwn4yRfc1Rrzrmvcl",
         "lgUrl": "https://www.lg.com/cl/televisores/lg-55SK8000PSA",
-        "subcategory": "SUPER UHD 4K",
+        "subcategory": "NANOCELL 4K",
         "flixmediaMpn": "55SK8000PSA"
     },
     {
@@ -3308,7 +3308,7 @@
         "mainPictureId": "1_FaWh6AZMPnXKdfr2qLfzQibvoUALgYp",
         "secondaryPicturesId": "1CsAZCZ9os9603xNAwn4yRfc1Rrzrmvcl",
         "lgUrl": "https://www.lg.com/cl/televisores/lg-65SK8000PSA",
-        "subcategory": "SUPER UHD 4K",
+        "subcategory": "NANOCELL 4K",
         "flixmediaMpn": "65SK8000PSA"
     },
     {
@@ -3324,7 +3324,7 @@
         "mainPictureId": "13QDRkfkaWTz3iNWa7uEQA2Ra7hi_F2Gy",
         "secondaryPicturesId": "1AHEOyipWz2d8tE-ti3Vbds8ZNnKxVFCK",
         "lgUrl": "https://www.lg.com/cl/televisores/lg-75SK8000PSA",
-        "subcategory": "SUPER UHD 4K",
+        "subcategory": "NANOCELL 4K",
         "flixmediaMpn": "75SK8000PSA"
     },
     {
@@ -3340,7 +3340,7 @@
         "mainPictureId": "1s0GPcYInubFfu0aW2SrNAY-7Q7itcsjM",
         "secondaryPicturesId": "11GFRZ8US5xYoY0rE2JCbQ-7cMqjIHHGq",
         "lgUrl": "https://www.lg.com/cl/televisores/lg-55SK8500PSA",
-        "subcategory": "SUPER UHD 4K",
+        "subcategory": "NANOCELL 4K",
         "flixmediaMpn": "55SK8500PSA"
     },
     {
@@ -3356,7 +3356,7 @@
         "mainPictureId": "1s0GPcYInubFfu0aW2SrNAY-7Q7itcsjM",
         "secondaryPicturesId": "11GFRZ8US5xYoY0rE2JCbQ-7cMqjIHHGq",
         "lgUrl": "https://www.lg.com/cl/televisores/lg-65SK8500PSA",
-        "subcategory": "SUPER UHD 4K",
+        "subcategory": "NANOCELL 4K",
         "flixmediaMpn": "65SK8500PSA"
     },
     {
@@ -3900,7 +3900,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/monitores/lg-24MT47D",
-        "subcategory": "",
+        "subcategory": "Monitor TV",
         "flixmediaMpn": null
     },
     {
@@ -3916,7 +3916,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": null,
-        "subcategory": "",
+        "subcategory": "Monitor TV",
         "flixmediaMpn": null
     },
     {
@@ -3932,7 +3932,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-32LK610BPSA",
-        "subcategory": "",
+        "subcategory": "HD",
         "flixmediaMpn": null
     },
     {
@@ -3948,7 +3948,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-32LM630BPSB",
-        "subcategory": "",
+        "subcategory": "HD",
         "flixmediaMpn": null
     },
     {
@@ -3964,7 +3964,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-50UM7300PSA",
-        "subcategory": "",
+        "subcategory": "UHD 4K",
         "flixmediaMpn": null
     },
     {
@@ -3980,7 +3980,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-50UM7500PSB",
-        "subcategory": "",
+        "subcategory": "UHD 4K",
         "flixmediaMpn": null
     },
     {
@@ -3996,7 +3996,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-55SM8100PSA",
-        "subcategory": "",
+        "subcategory": "NANOCELL 4K",
         "flixmediaMpn": null
     },
     {
@@ -4012,7 +4012,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-55SM8600PSA",
-        "subcategory": "",
+        "subcategory": "NANOCELL 4K",
         "flixmediaMpn": null
     },
     {
@@ -4028,7 +4028,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-55UM7650PSB",
-        "subcategory": "",
+        "subcategory": "UHD 4K",
         "flixmediaMpn": null
     },
     {
@@ -4044,7 +4044,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-55UM7650PSB",
-        "subcategory": "",
+        "subcategory": "UHD 4K",
         "flixmediaMpn": null
     },
     {
@@ -4060,7 +4060,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-60UK6200PSA",
-        "subcategory": "",
+        "subcategory": "UHD 4K",
         "flixmediaMpn": null
     },
     {
@@ -4076,7 +4076,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-65SM8100PSA",
-        "subcategory": "",
+        "subcategory": "NANOCELL 4K",
         "flixmediaMpn": null
     },
     {
@@ -4092,7 +4092,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-86UK6570PSA",
-        "subcategory": "",
+        "subcategory": "UHD 4K",
         "flixmediaMpn": null
     },
     {
@@ -4108,7 +4108,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-OLED65B9PSB",
-        "subcategory": "",
+        "subcategory": "OLED 4K",
         "flixmediaMpn": null
     },
     {
@@ -4124,7 +4124,7 @@
         "mainPictureId": null,
         "secondaryPicturesId": null,
         "lgUrl": "https://www.lg.com/cl/televisores/lg-OLED77C9PSB",
-        "subcategory": "",
+        "subcategory": "OLED 4K",
         "flixmediaMpn": null
     }
 ]

@@ -84,7 +84,8 @@ INSTALLED_APPS = [
     'product_lists',
     'brand_comparisons',
     'lg_online',
-    'keyword_search_positions'
+    'keyword_search_positions',
+    'lg_pricing'
 ]
 
 SITE_ID = 1
@@ -135,6 +136,8 @@ DATABASES = {
         'NAME': 'solotodo_core',
     }
 }
+
+DATABASE_ROUTERS = ['lg_pricing.db_router.LgPricingDbRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -247,6 +250,7 @@ CELERYD_TASK_TIME_LIMIT = 300
 AWS_ACCESS_KEY_ID = ''
 AWS_SECRET_ACCESS_KEY = ''
 AWS_STORAGE_BUCKET_NAME = 'solotodo-core'
+AWS_SA_STORAGE_BUCKET_NAME = 'solotodo-sa'  # Made up, our bucket in SA region
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_REGION_NAME = 'us-east-1'
 

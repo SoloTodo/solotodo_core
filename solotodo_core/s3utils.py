@@ -21,3 +21,12 @@ class MediaRootPrivateS3Boto3Storage(S3Boto3Storage):
 
 def PrivateS3Boto3Storage():
     return S3Boto3Storage(default_acl='private')
+
+
+def PrivateSaS3Boto3Storage():
+    from django.conf import settings
+
+    return S3Boto3Storage(
+        default_acl='private',
+        bucket=settings.AWS_SA_STORAGE_BUCKET_NAME
+    )

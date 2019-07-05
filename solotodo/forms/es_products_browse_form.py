@@ -55,7 +55,8 @@ class EsProductsBrowseForm(forms.Form):
     ]
     DEFAULT_ORDERING = 'offer_price'
 
-    DB_ORDERING_CHOICES = PRICING_ORDERING_CHOICES + ['leads', 'discount']
+    DB_ORDERING_CHOICES = PRICING_ORDERING_CHOICES + \
+        ['leads', 'discount', 'relevance']
 
     ordering = forms.CharField(required=False)
     search = forms.CharField(required=False)
@@ -225,10 +226,10 @@ class EsProductsBrowseForm(forms.Form):
             keywords_query = Q('simple_query_string', fields=['keywords'],
                                default_operator='or', query=keywords)
             search = search.query('has_parent', parent_type='product',
-                                  query=keywords_query)
+                                  query=keywords_query, score=True)
 
         # Add the metrics to the query (prices, leads).
-        product_stats_bucket = self.pricing_metrics()
+        product_stats_bucket = self.pricing_metrics(include_relevance=True)
         search.aggs\
             .bucket('product_stats', product_stats_bucket)
         search.aggs.pipeline('offer_price_usd', 'stats_bucket',
@@ -446,13 +447,13 @@ class EsProductsBrowseForm(forms.Form):
         if ordering in self.PRICING_ORDERING_CHOICES:
             reverse_results = False
         else:
-            # Discount, leads
+            # Discount, leads, relevance (score)
             reverse_results = True
 
         return sorted(product_entries, key=lambda x: x['metadata'][ordering],
                       reverse=reverse_results)
 
-    def pricing_metrics(self):
+    def pricing_metrics(self, include_relevance=False):
         product_stats_bucket = A('terms', field='product_id', size=100000)
         product_prices_per_currency_bucket = A('terms', field='currency_id',
                                                size=10)
@@ -468,6 +469,9 @@ class EsProductsBrowseForm(forms.Form):
         product_stats_bucket.metric('leads', 'sum', field='leads')
         product_stats_bucket.bucket('per_currency',
                                     product_prices_per_currency_bucket)
+        if include_relevance:
+            product_stats_bucket.metric('relevance', 'max',
+                                        script={'inline': '_score'})
 
         return product_stats_bucket
 
@@ -501,6 +505,8 @@ class EsProductsBrowseForm(forms.Form):
                 'offer_price_usd': metadata_entry['offer_price_usd'][
                     'value'],
                 'leads': metadata_entry['leads']['value'],
+                'relevance': metadata_entry.get(
+                    'relevance', {}).get('value', 0),
                 'discount': reference_price - current_price,
                 'prices_per_currency': prices_per_currency
             })

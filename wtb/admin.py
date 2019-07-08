@@ -13,7 +13,7 @@ class WtbBrandModelAdmin(GuardedModelAdmin):
 class WtbEntityModelAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'brand', 'category', 'product', 'name', 'key')
     list_filter = ('brand', 'category')
-    readonly_fields = ('product', )
+    readonly_fields = ('product', 'last_association_user')
 
 
 @admin.register(WtbBrandUpdateLog)

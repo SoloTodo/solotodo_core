@@ -1,7 +1,6 @@
 from django.db import models
 
 from solotodo.models.entity import Entity
-from solotodo.models.utils import rs_refresh_entries
 
 
 class EntityHistoryQueryset(models.QuerySet):
@@ -44,8 +43,10 @@ class EntityHistory(models.Model):
     cell_monthly_payment = models.DecimalField(decimal_places=2, max_digits=12,
                                                null=True, blank=True,
                                                db_index=True)
-    estimated_sales_since_previous_registry = models.PositiveIntegerField(
-        default=0)
+    picture_count = models.PositiveIntegerField(null=True, blank=True)
+    video_count = models.PositiveIntegerField(null=True, blank=True)
+    review_count = models.PositiveIntegerField(null=True, blank=True)
+    review_avg_score = models.FloatField(blank=True, null=True)
 
     objects = EntityHistoryQueryset.as_manager()
 
@@ -53,16 +54,6 @@ class EntityHistory(models.Model):
 
     def __str__(self):
         return u'{} - {}'.format(self.entity, self.timestamp)
-
-    @classmethod
-    def rs_refresh(cls):
-        qs = cls.objects.all()
-        rs_refresh_entries(
-            qs, 'entity_history', 'timestamp',
-            ['id', 'timestamp', 'stock', 'normal_price', 'offer_price',
-             'cell_monthly_payment', 'entity_id',
-             'estimated_sales_since_previous_registry',
-             'is_available'])
 
     class Meta:
         app_label = 'solotodo'

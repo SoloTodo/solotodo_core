@@ -11,7 +11,6 @@ from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 from sorl.thumbnail import ImageField
 
-from solotodo.models.utils import rs_refresh_model
 from .store_type import StoreType
 from .country import Country
 from .category import Category
@@ -80,10 +79,9 @@ class Store(models.Model):
             update_log.save()
 
         extra_args = {}
+
         if self.storescraper_extra_args:
             extra_args = json.loads(self.storescraper_extra_args)
-
-        # First pass of product retrieval
 
         def log_update_error(local_error_message):
             if update_log:
@@ -112,58 +110,11 @@ class Store(models.Model):
             log_update_error(error_message)
             raise
 
-        # Second pass of product retrieval, for the products mis-catalogued
-        # in the store
-        extra_entities = self.entity_set.filter(
-            category__in=categories
-        ).exclude(
-            scraped_category__in=categories,
-        ).exclude(
-            # Exclude the entities that we already scraped previously. This
-            # happens when categories is None and is sanitized to include
-            # the categories of these entities.
-            key__in=[e.key for e in scraped_products_data['products']]
-        )
-
-        extra_entities_args = {
-            e.discovery_url: {
-                'positions': [],
-                'category': e.scraped_category.storescraper_name,
-                'category_weight': 1
-            } for e in extra_entities
-        }
-
-        extra_products_task_signature = scraper.products_for_urls_task.s(
-            self.storescraper_class,
-            extra_entities_args,
-            extra_args=extra_args,
-            products_for_url_concurrency=products_for_url_concurrency,
-            use_async=use_async
-        )
-
-        extra_products_task_signature.set(queue='storescraper')
-
-        # Prevents Celery error for running a task inside another
-        with allow_join_result():
-            try:
-                extra_products_data = \
-                    extra_products_task_signature.delay().get()
-            except Exception as e:
-                error_message = 'Unknown error: {}'.format(
-                    traceback.format_exc())
-                log_update_error(error_message)
-                raise
-
-        scraped_products = scraped_products_data['products'] + \
-            extra_products_data['products']
-
-        discovery_urls_without_products = \
-            scraped_products_data['discovery_urls_without_products'] + \
-            extra_products_data['discovery_urls_without_products']
-
-        self.update_with_scraped_products(categories, scraped_products,
-                                          discovery_urls_without_products,
-                                          update_log=update_log)
+        self.update_with_scraped_products(
+            categories,
+            scraped_products_data['products'],
+            scraped_products_data['discovery_urls_without_products'],
+            update_log=update_log)
 
     def update_pricing_from_json(self, json_data, update_log=None):
         assert self.last_activation is not None
@@ -381,10 +332,6 @@ class Store(models.Model):
         update.save()
         self.active_banner_update = update
         self.save()
-
-    @classmethod
-    def rs_refresh(cls):
-        rs_refresh_model(cls, 'store', ['id', 'name', 'country_id', 'type_id'])
 
     class Meta:
         app_label = 'solotodo'

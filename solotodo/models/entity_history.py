@@ -43,6 +43,10 @@ class EntityHistory(models.Model):
     cell_monthly_payment = models.DecimalField(decimal_places=2, max_digits=12,
                                                null=True, blank=True,
                                                db_index=True)
+    picture_count = models.PositiveIntegerField(null=True, blank=True)
+    video_count = models.PositiveIntegerField(null=True, blank=True)
+    review_count = models.PositiveIntegerField(null=True, blank=True)
+    review_avg_score = models.FloatField(blank=True, null=True)
 
     objects = EntityHistoryQueryset.as_manager()
 

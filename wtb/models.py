@@ -174,7 +174,7 @@ class WtbEntity(models.Model):
     # it is used for staff payments
     last_association = models.DateTimeField(null=True, blank=True)
     last_association_user = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, null=True)
+        get_user_model(), on_delete=models.CASCADE, null=True, blank=True)
 
     def __str__(self):
         return '{} - {}'.format(self.brand, self.name)

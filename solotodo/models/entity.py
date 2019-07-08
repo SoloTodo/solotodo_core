@@ -261,7 +261,6 @@ class Entity(models.Model):
                                     category=None, currency=None):
         from solotodo.models import EntityHistory, StoreSection, \
             EntitySectionPosition
-        from django.conf import settings
 
         assert scraped_product is None or self.key == scraped_product.key
 
@@ -284,7 +283,11 @@ class Entity(models.Model):
                 normal_price=scraped_product.normal_price,
                 offer_price=scraped_product.offer_price,
                 cell_monthly_payment=scraped_product.cell_monthly_payment,
-                timestamp=scraped_product.timestamp
+                timestamp=scraped_product.timestamp,
+                picture_count=scraped_product.picture_urls_count(),
+                video_count=scraped_product.video_urls_count(),
+                review_count=scraped_product.review_count,
+                review_avg_score=scraped_product.review_avg_score
             )
 
             for section_name, position_value in \
@@ -367,7 +370,11 @@ class Entity(models.Model):
             normal_price=scraped_product.normal_price,
             offer_price=scraped_product.offer_price,
             cell_monthly_payment=scraped_product.cell_monthly_payment,
-            timestamp=scraped_product.timestamp
+            timestamp=scraped_product.timestamp,
+            picture_count=scraped_product.picture_urls_count(),
+            video_count=scraped_product.video_urls_count(),
+            review_count=scraped_product.review_count,
+            review_avg_score=scraped_product.review_avg_score
         )
 
         new_entity.active_registry = new_entity_history

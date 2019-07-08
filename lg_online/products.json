@@ -4126,5 +4126,21 @@
         "lgUrl": "https://www.lg.com/cl/televisores/lg-OLED77C9PSB",
         "subcategory": "OLED 4K",
         "flixmediaMpn": null
+    },
+    {
+        "productId": 61410,
+        "categoryId": 17,
+        "customTitle": "Horno Microondas con Grill 42 Litros",
+        "customDescription": "",
+        "frontpageOrdering": null,
+        "categoryOrdering": null,
+        "custom_1": "",
+        "custom_2": "",
+        "custom_3": "",
+        "mainPictureId": null,
+        "secondaryPicturesId": null,
+        "lgUrl": null,
+        "subcategory": "Microondas",
+        "flixmediaMpn": "MH8236GIR"
     }
 ]

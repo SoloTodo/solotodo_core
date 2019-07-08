@@ -132,7 +132,7 @@ class LgRsEntitySectionPosition(models.Model):
 
         if last_synchronization:
             print('Deleting existing entity positions in Redshift')
-            cls.objects.filter(date=last_synchronization).delete()
+            cls.objects.filter(date__gte=last_synchronization).delete()
 
         print('Loading new data into Redshift')
 

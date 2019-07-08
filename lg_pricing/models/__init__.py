@@ -1,1 +1,2 @@
 from .lg_rs_banner import LgRsBanner
+from .lg_rs_entity_section_position import LgRsEntitySectionPosition

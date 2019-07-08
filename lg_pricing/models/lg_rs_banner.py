@@ -8,6 +8,7 @@ from django.db import models, connections
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek, ExtractYear
 from django.utils import timezone
+from django_redshift_backend.distkey import DistKey
 
 from solotodo_core.s3utils import PrivateSaS3Boto3Storage
 
@@ -149,4 +150,5 @@ class LgRsBanner(models.Model):
 
     class Meta:
         app_label = 'lg_pricing'
-        ordering = ('-timestamp',)
+        indexes = [DistKey(fields=['brand_id'])]
+        ordering = ('timestamp',)

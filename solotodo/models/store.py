@@ -11,7 +11,6 @@ from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 from sorl.thumbnail import ImageField
 
-from solotodo.models.utils import rs_refresh_model
 from .store_type import StoreType
 from .country import Country
 from .category import Category
@@ -381,10 +380,6 @@ class Store(models.Model):
         update.save()
         self.active_banner_update = update
         self.save()
-
-    @classmethod
-    def rs_refresh(cls):
-        rs_refresh_model(cls, 'store', ['id', 'name', 'country_id', 'type_id'])
 
     class Meta:
         app_label = 'solotodo'

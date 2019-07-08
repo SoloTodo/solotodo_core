@@ -14,7 +14,7 @@ from sklearn.neighbors import NearestNeighbors
 from metamodel.models import InstanceModel
 from .es_product import EsProduct
 from solotodo.signals import product_saved
-from solotodo.models.utils import solotodo_com_site, rs_refresh_entries
+from solotodo.models.utils import solotodo_com_site
 
 from .category import Category
 from .brand import Brand
@@ -350,13 +350,6 @@ class Product(models.Model):
             [self], stores=stores, brands=brands,
             initial_candidate_entities=initial_candidate_entities,
             results_per_product=results_per_product)[0]
-
-    @classmethod
-    def rs_refresh(cls):
-        qs = cls.objects.select_related('instance_model__model__category')
-        rs_refresh_entries(qs, 'product', 'last_updated',
-                           ['id', 'name', 'creation_date',
-                            'last_updated', 'category_id'])
 
     class Meta:
         app_label = 'solotodo'

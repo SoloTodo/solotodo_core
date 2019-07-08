@@ -10,7 +10,6 @@ from django.utils import timezone
 
 from gtin_fields import fields as gtin_fields
 
-from solotodo.models.utils import rs_refresh_entries
 from solotodo.utils import iterable_to_dict
 from .product import Product
 from .currency import Currency
@@ -279,29 +278,13 @@ class Entity(models.Model):
                 currency = Currency.objects.get(
                     iso_code=scraped_product.currency)
 
-            estimated_sales = 0
-
-            # If we have a valid stock difference, use it as estimated sales
-            if scraped_product.stock != -1 and \
-                    self.active_registry and \
-                    self.active_registry.stock != -1 and \
-                    scraped_product.stock < self.active_registry.stock:
-                estimated_sales = self.active_registry.stock - \
-                                  scraped_product.stock
-
-                if self.store_id in settings.UNRELIABLE_STOCK_STORES and \
-                        estimated_sales >= \
-                        settings.UNRELIABLE_STOCK_STORE_SALES_THRESHOLD:
-                    estimated_sales = 0
-
             new_active_registry = EntityHistory.objects.create(
                 entity=self,
                 stock=scraped_product.stock,
                 normal_price=scraped_product.normal_price,
                 offer_price=scraped_product.offer_price,
                 cell_monthly_payment=scraped_product.cell_monthly_payment,
-                timestamp=scraped_product.timestamp,
-                estimated_sales_since_previous_registry=estimated_sales
+                timestamp=scraped_product.timestamp
             )
 
             for section_name, position_value in \
@@ -649,16 +632,6 @@ class Entity(models.Model):
             return url
 
         return None
-
-    @classmethod
-    def rs_refresh(cls):
-        qs = cls.objects.filter(product__isnull=False)
-        rs_refresh_entries(
-            qs, 'entity', 'last_updated',
-            ['id', 'name', 'condition', 'part_number', 'sku', 'ean', 'key',
-             'url', 'creation_date', 'last_updated', 'active_registry_id',
-             'category_id', 'cell_plan_id', 'currency_id', 'product_id',
-             'store_id'])
 
     class Meta:
         app_label = 'solotodo'

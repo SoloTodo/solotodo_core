@@ -2,6 +2,7 @@ import csv
 import io
 
 from django.contrib.auth.models import Group
+from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import models, connections
 from django.db.models import Max
@@ -73,9 +74,9 @@ class LgRsEntityHistory(models.Model):
         else:
             print('Synchronizing from scratch')
 
-        print('Creating in memory CSV File')
-        output = io.StringIO()
-        writer = csv.writer(output)
+        print('Creating CSV File')
+        csv_file = open('lg_pricing/entity_histories.csv', 'w', newline='')
+        writer = csv.writer(csv_file)
 
         print('Obtaining data')
 
@@ -127,33 +128,46 @@ class LgRsEntityHistory(models.Model):
                     cell_plan_name,
                 ])
 
-        output.seek(0)
-        file_for_upload = ContentFile(output.getvalue().encode('utf-8'))
+        csv_file.close()
 
-        print('Uploading CSV file')
-
-        storage = PrivateSaS3Boto3Storage()
-        storage.file_overwrite = True
-        path = 'lg_pricing/entity_histories.csv'
-        storage.save(path, file_for_upload)
-
-        print('Loading new data into Redshift')
-
-        cursor = connections['lg_pricing'].cursor()
-        command = """
-                    copy {} from 's3://{}/{}'
-                    credentials 'aws_access_key_id={};aws_secret_access_key={}'
-                    csv;
-                    """.format(
-            cls._meta.db_table,
-            settings.AWS_SA_STORAGE_BUCKET_NAME,
-            path,
-            settings.AWS_ACCESS_KEY_ID,
-            settings.AWS_SECRET_ACCESS_KEY
-        )
-
-        cursor.execute(command)
-        cursor.close()
+        # csv_file.seek(0)
+        # import ipdb
+        # ipdb.set_trace()
+        # django_file = ContentFile(csv_file)
+        #
+        # print('Uploading CSV file')
+        #
+        # storage = PrivateSaS3Boto3Storage()
+        # storage.file_overwrite = True
+        # path = 'lg_pricing/entity_histories.csv'
+        # import ipdb
+        # ipdb.set_trace()
+        # storage.save(path, django_file)
+        #
+        # import ipdb
+        # ipdb.set_trace()
+        #
+        # file.close()
+        #
+        # return
+        #
+        # print('Loading new data into Redshift')
+        #
+        # cursor = connections['lg_pricing'].cursor()
+        # command = """
+        #             copy {} from 's3://{}/{}'
+        #             credentials 'aws_access_key_id={};aws_secret_access_key={}'
+        #             csv;
+        #             """.format(
+        #     cls._meta.db_table,
+        #     settings.AWS_SA_STORAGE_BUCKET_NAME,
+        #     path,
+        #     settings.AWS_ACCESS_KEY_ID,
+        #     settings.AWS_SECRET_ACCESS_KEY
+        # )
+        #
+        # cursor.execute(command)
+        # cursor.close()
 
     class Meta:
         app_label = 'lg_pricing'

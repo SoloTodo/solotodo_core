@@ -8,6 +8,7 @@ from django.db.models import Max
 from django_redshift_backend.distkey import DistKey
 from guardian.shortcuts import get_objects_for_group
 
+from solotodo.models import Product
 from solotodo_core.s3utils import PrivateSaS3Boto3Storage
 
 
@@ -78,39 +79,53 @@ class LgRsEntityHistory(models.Model):
 
         print('Obtaining data')
 
-        for idx, entity_history in enumerate(histories_to_synchronize):
-            print('Processing: {}'.format(idx + 1))
+        products_to_synchronize = Product.objects.filter_by_category(
+            categories)
+        products_count = len(products_to_synchronize)
 
-            if entity_history.entity.cell_plan:
-                cell_plan_name = str(entity_history.entity.cell_plan)
-            else:
-                cell_plan_name = None
+        for idx, product in enumerate(products_to_synchronize):
+            print('Processing product: {} / {}'.format(
+                idx + 1, products_count))
 
-            writer.writerow([
-                entity_history.id,
-                entity_history.entity.id,
-                entity_history.timestamp,
-                entity_history.normal_price,
-                entity_history.offer_price,
-                entity_history.picture_count,
-                entity_history.video_count,
-                entity_history.review_count,
-                entity_history.review_avg_score,
-                entity_history.entity.store.id,
-                str(entity_history.entity.store),
-                entity_history.entity.category.id,
-                str(entity_history.entity.category),
-                entity_history.entity.product.id,
-                str(entity_history.entity.product),
-                entity_history.entity.product.brand.id,
-                str(entity_history.entity.product.brand),
-                entity_history.entity.active_registry_id == entity_history.id,
-                entity_history.entity.sku,
-                entity_history.entity.url,
-                entity_history.entity.name,
-                entity_history.entity.cell_plan_id,
-                cell_plan_name,
-            ])
+            product_entities = histories_to_synchronize.filter(
+                entity__product=product
+            )
+            entity_count = len(product_entities)
+
+            for idx2, entity_history in enumerate(product_entities):
+                print('Processing: {} / {}'.format(idx2 + 1, entity_count))
+
+                if entity_history.entity.cell_plan:
+                    cell_plan_name = str(entity_history.entity.cell_plan)
+                else:
+                    cell_plan_name = None
+
+                writer.writerow([
+                    entity_history.id,
+                    entity_history.entity.id,
+                    entity_history.timestamp,
+                    entity_history.normal_price,
+                    entity_history.offer_price,
+                    entity_history.picture_count,
+                    entity_history.video_count,
+                    entity_history.review_count,
+                    entity_history.review_avg_score,
+                    entity_history.entity.store.id,
+                    str(entity_history.entity.store),
+                    entity_history.entity.category.id,
+                    str(entity_history.entity.category),
+                    entity_history.entity.product.id,
+                    str(entity_history.entity.product),
+                    entity_history.entity.product.brand.id,
+                    str(entity_history.entity.product.brand),
+                    entity_history.entity.active_registry_id ==
+                    entity_history.id,
+                    entity_history.entity.sku,
+                    entity_history.entity.url,
+                    entity_history.entity.name,
+                    entity_history.entity.cell_plan_id,
+                    cell_plan_name,
+                ])
 
         output.seek(0)
         file_for_upload = ContentFile(output.getvalue().encode('utf-8'))

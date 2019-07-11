@@ -246,7 +246,7 @@ class StoreHistoricEntityPositionsForm(forms.Form):
         file_value = output.getvalue()
         file_for_upload = ContentFile(file_value)
         storage = PrivateS3Boto3Storage()
-        filename = 'historic_sku_positions.xlsx'
+        filename = 'reports/historic_sku_positions.xlsx'
         path = storage.save(filename, file_for_upload)
 
         return {

@@ -112,7 +112,7 @@ class ReportHistoricShareOfShelvesForm(forms.Form):
         file_value = output.getvalue()
         file_for_upload = ContentFile(file_value)
         storage = PrivateS3Boto3Storage()
-        filename = "historic_share_of_shelves.xlsx"
+        filename = "reports/historic_share_of_shelves.xlsx"
         path = storage.save(filename, file_for_upload)
 
         return {

@@ -42,8 +42,27 @@ class LgRsEntityHistory(models.Model):
     @classmethod
     def synchronize_with_db_entity_histories(cls):
         from solotodo.models import Store, Category, EntityHistory
-
         from django.conf import settings
+
+        print('Getting old histories marked as active')
+        active_histories_in_rs = cls.objects.filter(is_active=True)
+        active_history_ids = [x.entity_history_id
+                              for x in active_histories_in_rs]
+        print('Found {} active entries in Redshift'.format(
+            len(active_history_ids)))
+
+        print('Obtaining updated data for those entries')
+        inactive_entities = EntityHistory.objects.filter(
+            pk__in=active_history_ids
+        ).exclude(entity__active_registry_id=F('id'))
+        inactive_entity_ids = [x.id for x in inactive_entities]
+        print('Setting {} entries as inactive'.format(
+            len(inactive_entity_ids)))
+        rs_entries_to_be_updated = cls.objects.filter(
+            entity_history_id__in=inactive_entity_ids)
+        rs_entries_to_be_updated.update(is_active=False)
+
+        print('Getting new data')
         lg_group = Group.objects.get(pk=settings.LG_CHILE_GROUP_ID)
 
         stores = get_objects_for_group(lg_group, 'view_store', Store)
@@ -112,20 +131,6 @@ class LgRsEntityHistory(models.Model):
                 entity_history.entity.cell_plan_id,
                 cell_plan_name,
             ])
-
-        print('Getting old histories marked as active')
-        active_histories_in_rs = cls.objects.filter(is_active=True)
-        active_history_ids = [x.entity_history_id
-                              for x in active_histories_in_rs]
-
-        print('Obtaining updated data for those entries')
-        inactive_entities = cls.objects.filter(
-            pk__in=active_history_ids
-        ).exclude(entity__active_registry_id=F('id'))
-        inactive_entity_ids = [x.id for x in inactive_entities]
-        rs_entries_to_be_updated = cls.objects.filter(
-            entity_history_id__in=inactive_entity_ids)
-        rs_entries_to_be_updated.update(is_active=False)
 
         print('Uploading CSV file')
         output.seek(0)

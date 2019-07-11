@@ -69,105 +69,79 @@ class LgRsEntityHistory(models.Model):
         if last_synchronization:
             print('Synchronizing since {}'.format(last_synchronization))
             histories_to_synchronize = histories_to_synchronize.filter(
-                entity_history__timestamp__gt=last_synchronization
+                timestamp__gt=last_synchronization
             )
         else:
             print('Synchronizing from scratch')
 
-        print('Creating CSV File')
-        csv_file = open('lg_pricing/entity_histories.csv', 'w', newline='')
-        writer = csv.writer(csv_file)
+        print('Creating in memory CSV File')
+        output = io.StringIO()
+        writer = csv.writer(output)
 
         print('Obtaining data')
 
-        products_to_synchronize = Product.objects.filter_by_category(
-            categories)
-        products_count = len(products_to_synchronize)
+        for idx, entity_history in enumerate(histories_to_synchronize):
+            print('Processing: {}'.format(idx))
 
-        for idx, product in enumerate(products_to_synchronize):
-            print('Processing product: {} / {}'.format(
-                idx + 1, products_count))
+            if entity_history.entity.cell_plan:
+                cell_plan_name = str(entity_history.entity.cell_plan)
+            else:
+                cell_plan_name = None
 
-            product_entities = histories_to_synchronize.filter(
-                entity__product=product
-            )
-            entity_count = len(product_entities)
+            writer.writerow([
+                entity_history.id,
+                entity_history.entity.id,
+                entity_history.timestamp,
+                entity_history.normal_price,
+                entity_history.offer_price,
+                entity_history.picture_count,
+                entity_history.video_count,
+                entity_history.review_count,
+                entity_history.review_avg_score,
+                entity_history.entity.store.id,
+                str(entity_history.entity.store),
+                entity_history.entity.category.id,
+                str(entity_history.entity.category),
+                entity_history.entity.product.id,
+                str(entity_history.entity.product),
+                entity_history.entity.product.brand.id,
+                str(entity_history.entity.product.brand),
+                entity_history.entity.active_registry_id ==
+                entity_history.id,
+                entity_history.entity.sku,
+                entity_history.entity.url,
+                entity_history.entity.name,
+                entity_history.entity.cell_plan_id,
+                cell_plan_name,
+            ])
 
-            for idx2, entity_history in enumerate(product_entities):
-                print('Processing: {} / {}'.format(idx2 + 1, entity_count))
+        output.seek(0)
+        file_for_upload = ContentFile(output.getvalue().encode('utf-8'))
 
-                if entity_history.entity.cell_plan:
-                    cell_plan_name = str(entity_history.entity.cell_plan)
-                else:
-                    cell_plan_name = None
+        print('Uploading CSV file')
 
-                writer.writerow([
-                    entity_history.id,
-                    entity_history.entity.id,
-                    entity_history.timestamp,
-                    entity_history.normal_price,
-                    entity_history.offer_price,
-                    entity_history.picture_count,
-                    entity_history.video_count,
-                    entity_history.review_count,
-                    entity_history.review_avg_score,
-                    entity_history.entity.store.id,
-                    str(entity_history.entity.store),
-                    entity_history.entity.category.id,
-                    str(entity_history.entity.category),
-                    entity_history.entity.product.id,
-                    str(entity_history.entity.product),
-                    entity_history.entity.product.brand.id,
-                    str(entity_history.entity.product.brand),
-                    entity_history.entity.active_registry_id ==
-                    entity_history.id,
-                    entity_history.entity.sku,
-                    entity_history.entity.url,
-                    entity_history.entity.name,
-                    entity_history.entity.cell_plan_id,
-                    cell_plan_name,
-                ])
+        storage = PrivateSaS3Boto3Storage()
+        storage.file_overwrite = True
+        path = 'lg_pricing/entity_positions.csv'
+        storage.save(path, file_for_upload)
 
-        csv_file.close()
+        print('Loading new data into Redshift')
 
-        # csv_file.seek(0)
-        # import ipdb
-        # ipdb.set_trace()
-        # django_file = ContentFile(csv_file)
-        #
-        # print('Uploading CSV file')
-        #
-        # storage = PrivateSaS3Boto3Storage()
-        # storage.file_overwrite = True
-        # path = 'lg_pricing/entity_histories.csv'
-        # import ipdb
-        # ipdb.set_trace()
-        # storage.save(path, django_file)
-        #
-        # import ipdb
-        # ipdb.set_trace()
-        #
-        # file.close()
-        #
-        # return
-        #
-        # print('Loading new data into Redshift')
-        #
-        # cursor = connections['lg_pricing'].cursor()
-        # command = """
-        #             copy {} from 's3://{}/{}'
-        #             credentials 'aws_access_key_id={};aws_secret_access_key={}'
-        #             csv;
-        #             """.format(
-        #     cls._meta.db_table,
-        #     settings.AWS_SA_STORAGE_BUCKET_NAME,
-        #     path,
-        #     settings.AWS_ACCESS_KEY_ID,
-        #     settings.AWS_SECRET_ACCESS_KEY
-        # )
-        #
-        # cursor.execute(command)
-        # cursor.close()
+        cursor = connections['lg_pricing'].cursor()
+        command = """
+                    copy {} from 's3://{}/{}'
+                    credentials 'aws_access_key_id={};aws_secret_access_key={}'
+                    csv;
+                    """.format(
+            cls._meta.db_table,
+            settings.AWS_SA_STORAGE_BUCKET_NAME,
+            path,
+            settings.AWS_ACCESS_KEY_ID,
+            settings.AWS_SECRET_ACCESS_KEY
+        )
+
+        cursor.execute(command)
+        cursor.close()
 
     class Meta:
         app_label = 'lg_pricing'

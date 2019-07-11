@@ -2,14 +2,12 @@ import csv
 import io
 
 from django.contrib.auth.models import Group
-from django.core.files import File
 from django.core.files.base import ContentFile
 from django.db import models, connections
 from django.db.models import Max
 from django_redshift_backend.distkey import DistKey
 from guardian.shortcuts import get_objects_for_group
 
-from solotodo.models import Product
 from solotodo_core.s3utils import PrivateSaS3Boto3Storage
 
 
@@ -80,15 +78,13 @@ class LgRsEntityHistory(models.Model):
 
         print('Obtaining data')
 
-        for idx, entity_history in enumerate(histories_to_synchronize):
-            print('Processing: {}'.format(idx))
-
+        def entity_history_to_row(entity_history):
             if entity_history.entity.cell_plan:
                 cell_plan_name = str(entity_history.entity.cell_plan)
             else:
                 cell_plan_name = None
 
-            writer.writerow([
+            return [
                 entity_history.id,
                 entity_history.entity.id,
                 entity_history.timestamp,
@@ -113,13 +109,30 @@ class LgRsEntityHistory(models.Model):
                 entity_history.entity.name,
                 entity_history.entity.cell_plan_id,
                 cell_plan_name,
-            ])
+            ]
 
-        output.seek(0)
-        file_for_upload = ContentFile(output.getvalue().encode('utf-8'))
+        for idx, entity_history in enumerate(histories_to_synchronize):
+            print('Processing: {}'.format(idx))
+            writer.row(entity_history_to_row(entity_history))
+
+        print('Getting old histories marked as active')
+        active_histories_in_rs = cls.objects.filter(is_active=True)
+        active_history_ids = [x.entity_history_id
+                              for x in active_histories_in_rs]
+
+        print('Obtaining updated data for those entries')
+        refreshed_entities = cls.objects.filter(pk__in=active_history_ids)
+
+        for idx, entity_history in enumerate(refreshed_entities):
+            print('Processing: {}'.format(idx))
+            writer.row(entity_history_to_row(entity_history))
+
+        print('Deleting old active registries in RS')
+        active_histories_in_rs.delete()
 
         print('Uploading CSV file')
-
+        output.seek(0)
+        file_for_upload = ContentFile(output.getvalue().encode('utf-8'))
         storage = PrivateSaS3Boto3Storage()
         storage.file_overwrite = True
         path = 'lg_pricing/entity_positions.csv'

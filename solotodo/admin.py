@@ -137,7 +137,7 @@ admin.site.register(StoreUpdateLog)
 @admin.register(Lead)
 class LeadModelAdmin(admin.ModelAdmin):
     list_display = ['product_link', 'store_link', 'website', 'timestamp', 'ip',
-                    'user']
+                    'user', 'uuid']
     list_filter = ['website', 'entity_history__entity__category',
                    'entity_history__entity__store']
     readonly_fields = ['website', 'entity_history', 'user', 'ip', 'timestamp']

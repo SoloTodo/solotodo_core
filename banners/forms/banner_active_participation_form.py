@@ -288,7 +288,7 @@ class BannerActiveParticipationForm(forms.Form):
 
         storage = PrivateS3Boto3Storage()
 
-        filename = 'banner_participation.xlsx'
+        filename = 'reports/banner_participation.xlsx'
 
         path = storage.save(filename, file_for_upload)
 

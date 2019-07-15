@@ -366,7 +366,7 @@ class BannerHistoricParticipationForm(forms.Form):
         file_value = output.getvalue()
         file_for_upload = ContentFile(file_value)
         storage = PrivateS3Boto3Storage()
-        filename = 'banner_historic_participation.xlsx'
+        filename = 'reports/banner_historic_participation.xlsx'
         path = storage.save(filename, file_for_upload)
 
         return {

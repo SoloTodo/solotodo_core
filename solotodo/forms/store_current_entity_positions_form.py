@@ -309,7 +309,7 @@ class StoreCurrentEntityPositionsForm(forms.Form):
         file_value = output.getvalue()
         file_for_upload = ContentFile(file_value)
         storage = PrivateS3Boto3Storage()
-        filename = 'current_sku_positions.xlsx'
+        filename = 'reports/current_sku_positions.xlsx'
         path = storage.save(filename, file_for_upload)
 
         return {

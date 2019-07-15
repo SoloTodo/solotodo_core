@@ -71,7 +71,7 @@ class ShareOfShelvesForm(forms.Form):
 
         storage = PrivateS3Boto3Storage()
 
-        filename = 'share_of_shelves.xlsx'
+        filename = 'reports/share_of_shelves.xlsx'
 
         path = storage.save(filename, file_for_upload)
 

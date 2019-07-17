@@ -998,9 +998,11 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         if form.is_valid():
             website = form.cleaned_data['website']
+            uuid = request.data.get('uuid', None)
             ip = get_client_ip(request) or '127.0.0.1'
 
             lead = Lead.objects.create(
+                uuid=uuid,
                 entity_history=entity.active_registry,
                 website=website,
                 user=user,

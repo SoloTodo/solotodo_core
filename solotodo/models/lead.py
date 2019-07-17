@@ -37,6 +37,8 @@ class LeadQuerySet(models.QuerySet):
 
 
 class Lead(models.Model):
+    uuid = models.CharField(max_length=256, blank=True, null=True,
+                            unique=True, db_index=True)
     entity_history = models.ForeignKey(EntityHistory, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)

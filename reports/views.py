@@ -258,7 +258,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
                 'errors': form.errors
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        report_path = form.generate_report()
+        report_path = form.generate_report()['path']
 
         ReportDownload.objects.create(
             report=report,

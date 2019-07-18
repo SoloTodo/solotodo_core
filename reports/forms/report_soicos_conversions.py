@@ -1,19 +1,25 @@
-from django import forms
+import io
+import xlsxwriter
 
+from django import forms
+from django.utils import timezone
+from django.core.files.base import ContentFile
 from guardian.shortcuts import get_objects_for_user
 
 from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Website, Store, Category
+from soicos_conversions.models import SoicosConversion
+from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
 class ReportSoicosConversions(forms.Form):
     timestamp = IsoDateTimeRangeField()
     sites = forms.ModelMultipleChoiceField(
-        queryset=Website.objects.all)
+        queryset=Website.objects.all(), required=False)
     stores = forms.ModelMultipleChoiceField(
-        queryset=Store.objects.all())
+        queryset=Store.objects.all(), required=False)
     categories = forms.ModelMultipleChoiceField(
-        queryset=Category.objects.all)
+        queryset=Category.objects.all(), required=False)
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -51,5 +57,145 @@ class ReportSoicosConversions(forms.Form):
         stores = self.cleaned_data['stores']
         timestamp = self.cleaned_data['timestamp']
 
-        import ipdb
-        ipdb.set_trace()
+        conversions = SoicosConversion.objects.filter(
+            lead__entity_history__entity__category__in=categories,
+            lead__entity_history__entity__store__in=stores,
+            lead__website__in=sites,
+            creation_date__gte=timestamp.start,
+            creation_date__lte=timestamp.stop
+        )
+
+        # REPORT CREATION "
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        workbook.formats[0].set_font_size(10)
+        worksheet = workbook.add_worksheet()
+
+        url_format = workbook.add_format({
+            'font_color': 'blue',
+            'font_size': 10
+        })
+
+        header_format = workbook.add_format({
+            'bold': True,
+            'font_size': 10
+        })
+
+        date_format = workbook.add_format({
+            'num_format': 'yyyy-mm-dd',
+            'font_size': 10
+        })
+
+        headers = [
+            "Product",
+            "SKU",
+            "Store",
+            "Category",
+            "Normal price",
+            "Offer price",
+            "UUID",
+            "Timestamp",
+            "Website",
+            "Transaction id",
+            "Status",
+            "Creation date",
+            "Validation date",
+            "Payout",
+            "Transaction Total"
+        ]
+
+        for idx, header in enumerate(headers):
+            worksheet.write(0, idx, header, header_format)
+
+        row = 1
+        for conversion in conversions:
+            col = 0
+            worksheet.write_url(
+                row, col,
+                conversion.lead.entity_history.entity.url,
+                string=str(conversion.lead.entity_history.entity.product),
+                cell_format=url_format
+            )
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.lead.entity_history.entity.sku)
+
+            col += 1
+            worksheet.write(
+                row, col, str(conversion.lead.entity_history.entity.store))
+
+            col += 1
+            worksheet.write(
+                row, col, str(conversion.lead.entity_history.entity.category))
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.lead.entity_history.normal_price)
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.lead.entity_history.offer_price)
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.lead.uuid)
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.lead.timestamp.date(), date_format)
+
+            col += 1
+            worksheet.write(
+                row, col, str(conversion.lead.website))
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.transaction_id)
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.status)
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.creation_date.date(), date_format)
+
+            col += 1
+            if conversion.validation_date:
+                worksheet.write(
+                    row, col, conversion.validation_date.date(), date_format)
+            else:
+                worksheet.write(
+                    row, col, '-')
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.payout)
+
+            col += 1
+            worksheet.write(
+                row, col, conversion.transaction_total)
+
+            row += 1
+
+        worksheet.autofilter(0, 0, row - 1, len(headers) - 1)
+        workbook.close()
+
+        output.seek(0)
+        file_value = output.getvalue()
+        file_for_upload = ContentFile(file_value)
+
+        storage = PrivateS3Boto3Storage()
+
+        filename_template = 'soicos_conversions_%Y-%m-%d_%H:%M:%S'
+
+        filename = timezone.now().strftime(filename_template)
+
+        path = storage.save('reports/{}.xlsx'.format(filename),
+                            file_for_upload)
+
+        return {
+            'file': file_value,
+            'path': path
+        }

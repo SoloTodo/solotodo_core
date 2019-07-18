@@ -105,7 +105,7 @@ class LgRsEntityHistory(models.Model):
             else:
                 cell_plan_name = None
 
-            writer.row([
+            writer.writerow([
                 entity_history.id,
                 entity_history.entity.id,
                 entity_history.timestamp,

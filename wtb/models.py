@@ -160,7 +160,7 @@ class WtbEntity(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
                                 blank=True, null=True)
-    key = models.CharField(max_length=255)
+    key = models.CharField(max_length=255, db_index=True)
     url = models.URLField()
     picture_url = models.URLField()
     creation_date = models.DateTimeField(auto_now_add=True)

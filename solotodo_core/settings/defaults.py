@@ -420,3 +420,6 @@ PUBLICAPI_HOST = 'https://publicapi.solotodo.com'
 
 BRAND_COMPARISON_DEFAULT_STORE_IDS = [9, 18, 11]
 LG_CHILE_GROUP_ID = 14
+
+SOICOS_USER = ''
+SOICOS_PASS = ''

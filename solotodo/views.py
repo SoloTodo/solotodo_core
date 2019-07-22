@@ -2,6 +2,7 @@ import traceback
 from collections import OrderedDict
 
 import datetime
+import json
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -68,7 +69,7 @@ from solotodo.forms.store_historic_entity_positions_form import \
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory, Visit, Rating, ProductPicture, Brand, StoreSection, \
-    EntitySectionPosition, EsProduct
+    EntitySectionPosition, EsProduct, ProductVideo
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination, \
@@ -1131,6 +1132,15 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = EntitySerializer(product_entities, many=True,
                                       context={'request': request})
         return Response(serializer.data)
+
+    @detail_route()
+    def videos(self, request, pk):
+        product = self.get_object()
+        specs = product.specs()
+        videos = ProductVideo.objects.all()
+
+        for video in videos:
+            conditions = json.loads(video.conditions)
 
     @detail_route(methods=['post', ])
     def clone(self, request, pk):

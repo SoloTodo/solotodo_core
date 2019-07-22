@@ -12,7 +12,7 @@ from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
     CategorySpecsFilter, CategorySpecsOrder, Lead, Visit, Rating, \
-    ProductPicture, Brand, StoreSection, EntitySectionPosition
+    ProductPicture, Brand, StoreSection, EntitySectionPosition, ProductVideo
 
 
 @admin.register(Permission)
@@ -233,3 +233,8 @@ class StoreSectionAdmin(admin.ModelAdmin):
 
     list_filter = ('store', )
     search_fields = ['name']
+
+
+@admin.register(ProductVideo)
+class ProductVideoAdmin(admin.ModelAdmin):
+    list_display = ('youtube_id', 'name', 'conditions')

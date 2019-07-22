@@ -53,7 +53,7 @@ class SoicosConversion(models.Model):
             conversions_url = "/publisher/reports/conversions?" \
                               "date_based=date_created&" \
                               "status=All&" \
-                              "ds_date_from=2019-07-01&" \
+                              "ds_date_from=2019-01-01&" \
                               "ds_date_to={}&" \
                               "page={}".format(today_date, page)
 
@@ -89,7 +89,7 @@ class SoicosConversion(models.Model):
 
                 if contents[3].text != '-':
                     validation_date = datetime.strptime(
-                        contents[3].text, '%d/%m/%Y %H:%M:%S')
+                        contents[3].text, '%d/%m/%Y')
                     validation_date = pytz.timezone(
                         "Chile/Continental").localize(validation_date)
                 else:

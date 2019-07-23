@@ -91,7 +91,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer, \
     ProductPictureSerializer, BrandSerializer, \
     ProductAvailableEntitiesMinimalSerializer, StoreSectionSerializer, \
-    EntitySectionPositionSerializer
+    EntitySectionPositionSerializer, ProductVideoSerializer
 from solotodo.tasks import store_update, \
     send_historic_entity_positions_report_task
 from solotodo.utils import get_client_ip, iterable_to_dict
@@ -1136,11 +1136,26 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     @detail_route()
     def videos(self, request, pk):
         product = self.get_object()
-        specs = product.specs()
+        specs = product.specs
         videos = ProductVideo.objects.all()
+        selected_videos = []
 
         for video in videos:
             conditions = json.loads(video.conditions)
+            include_video = True
+
+            for key, value in conditions.items():
+                if specs.get(key) not in value:
+                    include_video = False
+                    break
+
+            if include_video:
+                selected_videos.append(video)
+
+        serializer = ProductVideoSerializer(selected_videos, many=True,
+                                            context={'request': request})
+
+        return Response(serializer.data)
 
     @detail_route(methods=['post', ])
     def clone(self, request, pk):
@@ -1517,3 +1532,12 @@ class StoreSectionViewSet(mixins.CreateModelMixin,
     serializer_class = StoreSectionSerializer
     filter_backends = (rest_framework.DjangoFilterBackend,)
     filter_class = StoreSectionFilterSet
+
+
+class ProductVideoViewSet(mixins.CreateModelMixin,
+                          mixins.RetrieveModelMixin,
+                          mixins.ListModelMixin,
+                          viewsets.GenericViewSet):
+    queryset = ProductVideo.objects.all()
+    serializer_class = ProductVideoSerializer
+

@@ -39,6 +39,7 @@ from .category_specs_order import CategorySpecsOrder
 from .visit import Visit
 from .store_section import StoreSection
 from .entity_section_position import EntitySectionPosition
+from .product_video import ProductVideo
 
 # ElasticSearch DSL persistence models
 from .es_product_relationship import EsProductRelationship

@@ -9,7 +9,7 @@ from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
     Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating, \
-    ProductPicture, Brand, StoreSection, EntitySectionPosition
+    ProductPicture, Brand, StoreSection, EntitySectionPosition, ProductVideo
 from solotodo.serializer_utils import StorePrimaryKeyRelatedField, \
     ProductPrimaryKeyRelatedField
 from solotodo.utils import get_client_ip
@@ -625,3 +625,9 @@ class EntitySectionPositionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = EntitySectionPosition
         fields = ('id', 'url', 'value', 'entity_history', 'section')
+
+
+class ProductVideoSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = ProductVideo
+        fields = ('id', 'url', 'youtube_id', 'name', 'conditions')

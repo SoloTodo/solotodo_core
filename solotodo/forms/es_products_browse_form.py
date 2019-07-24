@@ -208,13 +208,14 @@ class EsProductsBrowseForm(forms.Form):
         }
 
     def get_products(self, request):
-        from solotodo.models import EsEntity, EsProduct
+        from solotodo.models import EsProduct
 
-        search = EsEntity.search()
+        search = EsProduct.search()
 
         # Filter entities based on our form fields
         entities_filter = self.filter_entities()
-        search = search.filter(entities_filter)
+        search = search.filter('has_child', type='entity',
+                               query=entities_filter)
 
         ordering = self.cleaned_data['ordering'] or 'offer_price_usd'
 
@@ -223,89 +224,66 @@ class EsProductsBrowseForm(forms.Form):
         keywords = self.cleaned_data['search']
 
         if keywords:
-            keywords_query = Q('simple_query_string', fields=['keywords'],
-                               default_operator='or', query=keywords)
-            search = search.query('has_parent', parent_type='product',
-                                  query=keywords_query, score=True)
+            keywords_query = Product.query_es_by_search_string(keywords,
+                                                               mode='OR')
+            search = search.query(keywords_query)
 
         # Add the metrics to the query (prices, leads).
-        product_stats_bucket = self.pricing_metrics(include_relevance=True)
-        search.aggs\
+        product_stats_bucket = self.pricing_metrics()
+        search.aggs.bucket('entities', 'children', type='entity') \
+            .bucket('filtered_entities', 'filter', filter=entities_filter) \
             .bucket('product_stats', product_stats_bucket)
-        search.aggs.pipeline('offer_price_usd', 'stats_bucket',
-                             buckets_path='product_stats>offer_price_usd')
+
+        search.aggs.bucket(
+            'categories', 'terms', field='category_id', size=50)
 
         # Obtain the results
-        es_result = search.execute().to_dict()
+        es_result = search[:10000].execute().to_dict()
 
+        # Assemble product entries with their prices, leads and discount
         products_metadata = self.calculate_product_metadata(
-            es_result['aggregations']['product_stats']['buckets'],
+            es_result['aggregations']['entities'][
+                'filtered_entities']['product_stats']['buckets'],
             request
         )
-        count = len(products_metadata)
-        is_ordering_leads_or_discount = ordering not in \
-            self.PRICING_ORDERING_CHOICES
-        products_metadata = sorted(products_metadata,
-                                   key=lambda x: x[ordering],
-                                   reverse=is_ordering_leads_or_discount)
-        product_ids = [x['product_id'] for x in products_metadata]
 
-        es_products_search = EsProduct.search()\
-            .filter('terms', product_id=product_ids)
+        # Create the product_entries (product + metadata)
+        products_metadata_dict = {x['product_id']: x
+                                  for x in products_metadata}
 
-        es_products_search.aggs.bucket(
-            'categories', 'terms', field='category_id', size=50)
-        es_products_search.aggs.bucket(
-            'brands', 'terms', field='brand_id', size=50)
-
-        es_products = es_products_search[:len(product_ids)].execute().to_dict()
-
-        es_products_dict = {x['_source']['product_id']: x['_source']
-                            for x in es_products['hits']['hits']}
-
-        pagination_params = self.pagination_params(request)
-        products_metadata = products_metadata[
-            pagination_params['offset']:
-            pagination_params['upper_bound']
-        ]
-
+        products = [entry['_source'] for entry in es_result['hits']['hits']]
         product_entries = []
-        for product_metadata in products_metadata:
-            serialized_product = self.serialize_product(
-                es_products_dict[product_metadata['product_id']], request)
-            del product_metadata['product_id']
 
+        for product in products:
             product_entries.append({
-                'product': serialized_product,
-                'metadata': product_metadata
+                'product': self.serialize_product(product, request),
+                'metadata': products_metadata_dict[product['id']]
             })
 
-        price_metadata = es_result['aggregations']['offer_price_usd']
+        # Sort based on DB (if given)
+        product_entries = self.order_entries_by_db(
+            product_entries,
+            self.cleaned_data['ordering']
+        )
 
-        categories_metadata = [{
-            'id': x['key'],
-            'doc_count': x['doc_count']
-        } for x in es_products['aggregations']['categories']['buckets']]
+        # Paginate
+        pagination_params = self.pagination_params(request)
+        results_page = \
+            product_entries[pagination_params['offset']:
+                            pagination_params['upper_bound']]
 
-        brands_metadata = [{
-            'id': x['key'],
-            'doc_count': x['doc_count']
-        } for x in es_products['aggregations']['brands']['buckets']]
-
-        metadata = {
-            'offer_price_usd_stats': {
-                'min': price_metadata['min'],
-                'max': price_metadata['max'],
-                'avg': price_metadata['avg']
-            },
-            'category_buckets': categories_metadata,
-            'brand_buckets': brands_metadata
-        }
+        # Category aggregations
+        category_buckets = [
+            {'id': x['key'], 'doc_count': x['doc_count']}
+            for x in es_result['aggregations']['categories']['buckets']
+        ]
 
         return {
-            'count': count,
-            'results': product_entries,
-            'metadata': metadata
+            'count': len(product_entries),
+            'metadata': {
+                'category_buckets': category_buckets
+            },
+            'results': results_page,
         }
 
     def get_category_products(self, category, request):
@@ -441,13 +419,13 @@ class EsProductsBrowseForm(forms.Form):
         return entities_filter
 
     def order_entries_by_db(self, product_entries, ordering):
-        if not ordering:
+        if not ordering or ordering == 'relevance':
             return product_entries
 
         if ordering in self.PRICING_ORDERING_CHOICES:
             reverse_results = False
         else:
-            # Discount, leads, relevance (score)
+            # Discount, leads
             reverse_results = True
 
         return sorted(product_entries, key=lambda x: x['metadata'][ordering],

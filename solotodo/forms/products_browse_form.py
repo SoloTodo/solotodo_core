@@ -172,8 +172,9 @@ class ProductsBrowseForm(forms.Form):
 
         search = self.cleaned_data['search']
         if search:
-            es_search = Product.query_es_by_search_string(
-                es_search, search, mode='OR')
+            keywords_query = Product.query_es_by_search_string(
+                search, mode='OR')
+            es_search = es_search.query(keywords_query)
 
         if search:
             es_results = es_search[:len(product_ids)].execute()

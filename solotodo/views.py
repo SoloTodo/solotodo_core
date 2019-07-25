@@ -1540,4 +1540,3 @@ class ProductVideoViewSet(mixins.CreateModelMixin,
                           viewsets.GenericViewSet):
     queryset = ProductVideo.objects.all()
     serializer_class = ProductVideoSerializer
-

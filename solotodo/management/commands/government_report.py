@@ -31,7 +31,15 @@ class Command(BaseCommand):
                  'energy_efficiency_unicode',
                  'consumption',
                  'refrigerator_capacity',
-                 'freezer_capacity']
+                 'freezer_capacity'],
+            11: [
+                'display_unicode',
+                'size_value',
+                'resolution_unicode',
+                'is_smart_tv',
+                'energy_efficiency_unicode',
+                'average_monthly_consumption'
+            ]
         }
 
         with open('government_report.csv', mode='w') as csv_file:

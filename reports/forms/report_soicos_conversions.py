@@ -65,6 +65,13 @@ class ReportSoicosConversions(forms.Form):
             creation_date__lte=timestamp.stop
         )
 
+        status_dict = {
+            1: 'OK',
+            2: 'Cancelado',
+            3: 'Pendiente',
+            4: 'Bloqueado',
+            5: 'País Invalido'}
+
         # REPORT CREATION "
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output)
@@ -87,19 +94,19 @@ class ReportSoicosConversions(forms.Form):
         })
 
         headers = [
-            "Product",
+            "Producto",
+            "Categoría",
+            "Tienda",
             "SKU",
-            "Store",
-            "Category",
-            "Normal price",
-            "Offer price",
+            "Precio Normal",
+            "Precio Oferta",
             "UUID",
-            "Timestamp",
+            "Fecha Lead",
             "Website",
-            "Transaction id",
-            "Status",
-            "Creation date",
-            "Validation date",
+            "Id transacción",
+            "Estado",
+            "Fecha creacion conversión",
+            "Fecha validación conversion",
             "Payout",
             "Transaction Total"
         ]
@@ -119,7 +126,7 @@ class ReportSoicosConversions(forms.Form):
 
             col += 1
             worksheet.write(
-                row, col, conversion.lead.entity_history.entity.sku)
+                row, col, str(conversion.lead.entity_history.entity.category))
 
             col += 1
             worksheet.write(
@@ -127,7 +134,7 @@ class ReportSoicosConversions(forms.Form):
 
             col += 1
             worksheet.write(
-                row, col, str(conversion.lead.entity_history.entity.category))
+                row, col, conversion.lead.entity_history.entity.sku)
 
             col += 1
             worksheet.write(
@@ -155,7 +162,7 @@ class ReportSoicosConversions(forms.Form):
 
             col += 1
             worksheet.write(
-                row, col, conversion.status)
+                row, col, status_dict[conversion.status])
 
             col += 1
             worksheet.write(
@@ -167,7 +174,7 @@ class ReportSoicosConversions(forms.Form):
                     row, col, conversion.validation_date.date(), date_format)
             else:
                 worksheet.write(
-                    row, col, '-')
+                    row, col, 'Sin validar')
 
             col += 1
             worksheet.write(

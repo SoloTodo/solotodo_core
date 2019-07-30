@@ -27,11 +27,13 @@ class Command(BaseCommand):
         months = list(rrule(MONTHLY, dtstart=start_date, until=end_date))
 
         category_specs_dict = {
-            15: ['r_format_unicode',
-                 'energy_efficiency_unicode',
-                 'consumption',
-                 'refrigerator_capacity',
-                 'freezer_capacity'],
+            15: [
+                'r_format_unicode',
+                'energy_efficiency_unicode',
+                'consumption',
+                'refrigerator_capacity',
+                'freezer_capacity'
+            ],
             11: [
                 'display_unicode',
                 'size_value',
@@ -39,6 +41,27 @@ class Command(BaseCommand):
                 'is_smart_tv',
                 'energy_efficiency_unicode',
                 'average_monthly_consumption'
+            ],
+            17: [
+                'o_type_unicode',
+                'power_value',
+                'capacity',
+                'capacity',
+                'has_grill',
+                'energy_efficiency_cl_unicode',
+                'standby_monthly_consumption_cl'
+            ],
+            43: [
+                'type_unicode',
+                'cooling_power',
+                'cooling_power_btu_value',
+                'cooling_consumption',
+                'cooling_energy_efficiency_cl_unicode',
+                'heating_power',
+                'heating_consumption',
+                'heating_energy_efficiency_cl_unicode',
+                'indice_eficiencia_energetica',
+                'has_inverter_technology',
             ]
         }
 

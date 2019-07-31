@@ -351,10 +351,12 @@ Si prendes el PC con el procesador en la placa sin actualizar el equipo
 probablemente no va a mostrar señal de video, y no va a mostrar BIOS.
 """.format(processor.name, mb.name))
             else:
-                warnings.append("""
-No tenemos información definitiva acerca de la compatibilidad del procesador
-y la placa madre
-""")
+                errors.append("""
+El chipset de la placa madre {} no soporta oficialmente el procesador {}. Es
+posible esta placa madre en específico sea compatible con el procesador, pero
+depende del modelo en específico. Por favor confirma con la página
+oficial del fabricante de la placa madre.
+""".format(mb.name, processor.name))
         if processor and not processor.specs.includes_cooler and not cooler:
             errors.append("""
 El procesador de tu cotización no incluye cooler de fábrica, y tu cotización

@@ -354,8 +354,8 @@ probablemente no va a mostrar señal de video, y no va a mostrar BIOS.
                 errors.append("""
 El chipset de la placa madre {} no soporta oficialmente el procesador {}. Es
 posible esta placa madre en específico sea compatible con el procesador, pero
-depende del modelo en específico. Por favor confirma con la página
-oficial del fabricante de la placa madre.
+depende del modelo. Por favor confirma con la página oficial del fabricante
+de la placa madre.
 """.format(mb.name, processor.name))
         if processor and not processor.specs.includes_cooler and not cooler:
             errors.append("""

@@ -1,7 +1,9 @@
 from django.db import models
+from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
 
-from solotodo.models import Store, Category, Entity
+from solotodo_core.settings import ADMINS
+from solotodo.models import Store, Category, Entity, SoloTodoUser
 
 
 class KeywordSearch(models.Model):
@@ -42,7 +44,17 @@ class KeywordSearch(models.Model):
             update.status = KeywordSearchUpdate.ERROR
             update.message = str(e)
             update.save()
+            message = "Error al realizar búsqueda por keyword '{}' ({}) " \
+                      "en tienda {}.\n ERROR: {}"\
+                .format(self.keyword, self.id, self.store, str(e))
+            self.send_keyword_mail(message)
             return
+
+        if not products:
+            self.send_keyword_mail(
+                "No se encontraron productos "
+                "para el keyword '{}' ({}) en la tienda {}."
+                .format(self.keyword, self.id, self.store))
 
         for idx, product in enumerate(products):
             try:
@@ -58,6 +70,17 @@ class KeywordSearch(models.Model):
 
         update.status = KeywordSearchUpdate.SUCCESS
         update.save()
+
+    def send_keyword_mail(self, message):
+        sender = SoloTodoUser.get_bot().email_recipient_text()
+        subject = 'Actualización Keyword Search'
+        recipients = []
+
+        for admin in ADMINS:
+            recipients.append(admin[1])
+
+        email = EmailMessage(subject, message, sender, recipients)
+        email.send()
 
     def save(self, *args, **kwargs):
         from keyword_search_positions.tasks import keyword_search_update

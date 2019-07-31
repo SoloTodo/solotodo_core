@@ -307,6 +307,15 @@ El sistema solo puede verificar la compatibilidad de 0, 1 o 2 tarjetas de video
         # TODO Check if the processor / motherboard is for overclocking
 
         if processor and mb:
+            default_cores = getattr(
+                mb.specs,
+                'chipset_supported_processor_cores_by_default_id',
+                [])
+            update_cores = getattr(
+                mb.specs,
+                'chipset_supported_processor_cores_with_bios_update_id',
+                [])
+
             if processor.specs.socket_socket_id != \
                     mb.specs.chipset_northbridge_family_socket_socket_id:
                 errors.append("""El procesador tiene que ser del mismo socket
@@ -316,12 +325,10 @@ madre es socket {}
                     processor.specs.socket_socket_unicode,
                     mb.specs.
                     chipset_northbridge_family_socket_socket_unicode))
-            elif processor.specs.core_id in mb.specs\
-                    .chipset_supported_processor_cores_by_default_id:
+            elif processor.specs.core_id in default_cores:
                 # No problem, chipset supports the core bu default
                 pass
-            elif processor.specs.core_id in mb.specs\
-                    .chipset_supported_processor_cores_with_bios_update_id:
+            elif processor.specs.core_id in update_cores:
                 warnings.append("""
 Para usar el procesador {} en la placa madre {} la placa madre requiere de
 actualización de BIOS previa. \z\z
@@ -344,7 +351,7 @@ Si prendes el PC con el procesador en la placa sin actualizar el equipo
 probablemente no va a mostrar señal de video, y no va a mostrar BIOS.
 """.format(processor.name, mb.name))
             else:
-                    warnings.append("""
+                warnings.append("""
 No tenemos información definitiva acerca de la compatibilidad del procesador
 y la placa madre
 """)

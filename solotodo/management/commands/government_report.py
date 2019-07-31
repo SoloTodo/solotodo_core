@@ -62,6 +62,17 @@ class Command(BaseCommand):
                 'heating_energy_efficiency_cl_unicode',
                 'indice_eficiencia_energetica',
                 'has_inverter_technology',
+            ],
+            32: [
+                'consumption',
+                'temperature',
+                'brightness',
+                'format_unicode',
+                'l_type_unicode',
+                'socket_unicode',
+                'light_type_unicode',
+                'lifespan',
+                'equivalent_power'
             ]
         }
 

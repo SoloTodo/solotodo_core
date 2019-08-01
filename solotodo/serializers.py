@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from guardian.utils import get_anonymous_user
 from rest_framework import serializers
+from rest_framework.reverse import reverse
 
 from product_lists.models import ProductList, ProductListEntry
 
@@ -64,6 +65,19 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
         view_name='solotodouser-detail', read_only=True, source='pk')
     budgets = InlineBudgetSerializer(many=True)
     product_lists = ProductListNestedSerializer(many=True)
+
+    preferred_store = serializers.SerializerMethodField()
+
+    def get_preferred_store(self, obj):
+        group = obj.groups.all()[0]
+        request = self.context['request']
+        try:
+            return reverse(
+                'store-detail',
+                args=[group.preferred_store.id],
+                request=request)
+        except Store.DoesNotExist:
+            return None
 
     class Meta:
         model = get_user_model()

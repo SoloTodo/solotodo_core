@@ -4,6 +4,7 @@ import base64
 import traceback
 
 from celery.result import allow_join_result
+from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Q
@@ -52,6 +53,10 @@ class Store(models.Model):
                                                 on_delete=models.SET_NULL,
                                                 null=True, blank=True,
                                                 related_name='+')
+
+    group = models.OneToOneField(Group, on_delete=models.SET_NULL,
+                                 blank=True, null=True,
+                                 related_name='preferred_store')
 
     objects = StoreQuerySet.as_manager()
 

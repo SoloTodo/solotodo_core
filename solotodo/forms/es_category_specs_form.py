@@ -28,15 +28,17 @@ class EsCategorySpecsForm(forms.Form):
                 new_ordering_field
 
     def get_es_products(self, search):
+        from solotodo.models import Product
+
         if not self.is_valid():
             raise ValidationError(self.errors)
 
         keywords = self.cleaned_data['search']
 
         if keywords:
-            keywords_query = Q('simple_query_string', fields=['keywords'],
-                               default_operator='and', query=keywords)
-            search = search.filter(keywords_query)
+            keywords_query = Product.query_es_by_search_string(keywords,
+                                                               mode='AND')
+            search = search.query(keywords_query)
 
         bucket_field = self.cleaned_data['bucket_field']
 

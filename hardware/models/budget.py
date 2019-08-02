@@ -307,6 +307,15 @@ El sistema solo puede verificar la compatibilidad de 0, 1 o 2 tarjetas de video
         # TODO Check if the processor / motherboard is for overclocking
 
         if processor and mb:
+            default_cores = getattr(
+                mb.specs,
+                'chipset_supported_processor_cores_by_default_id',
+                [])
+            update_cores = getattr(
+                mb.specs,
+                'chipset_supported_processor_cores_with_bios_update_id',
+                [])
+
             if processor.specs.socket_socket_id != \
                     mb.specs.chipset_northbridge_family_socket_socket_id:
                 errors.append("""El procesador tiene que ser del mismo socket
@@ -316,54 +325,38 @@ madre es socket {}
                     processor.specs.socket_socket_unicode,
                     mb.specs.
                     chipset_northbridge_family_socket_socket_unicode))
-
-            # Check for Kaby Lake processor in Skylake motherboard
-
-            if processor.specs.core_id == 566207 and mb.specs.chipset_id in \
-                    [134521, 508999, 504945, 134630, 134639, 134847]:
-                if mb.product_id == 31746:
-                    warnings.append("""
-La MSI H110M PRO-VH PLUS viene actualizada para usar procesadores Intel de
- séptima generación en las tiendas AllTec, SpDigital, y Winpy. No es seguro si
- las otras tiendas la entregan actualizada.
-                    """)
-                else:
-                    warnings.append("""
-Para usar un procesador Intel de séptima generación (Kaby Lake) en una placa de
- sexta generación (chipset H110 / B150 / H170 / Z170) la placa madre
- tiene que tener su BIOS actualizada ANTES de colocar el procesador. La
- única excepción actualmente es la MSI H110M PRO-VH PLUS que viene actualizada
- de fábrica por lo menos en las tiendas AllTec, SpDigital, y Winpy. \z\z
-
-Para solucionar esto tienes tres opciones:\z\z
-
-1. Comprar una placa madre compatible de fábrica (chipset B250 / H270 / Z270) o
- la H110M PRO-VH PLUS mencionada antes.\z
-2. Pedir a la tienda donde la compres que te entregue la placa madre
-actualizada (consulta a la tienda, no todas lo hacen, y algunas cobran extra)\z
-3. Comprar la placa y llevarla a una tienda que actualice BIOS (TTChile,
-Infor-Ingen). Las tiendas cobran por este servicio.\z\z
-
-Si prendes el PC con el procesador en la placa sin actualizar el equipo no
- va a mostrar señal de video, y no va a mostrar BIOS.
-""")
-
-            # Check for non-Summit Ridge processor in current AM4 MB
-            if processor.specs.socket_id == 590711 \
-                    and processor.specs.core_id != 590715 \
-                    and mb.specs.chipset_id in [644835, 593827, 599473]:
+            elif processor.specs.core_id in default_cores:
+                # No problem, chipset supports the core bu default
+                pass
+            elif processor.specs.core_id in update_cores:
                 warnings.append("""
-Para usar el procesador {} en la placa madre {} la placa madre necesita
+Para usar el procesador {} en la placa madre {} la placa madre requiere de
 actualización de BIOS previa. \z\z
 
-Consulta a la tienda donde vayas a comprar la
-placa madre si la venden actualizada (o si la pueden actualizar) para este
-procesador. \z\z
+Para actualizar una BIOS normalmente se requiere de un procesador inicialmente
+compatible con la placa madre, lo que usualmente no es el caso.
 
-Actualmente no hay placas madres a la venta con soporte de fábrica para
-este procesador.
- """.format(processor.name, mb.name))
+La solución más común es solicitar a la tienda donde compres la placa madre
+para que te la entreguen con la BIOS actualizada. Las tiendas que ofrecen este
+servicio actualmente son: \z\z
 
+AllTec (gratis), Infor-Ingen (gratis), PC Express (gratis), TtChile (con un
+costo adicional) y Winpy (con un costo adicional, seleccionando "Actualización
+de BIOS en Placa Madre" en el carrito de compras de su sitio). \z\z
+
+No tenemos información de la política de actualización de BIOS de las otras
+tiendas en este momento. \z\z
+
+Si prendes el PC con el procesador en la placa sin actualizar el equipo
+probablemente no va a mostrar señal de video, y no va a mostrar BIOS.
+""".format(processor.name, mb.name))
+            else:
+                errors.append("""
+El chipset de la placa madre {} no soporta oficialmente el procesador {}. Es
+posible esta placa madre en específico sea compatible con el procesador, pero
+depende del modelo. Por favor confirma con la página oficial del fabricante
+de la placa madre.
+""".format(mb.name, processor.name))
         if processor and not processor.specs.includes_cooler and not cooler:
             errors.append("""
 El procesador de tu cotización no incluye cooler de fábrica, y tu cotización

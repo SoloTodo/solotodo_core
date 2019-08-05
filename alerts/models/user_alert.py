@@ -92,11 +92,16 @@ class UserAlert(models.Model):
                         currency_formatter(previous_price),
                         currency_formatter(new_price)
                     )
-            else:
+            elif price_delta > zero:
                 return \
                     '<span class="text-red"><span class="old-price">' \
                     '{}</span> ↗ {}</span>'.format(
                         currency_formatter(previous_price),
+                        currency_formatter(new_price)
+                    )
+            else:
+                return \
+                    '<span class="text-grey">{}</span>'.format(
                         currency_formatter(new_price)
                     )
 

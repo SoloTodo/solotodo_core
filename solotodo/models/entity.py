@@ -186,6 +186,7 @@ class Entity(models.Model):
                                          related_name='+')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
     condition = models.URLField(choices=CONDITION_CHOICES)
+    scraped_condition = models.URLField(choices=CONDITION_CHOICES)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
                                   related_name='+')
@@ -319,7 +320,7 @@ class Entity(models.Model):
                 'picture_urls': scraped_product.picture_urls_as_json(),
                 'video_urls': scraped_product.video_urls_as_json(),
                 'description': scraped_product.description,
-                'condition': scraped_product.condition,
+                'scraped_condition': scraped_product.condition,
                 'flixmedia_id': scraped_product.flixmedia_id,
                 'review_count': scraped_product.review_count,
                 'review_avg_score': scraped_product.review_avg_score,
@@ -345,6 +346,7 @@ class Entity(models.Model):
             scraped_category=category,
             currency=currency,
             condition=scraped_product.condition,
+            scraped_condition=scraped_product.condition,
             name=scraped_product.name,
             cell_plan_name=scraped_product.cell_plan_name,
             part_number=scraped_product.part_number,

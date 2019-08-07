@@ -452,8 +452,8 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         ratings = Rating.objects.filter(
             store__in=stores,
             approval_date__isnull=False
-        ).values('store')\
-            .annotate(rating=Avg('store_rating'))\
+        ).values('store') \
+            .annotate(rating=Avg('store_rating')) \
             .order_by('store')
 
         stores_dict = {s.id: s for s in stores}
@@ -735,9 +735,9 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         user = request.user
 
         has_perm = user.has_perm('update_store_pricing', entity.store) \
-            or entity.user_has_staff_perms(user) \
-            or user.has_perm('update_category_entities_pricing',
-                             entity.category)
+                   or entity.user_has_staff_perms(user) \
+                   or user.has_perm('update_category_entities_pricing',
+                                    entity.category)
 
         if not has_perm:
             raise PermissionDenied
@@ -839,6 +839,27 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
 
+    @detail_route(methods=['post'])
+    def set_condition(self, request, *args, **kwargs):
+        entity = self.get_object()
+        if not entity.user_has_staff_perms(request.user):
+            raise PermissionDenied
+
+        new_condition = request.data['condition']
+
+        if new_condition == entity.condition:
+            return Response({'detail': 'The new condition must be '
+                                       'different from the original one'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        entity.update_keeping_log({
+            'condition': new_condition
+        })
+        serialized_data = EntitySerializer(
+            entity, context={'request': self.request}).data
+
+        return Response(serialized_data)
+
     @detail_route(methods=['post', ])
     def associate(self, request, *args, **kwargs):
         entity = self.get_object()
@@ -918,7 +939,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         if not request.user.has_perm(
                 'view_category_entity_positions', entity.category) \
                 or not request.user.has_perm(
-                    'view_store_entity_positions', entity.store):
+            'view_store_entity_positions', entity.store):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         serializer_klass = EntitySectionPositionSerializer
@@ -960,7 +981,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             matching_cell_plans = EsProduct.category_search(
                 cell_plan_category).filter(
                 'term',
-                specs__association_name__keyword=entity.cell_plan_name)\
+                specs__association_name__keyword=entity.cell_plan_name) \
                 .execute()
 
             cell_plan_ids = [x.product_id for x in matching_cell_plans]
@@ -1316,7 +1337,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def average_rating(self, request, pk):
         product = self.get_object()
 
-        rating = product.rating_set.filter(approval_date__isnull=False)\
+        rating = product.rating_set.filter(approval_date__isnull=False) \
             .aggregate(average=Avg('product_rating'), count=Count('*'))
 
         return Response(rating)

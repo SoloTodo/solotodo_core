@@ -33,6 +33,7 @@ from banners.router import router as banners_router
 from product_lists.router import router as product_lists_router
 from brand_comparisons.router import router as brand_comparisons_router
 from lg_online.router import router as lg_online_router
+from lg_pricing.router import router as lg_pricing_router
 from keyword_search_positions.router import router as keyword_search_router
 from .custom_default_router import CustomDefaultRouter
 
@@ -51,6 +52,7 @@ router.extend(banners_router)
 router.extend(product_lists_router)
 router.extend(brand_comparisons_router)
 router.extend(lg_online_router)
+router.extend(lg_pricing_router)
 router.extend(keyword_search_router)
 
 

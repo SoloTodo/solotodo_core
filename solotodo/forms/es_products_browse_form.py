@@ -238,11 +238,11 @@ class EsProductsBrowseForm(forms.Form):
             'categories', 'terms', field='category_id', size=50)
 
         # Obtain the results
-        es_aggs = search.execute().to_dict()
+        es_result = search[:30000].execute().to_dict()
 
         # Assemble product entries with their prices, leads and discount
         products_metadata = self.calculate_product_metadata(
-            es_aggs['aggregations']['entities'][
+            es_result['aggregations']['entities'][
                 'filtered_entities']['product_stats']['buckets'],
             request
         )
@@ -253,8 +253,8 @@ class EsProductsBrowseForm(forms.Form):
 
         product_entries = []
 
-        for entry in search[:10000].scan():
-            product = entry.to_dict()
+        for entry in es_result['hits']['hits']:
+            product = entry['_source']
 
             product_entries.append({
                 'product': self.serialize_product(product, request),
@@ -276,7 +276,7 @@ class EsProductsBrowseForm(forms.Form):
         # Category aggregations
         category_buckets = [
             {'id': x['key'], 'doc_count': x['doc_count']}
-            for x in es_aggs['aggregations']['categories']['buckets']
+            for x in es_result['aggregations']['categories']['buckets']
         ]
 
         return {
@@ -334,11 +334,11 @@ class EsProductsBrowseForm(forms.Form):
             .bucket('product_stats', product_stats_bucket)
 
         # Obtain the results
-        aggs_result = search.execute().to_dict()
+        es_result = search[:10000].execute().to_dict()
 
         # Assemble product entries with their prices, leads and discount
         products_metadata = self.calculate_product_metadata(
-            aggs_result['aggregations']['filtered_products']['entities'][
+            es_result['aggregations']['filtered_products']['entities'][
                 'filtered_entities']['product_stats']['buckets'],
             request
         )
@@ -349,8 +349,8 @@ class EsProductsBrowseForm(forms.Form):
 
         product_entries = []
 
-        for entry in search[:10000].scan():
-            product = entry.to_dict()
+        for entry in es_result['hits']['hits']:
+            product = entry['_source']
 
             product_entries.append({
                 'product': self.serialize_product(product, request),
@@ -374,7 +374,7 @@ class EsProductsBrowseForm(forms.Form):
             bucketed_results[pagination_params['offset']:
                              pagination_params['upper_bound']]
 
-        filter_aggs = specs_form.process_es_aggs(aggs_result['aggregations'])
+        filter_aggs = specs_form.process_es_aggs(es_result['aggregations'])
 
         return {
             'count': len(bucketed_results),

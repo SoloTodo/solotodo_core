@@ -238,7 +238,7 @@ class EsProductsBrowseForm(forms.Form):
             'categories', 'terms', field='category_id', size=50)
 
         # Obtain the results
-        es_result = search[:10000].execute().to_dict()
+        es_result = search[:30000].execute().to_dict()
 
         # Assemble product entries with their prices, leads and discount
         products_metadata = self.calculate_product_metadata(
@@ -251,10 +251,11 @@ class EsProductsBrowseForm(forms.Form):
         products_metadata_dict = {x['product_id']: x
                                   for x in products_metadata}
 
-        products = [entry['_source'] for entry in es_result['hits']['hits']]
         product_entries = []
 
-        for product in products:
+        for entry in es_result['hits']['hits']:
+            product = entry['_source']
+
             product_entries.append({
                 'product': self.serialize_product(product, request),
                 'metadata': products_metadata_dict[product['id']]
@@ -346,10 +347,11 @@ class EsProductsBrowseForm(forms.Form):
         products_metadata_dict = {x['product_id']: x
                                   for x in products_metadata}
 
-        products = [entry['_source'] for entry in es_result['hits']['hits']]
         product_entries = []
 
-        for product in products:
+        for entry in es_result['hits']['hits']:
+            product = entry['_source']
+
             product_entries.append({
                 'product': self.serialize_product(product, request),
                 'metadata': products_metadata_dict[product['id']]

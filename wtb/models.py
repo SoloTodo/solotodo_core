@@ -155,7 +155,7 @@ class WtbEntityQuerySet(models.QuerySet):
 
 
 class WtbEntity(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, db_index=True)
     brand = models.ForeignKey(WtbBrand, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,

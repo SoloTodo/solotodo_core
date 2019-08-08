@@ -12,14 +12,29 @@ class LgWtbViewSet(ViewSet):
     @action(detail=False, methods=['get'])
     def entity_data(self, request):
         params = request.GET
-        product = params['product']
+        product = params.get('product')
+        model_id = params.get('model_id')
+        sub_model_id = params.get('sub_model_id')
+
+        if not product and not model_id and not sub_model_id:
+            return Response(
+                {'detail': 'product, model_id or sub_model_id must be given'},
+                status=400
+            )
+
+        wtb_entities = WtbEntity.objects.filter(brand=1)
+
+        if sub_model_id:
+            wtb_entities = wtb_entities.filter(key=sub_model_id)
+        elif model_id:
+            wtb_entities = wtb_entities.filter(key=model_id)
+        else:
+            wtb_entities = wtb_entities.filter(name__contains=product)
+
+        products = [w.product for w in wtb_entities]
 
         store_ids = [30, 61, 60, 97, 38, 9, 87, 5, 43, 23, 37, 11, 12, 18, 67,
                      167, 85, 86, 181, 195, 197, 224]
-
-        wtb_entities = WtbEntity.objects.filter(
-            name__contains=product, brand=1)
-        products = [w.product for w in wtb_entities]
 
         entities = Entity.objects\
             .filter(product__in=products, store__in=store_ids)\

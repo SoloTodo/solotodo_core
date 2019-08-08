@@ -735,9 +735,9 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         user = request.user
 
         has_perm = user.has_perm('update_store_pricing', entity.store) \
-                   or entity.user_has_staff_perms(user) \
-                   or user.has_perm('update_category_entities_pricing',
-                                    entity.category)
+            or entity.user_has_staff_perms(user) \
+            or user.has_perm('update_category_entities_pricing',
+                             entity.category)
 
         if not has_perm:
             raise PermissionDenied
@@ -939,7 +939,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         if not request.user.has_perm(
                 'view_category_entity_positions', entity.category) \
                 or not request.user.has_perm(
-            'view_store_entity_positions', entity.store):
+                'view_store_entity_positions', entity.store):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         serializer_klass = EntitySectionPositionSerializer

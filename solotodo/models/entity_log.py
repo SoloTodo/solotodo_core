@@ -25,6 +25,12 @@ class EntityLog(models.Model):
         ('https://schema.org/RefurbishedCondition', 'Refurbished'),
         ('https://schema.org/UsedCondition', 'Used')]
     )
+    scraped_condition = models.URLField(choices=[
+        ('https://schema.org/DamagedCondition', 'Damaged'),
+        ('https://schema.org/NewCondition', 'New'),
+        ('https://schema.org/RefurbishedCondition', 'Refurbished'),
+        ('https://schema.org/UsedCondition', 'Used')]
+    )
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
                                   related_name='+')
@@ -49,6 +55,7 @@ class EntityLog(models.Model):
         'scraped_category',
         'currency',
         'condition',
+        'scraped_condition',
         'product',
         'cell_plan',
         'name',

@@ -1,0 +1,23 @@
+<mjml>
+  <mj-body>
+    <mj-section>
+      <mj-column>
+        <mj-text>{{ summary|safe }}</mj-text>
+        <mj-table>
+        	<tr>
+            <th rowspan=2>Tienda</th>
+            <th colspan=2>Normal</th>
+            <th colspan=2>Oferta</th>
+          </tr>
+          <tr>
+            <th>Anterior</th>
+            <th>Nuevo</th>
+            <th>Anterior</th>
+            <th>Nuevo</th>
+          </tr>
+          {{ table_content }}
+        </mj-table>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

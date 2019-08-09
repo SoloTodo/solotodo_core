@@ -5,5 +5,3 @@ from .user_alert import UserAlert
 
 from .product_price_alert import ProductPriceAlert
 from .product_price_alert_history import ProductPriceAlertHistory
-from .product_price_alert_history_entry import ProductPriceAlertHistoryEntry
-

@@ -7,7 +7,7 @@
   <mj-body background-color="#f9f9f9">
     <mj-section>
       <mj-column>
-        <mj-image src="https://s3.amazonaws.com/solotodo-core/media/logo_500.png" width="250" align="left" />
+        <mj-image src="https://s3.amazonaws.com/solotodo-core/media/logo_500.png" width="250px" align="left" />
       </mj-column>
     </mj-section>
     <mj-section background-color="#ffffff">

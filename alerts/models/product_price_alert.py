@@ -1,8 +1,16 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
+from django.contrib.sites.models import Site
+from django.core import signing
+from django.conf import settings
 from collections import OrderedDict
+from decimal import Decimal
 
-from solotodo.models import Product, Store, Entity
+from solotodo.models import Product, Store, Entity, SoloTodoUser
+from .utils import extract_price, calculate_price_delta, currency_formatter
 
 
 class ProductPriceAlert(models.Model):
@@ -42,7 +50,7 @@ class ProductPriceAlert(models.Model):
         self.save()
 
     def generate_delta_dict(self):
-        entries = self.active_history.entries
+        entries = self.active_history.entries.all()
         entities = self.get_entities()
 
         delta_dict = OrderedDict()
@@ -62,28 +70,214 @@ class ProductPriceAlert(models.Model):
 
         return delta_dict
 
+    def generate_minimum_dict(self):
+        entries = self.active_history.entries.all()
+        entities = self.get_entities()
+
+        minimum_dict = {
+            'offer': {
+                'previous': None,
+                'current': None
+            },
+            'normal': {
+                'previous': None,
+                'current': None
+            }
+        }
+
+        if entries:
+            minimum_dict['offer']['previous'] = entries[0]
+            minimum_dict['normal']['previous'] = entries[0]
+
+            for entry in entries:
+                if entry.offer_price < \
+                        minimum_dict['offer']['previous'].offer_price:
+                    minimum_dict['offer']['previous'] = entry
+
+                if entry.normal_price < \
+                        minimum_dict['normal']['previous'].normal_price:
+                    minimum_dict['normal']['previous'] = entry
+
+        if entities:
+            minimum_dict['offer']['current'] = entities[0].active_registry
+            minimum_dict['normal']['current'] = entities[0].active_registry
+
+            for entity in entities:
+                if entity.active_registry.offer_price < \
+                        minimum_dict['offer']['current'].offer_price:
+                    minimum_dict['offer']['current'] = entity.active_registry
+
+                if entity.active_registry.normal_price < \
+                        minimum_dict['normal']['current'].normal_price:
+                    minimum_dict['normal']['current'] = entity.active_registry
+
+        return minimum_dict
+
     def check_for_changes(self):
         changed = False
 
-        delta_list = self.generate_delta_dict()
+        if self.user:
+            delta_dict = self.generate_delta_dict()
 
-        for item in delta_list:
+            for item in delta_dict:
+                previous = item.get('previous')
+                current = item.get('current')
+
+                if not previous or not current or \
+                        previous.offer_price != current.offer_price or \
+                        previous.normal_price != current.normal_price:
+                    changed = True
+                    break
+
+            if changed:
+                self.send_email(delta_dict)
+                self.update_active_history()
+
+        else:
+            minimum_dict = self.generate_minimum_dict()
+
+            previous_normal_price = extract_price(
+                minimum_dict['normal']['previous'], 'normal')
+            previous_offer_price = extract_price(
+                minimum_dict['offer']['previous'], 'offer')
+            new_normal_price = extract_price(
+                minimum_dict['normal']['current'], 'normal')
+            new_offer_price = extract_price(
+                minimum_dict['offer']['current'], 'offer')
+
+            if previous_normal_price != new_normal_price or \
+                    previous_offer_price != new_offer_price:
+                self.send_email(minimum_dict)
+                self.update_active_history()
+
+    def send_email(self, a_dict=None):
+        if self.user:
+            self._send_delta_email(a_dict)
+        else:
+            self._send_minimum_email(a_dict)
+
+    def _send_delta_email(self, delta_dict=None):
+        if not delta_dict:
+            delta_list = self.generate_delta_dict()
+
+        def product_row(previous_entry, current_entry):
+            row = '<tr>' \
+                  '<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>' \
+                  '</tr>'
+
+            store_name = previous_entry.entity.store.name
+            previous_normal_price = extract_price(previous_entry, 'normal')
+            previous_offer_price = extract_price(previous_entry, 'offer')
+            new_normal_price = extract_price(current_entry, 'normal')
+            new_offer_price = extract_price(current_entry, 'offer')
+
+            return row.format(
+                store_name,
+                previous_normal_price, new_normal_price,
+                previous_offer_price, new_offer_price)
+
+        html_rows = ''
+        for item in delta_dict:
             previous = item.get('previous')
             current = item.get('current')
 
-            if not previous or not current or \
-                    previous.offer_price != current.offer_price or \
-                    previous.normal_price != current.normal_price:
-                changed = True
-                break
+            html_rows += product_row(previous, current)
+            
+    def _send_minimum_email(self, minimum_dict=None):
+        if not minimum_dict:
+            minimum_dict = self.generate_minimum_dict()
 
-        if changed:
-            self.send_email(delta_list)
-            self.update_active_history()
+        previous_normal_price = extract_price(
+            minimum_dict['normal']['previous'], 'normal')
+        previous_offer_price = extract_price(
+            minimum_dict['offer']['previous'], 'offer')
+        new_normal_price = extract_price(
+            minimum_dict['normal']['current'], 'normal')
+        new_offer_price = extract_price(
+            minimum_dict['offer']['current'], 'offer')
 
-    def send_email(self, delta_list=None):
-        if not delta_list:
-            delta_list = self.generate_delta_dict()
+        normal_price_delta = calculate_price_delta(
+            previous_normal_price, new_normal_price)
+        offer_price_delta = calculate_price_delta(
+            previous_offer_price, new_offer_price)
+
+        zero = Decimal(0)
+
+        def price_labeler(previous_price, new_price, price_delta):
+            if price_delta is None:
+                return '<span class="text-grey">No disponible</span>'
+            elif price_delta == Decimal('-Inf'):
+                return \
+                    '<span class="text-red"><span class="old-price">{}' \
+                    '</span> No disponible</span>'.format(
+                        currency_formatter(previous_price))
+            elif price_delta == Decimal('Inf'):
+                return \
+                    '<span class="text-green"><span class="old-price"> ' \
+                    'No disponible</span>{}</span>'.format(
+                        currency_formatter(new_price))
+            elif price_delta < zero:
+                return \
+                    '<span class="text-green"><span class="old-price">' \
+                    '{}</span> ↘ {}</span>'.format(
+                        currency_formatter(previous_price),
+                        currency_formatter(new_price))
+            elif price_delta == zero:
+                return \
+                    '<span class="text-grey">{}</span>'.format(
+                        currency_formatter(previous_price))
+            else:
+                return \
+                    '<span class="text-red"><span class="old-price">' \
+                    '{}</span> ↗ {}</span>'.format(
+                        currency_formatter(previous_price),
+                        currency_formatter(new_price))
+
+        offer_price_label = price_labeler(
+            previous_offer_price, new_offer_price, offer_price_delta)
+        normal_price_label = price_labeler(
+            previous_normal_price, new_normal_price, normal_price_delta)
+
+        product_label = '<span class="product-name">{}</span>'\
+            .format(self.product)
+
+        if offer_price_delta is None or \
+                (offer_price_delta == zero and normal_price_delta == zero):
+            summary = 'Sólo te queríamos contar que tu producto {} no ha ' \
+                      'tenido cambios durante la última semana.'\
+                .format(product_label)
+        elif offer_price_delta == Decimal('-Inf'):
+            summary = '¡Tu producto {} ya no está disponible! 😱.'\
+                .format(product_label)
+        elif offer_price_delta == Decimal('Inf'):
+            summary = '¡Tu producto {} volvió a estar disponible! 😊'\
+                .format(product_label)
+        elif offer_price_delta < zero or normal_price_delta < zero:
+            summary = '¡Tu producto {} bajó de precio! 😊'\
+                .format(product_label)
+        else:
+            summary = '¡Tu producto {} subió de precio! 😞'\
+                .format(product_label)
+
+        sender = SoloTodoUser().get_bot().email_recipient_text()
+
+        html_message = render_to_string(
+            'alert_mail.html',
+            {
+                'unsubscribe_key': signing.dumps({
+                    'anonymous_alert_id': self.id
+                }),
+                'product': self.product,
+                'summary': mark_safe(summary),
+                'offer_price_label': mark_safe(offer_price_label),
+                'normal_price_label': mark_safe(normal_price_label),
+                'api_host': settings.PUBLICAPI_HOST,
+                'solotodo_com_domain': Site.objects.get(
+                    pk=settings.SOLOTODO_COM_SITE_ID).domain
+            })
+
+        send_mail('Actualización de tu producto {}'.format(self.product),
+                  summary, sender, [self.email], html_message=html_message)
 
     class Meta:
         app_label = 'alerts'

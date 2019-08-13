@@ -10,7 +10,8 @@ from collections import OrderedDict
 from decimal import Decimal
 
 from solotodo.models import Product, Store, Entity, SoloTodoUser
-from .utils import extract_price, calculate_price_delta, currency_formatter
+from .utils import extract_price, calculate_price_delta, \
+    currency_formatter, currency_formatter_no_symbol
 
 
 class ProductPriceAlert(models.Model):
@@ -27,8 +28,8 @@ class ProductPriceAlert(models.Model):
 
     def get_entities(self):
         return Entity.objects.filter(
-            product=self.product, store__in=self.stores)\
-            .order_by('offer_price').get_available()
+            product=self.product, store__in=self.stores.all())\
+            .order_by('active_registry__offer_price').get_available()
 
     def update_active_history(self):
         from alerts.models import ProductPriceAlertHistory
@@ -39,11 +40,9 @@ class ProductPriceAlert(models.Model):
         for entity in entities:
             entries.append(entity.active_registry)
 
-        history = ProductPriceAlertHistory(
-            alert=self,
-            entries=entries
-        )
-
+        history = ProductPriceAlertHistory(alert=self)
+        history.save()
+        history.entries.set(entries)
         history.save()
 
         self.active_history = history
@@ -119,9 +118,9 @@ class ProductPriceAlert(models.Model):
         if self.user:
             delta_dict = self.generate_delta_dict()
 
-            for item in delta_dict:
-                previous = item.get('previous')
-                current = item.get('current')
+            for key, value in delta_dict.items():
+                previous = value.get('previous')
+                current = value.get('active')
 
                 if not previous or not current or \
                         previous.offer_price != current.offer_price or \
@@ -158,11 +157,15 @@ class ProductPriceAlert(models.Model):
 
     def _send_delta_email(self, delta_dict=None):
         if not delta_dict:
-            delta_list = self.generate_delta_dict()
+            delta_dict = self.generate_delta_dict()
 
         def product_row(previous_entry, current_entry):
             row = '<tr>' \
-                  '<td>{}</td><td>{}</td><td>{}</td><td>{}</td><td>{}</td>' \
+                  '<td>{}</td>' \
+                  '<td class="{} price-cell">{}</td>' \
+                  '<td class="{} price-cell">{}</td>' \
+                  '<td class="{} price-cell">{}</td>' \
+                  '<td class="{} price-cell">{}</td>' \
                   '</tr>'
 
             store_name = previous_entry.entity.store.name
@@ -171,17 +174,61 @@ class ProductPriceAlert(models.Model):
             new_normal_price = extract_price(current_entry, 'normal')
             new_offer_price = extract_price(current_entry, 'offer')
 
+            normal_class = "text-grey"
+            offer_class = "text-grey"
+
+            if new_normal_price < previous_normal_price:
+                normal_class = "text-green"
+            if new_normal_price > previous_normal_price:
+                normal_class = "text-red"
+
+            if new_offer_price < previous_offer_price:
+                offer_class = "text-green"
+            if new_offer_price > previous_offer_price:
+                offer_class = "text-red"
+
             return row.format(
                 store_name,
-                previous_normal_price, new_normal_price,
-                previous_offer_price, new_offer_price)
+                normal_class,
+                currency_formatter_no_symbol(previous_normal_price),
+                normal_class,
+                currency_formatter_no_symbol(new_normal_price),
+                offer_class,
+                currency_formatter_no_symbol(previous_offer_price),
+                offer_class,
+                currency_formatter_no_symbol(new_offer_price))
 
         html_rows = ''
-        for item in delta_dict:
-            previous = item.get('previous')
-            current = item.get('current')
-
+        for key, value in delta_dict.items():
+            previous = value.get('previous')
+            current = value.get('active')
             html_rows += product_row(previous, current)
+
+        product_label = '<span class="product-name">{}</span>'\
+            .format(self.product)
+
+        summary = 'Se han detectado cambios para el producto {}.'\
+            .format(product_label)
+
+        sender = SoloTodoUser().get_bot().email_recipient_text()
+
+        html_message = render_to_string(
+            'product_price_alert_mail.html',
+            {
+                'unsubscribe_key': signing.dumps({
+                    'anonymous_alert_id': self.id
+                }),
+                'product': self.product,
+                'summary': mark_safe(summary),
+                'table_content': mark_safe(html_rows),
+                'api_host': settings.PUBLICAPI_HOST,
+                'solotodo_com_domain': Site.objects.get(
+                    pk=settings.SOLOTODO_COM_SITE_ID).domain
+            })
+
+        send_mail('Actualización de tu producto {}'.format(self.product),
+                  summary, sender, [self.user.email],
+                  html_message=html_message)
             
     def _send_minimum_email(self, minimum_dict=None):
         if not minimum_dict:

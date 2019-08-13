@@ -159,20 +159,34 @@ class ReportCurrentPricesForm(forms.Form):
             purpose=settings.REPORTS_PURPOSE_ID
         )
 
-        cell_plans_in_entities = [e.cell_plan for e in
-                                  es.filter(cell_plan__isnull=False)]
+        cell_plans_in_entities = {}
+
+        for e in es.filter(cell_plan__isnull=False):
+            if e.cell_plan_id not in cell_plans_in_entities:
+                cell_plans_in_entities[e.cell_plan_id] = e.cell_plan
 
         headers = [
             'Producto',
         ]
 
+        cell_plan_installments = {
+            'Movistar': 18,
+            'Entel': 18,
+            'Claro': 12,
+            'WOM': 18
+        }
+
         cell_plan_prices_dict = {}
         if cell_plans_in_entities:
             headers.append('Plan celular')
+            headers.append('Plan celular (base)')
+            headers.append('Tipo plan')
+            headers.append('Modalidad adquisición equipo')
             headers.append('Precio plan celular')
 
             cell_plan_entities = Entity.objects.filter(
-                product__in=cell_plans_in_entities).get_available().values(
+                product__in=cell_plans_in_entities.keys())\
+                .get_available().values(
                 'product').annotate(
                 min_price=Min('active_registry__normal_price'))
 
@@ -195,6 +209,7 @@ class ReportCurrentPricesForm(forms.Form):
         if cell_monthly_payments_in_entities:
             if cell_plans_in_entities:
                 headers.append('Cuota arriendo')
+                headers.append('Número de cuotas')
 
         if currency:
             headers.extend([
@@ -231,19 +246,35 @@ class ReportCurrentPricesForm(forms.Form):
             # Cell plan
 
             if cell_plans_in_entities:
-                cell_plan = e.cell_plan
+                cell_plan = cell_plans_in_entities[e.cell_plan_id]
                 if cell_plan:
                     cell_plan_price = cell_plan_prices_dict.get(
                         cell_plan.id, 'N/A')
 
                     worksheet.write(
-                        row, col, str(e.cell_plan))
-                    worksheet.write(row, col + 1, cell_plan_price)
+                        row, col, str(cell_plan))
+                    worksheet.write(
+                        row, col + 1, str(cell_plan.specs['base_name']))
+
+                    if e.active_registry.cell_monthly_payment is None:
+                        plan_type = 'Prepago'
+                    elif cell_plan.specs['portability_exclusive']:
+                        plan_type = 'Portabilidad'
+                    else:
+                        plan_type = 'Línea nueva'
+
+                    worksheet.write(row, col + 2, plan_type)
+                    worksheet.write(row, col + 3,
+                                    cell_plan.specs['lease_unicode'])
+                    worksheet.write(row, col + 4, cell_plan_price)
                 else:
                     worksheet.write(row, col, 'N/A')
                     worksheet.write(row, col + 1, 'N/A')
+                    worksheet.write(row, col + 2, 'N/A')
+                    worksheet.write(row, col + 3, 'N/A')
+                    worksheet.write(row, col + 4, 'N/A')
 
-                col += 2
+                col += 5
 
             # Store
 
@@ -288,12 +319,21 @@ class ReportCurrentPricesForm(forms.Form):
             # Cell monthly payment
             if cell_monthly_payments_in_entities:
                 if e.active_registry.cell_monthly_payment is not None:
-                    cell_monthly_payment_text = \
-                        e.active_registry.cell_monthly_payment
+                    worksheet.write(
+                        row, col, e.active_registry.cell_monthly_payment)
+
+                    if e.active_registry.cell_monthly_payment:
+                        plan_brand = e.cell_plan.specs['brand_unicode']
+                        installments = cell_plan_installments.get(
+                            plan_brand, 'N/A')
+
+                        worksheet.write(row, col+1, installments)
+                    else:
+                        worksheet.write(row, col + 1, 'No aplica')
                 else:
-                    cell_monthly_payment_text = 'No aplica'
-                worksheet.write(row, col, cell_monthly_payment_text)
-                col += 1
+                    worksheet.write(row, col, 'No aplica')
+                    worksheet.write(row, col+1, 'No aplica')
+                col += 2
 
             # Converted prices
             if currency:

@@ -246,7 +246,7 @@ class ReportCurrentPricesForm(forms.Form):
             # Cell plan
 
             if cell_plans_in_entities:
-                cell_plan = cell_plans_in_entities[e.cell_plan_id]
+                cell_plan = cell_plans_in_entities.get(e.cell_plan_id)
                 if cell_plan:
                     cell_plan_price = cell_plan_prices_dict.get(
                         cell_plan.id, 'N/A')

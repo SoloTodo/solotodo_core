@@ -160,43 +160,116 @@ class ProductPriceAlert(models.Model):
             delta_dict = self.generate_delta_dict()
 
         def product_row(previous_entry, current_entry):
-            row = '<tr>' \
-                  '<td>{}</td>' \
-                  '<td class="{} price-cell">{}</td>' \
-                  '<td class="{} price-cell">{}</td>' \
+            row = '<tr class="price-table-row">' \
+                  '<td><a href={}>{}</a></td>' \
                   '<td class="{} price-cell">{}</td>' \
                   '<td class="{} price-cell">{}</td>' \
                   '</tr>'
 
-            store_name = previous_entry.entity.store.name
+            domain = Site.objects.get(
+                pk=settings.SOLOTODO_PRICING_SITE_ID).domain
+
+            if current_entry:
+                entity = current_entry.entity
+                store_name = current_entry.entity.store.name
+            else:
+                entity = previous_entry.entity
+                store_name = previous_entry.entity.store.name
+
+            store_sku_url = 'https://{}/skus/{}'
             previous_normal_price = extract_price(previous_entry, 'normal')
             previous_offer_price = extract_price(previous_entry, 'offer')
             new_normal_price = extract_price(current_entry, 'normal')
             new_offer_price = extract_price(current_entry, 'offer')
 
-            normal_class = "text-grey"
-            offer_class = "text-grey"
+            normal_class = ""
+            offer_class = ""
+            normal_price_label = ""
+            offer_price_label = ""
 
-            if new_normal_price < previous_normal_price:
+            if not previous_normal_price:
+                normal_price_label = '<span class="old-price">' \
+                                     'No Disponible</span><br/>' \
+                                     '<span>{}</span>'\
+                    .format(currency_formatter_no_symbol(new_normal_price))
                 normal_class = "text-green"
-            if new_normal_price > previous_normal_price:
-                normal_class = "text-red"
 
-            if new_offer_price < previous_offer_price:
+            elif not new_normal_price:
+                normal_price_label = '<span class="old-price">{}</span><br/>'\
+                                     '<span>No Disponible</span>'\
+                    .format(currency_formatter_no_symbol(
+                        previous_normal_price))
+                normal_class = "text-red"
+            else:
+                if new_normal_price == previous_normal_price:
+                    normal_price_label = '<span>{}</span>'.format(
+                        currency_formatter_no_symbol(new_normal_price))
+                    normal_class = "text-grey"
+
+                if new_normal_price < previous_normal_price:
+                    normal_price_label = '<span class="old-price">{}</span>' \
+                                         '<br/>' \
+                                         '<span>{}</span>' \
+                        .format(
+                            currency_formatter_no_symbol(
+                                previous_normal_price),
+                            currency_formatter_no_symbol(new_normal_price))
+                    normal_class = "text-green"
+
+                if new_normal_price > previous_normal_price:
+                    normal_price_label = '<span class="old-price">{}</span>' \
+                                         '<br/>' \
+                                         '<span>{}</span>'\
+                        .format(
+                            currency_formatter_no_symbol(
+                                previous_normal_price),
+                            currency_formatter_no_symbol(new_normal_price))
+                    normal_class = "text-red"
+
+            if not previous_offer_price:
+                offer_price_label = '<span class="old-price">' \
+                                    'No Disponible</span><br/>' \
+                                    '<span>{}</span>'\
+                    .format(currency_formatter_no_symbol(new_offer_price))
                 offer_class = "text-green"
-            if new_offer_price > previous_offer_price:
+
+            elif not new_offer_price:
+                offer_price_label = '<span class="old-price">{}</span><br/>' \
+                                    '<span>No Disponible</span>' \
+                    .format(currency_formatter_no_symbol(
+                        previous_offer_price))
                 offer_class = "text-red"
 
+            else:
+                if new_offer_price == previous_offer_price:
+                    offer_price_label = '<span>{}</span>'.format(
+                        currency_formatter_no_symbol(new_offer_price))
+                    offer_class = "text-grey"
+
+                if new_offer_price < previous_offer_price:
+                    offer_price_label = '<span class="old-price">{}</span>' \
+                                        '<br/>'\
+                                        '<span>{}</span>' \
+                        .format(
+                            currency_formatter_no_symbol(previous_offer_price),
+                            currency_formatter_no_symbol(new_offer_price))
+                    offer_class = "text-green"
+                if new_offer_price > previous_offer_price:
+                    offer_price_label = '<span class="old-price">{}</span>' \
+                                        '<br/>' \
+                                        '<span>{}</span>' \
+                        .format(
+                            currency_formatter_no_symbol(previous_offer_price),
+                            currency_formatter_no_symbol(new_offer_price))
+                    offer_class = "text-red"
+
             return row.format(
+                store_sku_url.format(domain, entity.id),
                 store_name,
                 normal_class,
-                currency_formatter_no_symbol(previous_normal_price),
-                normal_class,
-                currency_formatter_no_symbol(new_normal_price),
+                normal_price_label,
                 offer_class,
-                currency_formatter_no_symbol(previous_offer_price),
-                offer_class,
-                currency_formatter_no_symbol(new_offer_price))
+                offer_price_label)
 
         html_rows = ''
         for key, value in delta_dict.items():
@@ -223,7 +296,7 @@ class ProductPriceAlert(models.Model):
                 'table_content': mark_safe(html_rows),
                 'api_host': settings.PUBLICAPI_HOST,
                 'solotodo_com_domain': Site.objects.get(
-                    pk=settings.SOLOTODO_COM_SITE_ID).domain
+                    pk=settings.SOLOTODO_PRICING_SITE_ID).domain
             })
 
         send_mail('Actualización de tu producto {}'.format(self.product),

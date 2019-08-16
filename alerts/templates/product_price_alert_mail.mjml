@@ -4,7 +4,8 @@
       .product-name { font-weight: bold; color: #ce5028; } .old-price { text-decoration: line-through; } 
       .text-green { color: #28a745; } .text-red { color: #dc3545; } .text-grey { color: #6c757d; } 
       .unsubscribe-link { color: black; } .table-header {background-color: #ce5028; color: white;}
-      .price-cell {text-align: right;}
+      .price-cell {text-align: right;} a {color:black; text-decoration: none;} 
+      .price-table-row {border-bottom:1px solid #ecedee;}
     </mj-style>
   </mj-head>
   <mj-body background-color="#f9f9f9">
@@ -25,18 +26,13 @@
     </mj-section>
     <mj-section background-color="#ffffff">
       <mj-column>
-        <mj-table>
+        <mj-table class="price-table" border-color=black>
           <tr class="table-header">
-            <th rowspan=2>Tienda</th>
-            <th colspan=2>Normal</th>
-            <th colspan=2>Oferta</th>
+            <th>Tienda</th>
+            <th>Normal</th>
+            <th>Oferta</th>
           </tr>
-          <tr class="table-header">
-            <th>Anterior</th>
-            <th>Nuevo</th>
-            <th>Anterior</th>
-            <th>Nuevo</th>
-          </tr> {{ table_content }} </mj-table>
+          {{ table_content }} </mj-table>
       </mj-column>
     </mj-section>
     <mj-section>

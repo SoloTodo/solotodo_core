@@ -161,7 +161,7 @@ class ProductPriceAlert(models.Model):
 
         def product_row(previous_entry, current_entry):
             row = '<tr class="price-table-row">' \
-                  '<td><a href={}>{}</a></td>' \
+                  '<td class="text-cell"><a href={}>{}</a></td>' \
                   '<td class="{} price-cell">{}</td>' \
                   '<td class="{} price-cell">{}</td>' \
                   '</tr>'

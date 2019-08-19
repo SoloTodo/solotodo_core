@@ -4,8 +4,10 @@
       .product-name { font-weight: bold; color: #ce5028; } .old-price { text-decoration: line-through; } 
       .text-green { color: #28a745; } .text-red { color: #dc3545; } .text-grey { color: #6c757d; } 
       .unsubscribe-link { color: black; } .table-header {background-color: #ce5028; color: white;}
-      .price-cell {text-align: right;} a {color:black; text-decoration: none;} 
-      .price-table-row {border-bottom:1px solid #ecedee;}
+      .price-cell {text-align: right; padding-right: 10px;} a {text-decoration: none;} 
+      .price-table-row {border-bottom:1px solid #ecedee;} .price-table-link {color: #333333;}
+      .text-header {text-align: left; padding-left: 10px;} .price-header {text-align: right; padding-right: 10px;}
+      .text-cell {padding-left: 10px;}
     </mj-style>
   </mj-head>
   <mj-body background-color="#f9f9f9">
@@ -28,9 +30,9 @@
       <mj-column>
         <mj-table class="price-table" border-color=black>
           <tr class="table-header">
-            <th>Tienda</th>
-            <th>Normal</th>
-            <th>Oferta</th>
+            <th class="text-header">Tienda</th>
+            <th class="price-header">Normal</th>
+            <th class="price-header">Oferta</th>
           </tr>
           {{ table_content }} </mj-table>
       </mj-column>

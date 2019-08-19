@@ -6,10 +6,11 @@ from rest_framework.filters import OrderingFilter, \
     SearchFilter
 
 from alerts.forms import AlertDeleteByKeyForm
-from .models import AnonymousAlert, UserAlert, AlertNotification
+from .models import AnonymousAlert, UserAlert, ProductPriceAlert
 from alerts.serializers import AnonymousAlertSerializer, \
-    AnonymousAlertCreationSerializer, UserAlertSerializer,\
-    UserAlertCreationSerializer, AlertNotificationSerializer
+    AnonymousAlertCreationSerializer, UserAlertSerializer, \
+    UserAlertCreationSerializer, AlertNotificationSerializer, \
+    ProductPriceAlertSerializer
 
 
 class AnonymousAlertViewSet(mixins.CreateModelMixin,
@@ -94,8 +95,8 @@ class UserAlertViewSet(mixins.CreateModelMixin,
     def alert_notifications(self, request, pk, *args, **kwargs):
         user_alert = self.get_object()
 
-        alert_notifications = user_alert.alert.notifications\
-            .order_by('creation_date')\
+        alert_notifications = user_alert.alert.notifications \
+            .order_by('creation_date') \
             .select_related(
                 'previous_normal_price_registry'
                 '__entity__product__instance_model',
@@ -107,3 +108,16 @@ class UserAlertViewSet(mixins.CreateModelMixin,
             alert_notifications, many=True, context={'request': request})
 
         return Response(serializer.data)
+
+
+class ProductPriceAlertViewSet(mixins.CreateModelMixin,
+                               mixins.RetrieveModelMixin,
+                               mixins.ListModelMixin,
+                               mixins.DestroyModelMixin,
+                               viewsets.GenericViewSet):
+
+    queryset = ProductPriceAlert.objects.all()
+    serializer_class = ProductPriceAlertSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
+                       OrderingFilter)
+    ordering_fields = ('id', 'alert__creation_date')

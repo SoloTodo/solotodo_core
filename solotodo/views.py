@@ -1326,7 +1326,14 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                             status=status.HTTP_404_NOT_FOUND)
 
         picture = specs['picture']
-        resized_picture = get_thumbnail(picture, **form.thumbnail_kwargs())
+        thumbnail_kwargs = form.thumbnail_kwargs()
+
+        try:
+            resized_picture = get_thumbnail(picture, **thumbnail_kwargs)
+        except OSError:
+            # Probably trying to show an RGBA image in JPEG
+            del thumbnail_kwargs['format']
+            resized_picture = get_thumbnail(picture, **thumbnail_kwargs)
 
         response = Response(status=status.HTTP_302_FOUND)
         response['Location'] = resized_picture.url

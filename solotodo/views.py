@@ -169,7 +169,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @detail_route()
     def staff_actions(self, request, pk, *args, **kwargs):
-
         request_user = request.user
 
         if not request_user.is_authenticated:

@@ -2,15 +2,17 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import list_route, detail_route
 from rest_framework.response import Response
 from django_filters import rest_framework
+from django.db.models import Q
 from rest_framework.filters import OrderingFilter, \
     SearchFilter
 
 from alerts.forms import AlertDeleteByKeyForm
 from .models import AnonymousAlert, UserAlert, ProductPriceAlert
+from alerts.pagination import ProductPriceAlertPagination
 from alerts.serializers import AnonymousAlertSerializer, \
     AnonymousAlertCreationSerializer, UserAlertSerializer, \
     UserAlertCreationSerializer, AlertNotificationSerializer, \
-    ProductPriceAlertSerializer
+    ProductPriceAlertSerializer, ProductPriceAlertCreationSerializer
 
 
 class AnonymousAlertViewSet(mixins.CreateModelMixin,
@@ -118,6 +120,24 @@ class ProductPriceAlertViewSet(mixins.CreateModelMixin,
 
     queryset = ProductPriceAlert.objects.all()
     serializer_class = ProductPriceAlertSerializer
+    pagination_class = ProductPriceAlertPagination
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
-    ordering_fields = ('id', 'alert__creation_date')
+    ordering_fields = ('id', 'creation_date')
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return ProductPriceAlert.objects.none()
+        elif user.is_superuser:
+            return ProductPriceAlert.objects.all()
+        else:
+            return ProductPriceAlert.objects.filter(
+                Q(email=user.email) | Q(user=user))
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ProductPriceAlertCreationSerializer
+        else:
+            return ProductPriceAlertSerializer

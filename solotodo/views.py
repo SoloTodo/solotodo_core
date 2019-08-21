@@ -54,7 +54,6 @@ from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
 from solotodo.forms.product_picture_form import ProductPictureForm
-from solotodo.forms.products_browse_form import ProductsBrowseForm
 from solotodo.forms.resource_names_form import ResourceNamesForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
@@ -308,10 +307,12 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
     @detail_route()
     def browse(self, request, pk, *args, **kwargs):
-        # TODO: Remove client usage of this method and delete it
         category = self.get_object()
-        form = \
-            ProductsBrowseForm(request.query_params)
+        form = EsProductsBrowseForm(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = form.get_category_products(category, request)
 
         return Response(result)
@@ -1129,8 +1130,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def browse(self, request, *args, **kwargs):
-        # TODO Delete this endpoint once clients are migrated to es_browse
-        form = ProductsBrowseForm(request.query_params)
+        form = EsProductsBrowseForm(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = form.get_products(request)
         return Response(result)
 

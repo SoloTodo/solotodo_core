@@ -28,7 +28,6 @@ from .brand import Brand
 from .product import Product
 from .product_picture import ProductPicture
 from .rating import Rating
-from .materialized_entity import MaterializedEntity
 from .entity import Entity
 from .entity_history import EntityHistory
 from .entity_log import EntityLog

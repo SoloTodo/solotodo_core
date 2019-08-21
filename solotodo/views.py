@@ -54,7 +54,6 @@ from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
 from solotodo.forms.product_picture_form import ProductPictureForm
-from solotodo.forms.products_browse_form import ProductsBrowseForm
 from solotodo.forms.resource_names_form import ResourceNamesForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
@@ -169,7 +168,6 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
     @detail_route()
     def staff_actions(self, request, pk, *args, **kwargs):
-
         request_user = request.user
 
         if not request_user.is_authenticated:
@@ -309,10 +307,12 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
     @detail_route()
     def browse(self, request, pk, *args, **kwargs):
-        # TODO: Remove client usage of this method and delete it
         category = self.get_object()
-        form = \
-            ProductsBrowseForm(request.query_params)
+        form = EsProductsBrowseForm(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = form.get_category_products(category, request)
 
         return Response(result)
@@ -735,9 +735,9 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         user = request.user
 
         has_perm = user.has_perm('update_store_pricing', entity.store) \
-                   or entity.user_has_staff_perms(user) \
-                   or user.has_perm('update_category_entities_pricing',
-                                    entity.category)
+            or entity.user_has_staff_perms(user) \
+            or user.has_perm('update_category_entities_pricing',
+                             entity.category)
 
         if not has_perm:
             raise PermissionDenied
@@ -939,7 +939,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         if not request.user.has_perm(
                 'view_category_entity_positions', entity.category) \
                 or not request.user.has_perm(
-            'view_store_entity_positions', entity.store):
+                'view_store_entity_positions', entity.store):
             return Response(status=status.HTTP_403_FORBIDDEN)
 
         serializer_klass = EntitySectionPositionSerializer
@@ -1130,8 +1130,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @list_route()
     def browse(self, request, *args, **kwargs):
-        # TODO Delete this endpoint once clients are migrated to es_browse
-        form = ProductsBrowseForm(request.query_params)
+        form = EsProductsBrowseForm(request.user, request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
         result = form.get_products(request)
         return Response(result)
 
@@ -1327,7 +1330,14 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                             status=status.HTTP_404_NOT_FOUND)
 
         picture = specs['picture']
-        resized_picture = get_thumbnail(picture, **form.thumbnail_kwargs())
+        thumbnail_kwargs = form.thumbnail_kwargs()
+
+        try:
+            resized_picture = get_thumbnail(picture, **thumbnail_kwargs)
+        except OSError:
+            # Probably trying to show an RGBA image in JPEG
+            del thumbnail_kwargs['format']
+            resized_picture = get_thumbnail(picture, **thumbnail_kwargs)
 
         response = Response(status=status.HTTP_302_FOUND)
         response['Location'] = resized_picture.url

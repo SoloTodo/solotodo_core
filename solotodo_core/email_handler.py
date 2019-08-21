@@ -21,9 +21,7 @@ class ThrottledAdminEmailHandler(AdminEmailHandler):
         except Exception:
             pass
         else:
-            counter = counter or 0
-
-            if counter > self.MAX_EMAILS_IN_PERIOD:
+            if counter is None or counter > self.MAX_EMAILS_IN_PERIOD:
                 return
 
         super(ThrottledAdminEmailHandler, self).emit(record)

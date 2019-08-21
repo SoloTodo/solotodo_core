@@ -4,6 +4,7 @@ from rest_framework.decorators import list_route
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
+from reports.forms.pc_factory_sku_analysis_form import PcFactorySkuAnalysisForm
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
 from reports.forms.report_daily_prices_form import ReportDailyPricesForm
 from reports.forms.report_prices_history_form import ReportPricesHistoryForm
@@ -271,3 +272,15 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({
             'url': report_url
         })
+
+    @list_route()
+    def pc_factory_sku_analysis(self, request):
+        report = Report.objects.get(slug='pc_factory_sku_analysis')
+        user = request.user
+
+        if not user.has_perm('view_report', report):
+            raise PermissionDenied
+
+        data = PcFactorySkuAnalysisForm.generate_report()
+
+        return Response(data)

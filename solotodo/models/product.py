@@ -180,15 +180,24 @@ class Product(models.Model):
         search_terms = [term.lower() for term in re.split(r'\W+', search)]
         search_query = None
         for search_term in search_terms:
-            search_term_query = Q('wildcard',
-                                  keywords='*{}*'.format(search_term))
+            keywords_term_query = Q('wildcard',
+                                    keywords='*{}*'.format(search_term))
+            name_term_query = Q('wildcard',
+                                name={
+                                    'value': '*{}*'.format(search_term),
+                                    'boost': 3.0
+                                })
+
             if search_query:
                 if mode == 'OR':
-                    search_query |= search_term_query
+                    search_query |= keywords_term_query
+                    search_query |= name_term_query
                 else:
-                    search_query &= search_term_query
+                    search_query &= keywords_term_query
             else:
-                search_query = search_term_query
+                search_query = keywords_term_query
+                if mode == 'OR':
+                    search_query |= name_term_query
 
         return search_query
 

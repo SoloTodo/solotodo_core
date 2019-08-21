@@ -461,14 +461,6 @@ class CategoryBrowseProductEntrySerializer(serializers.Serializer):
         fields = ['product', 'ordering_value', 'prices']
 
 
-class CategoryBrowseResultSerializer(serializers.Serializer):
-    bucket = serializers.CharField()
-    product_entries = CategoryBrowseProductEntrySerializer(many=True)
-
-    class Meta:
-        fields = ['bucket', 'product_entries']
-
-
 class CategoryFullBrowseResultEntityHistorySerializer(
         serializers.HyperlinkedModelSerializer):
     class Meta:

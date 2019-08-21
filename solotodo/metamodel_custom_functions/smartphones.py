@@ -142,7 +142,7 @@ def additional_es_fields(instance_model, elastic_search_result):
             'main_points': cell_plan_main_points(elastic_search_result),
             'base_name': '{} {}'.format(
                 elastic_search_result['line_unicode'],
-                elastic_search_result['name']),
+                elastic_search_result['name'] or '').strip(),
             'brand_unicode': elastic_search_result['line_brand_unicode']
         }
         return result

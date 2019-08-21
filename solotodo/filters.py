@@ -10,7 +10,7 @@ from solotodo.filter_querysets import create_store_filter, \
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.models import Entity, StoreUpdateLog, \
     Product, EntityHistory, Country, Store, StoreType, Lead, Website, \
-    Currency, Visit, Rating, Category, MaterializedEntity, ProductPicture, \
+    Visit, Rating, ProductPicture, \
     Brand, StoreSection, EntitySectionPosition
 
 
@@ -295,92 +295,6 @@ class EntityStaffFilterSet(rest_framework.FilterSet):
             qs = qs.filter_by_user_perms(
                 self.request.user, 'is_entity_staff')
         return qs
-
-
-# TODO: Remove this FilterSet once the original browse method is migrated
-
-class ProductsBrowseEntityFilterSet(rest_framework.FilterSet):
-    products = CustomModelMultipleChoiceFilter(
-        queryset=Product.objects.all(),
-        name='product',
-        label='Products'
-    )
-    categories = CustomModelMultipleChoiceFilter(
-        queryset=Category.objects.all(),
-        name='category',
-        label='Categories'
-    )
-    stores = CustomModelMultipleChoiceFilter(
-        queryset=Store.objects.all(),
-        name='store',
-        label='Stores'
-    )
-    countries = rest_framework.ModelMultipleChoiceFilter(
-        queryset=Country.objects.all(),
-        name='country',
-        label='Countries'
-    )
-    currencies = rest_framework.ModelMultipleChoiceFilter(
-        queryset=Currency.objects.all(),
-        name='currency',
-        label='Currencies'
-    )
-    store_types = rest_framework.ModelMultipleChoiceFilter(
-        queryset=StoreType.objects.all(),
-        name='store_type',
-        label='Store types'
-    )
-    normal_price = rest_framework.RangeFilter(
-        label='Normal price',
-        name='active_registry__normal_price'
-    )
-    offer_price = rest_framework.RangeFilter(
-        label='Offer price',
-        name='active_registry__offer_price'
-    )
-    normal_price_usd = rest_framework.RangeFilter(
-        label='Normal price (USD)',
-        name='normal_price_usd'
-    )
-    offer_price_usd = rest_framework.RangeFilter(
-        label='Offer price (USD)',
-        name='offer_price_usd'
-    )
-
-    @classmethod
-    def create(cls, request):
-        filterset = cls(
-            data=request.query_params, request=request)
-
-        if 'products' in request.query_params:
-            filterset.form.fields['products'].queryset = \
-                create_product_filter()(request)
-
-        if 'categories' in request.query_params:
-            filterset.form.fields['categories'].queryset = \
-                create_category_filter()(request)
-
-        if 'stores' in request.query_params:
-            filterset.form.fields['stores'].queryset = \
-                create_store_filter()(request)
-
-        return filterset
-
-    @property
-    def qs(self):
-        qs = super(ProductsBrowseEntityFilterSet, self).qs.select_related(
-            'product__instance_model__model__category',
-        )
-
-        if self.request:
-            qs = qs.filter_by_user_perms(
-                self.request.user, 'view_materialized_entity')
-
-        return qs
-
-    class Meta:
-        model = MaterializedEntity
-        fields = []
 
 
 class ProductFilterSet(rest_framework.FilterSet):

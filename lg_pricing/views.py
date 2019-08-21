@@ -5,8 +5,6 @@ from rest_framework.decorators import action
 from wtb.models import WtbEntity
 from solotodo.models import Entity
 
-import json
-
 
 class LgWtbViewSet(ViewSet):
     @action(detail=False, methods=['get'])

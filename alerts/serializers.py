@@ -225,7 +225,8 @@ class ProductPriceAlertSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = ProductPriceAlert
-        fields = ('id', 'url', 'product', 'stores', 'user', 'email')
+        fields = ('id', 'url', 'product', 'stores', 'user', 'email',
+                  'creation_date')
 
 
 class ProductPriceAlertCreationSerializer(
@@ -262,6 +263,8 @@ class ProductPriceAlertCreationSerializer(
         if len(value) != len(valid_stores):
             raise serializers.ValidationError('Invalid store')
 
+        return value
+
     def validate(self, attrs):
         product = attrs.get('product')
 
@@ -272,7 +275,6 @@ class ProductPriceAlertCreationSerializer(
         return attrs
 
     def create(self, validated_data):
-        print(validated_data)
         user = self.context['request'].user
         stores = validated_data['stores']
         product = validated_data['product']

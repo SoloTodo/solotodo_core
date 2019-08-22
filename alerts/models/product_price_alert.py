@@ -289,7 +289,7 @@ class ProductPriceAlert(models.Model):
             'product_price_alert_mail.html',
             {
                 'unsubscribe_key': signing.dumps({
-                    'anonymous_alert_id': self.id
+                    'alert_id': self.id
                 }),
                 'product': self.product,
                 'summary': mark_safe(summary),
@@ -385,7 +385,7 @@ class ProductPriceAlert(models.Model):
             'alert_mail.html',
             {
                 'unsubscribe_key': signing.dumps({
-                    'anonymous_alert_id': self.id
+                    'alert_id': self.id
                 }),
                 'product': self.product,
                 'summary': mark_safe(summary),

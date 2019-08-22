@@ -244,8 +244,14 @@ class ProductPriceAlertCreationSerializer(
 
     def validate_product(self, value):
         user = self.context['request'].user
-        valid_categories = get_objects_for_user(
-            user, 'view_catetory_reports', klass=Category)
+        email = self.context['request'].data.get('email')
+
+        if not email:
+            valid_categories = get_objects_for_user(
+                user, 'view_category_reports', klass=Category)
+        else:
+            valid_categories = get_objects_for_user(
+                user, 'view_category', klass=Category)
 
         if value.category not in valid_categories:
             raise serializers.ValidationError('Invalid product')
@@ -254,11 +260,18 @@ class ProductPriceAlertCreationSerializer(
 
     def validate_stores(self, value):
         user = self.context['request'].user
+        email = self.context['request'].data.get('email')
 
-        requested_stores = Store.objects.filter(
-            pk__in=[s.pk for s in value])
-        valid_stores = get_objects_for_user(user, 'view_store_reports',
-                                            klass=requested_stores)
+        if not email:
+            requested_stores = Store.objects.filter(
+                pk__in=[s.pk for s in value])
+            valid_stores = get_objects_for_user(
+                user, 'view_store_reports', klass=requested_stores)
+        else:
+            requested_stores = Store.objects.filter(
+                pk__in=[s.pk for s in value])
+            valid_stores = get_objects_for_user(
+                user, 'view_store', klass=requested_stores)
 
         if len(value) != len(valid_stores):
             raise serializers.ValidationError('Invalid store')

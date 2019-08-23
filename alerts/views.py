@@ -165,5 +165,10 @@ class ProductPriceAlertViewSet(mixins.CreateModelMixin,
                 'errors': ['Matching alert not found']
             }, status=status.HTTP_404_NOT_FOUND)
 
+        if alert.user:
+            return Response({
+                'errors': ['Matching alert not found']
+            }, status=status.HTTP_404_NOT_FOUND)
+
         alert.delete()
         return Response({'status': 'deleted'})

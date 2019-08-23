@@ -1,12 +1,16 @@
 from django.db import models
+
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
+from django.core import signing
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.contrib.sites.models import Site
-from django.core import signing
+from django.utils import timezone
 from django.conf import settings
+
 from collections import OrderedDict
+from datetime import timedelta
 from decimal import Decimal
 
 from solotodo.models import Product, Store, Entity, SoloTodoUser
@@ -85,30 +89,23 @@ class ProductPriceAlert(models.Model):
         }
 
         if entries:
-            minimum_dict['offer']['previous'] = entries[0]
-            minimum_dict['normal']['previous'] = entries[0]
+            min_offer_entry = min(entries, key=lambda x: x.offer_price)
+            min_normal_entry = min(entries, key=lambda x: x.normal_price)
 
-            for entry in entries:
-                if entry.offer_price < \
-                        minimum_dict['offer']['previous'].offer_price:
-                    minimum_dict['offer']['previous'] = entry
-
-                if entry.normal_price < \
-                        minimum_dict['normal']['previous'].normal_price:
-                    minimum_dict['normal']['previous'] = entry
+            minimum_dict['offer']['previous'] = min_offer_entry
+            minimum_dict['normal']['previous'] = min_normal_entry
 
         if entities:
-            minimum_dict['offer']['current'] = entities[0].active_registry
-            minimum_dict['normal']['current'] = entities[0].active_registry
+            min_offer_entry = min(
+                entities,
+                key=lambda x: x.active_registry.offer_price).active_registry
 
-            for entity in entities:
-                if entity.active_registry.offer_price < \
-                        minimum_dict['offer']['current'].offer_price:
-                    minimum_dict['offer']['current'] = entity.active_registry
+            min_normal_entry = min(
+                entities,
+                key=lambda x: x.active_registry.normal_price).active_registry
 
-                if entity.active_registry.normal_price < \
-                        minimum_dict['normal']['current'].normal_price:
-                    minimum_dict['normal']['current'] = entity.active_registry
+            minimum_dict['offer']['current'] = min_offer_entry
+            minimum_dict['normal']['current'] = min_normal_entry
 
         return minimum_dict
 
@@ -144,18 +141,21 @@ class ProductPriceAlert(models.Model):
             new_offer_price = extract_price(
                 minimum_dict['offer']['current'], 'offer')
 
+            last_interaction = self.active_history.timestamp
+
             if previous_normal_price != new_normal_price or \
-                    previous_offer_price != new_offer_price:
+                    previous_offer_price != new_offer_price or \
+                    (timezone.now() - last_interaction) > timedelta(days=7):
                 self.send_email(minimum_dict)
                 self.update_active_history()
 
     def send_email(self, a_dict=None):
         if self.user:
-            self._send_delta_email(a_dict)
+            self._send_full_email(a_dict)
         else:
             self._send_minimum_email(a_dict)
 
-    def _send_delta_email(self, delta_dict=None):
+    def _send_full_email(self, delta_dict=None):
         if not delta_dict:
             delta_dict = self.generate_delta_dict()
 

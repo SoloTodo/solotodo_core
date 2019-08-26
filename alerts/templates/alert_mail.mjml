@@ -1,14 +1,11 @@
 <mjml>
   <mj-head>
-    <mj-style>
-      .product-name { font-weight: bold; color: #ce5028; } .old-price { text-decoration: line-through; } .text-green { color: #28a745; } .text-red { color: #dc3545; } .text-grey { color: #6c757d; } .unsubscribe-link { color: black; }
-    </mj-style>
+    <mj-style> .product-name { font-weight: bold; color: #ce5028; } .old-price { text-decoration: line-through; } .text-green { color: #28a745; } .text-red { color: #dc3545; } .text-grey { color: #6c757d; } .unsubscribe-link { color: black; } </mj-style>
   </mj-head>
   <mj-body background-color="#f9f9f9">
     <mj-section>
       <mj-column>
-        <mj-image src="https://s3.amazonaws.com/solotodo-core/media/logo_500.png" width="250" align="left" />
-      </mj-column>
+        <mj-image src="https://s3.amazonaws.com/solotodo-core/media/logo_500.png" width="250px" align="left" /> </mj-column>
     </mj-section>
     <mj-section background-color="#ffffff">
       <mj-column>
@@ -17,13 +14,11 @@
     </mj-section>
     <mj-section background-color="#ffffff">
       <mj-column>
-        <mj-image src="{{ api_host }}/products/{{ product.id }}/picture/?width=600&height=600" />
-      </mj-column>
+        <mj-image src="{{ api_host }}/products/{{ product.id }}/picture/?width=600&height=600" /> </mj-column>
       <mj-column>
         <mj-text font-weight="bold" font-size="14px">Precio oferta</mj-text>
         <mj-text>Con tarjetas de casas comerciales, o en efectivo para tiendas de computación.</mj-text>
         <mj-text font-size="22px"><span class="price-label">{{ offer_price_label|safe }}</span></mj-text>
-
         <mj-text font-weight="bold" font-size="14px">Precio normal</mj-text>
         <mj-text>Con cualquier medio de pago.</mj-text>
         <mj-text font-size="22px"><span class="price-label">{{ normal_price_label|safe }}</span></mj-text>

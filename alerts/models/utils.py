@@ -33,3 +33,7 @@ def calculate_price_delta(previous_price, new_price):
 
 def currency_formatter(value):
     return format_currency(value, places=0)
+
+
+def currency_formatter_no_symbol(value):
+    return format_currency(value, places=0).replace('$', '')

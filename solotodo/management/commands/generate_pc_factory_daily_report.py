@@ -1,5 +1,6 @@
 import io
 from decimal import Decimal
+from math import floor
 
 import xlsxwriter
 from django.contrib.auth.models import Group
@@ -60,6 +61,7 @@ class Command(BaseCommand):
             ('Nombre SKU', 80),
             ('Producto', 80),
             ('Categoría', 20),
+            ('Mediana Precio', 20),
             ('Precio PC Factory', 20),
             ('Menor precio del mercado', 20),
             ('Diferencia (%)', 15),
@@ -85,25 +87,34 @@ class Command(BaseCommand):
             pcf_price = pcf_entity.active_registry.normal_price
             min_price = min_price_per_product[pcf_entity.product_id]
 
+            product_entities = stores_entities.filter(
+                product=pcf_entity.product).order_by(
+                'active_registry__normal_price')
+
+            median_index = floor(len(product_entities)/2)
+            median = product_entities[median_index]\
+                .active_registry.normal_price
+
             worksheet.write_url(row, 0, pcf_entity.url,
                                 string=pcf_entity.sku)
             worksheet.write(row, 1, pcf_entity.name)
             worksheet.write(row, 2, str(pcf_entity.product))
             worksheet.write(row, 3, str(pcf_entity.product.category))
-            worksheet.write(row, 4, pcf_entity.active_registry.normal_price)
-            worksheet.write(row, 5, min_price)
+            worksheet.write(row, 4, median)
+            worksheet.write(row, 5, pcf_entity.active_registry.normal_price)
+            worksheet.write(row, 6, min_price)
 
-            percentage_delta = Decimal('100') * (pcf_price - min_price) / \
-                min_price
+            percentage_delta = Decimal('100') * (min_price - pcf_price) / \
+                pcf_price
 
-            worksheet.write(row, 6, percentage_delta)
+            worksheet.write(row, 7, percentage_delta)
 
             best_price_entities = stores_entities.filter(
                 product=pcf_entity.product,
                 active_registry__normal_price=min_price
             ).select_related('store')[:3]
 
-            col = 7
+            col = 8
 
             for entity in best_price_entities:
                 worksheet.write_url(row, col, entity.url,

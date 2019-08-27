@@ -5,9 +5,10 @@ from alerts.models import ProductPriceAlert, AnonymousAlert, UserAlert
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
-        a_alerts = AnonymousAlert.objects.all()[0:100]
+        a_alerts = AnonymousAlert.objects.order_by('id')
 
         for alert in a_alerts:
+            print(alert.id)
             product = alert.alert.product
             stores = alert.alert.stores.all()
             email = alert.email
@@ -22,11 +23,11 @@ class Command(BaseCommand):
             new_alert.save()
 
             new_alert.update_active_history()
-            print(new_alert.id)
 
-        u_alerts = UserAlert.objects.all()
+        u_alerts = UserAlert.objects.order_by('id')
 
         for alert in u_alerts:
+            print(alert.id)
             if alert.entity:
                 product = alert.entity.product
                 stores = [alert.entity.store]
@@ -46,4 +47,3 @@ class Command(BaseCommand):
             new_alert.save()
 
             new_alert.update_active_history()
-            print(new_alert.id)

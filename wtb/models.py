@@ -212,7 +212,7 @@ class WtbEntity(models.Model):
                 picture_url = 'https://via.placeholder.com/200'
 
             self.name = scraped_product.name[:254]
-            self.model_name = scraped_product.sku,
+            self.model_name = scraped_product.sku
             self.url = scraped_product.url
             self.picture_url = picture_url
             self.is_active = True

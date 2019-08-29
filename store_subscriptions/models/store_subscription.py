@@ -3,8 +3,10 @@ import xlsxwriter
 
 from django.db import models
 from django.contrib.auth import get_user_model
+from django.contrib.sites.models import Site
 from django.core.mail import EmailMessage
 from django.utils import timezone
+from django.conf import settings
 
 from solotodo.models import Store, Category, Entity, EntityHistory, \
     SoloTodoUser
@@ -18,6 +20,7 @@ class StoreSubscription(models.Model):
 
     def send_update(self):
         entities = Entity.objects.filter(
+            product__isnull=False,
             store=self.store,
             category__in=self.categories.all())
 
@@ -34,13 +37,14 @@ class StoreSubscription(models.Model):
         headers = [
             'Producto',
             'Categoría',
+            'Marca',
             'SKU',
-            'Precio Oferta Actual',
             'Precio Oferta Anterior',
-            'Diferencia',
-            'Precio Normal Actual',
+            'Precio Oferta Actual',
+            'Diferencia Precio Oferta',
             'Precio Normal Anterior',
-            'Diferencia']
+            'Precio Normal Actual',
+            'Diferencia Precio Normal']
 
         for idx, header in enumerate(headers):
             worksheet.write(0, idx, header, header_format)
@@ -53,11 +57,16 @@ class StoreSubscription(models.Model):
             active_registry = entity.active_registry
             compare_registry = self._get_comparison_registry(entity)
 
-            if active_registry:
+            current_offer_price = None
+            current_normal_price = None
+            previous_offer_price = None
+            previous_normal_price = None
+
+            if active_registry and active_registry.stock != 0:
                 current_offer_price = active_registry.offer_price
                 current_normal_price = active_registry.normal_price
 
-            if compare_registry:
+            if compare_registry and compare_registry.stock != 0:
                 previous_offer_price = compare_registry.offer_price
                 previous_normal_price = compare_registry.normal_price
 
@@ -65,17 +74,24 @@ class StoreSubscription(models.Model):
                     current_offer_price == previous_offer_price:
                 continue
 
+            domain = Site.objects.get(
+                pk=settings.SOLOTODO_PRICING_SITE_ID).domain
+
+            url = 'https://{}/skus/{}'.format(domain, entity.id)
+
             col = 0
             worksheet.write(row, col, product.name)
             col += 1
             worksheet.write(row, col, category.name)
             col += 1
-            worksheet.write(row, col, entity.sku)
+            worksheet.write(row, col, product.brand.name)
+            col += 1
+            worksheet.write_url(row, col, url, string=entity.sku)
             col += 1
 
-            worksheet.write(row, col, current_offer_price)
+            worksheet.write(row, col, previous_offer_price or 'No Disponible')
             col += 1
-            worksheet.write(row, col, previous_offer_price)
+            worksheet.write(row, col, current_offer_price or 'No Disponible')
             col += 1
 
             if current_offer_price and previous_offer_price:
@@ -86,9 +102,9 @@ class StoreSubscription(models.Model):
                 worksheet.write(row, col, 'N/A')
                 col += 1
 
-            worksheet.write(row, col, current_normal_price)
+            worksheet.write(row, col, previous_normal_price or 'No Disponible')
             col += 1
-            worksheet.write(row, col, previous_normal_price)
+            worksheet.write(row, col, current_normal_price or 'No Disponible')
             col += 1
 
             if current_normal_price and previous_normal_price:
@@ -119,10 +135,14 @@ class StoreSubscription(models.Model):
 
     @classmethod
     def _get_comparison_registry(cls, entity):
-        search_date = timezone.now() - timezone.timedelta(days=1)
-        ehs = EntityHistory.objects\
-            .filter(entity=entity, timestamp__gte=search_date)\
-            .order_by('timestamp')
+        search_date_to = timezone.now() - timezone.timedelta(days=1)
+        search_date_from = timezone.now() - timezone.timedelta(days=2)
+        ehs = EntityHistory.objects \
+            .filter(
+                entity=entity,
+                timestamp__gte=search_date_from,
+                timestamp__lte=search_date_to) \
+            .order_by('-timestamp')
 
         if ehs:
             return ehs[0]

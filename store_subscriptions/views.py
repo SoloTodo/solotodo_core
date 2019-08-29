@@ -1,7 +1,8 @@
 from rest_framework import viewsets, mixins, status
 
 from .models import StoreSubscription
-from .serializers import StoreSubscriptionSerializer
+from .serializers import StoreSubscriptionSerializer, \
+    StoreSubscriptionCreationSerializer
 
 
 class StoreSubscriptionViewSet(mixins.CreateModelMixin,
@@ -20,3 +21,9 @@ class StoreSubscriptionViewSet(mixins.CreateModelMixin,
             return StoreSubscription.objects.all()
         else:
             return StoreSubscription.objects.filter(user=user)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return StoreSubscriptionCreationSerializer
+        else:
+            return StoreSubscriptionSerializer

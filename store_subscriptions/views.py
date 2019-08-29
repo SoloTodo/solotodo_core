@@ -3,6 +3,7 @@ from rest_framework import viewsets, mixins, status
 from .models import StoreSubscription
 from .serializers import StoreSubscriptionSerializer, \
     StoreSubscriptionCreationSerializer
+from .pagination import StoreSubscriptionPagination
 
 
 class StoreSubscriptionViewSet(mixins.CreateModelMixin,
@@ -11,6 +12,7 @@ class StoreSubscriptionViewSet(mixins.CreateModelMixin,
                                viewsets.GenericViewSet):
     queryset = StoreSubscription.objects.all()
     serializer_class = StoreSubscriptionSerializer
+    pagination_class = StoreSubscriptionPagination
 
     def get_queryset(self):
         user = self.request.user

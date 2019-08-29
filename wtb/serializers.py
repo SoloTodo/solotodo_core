@@ -17,9 +17,9 @@ class WtbEntityMinimalSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = WtbEntity
-        fields = ('url', 'id', 'name', 'brand', 'category', 'external_url',
-                  'key', 'picture_url', 'creation_date',
-                  'last_updated', 'is_visible', 'is_active')
+        fields = ('url', 'id', 'name', 'model_name', 'brand',
+                  'category', 'external_url', 'key', 'picture_url',
+                  'creation_date', 'last_updated', 'is_visible', 'is_active')
 
 
 class WtbEntitySerializer(serializers.HyperlinkedModelSerializer):
@@ -29,9 +29,9 @@ class WtbEntitySerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = WtbEntity
-        fields = ('url', 'id', 'name', 'brand', 'category', 'external_url',
-                  'product', 'key', 'picture_url', 'creation_date',
-                  'last_updated', 'is_visible', 'is_active')
+        fields = ('url', 'id', 'name', 'model_name', 'brand', 'category',
+                  'external_url', 'product', 'key', 'picture_url',
+                  'creation_date', 'last_updated', 'is_visible', 'is_active')
 
 
 class WtbEntityStaffInfoSerializer(serializers.HyperlinkedModelSerializer):

@@ -156,6 +156,7 @@ class WtbEntityQuerySet(models.QuerySet):
 
 class WtbEntity(models.Model):
     name = models.CharField(max_length=255, db_index=True)
+    model_name = models.CharField(max_length=255, db_index=True)
     brand = models.ForeignKey(WtbBrand, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
@@ -211,6 +212,7 @@ class WtbEntity(models.Model):
                 picture_url = 'https://via.placeholder.com/200'
 
             self.name = scraped_product.name[:254]
+            self.model_name = scraped_product.sku,
             self.url = scraped_product.url
             self.picture_url = picture_url
             self.is_active = True
@@ -254,6 +256,7 @@ class WtbEntity(models.Model):
 
         cls.objects.create(
             name=scraped_product.name[:254],
+            model_name=scraped_product.sku,
             brand=brand,
             category=category,
             key=scraped_product.key,

@@ -86,7 +86,8 @@ INSTALLED_APPS = [
     'lg_online',
     'keyword_search_positions',
     'lg_pricing',
-    'soicos_conversions'
+    'soicos_conversions',
+    'store_subscriptions'
 ]
 
 SITE_ID = 1

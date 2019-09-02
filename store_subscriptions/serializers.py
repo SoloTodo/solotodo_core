@@ -21,7 +21,7 @@ class StoreSubscriptionCreationSerializer(
     @property
     def data(self):
         return StoreSubscriptionSerializer(
-            self.instance, context={'request':self.context['request']}).data
+            self.instance, context={'request': self.context['request']}).data
 
     def validate_store(self, value):
         user = self.context['request'].user
@@ -42,7 +42,7 @@ class StoreSubscriptionCreationSerializer(
             user, 'view_category', klass=requested_categories)
 
         if len(value) != len(valid_categories):
-            raise serializers.ValidationError('Invalid category')
+            raise serializers.ValidationError('Invalid categories')
 
         return value
 

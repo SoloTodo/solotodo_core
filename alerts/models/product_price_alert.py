@@ -302,7 +302,7 @@ class ProductPriceAlert(models.Model):
         send_mail('Actualización de tu producto {}'.format(self.product),
                   summary, sender, [self.user.email],
                   html_message=html_message)
-            
+
     def _send_minimum_email(self, minimum_dict=None):
         if not minimum_dict:
             minimum_dict = self.generate_minimum_dict()

@@ -1,4 +1,4 @@
-from rest_framework import viewsets, mixins, status
+from rest_framework import viewsets, mixins
 
 from .models import StoreSubscription
 from .serializers import StoreSubscriptionSerializer, \
@@ -9,6 +9,7 @@ from .pagination import StoreSubscriptionPagination
 class StoreSubscriptionViewSet(mixins.CreateModelMixin,
                                mixins.RetrieveModelMixin,
                                mixins.ListModelMixin,
+                               mixins.DestroyModelMixin,
                                viewsets.GenericViewSet):
     queryset = StoreSubscription.objects.all()
     serializer_class = StoreSubscriptionSerializer

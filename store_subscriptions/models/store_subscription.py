@@ -22,7 +22,10 @@ class StoreSubscription(models.Model):
         entities = Entity.objects.filter(
             product__isnull=False,
             store=self.store,
-            category__in=self.categories.all())
+            category__in=self.categories.all()
+        ).select_related(
+            'product__brand', 'category', 'active_registry'
+        )
 
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output)
@@ -80,11 +83,11 @@ class StoreSubscription(models.Model):
             url = 'https://{}/skus/{}'.format(domain, entity.id)
 
             col = 0
-            worksheet.write(row, col, product.name)
+            worksheet.write(row, col, str(product))
             col += 1
-            worksheet.write(row, col, category.name)
+            worksheet.write(row, col, str(category))
             col += 1
-            worksheet.write(row, col, product.brand.name)
+            worksheet.write(row, col, str(product.brand))
             col += 1
             worksheet.write_url(row, col, url, string=entity.sku)
             col += 1
@@ -97,11 +100,10 @@ class StoreSubscription(models.Model):
             if current_offer_price and previous_offer_price:
                 worksheet.write(
                     row, col, current_offer_price-previous_offer_price)
-                col += 1
             else:
                 worksheet.write(row, col, 'N/A')
-                col += 1
 
+            col += 1
             worksheet.write(row, col, previous_normal_price or 'No Disponible')
             col += 1
             worksheet.write(row, col, current_normal_price or 'No Disponible')
@@ -152,3 +154,7 @@ class StoreSubscription(models.Model):
     class Meta:
         app_label = 'store_subscriptions'
         ordering = ('-creation_date',)
+        permissions = (
+            ['backend_list_store_subscriptions',
+             'Can see store subscription list in the backend'],
+        )

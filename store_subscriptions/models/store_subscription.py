@@ -18,7 +18,14 @@ class StoreSubscription(models.Model):
     categories = models.ManyToManyField(Category)
     creation_date = models.DateTimeField(auto_now_add=True)
 
-    def send_update(self):
+    def __str__(self):
+        value = '{} - {} ('.format(self.store, self.user)
+        for category in self.categories.all():
+            value += str(category) + ', '
+        value += ')'
+        return value
+
+    def send_report(self):
         entities = Entity.objects.filter(
             product__isnull=False,
             store=self.store,
@@ -121,13 +128,20 @@ class StoreSubscription(models.Model):
         output.seek(0)
 
         file_value = output.getvalue()
-        filename = 'store_changes_report.xlsx'
 
         sender = SoloTodoUser().get_bot().email_recipient_text()
-        message = 'Probando'
+        message = 'Se adjunta el reporte de variaciones para la tienda {}'\
+            .format(self.store)
+
+        subject_template = 'Reporte {} %Y-%m-%d_%H:%M:%S'\
+            .format(str(self.store))
+        subject = timezone.now().strftime(subject_template)
+        filename_template = 'variaciones_{}_%Y-%m-%d_%H:%M:%S'\
+            .format(str(self.store))
+        filename = timezone.now().strftime(filename_template)
 
         email = EmailMessage(
-            'Reporte Tienda', message, sender, [self.user.email])
+            subject, message, sender, [self.user.email])
 
         email.attach(
             filename, file_value,

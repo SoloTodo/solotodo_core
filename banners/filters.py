@@ -3,8 +3,12 @@ from django_filters import rest_framework
 from solotodo.custom_model_multiple_choice_filter import \
     CustomModelMultipleChoiceFilter
 from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
-from solotodo.filter_querysets import create_store_filter
-from .models import Banner, BannerUpdate, BannerAsset, BannerSection
+from solotodo.filter_querysets import \
+    create_store_filter, create_category_filter
+
+from solotodo.models import Brand, Category
+from .models import \
+    Banner, BannerUpdate, BannerAsset, BannerSection, BannerSubsectionType
 
 
 class BannerFilterSet(rest_framework.FilterSet):
@@ -28,6 +32,28 @@ class BannerFilterSet(rest_framework.FilterSet):
         queryset=BannerAsset.objects.all(),
         name='asset',
         label='Assets'
+    )
+
+    brands = CustomModelMultipleChoiceFilter(
+        queryset=Brand.objects.all(),
+        name='asset__contents__brand',
+        label='Brand'
+    )
+
+    categories = CustomModelMultipleChoiceFilter(
+        queryset=create_category_filter('view_category_report'),
+        name='asset__contents__category',
+        label='Category'
+    )
+
+    types = CustomModelMultipleChoiceFilter(
+        queryset=BannerSubsectionType.objects.all(),
+        name='subsection__type',
+        label='Types'
+    )
+
+    creation_date = IsoDateTimeFromToRangeFilter(
+        name='update__timestamp'
     )
 
     is_active = rest_framework.BooleanFilter(

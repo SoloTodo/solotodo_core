@@ -280,10 +280,16 @@ class ProductPriceAlertCreationSerializer(
 
     def validate(self, attrs):
         product = attrs.get('product')
+        email = self.context['request'].data.get('email')
 
         if not product:
             raise serializers.ValidationError(
                 'Alert does not have a product')
+
+        if email:
+            if ProductPriceAlert.objects.filter(email=email, product=product):
+                raise serializers.ValidationError(
+                    'email/product combination not unique')
 
         return attrs
 
@@ -294,6 +300,7 @@ class ProductPriceAlertCreationSerializer(
         email = validated_data.get('email', None)
 
         if email:
+
             alert = ProductPriceAlert.objects.create(
                 product=product,
                 email=email)

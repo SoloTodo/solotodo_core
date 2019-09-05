@@ -32,8 +32,10 @@ class ProductPriceAlert(models.Model):
 
     def get_entities(self):
         return Entity.objects.filter(
-            product=self.product, store__in=self.stores.all())\
-            .order_by('active_registry__offer_price').get_available()
+            product=self.product,
+            store__in=self.stores.all(),
+            active_registry__cell_monthly_payment__isnull=True
+        ).order_by('active_registry__offer_price').get_available()
 
     def update_active_history(self):
         from alerts.models import ProductPriceAlertHistory

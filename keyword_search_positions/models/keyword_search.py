@@ -73,7 +73,8 @@ class KeywordSearch(models.Model):
 
     def send_keyword_mail(self, message):
         sender = SoloTodoUser.get_bot().email_recipient_text()
-        subject = 'Actualización Keyword Search'
+        subject = 'Actualización Keyword Search {} ({})'\
+            .format(self.store, self.category)
         recipients = []
 
         for admin in ADMINS:

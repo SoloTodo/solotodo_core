@@ -134,6 +134,11 @@ class EntityFilterSet(rest_framework.FilterSet):
         name='product__brand',
         label='Brands'
     )
+    exclude_refurbished = rest_framework.BooleanFilter(
+        name='exclude_refurbished',
+        method='_exclude_refurbished',
+        label='Exclude refurbished?'
+    )
 
     is_available = rest_framework.BooleanFilter(
         name='is_available', method='_is_available', label='Is available?')
@@ -173,6 +178,12 @@ class EntityFilterSet(rest_framework.FilterSet):
 
     def _is_associated(self, queryset, name, value):
         return queryset.filter(product__isnull=not value)
+
+    def _exclude_refurbished(self, queryset, name, value):
+        if value:
+            return queryset.filter(condition='https://schema.org/NewCondition')
+        else:
+            return queryset
 
     class Meta:
         model = Entity

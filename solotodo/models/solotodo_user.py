@@ -33,9 +33,8 @@ class SoloTodoUser(AbstractEmailUser):
         Country, on_delete=models.CASCADE, blank=True, null=True)
     preferred_number_format = models.ForeignKey(
         NumberFormat, on_delete=models.CASCADE, blank=True, null=True)
-    preferred_store = models.ForeignKey(
-        Store, on_delete=models.CASCADE, blank=True, null=True,
-        related_name='+'
+    preferred_exclude_refurbished = models.BooleanField(
+        default=False, blank=True
     )
     preferred_stores = models.ManyToManyField(
         Store,

@@ -49,6 +49,8 @@ class EsProductsBrowseForm(forms.Form):
     offer_price_usd_0 = forms.DecimalField(required=False)
     offer_price_usd_1 = forms.DecimalField(required=False)
 
+    exclude_refurbished = forms.BooleanField(required=False)
+
     PRICING_ORDERING_CHOICES = [
         'normal_price_usd',
         'offer_price_usd',
@@ -425,6 +427,10 @@ class EsProductsBrowseForm(forms.Form):
 
             if range_params:
                 entities_filter &= Q('range', **{range_field: range_params})
+
+        if self.cleaned_data['exclude_refurbished']:
+            entities_filter &= Q(
+                'term', condition='https://schema.org/NewCondition')
 
         return entities_filter
 

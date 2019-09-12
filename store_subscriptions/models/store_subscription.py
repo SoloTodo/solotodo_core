@@ -133,10 +133,10 @@ class StoreSubscription(models.Model):
         message = 'Se adjunta el reporte de variaciones para la tienda {}'\
             .format(self.store)
 
-        subject_template = 'Reporte {} %Y-%m-%d_%H:%M:%S'\
+        subject_template = 'Reporte {} %Y-%m-%d'\
             .format(str(self.store))
         subject = timezone.now().strftime(subject_template)
-        filename_template = 'variaciones_{}_%Y-%m-%d_%H:%M:%S'\
+        filename_template = 'variaciones_{}_%Y-%m-%d.xlsx'\
             .format(str(self.store))
         filename = timezone.now().strftime(filename_template)
 

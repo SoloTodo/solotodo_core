@@ -173,10 +173,13 @@ class ProductPriceAlert(models.Model):
 
             if current_entry:
                 entity = current_entry.entity
-                store_name = current_entry.entity.store.name
             else:
                 entity = previous_entry.entity
-                store_name = previous_entry.entity.store.name
+
+            store_name = entity.store.name
+
+            if entity.cell_plan_name:
+                store_name += ' ({})'.format(entity.cell_plan_name)
 
             store_sku_url = 'https://{}/skus/{}'
             previous_normal_price = extract_price(previous_entry, 'normal')

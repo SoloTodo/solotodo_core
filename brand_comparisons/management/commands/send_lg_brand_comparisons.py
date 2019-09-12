@@ -39,4 +39,5 @@ class Command(BaseCommand):
                 report_filename, comparison_attachment,
                 'application/vnd.openxmlformats-'
                 'officedocument.spreadsheetml.sheet')
-            email.send()
+
+        email.send()

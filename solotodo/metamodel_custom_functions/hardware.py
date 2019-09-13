@@ -17,28 +17,13 @@ def unicode_function(im):
             return '{} MB'.format(value)
 
 
-def pretty_turbo_frequencies(result):
-    ptf = []
-    base = result['frequency']
-    turbo_step = result['core_architecture_turbo_step']
-    core_count = result['core_count_value']
-    mode = result['turbo_modes'].split(',')
-    for core_number in range(1, core_count + 1):
-        ptf.append(base + turbo_step * (int(mode[core_number - 1])))
-
-    return ptf
-
-
 def additional_es_fields(instance_model, elastic_search_original):
     m = instance_model.model.name
     if m == 'Processor':
         result = {}
-        if elastic_search_original['turbo_modes'] == '0' or \
-           elastic_search_original['turbo_modes'] == '':
-                result['turbo_frequencies'] = []
-        else:
-            result['turbo_frequencies'] = \
-                pretty_turbo_frequencies(elastic_search_original)
+        result['has_turbo_frequencies'] = \
+            elastic_search_original['max_turbo_frequency'] > \
+            elastic_search_original['frequency']
         result['brand_unicode'] = \
             elastic_search_original['line_family_brand_brand_unicode']
         return result

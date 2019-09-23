@@ -1,9 +1,13 @@
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from rest_framework.exceptions import ParseError
+from django.http import HttpResponse
 
 from wtb.models import WtbEntity
 from solotodo.models import Entity
+
+import json
 
 
 class LgWtbViewSet(ViewSet):
@@ -13,6 +17,8 @@ class LgWtbViewSet(ViewSet):
         product = params.get('product')
         model_id = params.get('model_id')
         sub_model_id = params.get('sub_model_id')
+        data_type = params.get('type')
+        callback = params.get('callback')
 
         if not product and not model_id and not sub_model_id:
             return Response(
@@ -74,5 +80,11 @@ class LgWtbViewSet(ViewSet):
                 }
             ]
         }
+
+        if data_type == 'jsonp':
+            if not callback:
+                raise ParseError('Missing callback')
+            return HttpResponse(callback+'('+json.dumps(response)+')',
+                                content_type='text/javascript')
 
         return Response(response)

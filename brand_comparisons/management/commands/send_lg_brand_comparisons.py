@@ -8,11 +8,14 @@ from solotodo.models import SoloTodoUser
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument('--email', type=str)
+        parser.add_argument('--user_ids', nargs='+', type=int)
 
     def handle(self, *args, **options):
         comparison_ids = [4, 6]
-        email = options['email']
+        user_ids = options['user_ids']
+
+        users = SoloTodoUser.objects.filter(pk__in=user_ids)
+        emails = [user.email for user in users]
 
         sender = SoloTodoUser.get_bot().email_recipient_text()
         message = """
@@ -27,7 +30,7 @@ class Command(BaseCommand):
 
         email = EmailMessage(subject,
                              message, sender,
-                             [email])
+                             emails)
 
         for comparison_id in comparison_ids:
             comparison = BrandComparison.objects.get(pk=comparison_id)

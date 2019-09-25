@@ -181,11 +181,17 @@ class EntityByUrlForm(forms.Form):
         else:
             return None
 
-        sku_filter = Q(store=store) & (Q(url__icontains=sku) |
-                                       Q(sku__icontains=sku))
-        entities = Entity.objects.filter(sku_filter).order_by('-id')
+        entities = Entity.objects.filter(store=store)
 
-        if not entities:
+        sku_entities = entities.filter(Q(sku__icontains=sku) |
+                                       Q(key__icontains=sku))
+
+        if not sku_entities:
+            sku_entities = entities.filter(url__icontains=sku)
+
+        sku_entities = sku_entities.order_by('-id')
+
+        if not sku_entities:
             return None
 
-        return entities[0]
+        return sku_entities[0]

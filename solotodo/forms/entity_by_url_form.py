@@ -13,10 +13,11 @@ class EntityByUrlForm(forms.Form):
 
     def get_entity(self):
         url = urllib.parse.urlparse(self.cleaned_data['url'])
+        print(url.path)
 
         if url.netloc == 'www.falabella.com':
             store = Store.objects.get(name='Falabella')
-            m = re.search('/product/(\d+)', url.path)
+            m = re.search('/product/\d+/.+/(\d+)', url.path)
             if not m:
                 return None
             sku = m.groups()[0]

@@ -1087,7 +1087,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         entities = Entity.objects \
             .filter(product__in=products) \
             .get_available() \
-            .order_by('active_registry__offer_price')
+            .order_by('active_registry__offer_price',
+                      'active_registry__normal_price')
 
         if request.query_params.get('exclude_with_monthly_payment'):
             entities = entities.filter(

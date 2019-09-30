@@ -10,7 +10,7 @@ from django.contrib.gis.geoip2 import GeoIP2
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 from django.db import models, IntegrityError
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Min, Max
 from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
@@ -1193,6 +1193,45 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({
             'instance_id': cloned_instance.id
         })
+
+    @detail_route()
+    def min_history_price(self, request, pk):
+        product = self.get_object()
+        entity_histories = EntityHistory.objects\
+            .filter(
+                entity__product=product,
+                entity__condition='https://schema.org/NewCondition',
+                cell_monthly_payment__isnull=True)\
+            .exclude(
+                stock=0)
+
+        filterset = EntityHistoryFilterSet(
+            request.query_params, entity_histories, request=request)
+
+        min_price = filterset.qs.aggregate(
+            Min('offer_price'))['offer_price__min']
+
+        stores_aggs = filterset.qs.filter(offer_price__exact=min_price)\
+            .values('entity__store')\
+            .annotate(max_timestamp=Max('timestamp'))\
+            .order_by('entity__store')
+
+        stores_data = []
+
+        for agg in stores_aggs:
+            stores_data.append(
+                {'store': reverse(
+                    'store-detail',
+                    kwargs={'pk': agg['entity__store']},
+                    request=request),
+                 'timestamp': agg['max_timestamp']})
+
+        result = {
+            'min_price': min_price,
+            'stores_data': stores_data
+        }
+
+        return Response(result)
 
     @detail_route()
     def pricing_history(self, request, pk):

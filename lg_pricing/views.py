@@ -6,6 +6,7 @@ from django.http import HttpResponse
 
 from wtb.models import WtbEntity
 from solotodo.models import Entity
+from solotodo.utils import format_currency
 
 import json
 
@@ -51,6 +52,8 @@ class LgWtbViewSet(ViewSet):
         for entity in entities:
             if entity.store.name in store_names:
                 continue
+            price = entity.active_registry.offer_price
+            formatted_price = format_currency(price, places=0)
             store_names.append(entity.store.name)
             product_images = entity.picture_urls_as_list()
             retailer = {
@@ -58,8 +61,8 @@ class LgWtbViewSet(ViewSet):
                 "instock": True,
                 "logo_url": entity.store.logo.url,
                 "deeplink_url": entity.url,
-                "price": None,
-                "priceformatted": None,
+                "price": str(price),
+                "priceformatted": formatted_price,
                 "currency_code": "CLP",
                 "currency_symbol": "$",
                 "sku": entity.sku,

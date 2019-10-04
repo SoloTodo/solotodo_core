@@ -133,7 +133,6 @@ class EntityByUrlForm(forms.Form):
         elif url.netloc == 'www.easy.cl':
             store = Store.objects.get(name='Easy')
             m = re.search('(\d+)p$', url.path)
-            print(m)
             if not m:
                 return None
             sku = m.groups()[0]

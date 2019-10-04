@@ -39,7 +39,7 @@ class LgWtbViewSet(ViewSet):
         products = [w.product for w in wtb_entities]
 
         store_ids = [30, 61, 60, 97, 38, 9, 87, 5, 43, 23, 37, 11, 12, 18, 67,
-                     167, 85, 86, 181, 195, 197, 224]
+                     167, 85, 181, 195, 197, 224]
 
         entities = Entity.objects\
             .filter(product__in=products, store__in=store_ids)\

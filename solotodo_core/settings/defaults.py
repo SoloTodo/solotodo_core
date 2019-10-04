@@ -75,7 +75,6 @@ INSTALLED_APPS = [
     'mailing',
     'category_specs_forms',
     'category_columns',
-    'entity_subscriptions',
     'wtb',
     'navigation',
     'carousel_slides',

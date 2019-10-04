@@ -13,28 +13,28 @@ class EntityByUrlForm(forms.Form):
 
     def get_entity(self):
         url = urllib.parse.urlparse(self.cleaned_data['url'])
-        print(url.path)
 
         if url.netloc == 'www.falabella.com':
             store = Store.objects.get(name='Falabella')
-            m = re.search('/product/\d+/.+/(\d+)', url.path)
+            m = re.search(r'/product/\d+/.+/(\d+)', url.path)
             if not m:
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'simple.ripley.cl':
             store = Store.objects.get(name='Ripley')
-            m = re.search('(\d+)p', url.path)
+            m = re.search(r'(\d+)p', url.path)
             if not m:
-                m = re.search('mpm(\d+)', url.path)
+                store = Store.objects.get(name='Mercado Ripley')
+                m = re.search(r'mpm(\d+)', url.path)
             if not m:
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'www.paris.cl':
             store = Store.objects.get(name='Paris')
-            m = re.search('(\d+)-(ppp|PPP|999)', url.path)
+            m = re.search(r'(\d+)(ppp|PPP|999)\.html', url.path)
             if not m:
                 return None
-            sku = m.groups()[0]
+            sku = m.groups()[0] + m.groups()[1]
         elif url.netloc == 'www.abcdin.cl':
             store = Store.objects.get(name='AbcDin')
             if 'productId' in url.path:
@@ -44,7 +44,7 @@ class EntityByUrlForm(forms.Form):
                 if not m:
                     return None
                 sku = m.groups()[0]
-        elif url.netloc == 'tienda.lapolar.cl':
+        elif url.netloc == 'www.lapolar.cl':
             store = Store.objects.get(name='La Polar')
             m = re.search(r'/(\d{8})', url.path)
             if not m:
@@ -133,12 +133,16 @@ class EntityByUrlForm(forms.Form):
         elif url.netloc == 'www.easy.cl':
             store = Store.objects.get(name='Easy')
             m = re.search('(\d+)p$', url.path)
+            print(m)
             if not m:
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'www.hites.com':
             store = Store.objects.get(name='Hites')
-            sku = url.path.split('/')[-1]
+            m = re.search(r'(\d+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0][:-3]
         elif url.netloc == 'www.lider.cl':
             store = Store.objects.get(name='Lider')
             m = re.search('/(\d+)$', url.path)

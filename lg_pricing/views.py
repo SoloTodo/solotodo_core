@@ -56,11 +56,12 @@ class LgWtbViewSet(ViewSet):
             formatted_price = format_currency(price, places=0)
             store_names.append(entity.store.name)
             product_images = entity.picture_urls_as_list()
+            url = entity.affiliate_url('LWTB_')
             retailer = {
                 "display_name": entity.store.name,
                 "instock": True,
                 "logo_url": entity.store.logo.url,
-                "deeplink_url": entity.url,
+                "deeplink_url": url or entity.url,
                 "price": str(price),
                 "priceformatted": formatted_price,
                 "currency_code": "CLP",

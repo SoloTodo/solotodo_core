@@ -618,10 +618,11 @@ class Entity(models.Model):
             return None
         return json.loads(self.video_urls)
 
-    def affiliate_url(self):
+    def affiliate_url(self, soicos_prefix=""):
         from django.conf import settings
 
         linio_settings = settings.LINIO_AFFILIATE_SETTINGS
+        affiliate_ids = settings.AFFILIATE_IDS
 
         if self.store_id == linio_settings['STORE_ID']:
             if '?' in self.url:
@@ -637,6 +638,13 @@ class Entity(models.Model):
             url = 'https://linio.go2cloud.org/aff_c?offer_id=18&aff_id={}' \
                   '&url={}'.format(linio_settings['AFFILIATE_ID'],
                                    urllib.parse.quote(target_url))
+            return url
+        elif self.store_id in affiliate_ids:
+            target_url = self.url
+            affiliate_id = affiliate_ids[self.store_id]
+            url = 'https://ad.soicos.com/{}?dl={}&trackerID={}{}'.format(
+                affiliate_id, urllib.parse.quote(target_url), soicos_prefix,
+                self.active_registry_id)
 
             return url
 

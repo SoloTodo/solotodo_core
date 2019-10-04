@@ -44,7 +44,7 @@ class EntityByUrlForm(forms.Form):
                 if not m:
                     return None
                 sku = m.groups()[0]
-        elif url.netloc == 'tienda.lapolar.cl':
+        elif url.netloc == 'www.lapolar.cl':
             store = Store.objects.get(name='La Polar')
             m = re.search(r'/(\d{8})', url.path)
             if not m:
@@ -133,12 +133,16 @@ class EntityByUrlForm(forms.Form):
         elif url.netloc == 'www.easy.cl':
             store = Store.objects.get(name='Easy')
             m = re.search('(\d+)p$', url.path)
+            print(m)
             if not m:
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'www.hites.com':
             store = Store.objects.get(name='Hites')
-            sku = url.path.split('/')[-1]
+            m = re.search(r'(\d+)$', url.path)
+            if not m:
+                return None
+            sku = m.groups()[0][:-3]
         elif url.netloc == 'www.lider.cl':
             store = Store.objects.get(name='Lider')
             m = re.search('/(\d+)$', url.path)

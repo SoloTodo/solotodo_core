@@ -32,6 +32,7 @@ class CategoryColumn(models.Model):
     country = models.ForeignKey(Country, on_delete=models.CASCADE,
                                 blank=True, null=True)
     ordering = models.PositiveIntegerField()
+    is_extended = models.BooleanField(default=False)
 
     def __str__(self):
         return '{} - {}'.format(self.field, self.purpose)

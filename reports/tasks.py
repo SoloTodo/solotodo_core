@@ -51,6 +51,7 @@ def send_current_prices_task(user_id, query_string):
     email.attach(
         report_filename, report_file,
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
     email.send()
 
 

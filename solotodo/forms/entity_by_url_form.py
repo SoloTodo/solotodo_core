@@ -18,6 +18,8 @@ class EntityByUrlForm(forms.Form):
             store = Store.objects.get(name='Falabella')
             m = re.search(r'/product/\d+/.+/(\d+)', url.path)
             if not m:
+                m = re.search(r'/product/(\d+)/', url.path)
+            if not m:
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'simple.ripley.cl':

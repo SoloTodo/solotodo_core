@@ -173,6 +173,8 @@ class EntityByUrlForm(forms.Form):
             store = Store.objects.get(name='SpDigital')
             m = re.search('products/view/(\d+)$', url.path)
             if not m:
+                m = re.search('products/cyberday_view/(\d+)$', url.path)
+            if not m:
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'cyber.cloud.spdigital.cl':

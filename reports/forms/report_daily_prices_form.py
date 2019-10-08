@@ -134,7 +134,8 @@ class ReportDailyPricesForm(forms.Form):
 
         specs_columns = CategoryColumn.objects.filter(
             field__category=category,
-            purpose=settings.REPORTS_PURPOSE_ID
+            purpose=settings.REPORTS_PURPOSE_ID,
+            is_extended=False
         )
 
         cell_plans_in_entities = [e.cell_plan for e in

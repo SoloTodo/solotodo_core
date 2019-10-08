@@ -183,7 +183,8 @@ class EsProductsBrowseForm(forms.Form):
 
         specs_columns = CategoryColumn.objects.filter(
             field__category=category,
-            purpose=settings.CATEGORY_PURPOSE_BROWSE_ID
+            purpose=settings.CATEGORY_PURPOSE_BROWSE_ID,
+            is_extended=False
         ).select_related('field')
 
         desired_spec_fields = \

@@ -3,8 +3,6 @@ from guardian.utils import get_anonymous_user
 from rest_framework import serializers
 from rest_framework.reverse import reverse
 
-from product_lists.models import ProductList, ProductListEntry
-
 from hardware.models import Budget
 from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
@@ -46,25 +44,9 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
             model = Budget
             fields = ['id', 'name', 'creation_date']
 
-    class ProductListNestedSerializer(serializers.HyperlinkedModelSerializer):
-        class ProductListEntryNestedSerializer(
-                serializers.HyperlinkedModelSerializer):
-            product = NestedProductSerializer()
-
-            class Meta:
-                model = ProductListEntry
-                fields = ('product', 'ordering')
-        entries = ProductListEntryNestedSerializer(many=True)
-
-        class Meta:
-            model = ProductList
-            fields = ('url', 'id', 'name', 'category', 'entries',
-                      'creation_date', 'last_updated')
-
     detail_url = serializers.HyperlinkedRelatedField(
         view_name='solotodouser-detail', read_only=True, source='pk')
     budgets = InlineBudgetSerializer(many=True)
-    product_lists = ProductListNestedSerializer(many=True)
 
     preferred_store = serializers.SerializerMethodField()
 
@@ -87,7 +69,7 @@ class MyUserSerializer(serializers.HyperlinkedModelSerializer):
                   'preferred_store', 'preferred_stores_last_updated',
                   'preferred_stores', 'preferred_exclude_refurbished',
                   'date_joined', 'is_staff', 'permissions', 'budgets',
-                  'is_superuser', 'product_lists')
+                  'is_superuser')
         read_only_fields = ('email', 'first_name', 'last_name',
                             'permissions', 'is_staff', 'is_superuser',
                             'budgets', 'date_joined')

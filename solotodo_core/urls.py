@@ -30,7 +30,6 @@ from hardware.router import router as hardware_router
 from carousel_slides.router import router as carousel_slides_router
 from alerts.router import router as alerts_router
 from banners.router import router as banners_router
-from product_lists.router import router as product_lists_router
 from brand_comparisons.router import router as brand_comparisons_router
 from lg_online.router import router as lg_online_router
 from lg_pricing.router import router as lg_pricing_router
@@ -50,7 +49,6 @@ router.extend(hardware_router)
 router.extend(carousel_slides_router)
 router.extend(alerts_router)
 router.extend(banners_router)
-router.extend(product_lists_router)
 router.extend(brand_comparisons_router)
 router.extend(lg_online_router)
 router.extend(lg_pricing_router)

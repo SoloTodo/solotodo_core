@@ -80,7 +80,6 @@ INSTALLED_APPS = [
     'carousel_slides',
     'alerts',
     'banners',
-    'product_lists',
     'brand_comparisons',
     'lg_online',
     'keyword_search_positions',

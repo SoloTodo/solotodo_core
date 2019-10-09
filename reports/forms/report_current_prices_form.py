@@ -39,6 +39,8 @@ class ReportCurrentPricesForm(forms.Form):
         required=False)
     filename = forms.CharField(
         required=False)
+    extended = forms.BooleanField(
+        required=False)
 
     def __init__(self, user, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -115,8 +117,9 @@ class ReportCurrentPricesForm(forms.Form):
         workbook = xlsxwriter.Workbook(output)
         workbook.formats[0].set_font_size(10)
 
+        extended = self.cleaned_data['extended']
         self.generate_worksheet(workbook, category, currency, entities,
-                                es_dict)
+                                es_dict, extended)
 
         workbook.close()
 
@@ -142,7 +145,8 @@ class ReportCurrentPricesForm(forms.Form):
         }
 
     @staticmethod
-    def generate_worksheet(workbook, category, currency, es, es_dict):
+    def generate_worksheet(workbook, category, currency, es, es_dict,
+                           extended):
         worksheet = workbook.add_worksheet()
 
         date_format = workbook.add_format({
@@ -158,6 +162,9 @@ class ReportCurrentPricesForm(forms.Form):
             field__category=category,
             purpose=settings.REPORTS_PURPOSE_ID
         )
+
+        if not extended:
+            specs_columns = specs_columns.filter(is_extended=False)
 
         cell_plans_in_entities = {}
 

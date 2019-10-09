@@ -124,7 +124,8 @@ class ReportWtbForm(forms.Form):
         if len(categories) == 1:
             specs_columns = CategoryColumn.objects.filter(
                 field__category=categories[0],
-                purpose=settings.REPORTS_PURPOSE_ID
+                purpose=settings.REPORTS_PURPOSE_ID,
+                is_extended=False
             )
         else:
             specs_columns = None

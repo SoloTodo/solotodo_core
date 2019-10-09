@@ -234,4 +234,8 @@ def additional_es_fields(instance_model, elastic_search_result):
         result['largest_storage_drive_drive_type_unicode'] = \
             storage_drives[0][0]
 
+        result['processor_has_turbo_frequencies'] = \
+            elastic_search_result['processor_frequency_value'] != \
+            elastic_search_result['processor_turbo_frequency_value']
+
         return result

@@ -185,7 +185,6 @@ class EntityByUrlForm(forms.Form):
             if not m:
                 return None
             sku = m.groups()[0]
-            print(sku)
         elif url.netloc == 'www.winpy.cl':
             store = Store.objects.get(name='Winpy')
             m = re.search('/venta/(.+)$', url.path)

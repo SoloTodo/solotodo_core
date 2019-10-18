@@ -128,46 +128,5 @@ class SoicosConversion(models.Model):
 
             page += 1
 
-            # download_url =
-            # 'https://solotodo-core.s3.amazonaws.com/report.csv'
-            # response = session.get(download_url)
-            #
-            # f = StringIO(response.text)
-            # reader = csv.reader(f, delimiter=',')
-            #
-            # first_row = True
-            #
-            # for row in reader:
-            #     if first_row:
-            #         first_row = False
-            #         continue
-            #
-            #     uuid_container = row[12]
-            #
-            #     if uuid_container ==
-            #     '-' or len(uuid_container.split('_')) < 3:
-            #         continue
-            #
-            #     uuid = uuid_container.split('_')[-1]
-            #
-            #     print(uuid)
-            #
-            #     try:
-            #         lead = Lead.objects.get(uuid=uuid)
-            #     except Lead.DoesNotExist:
-            #         continue
-            #
-            #     creation_date = datetime.strptime(
-            #         row[8], '%Y-%m-%d %H:%M:%S')
-            #
-            #     creation_date = pytz.timezone(
-            #         "Chile/Continental").localize(creation_date)
-            #
-            #     validation_date = datetime.strptime(
-            #         row[8], '%Y-%m-%d %H:%M:%S')
-            #
-            #     validation_date = pytz.timezone(
-            #         "Chile/Continental").localize(validation_date)
-
     class Meta:
         app_label = 'soicos_conversions'

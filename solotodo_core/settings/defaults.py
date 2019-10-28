@@ -81,7 +81,6 @@ INSTALLED_APPS = [
     'alerts',
     'banners',
     'brand_comparisons',
-    'lg_online',
     'keyword_search_positions',
     'lg_pricing',
     'soicos_conversions',

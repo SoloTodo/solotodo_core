@@ -61,7 +61,7 @@ class ShareOfShelvesForm(forms.Form):
 
         ReportCurrentPricesForm \
             .generate_worksheet(workbook, category, None,
-                                data['entities'], data['es_dict'])
+                                data['entities'], data['es_dict'], False)
 
         workbook.close()
 

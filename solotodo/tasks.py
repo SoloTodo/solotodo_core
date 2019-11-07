@@ -102,7 +102,7 @@ def entity_save(entity_id):
     Entity.objects.get(pk=entity_id).save()
 
 
-@shared_task(queue='general', ignore_result=True, task_time_limit=60*30)
+@shared_task(queue='reports', ignore_result=True, task_time_limit=60*30)
 def send_historic_entity_positions_report_task(store_id, user_id,
                                                query_string):
     from django.contrib.auth import get_user_model

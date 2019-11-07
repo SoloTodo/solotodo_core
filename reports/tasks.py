@@ -9,7 +9,7 @@ from reports.models import Report, ReportDownload
 from solotodo.models import SoloTodoUser, EsProduct
 
 
-@shared_task(queue='general', ignore_result=True, task_time_limit=1800)
+@shared_task(queue='reports', ignore_result=True, task_time_limit=1800)
 def send_current_prices_task(user_id, query_string):
     report = Report.objects.get(slug='current_prices')
     user = SoloTodoUser.objects.get(id=user_id)
@@ -55,7 +55,7 @@ def send_current_prices_task(user_id, query_string):
     email.send()
 
 
-@shared_task(queue='general', ignore_result=True, task_time_limit=1800)
+@shared_task(queue='reports', ignore_result=True, task_time_limit=1800)
 def send_daily_prices_task(user_id, query_string):
     report = Report.objects.get(slug='daily_prices')
     user = SoloTodoUser.objects.get(id=user_id)

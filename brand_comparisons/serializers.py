@@ -13,11 +13,12 @@ class BrandComparisonSerializer(serializers.HyperlinkedModelSerializer):
     user = UserSerializer()
     brand_1 = BrandSerializer()
     brand_2 = BrandSerializer()
+    manual_products = NestedProductSerializer(many=True)
 
     class Meta:
         model = BrandComparison
         fields = ('id', 'url', 'user', 'name', 'category', 'brand_1',
-                  'brand_2', 'price_type', 'stores')
+                  'brand_2', 'price_type', 'stores', 'manual_products')
 
 
 class BrandComparisonSegmentRowSerializer(
@@ -56,11 +57,12 @@ class FullBrandComparisonSerializer(serializers.HyperlinkedModelSerializer):
     brand_2 = BrandSerializer()
     segments = BrandComparisonSegmentSerializer(many=True)
     category = CategorySerializer()
+    manual_products = NestedProductSerializer(many=True)
 
     class Meta:
         model = BrandComparison
-        fields = ('url', 'id', 'user', 'name', 'category', 'brand_1',
-                  'brand_2', 'price_type', 'segments', 'stores')
+        fields = ('url', 'id', 'user', 'name', 'category', 'brand_1', 'brand_2'
+                  , 'price_type', 'segments', 'stores', 'manual_products')
 
 
 class BrandComparisonUpdateSerializer(serializers.HyperlinkedModelSerializer):

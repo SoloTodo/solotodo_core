@@ -6,7 +6,7 @@ from django.db import models
 from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
 
-from solotodo.models import Brand, Store, Category, Entity
+from solotodo.models import Brand, Store, Category, Entity, Product
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -23,6 +23,7 @@ class BrandComparison(models.Model):
         choices=[('normal', 'Normal'), ('offer', 'Offer')],
         default='offer')
     stores = models.ManyToManyField(Store)
+    manual_products = models.ManyToManyField(Product)
 
     def add_segment(self, name):
         from .brand_comparison_segment import BrandComparisonSegment
@@ -42,6 +43,12 @@ class BrandComparison(models.Model):
         BrandComparisonSegmentRow.objects.create(
             ordering=1,
             segment=segment)
+
+    def add_manual_product(self, product_id):
+        pass
+
+    def remove_manual_product(self, product_id):
+        pass
 
     def as_xls(self):
         preferred_currency = self.user.preferred_currency

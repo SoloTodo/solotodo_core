@@ -80,6 +80,44 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
         return Response(serializer.data)
 
+    @detail_route(methods=['get'])
+    def add_manual_product(self, request, pk, *args, **kwargs):
+        brand_comparison = self.get_object()
+        brand_comparison = BrandComparison.objects.get(id=brand_comparison.id)
+
+        product_id = request.GET.get('id')
+
+        if not product_id:
+            return Response({
+                'errors': 'No id'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        brand_comparison.add_manual_product(product_id)
+
+        serializer = FullBrandComparisonSerializer(
+            brand_comparison, context={'request': request})
+
+        return Response(serializer.data)
+
+    @detail_route(methods=['get'])
+    def remove_manual_product(self, request, pk, *args, **kwargs):
+        brand_comparison = self.get_object()
+        brand_comparison = BrandComparison.objects.get(id=brand_comparison.id)
+
+        product_id = request.GET.get('id')
+
+        if not product_id:
+            return Response({
+                'errors': 'No id'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        brand_comparison.remove_manual_product(product_id)
+
+        serializer = FullBrandComparisonSerializer(
+            brand_comparison, context={'request': request})
+
+        return Response(serializer.data)
+
 
 class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,
                                     mixins.ListModelMixin,

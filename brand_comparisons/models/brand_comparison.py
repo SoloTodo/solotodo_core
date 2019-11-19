@@ -45,10 +45,12 @@ class BrandComparison(models.Model):
             segment=segment)
 
     def add_manual_product(self, product_id):
-        pass
+        product = Product.objects.get(id=product_id)
+        self.manual_products.add(product)
 
     def remove_manual_product(self, product_id):
-        pass
+        product = Product.objects.get(id=product_id)
+        self.manual_products.remove(product)
 
     def as_xls(self):
         preferred_currency = self.user.preferred_currency

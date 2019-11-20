@@ -77,7 +77,11 @@ class ReportWtbForm(forms.Form):
             product_to_wtb_entity_dict[wtb_entity.product_id]\
                 .append(wtb_entity)
 
-        es = Entity.objects.filter(product__brand=brand, store__in=stores)\
+        es = Entity.objects.filter(
+                product__brand=brand,
+                store__in=stores,
+                category__in=categories
+            )\
             .get_available()\
             .select_related(
             'product__instance_model',

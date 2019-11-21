@@ -7,7 +7,7 @@ from .models import BrandComparison, BrandComparisonSegment, \
 @admin.register(BrandComparison)
 class BrandComparisonAdmin(admin.ModelAdmin):
     list_display = ('user', 'name', 'brand_1', 'brand_2', 'price_type')
-    readonly_fields = ('user',)
+    readonly_fields = ('user', 'manual_products')
 
 
 @admin.register(BrandComparisonSegment)

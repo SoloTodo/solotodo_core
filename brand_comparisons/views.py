@@ -64,8 +64,6 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
     @detail_route(methods=['post'])
     def add_segment(self, request, pk, *args, **kwargs):
         brand_comparison = self.get_object()
-        brand_comparison = BrandComparison.objects.get(id=brand_comparison.id)
-
         segment_name = request.data.get('name')
 
         if not segment_name:
@@ -80,12 +78,10 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
         return Response(serializer.data)
 
-    @detail_route(methods=['get'])
+    @detail_route(methods=['post'])
     def add_manual_product(self, request, pk, *args, **kwargs):
         brand_comparison = self.get_object()
-        brand_comparison = BrandComparison.objects.get(id=brand_comparison.id)
-
-        product_id = request.GET.get('id')
+        product_id = request.data.get('product_id')
 
         if not product_id:
             return Response({
@@ -99,12 +95,10 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
         return Response(serializer.data)
 
-    @detail_route(methods=['get'])
+    @detail_route(methods=['post'])
     def remove_manual_product(self, request, pk, *args, **kwargs):
         brand_comparison = self.get_object()
-        brand_comparison = BrandComparison.objects.get(id=brand_comparison.id)
-
-        product_id = request.GET.get('id')
+        product_id = request.data.get('product_id')
 
         if not product_id:
             return Response({

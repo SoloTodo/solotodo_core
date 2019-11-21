@@ -488,6 +488,7 @@ class CategoryFullBrowseResultProductSerializer(
             'id',
             'name',
             'specs',
+            'brand'
         )
 
 

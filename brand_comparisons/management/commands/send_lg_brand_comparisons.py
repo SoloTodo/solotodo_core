@@ -9,20 +9,24 @@ from solotodo.models import SoloTodoUser
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--user_ids', nargs='+', type=int)
+        parser.add_argument('--comparison_ids', nargs='+', type=int)
 
     def handle(self, *args, **options):
-        comparison_ids = [4, 6]
+        comparison_ids = options['comparison_ids']
+        comparisons = BrandComparison.objects.filter(pk__in=comparison_ids)
         user_ids = options['user_ids']
 
         users = SoloTodoUser.objects.filter(pk__in=user_ids)
         emails = [user.email for user in users]
 
         sender = SoloTodoUser.get_bot().email_recipient_text()
-        message = """
-        Buenas tardes,
 
-        Se adjuntan las comparaciones de modelos para el día %Y-%m-%d
-        """
+        message = """
+        Buenos días,
+
+        Se adjunta la Comparación de Precios ATA del día de hoy %d.%m.%Y
+        para Chile en {}
+        """.format(', '.join(str(x.category) for x in comparisons))
         message = timezone.now().strftime(message)
 
         subject = 'Comparación de modelos - %Y-%m-%d'

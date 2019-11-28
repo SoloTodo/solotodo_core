@@ -30,12 +30,14 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
             'stores'
         ).select_related('user', 'brand_1', 'brand_2', 'category')
 
+        group = user.groups.get()
+
         if not user.is_authenticated:
             return qs.none()
         elif user.is_superuser:
             return qs.all()
         else:
-            return qs.filter(user=user)
+            return qs.filter(user__groups=group)
 
     def get_serializer_class(self):
         if self.action == 'retrieve':

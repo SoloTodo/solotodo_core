@@ -3,7 +3,7 @@ from django.core.management import BaseCommand
 from django.utils import timezone
 
 from brand_comparisons.models import BrandComparison
-from solotodo.models import SoloTodoUser
+from solotodo.models import SoloTodoUser, Category
 
 
 class Command(BaseCommand):
@@ -21,12 +21,15 @@ class Command(BaseCommand):
 
         sender = SoloTodoUser.get_bot().email_recipient_text()
 
+        comparison_categories = Category.objects.filter(
+            pk__in=comparisons.values('category_id'))
+
         message = """
         Buenos días,
 
         Se adjunta la Comparación de Precios ATA del día de hoy %d.%m.%Y
         para Chile en {}
-        """.format(', '.join(str(x.category) for x in comparisons))
+        """.format(', '.join(str(x) for x in comparison_categories))
         message = timezone.now().strftime(message)
 
         subject = 'Comparación de modelos - %Y-%m-%d'

@@ -4,6 +4,7 @@ import xlsxwriter
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core.mail import EmailMessage
+from django.utils import timezone
 
 from .brand_comparison import BrandComparison
 from solotodo.models import Store, Entity, EntityHistory, SoloTodoUser
@@ -47,98 +48,44 @@ class BrandComparisonAlert(models.Model):
         for segment in self.brand_comparison.segments.all():
             for segment_row in segment.rows.all():
                 for store in self.stores.all():
+                    product_1 = segment_row.product_1
+                    product_2 = segment_row.product_2
+                    entity_1 = None
+                    entity_2 = None
 
-                    entities_1 = Entity.objects.filter(
-                        store=store, product=segment_row.product_1)\
-                        .order_by('-id')
+                    if product_1:
+                        entities_1 = Entity.objects.filter(
+                            store=store, product=product_1)\
+                            .order_by('-id')
 
-                    if entities_1:
-                        entity_1 = entities_1[0]
-                    else:
-                        continue
+                        if entities_1:
+                            entity_1 = entities_1[0]
 
-                    prev_registry = EntityHistory.objects.filter(
-                        entity=entity_1,
-                        timestamp__lte=self.last_check)\
-                        .order_by('-timestamp')[0]
+                    if product_2:
+                        entities_2 = Entity.objects.filter(
+                            store=store, product=product_2) \
+                            .order_by('-id')
 
-                    curr_registry = entity_1.active_registry
+                        if entities_2:
+                            entity_2 = entities_2[0]
 
-                    if not prev_registry and not curr_registry:
-                        continue
+                    add_row = self.write_report_row(
+                        worksheet, row, entity_1, entity_2, product_2)
 
-                    entities_2 = Entity.objects.filter(
-                        store=store, product=segment_row.product_2)\
-                        .order_by('-id')
+                    if add_row:
+                        row += 1
 
-                    if entities_2:
-                        entity_2 = entities_2[0]
-                    else:
-                        entity_2 = None
+                    add_row = self.write_report_row(
+                        worksheet, row, entity_2, entity_1, product_1)
 
-                    if not prev_registry or not curr_registry or \
-                            prev_registry.offer_price != \
-                            curr_registry.offer_price or \
-                            prev_registry.normal_price != \
-                            curr_registry.normal_price:
-
-                        changed = True
-                        import ipdb
-                        ipdb.set_trace()
-                        col = 0
-                        worksheet.write(row, col, str(entity_1.product))
-                        col += 1
-                        worksheet.write(row, col, str(store))
-                        col += 1
-
-                        if prev_registry:
-                            worksheet.write(
-                                row, col, prev_registry.normal_price)
-                        else:
-                            worksheet.write(row, col, 'No disponible')
-                        col += 1
-
-                        if curr_registry:
-                            worksheet.write(
-                                row, col, curr_registry.normal_price)
-                        else:
-                            worksheet.write(row, col, 'No disponible')
-                        col += 1
-
-                        if prev_registry:
-                            worksheet.write(
-                                row, col, prev_registry.offer_price)
-                        else:
-                            worksheet.write(row, col, 'No disponible')
-                        col += 1
-
-                        if curr_registry:
-                            worksheet.write(
-                                row, col, curr_registry.offer_price)
-                        else:
-                            worksheet.write(row, col, 'No disponible')
-                        col += 1
-
-                        if segment_row.product_2:
-                            worksheet.write(
-                                row, col, str(segment_row.product_2))
-                            col += 1
-
-                        if entity_2 and entity_2.active_registry:
-                            comp_registry = entity_2.active_registry
-                            worksheet.write(
-                                row, col, comp_registry.normal_price)
-                            col += 1
-                            worksheet.write(
-                                row, col, comp_registry.offer_price)
-
-                    row += 1
+                    if add_row:
+                        row += 1
 
         workbook.close()
         output.seek(0)
         file_value = output.getvalue()
 
-        if changed:
+        if row > 1:
             print('Sending email')
             sender = SoloTodoUser().get_bot().email_recipient_text()
             message = 'Probando'
@@ -154,6 +101,87 @@ class BrandComparisonAlert(models.Model):
                 'spreadsheetml.sheet')
 
             email.send()
+
+    def write_report_row(
+            self, worksheet, row, entity_1, entity_2, product_2):
+
+        if not entity_1:
+            return False
+
+        date_from = self.last_check - timezone.timedelta(days=1)
+
+        prev_registry = EntityHistory.objects.filter(
+            entity=entity_1,
+            timestamp__gte=date_from,
+            timestamp__lte=self.last_check) \
+            .order_by('-timestamp')
+
+        if not prev_registry:
+            prev_registry = None
+        else:
+            prev_registry = prev_registry[0]
+
+        curr_registry = entity_1.active_registry
+
+        if not prev_registry and not curr_registry:
+            return False
+
+        if not prev_registry or not curr_registry or \
+                prev_registry.offer_price != \
+                curr_registry.offer_price or \
+                prev_registry.normal_price != \
+                curr_registry.normal_price:
+
+            col = 0
+            worksheet.write(row, col, str(entity_1.product))
+            col += 1
+            worksheet.write(row, col, str(entity_1.store))
+            col += 1
+
+            if prev_registry:
+                worksheet.write(
+                    row, col, prev_registry.normal_price)
+            else:
+                worksheet.write(row, col, 'No disponible')
+            col += 1
+
+            if curr_registry:
+                worksheet.write(
+                    row, col, curr_registry.normal_price)
+            else:
+                worksheet.write(row, col, 'No disponible')
+            col += 1
+
+            if prev_registry:
+                worksheet.write(
+                    row, col, prev_registry.offer_price)
+            else:
+                worksheet.write(row, col, 'No disponible')
+            col += 1
+
+            if curr_registry:
+                worksheet.write(
+                    row, col, curr_registry.offer_price)
+            else:
+                worksheet.write(row, col, 'No disponible')
+            col += 1
+
+            if product_2:
+                worksheet.write(
+                    row, col, str(product_2))
+                col += 1
+
+            if entity_2 and entity_2.active_registry:
+                comp_registry = entity_2.active_registry
+                worksheet.write(
+                    row, col, comp_registry.normal_price)
+                col += 1
+                worksheet.write(
+                    row, col, comp_registry.offer_price)
+
+            return True
+
+        return False
 
     class Meta:
         app_label = 'brand_comparisons'

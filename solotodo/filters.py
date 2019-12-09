@@ -139,6 +139,9 @@ class EntityFilterSet(rest_framework.FilterSet):
         method='_exclude_refurbished',
         label='Exclude refurbished?'
     )
+    sku = rest_framework.CharFilter(
+        lookup_expr='icontains'
+    )
 
     is_available = rest_framework.BooleanFilter(
         name='is_available', method='_is_available', label='Is available?')

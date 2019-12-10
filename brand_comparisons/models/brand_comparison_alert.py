@@ -18,8 +18,6 @@ class BrandComparisonAlert(models.Model):
     last_check = models.DateTimeField()
 
     def check_for_changes(self):
-        changed = False
-
         output = io.BytesIO()
         workbook = xlsxwriter.Workbook(output)
         workbook.formats[0].set_font_size(10)
@@ -86,7 +84,6 @@ class BrandComparisonAlert(models.Model):
         file_value = output.getvalue()
 
         if row > 1:
-            print('Sending email')
             sender = SoloTodoUser().get_bot().email_recipient_text()
             message = 'Probando'
             subject = 'Reporte comparacion de marcas'

@@ -4,11 +4,12 @@ from rest_framework.response import Response
 
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 from .models import BrandComparison, BrandComparisonSegment, \
-    BrandComparisonSegmentRow
+    BrandComparisonSegmentRow, BrandComparisonAlert
 from .serializers import BrandComparisonSerializer, \
     FullBrandComparisonSerializer, BrandComparisonCreationSerializer,\
     BrandComparisonSegmentSerializer, BrandComparisonSegmentRowSerializer,\
-    BrandComparisonUpdateSerializer, BrandComparisonSegmentRowUpdateSerializer
+    BrandComparisonUpdateSerializer, BrandComparisonSegmentRowUpdateSerializer\
+    , BrandComparisonAlertSerializer
 from .pagination import BrandComparisonPagination
 
 
@@ -192,3 +193,12 @@ class BrandComparisonSegmentRowViewSet(mixins.RetrieveModelMixin,
             row, context={'request': request})
 
         return Response(serializer.data)
+
+
+class BrandComparisonAlertViewSet(mixins.RetrieveModelMixin,
+                                  mixins.CreateModelMixin,
+                                  mixins.ListModelMixin,
+                                  mixins.DestroyModelMixin,
+                                  viewsets.GenericViewSet):
+    queryset = BrandComparisonAlert.objects.all()
+    serializer_class = BrandComparisonAlertSerializer

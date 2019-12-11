@@ -54,7 +54,7 @@ class BrandComparisonSegmentSerializer(serializers.HyperlinkedModelSerializer):
 class BrandComparisonAlertSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = BrandComparisonAlert
-        fields = ('user', 'brand_comparison', 'stores', 'last_check')
+        fields = ('id', 'user', 'brand_comparison', 'stores', 'last_check')
 
 
 class FullBrandComparisonSerializer(serializers.HyperlinkedModelSerializer):

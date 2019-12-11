@@ -202,3 +202,13 @@ class BrandComparisonAlertViewSet(mixins.RetrieveModelMixin,
                                   viewsets.GenericViewSet):
     queryset = BrandComparisonAlert.objects.all()
     serializer_class = BrandComparisonAlertSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+
+        if not user.is_authenticated:
+            return BrandComparisonAlert.objects.none()
+        elif user.is_superuser:
+            return BrandComparisonAlert.objects.all()
+        else:
+            return BrandComparisonAlert.objects.filter(user=user)

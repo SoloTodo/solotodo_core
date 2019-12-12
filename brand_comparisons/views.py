@@ -1,3 +1,5 @@
+from django_filters import rest_framework
+
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
@@ -8,9 +10,11 @@ from .models import BrandComparison, BrandComparisonSegment, \
 from .serializers import BrandComparisonSerializer, \
     FullBrandComparisonSerializer, BrandComparisonCreationSerializer,\
     BrandComparisonSegmentSerializer, BrandComparisonSegmentRowSerializer,\
-    BrandComparisonUpdateSerializer, BrandComparisonSegmentRowUpdateSerializer\
-    , BrandComparisonAlertSerializer
+    BrandComparisonUpdateSerializer, BrandComparisonAlertSerializer,\
+    BrandComparisonSegmentRowUpdateSerializer, \
+    BrandComparisonAlertCreationSerializer
 from .pagination import BrandComparisonPagination
+from .filters import BrandComparisonAlertFilterSet
 
 
 class BrandComparisonViewSet(mixins.CreateModelMixin,
@@ -201,6 +205,8 @@ class BrandComparisonAlertViewSet(mixins.RetrieveModelMixin,
                                   mixins.DestroyModelMixin,
                                   viewsets.GenericViewSet):
     queryset = BrandComparisonAlert.objects.all()
+    filter_backends = (rest_framework.DjangoFilterBackend,)
+    filter_class = BrandComparisonAlertFilterSet
     serializer_class = BrandComparisonAlertSerializer
 
     def get_queryset(self):
@@ -212,3 +218,9 @@ class BrandComparisonAlertViewSet(mixins.RetrieveModelMixin,
             return BrandComparisonAlert.objects.all()
         else:
             return BrandComparisonAlert.objects.filter(user=user)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return BrandComparisonAlertCreationSerializer
+        else:
+            return BrandComparisonAlertSerializer

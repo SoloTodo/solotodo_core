@@ -15,7 +15,7 @@ class BrandComparisonAlert(models.Model):
     brand_comparison = models.ForeignKey(
         BrandComparison, on_delete=models.CASCADE)
     stores = models.ManyToManyField(Store)
-    last_check = models.DateTimeField()
+    last_check = models.DateTimeField(auto_now_add=True)
 
     def check_for_changes(self):
         output = io.BytesIO()

@@ -57,6 +57,55 @@ class BrandComparisonAlertSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'user', 'brand_comparison', 'stores', 'last_check')
 
 
+class BrandComparisonAlertCreationSerializer(
+        serializers.HyperlinkedModelSerializer):
+    brand_comparison = serializers.PrimaryKeyRelatedField(
+        queryset=BrandComparison.objects.all())
+    stores = serializers.PrimaryKeyRelatedField(
+        queryset=Store.objects.all(), many=True)
+
+    @property
+    def data(self):
+        return BrandComparisonAlertSerializer(
+            self.instance, context={'request': self.context['request']}).data
+
+    def validate_stores(self, value):
+        user = self.context['request'].user
+
+        for store in value:
+            if not user.has_perm('solotodo.view_store', store):
+                raise serializers.ValidationError('Permission denied on store')
+
+        return value
+
+    def validate_brand_comparison(self, value):
+        user = self.context['request'].user
+        group = user.groups.get()
+
+        if user.is_superuser or value.user.groups.get() == group:
+            return value
+
+        raise serializers.ValidationError('User not in group')
+
+
+    def create(self, validated_data):
+        user = self.context['request'].user
+        brand_comparison = validated_data['brand_comparison']
+        stores = validated_data['stores']
+
+        bca = BrandComparisonAlert.objects.create(
+            user=user,
+            brand_comparison=brand_comparison)
+
+        bca.stores.set(stores)
+
+        return bca
+
+    class Meta:
+        model = BrandComparisonAlert
+        fields = ('brand_comparison', 'stores')
+
+
 class FullBrandComparisonSerializer(serializers.HyperlinkedModelSerializer):
     user = UserSerializer()
     brand_1 = BrandSerializer()

@@ -29,14 +29,17 @@ class BrandComparisonAlert(models.Model):
 
         headers = [
             'Producto',
+            'Marca',
             'Tienda',
-            'P. normal anterior',
             'P. normal nuevo',
-            'P. oferta anterior',
+            'Diferencia',
             'P. oferta nuevo',
+            'Diferencia',
             'Producto comparado',
             'P. normal',
-            'P. oferta']
+            'Diferencia',
+            'P. oferta',
+            'Diferencia']
 
         for idx, header in enumerate(headers):
             worksheet.write(0, idx, header, header_format)
@@ -53,28 +56,32 @@ class BrandComparisonAlert(models.Model):
 
                     if product_1:
                         entities_1 = Entity.objects.filter(
-                            store=store, product=product_1)\
-                            .order_by('-id')
+                            store=store, product=product_1,
+                            active_registry__cell_monthly_payment__isnull=True
+                        ).order_by('-id')
 
                         if entities_1:
                             entity_1 = entities_1[0]
 
                     if product_2:
                         entities_2 = Entity.objects.filter(
-                            store=store, product=product_2) \
-                            .order_by('-id')
+                            store=store, product=product_2,
+                            active_registry__cell_monthly_payment__isnull=True
+                        ).order_by('-id')
 
                         if entities_2:
                             entity_2 = entities_2[0]
 
                     add_row = self.write_report_row(
-                        worksheet, row, entity_1, entity_2, product_2)
+                        workbook, worksheet, row,
+                        entity_1, entity_2, product_2)
 
                     if add_row:
                         row += 1
 
                     add_row = self.write_report_row(
-                        worksheet, row, entity_2, entity_1, product_1)
+                        workbook, worksheet, row,
+                        entity_2, entity_1, product_1)
 
                     if add_row:
                         row += 1
@@ -85,9 +92,15 @@ class BrandComparisonAlert(models.Model):
 
         if row > 1:
             sender = SoloTodoUser().get_bot().email_recipient_text()
-            message = 'Probando'
-            subject = 'Reporte comparacion de marcas'
-            filename = 'Cambio comparacion de marcas.xlsx'
+            date = timezone.now().strftime('%Y-%m-%d')
+            stores = ", ".join([s.name for s in self.stores.all()])
+
+            message = 'Se adjunta los cambios de la comparativa {} para el ' \
+                'día {} de las tiendas {}'.format(
+                self.brand_comparison.name, date, stores)
+            subject = 'Reporte comparativa {} - {}'.format(
+                self.brand_comparison.name, date)
+            filename = '{}-{}.xlsx'.format(self.brand_comparison.name, date)
 
             email = EmailMessage(
                 subject, message, sender, [self.user.email])
@@ -99,19 +112,42 @@ class BrandComparisonAlert(models.Model):
 
             email.send()
 
+        self.last_check = timezone.now()
+        self.save()
+
     def write_report_row(
-            self, worksheet, row, entity_1, entity_2, product_2):
+            self, workbook, worksheet, row, entity_1, entity_2, product_2):
 
         if not entity_1:
             return False
+
+        currency_format_red = workbook.add_format()
+        currency_format_red.set_font_size(10)
+        currency_format_red.set_num_format(entity_1.currency.excel_format())
+        currency_format_red.set_font_color('red')
+
+        currency_format_green = workbook.add_format()
+        currency_format_green.set_font_size(10)
+        currency_format_green.set_num_format(entity_1.currency.excel_format())
+        currency_format_green.set_font_color('green')
+
+        currency_format_black = workbook.add_format()
+        currency_format_black.set_font_size(10)
+        currency_format_black.set_num_format(entity_1.currency.excel_format())
+        currency_format_black.set_font_color('black')
+
+        right_align_format = workbook.add_format()
+        right_align_format.set_font_size(10)
+        right_align_format.set_align('right')
 
         date_from = self.last_check - timezone.timedelta(days=1)
 
         prev_registry = EntityHistory.objects.filter(
             entity=entity_1,
             timestamp__gte=date_from,
-            timestamp__lte=self.last_check) \
-            .order_by('-timestamp')
+            timestamp__lte=self.last_check,
+            cell_monthly_payment__isnull=True
+        ).order_by('-timestamp')
 
         if not prev_registry:
             prev_registry = None
@@ -123,62 +159,130 @@ class BrandComparisonAlert(models.Model):
         if not prev_registry and not curr_registry:
             return False
 
-        if not prev_registry or not curr_registry or \
-                prev_registry.offer_price != \
-                curr_registry.offer_price or \
-                prev_registry.normal_price != \
-                curr_registry.normal_price:
+        if prev_registry and curr_registry and \
+                prev_registry.offer_price == curr_registry.offer_price and\
+                prev_registry.normal_price == curr_registry.normal_price:
+            return False
 
-            col = 0
-            worksheet.write(row, col, str(entity_1.product))
-            col += 1
-            worksheet.write(row, col, str(entity_1.store))
-            col += 1
+        col = 0
+        worksheet.write(row, col, str(entity_1.product))
+        col += 1
+        worksheet.write(row, col, str(entity_1.product.brand))
+        col += 1
+        worksheet.write(row, col, str(entity_1.store))
 
-            if prev_registry:
-                worksheet.write(
-                    row, col, prev_registry.normal_price)
+        col += 1
+
+        curr_normal_price = None
+        curr_offer_price = None
+        prev_normal_price = None
+        prev_offer_price = None
+
+        if curr_registry:
+            curr_normal_price = curr_registry.normal_price
+            curr_offer_price = curr_registry.offer_price
+
+        if prev_registry:
+            prev_normal_price = prev_registry.normal_price
+            prev_offer_price = prev_registry.offer_price
+
+        if curr_normal_price:
+            worksheet.write(row, col, curr_normal_price, currency_format_black)
+        else:
+            worksheet.write(row, col, 'No disponible', right_align_format)
+        col += 1
+
+        if curr_normal_price and prev_normal_price:
+            difference = curr_normal_price-prev_normal_price
+            if difference < 0:
+                currency_format = currency_format_green
+            elif difference > 0:
+                currency_format = currency_format_red
             else:
-                worksheet.write(row, col, 'No disponible')
-            col += 1
+                currency_format = None
+                difference = ""
 
-            if curr_registry:
-                worksheet.write(
-                    row, col, curr_registry.normal_price)
+            worksheet.write(row, col, difference, currency_format)
+        else:
+            worksheet.write(row, col, '')
+        col += 1
+
+        if curr_offer_price:
+            worksheet.write(row, col, curr_offer_price, currency_format_black)
+        else:
+            worksheet.write(row, col, 'No disponible', right_align_format)
+        col += 1
+
+        if curr_offer_price and prev_offer_price:
+            difference = curr_offer_price-prev_offer_price
+            if difference < 0:
+                currency_format = currency_format_green
+            elif difference > 0:
+                currency_format = currency_format_red
             else:
-                worksheet.write(row, col, 'No disponible')
+                currency_format = None
+                difference = ""
+
+            worksheet.write(row, col, difference, currency_format)
+        else:
+            worksheet.write(row, col, '')
+        col += 1
+
+        if product_2:
+            worksheet.write(row, col, str(product_2))
             col += 1
 
-            if prev_registry:
-                worksheet.write(
-                    row, col, prev_registry.offer_price)
+        if entity_2 and entity_2.active_registry:
+            comp_registry = entity_2.active_registry
+            comp_normal_price = comp_registry.normal_price
+            comp_offer_price = comp_registry.normal_price
+
+            worksheet.write(row, col, comp_normal_price, currency_format_black)
+            col += 1
+
+            if curr_normal_price:
+                difference = comp_normal_price - curr_normal_price
+                if difference < 0:
+                    currency_format = currency_format_green
+                elif difference > 0:
+                    currency_format = currency_format_red
+                else:
+                    currency_format = None
+                    difference = ""
+
+                worksheet.write(row, col, difference, currency_format)
             else:
-                worksheet.write(row, col, 'No disponible')
+                worksheet.write(row, col, '')
             col += 1
 
-            if curr_registry:
-                worksheet.write(
-                    row, col, curr_registry.offer_price)
+            worksheet.write(row, col, comp_offer_price, currency_format_black)
+            col += 1
+
+            if curr_offer_price:
+                difference = comp_offer_price - curr_offer_price
+                if difference < 0:
+                    currency_format = currency_format_green
+                elif difference > 0:
+                    currency_format = currency_format_red
+                else:
+                    currency_format = None
+                    difference = ""
+
+                worksheet.write(row, col, difference, currency_format)
             else:
-                worksheet.write(row, col, 'No disponible')
+                worksheet.write(row, col, '')
             col += 1
 
-            if product_2:
-                worksheet.write(
-                    row, col, str(product_2))
-                col += 1
+        elif product_2:
+            worksheet.write(row, col, 'No disponible', right_align_format)
+            col += 1
+            worksheet.write(row, col, '')
+            col += 1
+            worksheet.write(row, col, 'No disponible', right_align_format)
+            col += 1
+            worksheet.write(row, col, '')
 
-            if entity_2 and entity_2.active_registry:
-                comp_registry = entity_2.active_registry
-                worksheet.write(
-                    row, col, comp_registry.normal_price)
-                col += 1
-                worksheet.write(
-                    row, col, comp_registry.offer_price)
-
-            return True
-
-        return False
+        return True
 
     class Meta:
         app_label = 'brand_comparisons'

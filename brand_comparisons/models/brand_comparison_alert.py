@@ -31,10 +31,11 @@ class BrandComparisonAlert(models.Model):
             'Producto',
             'Marca',
             'Tienda',
-            'P. normal nuevo',
-            'Diferencia',
-            'P. oferta nuevo',
-            'Diferencia',
+            'P. normal',
+            'Variación',
+            'P. oferta',
+            'Variación',
+            '',
             'Producto comparado',
             'P. normal',
             'Diferencia',
@@ -203,6 +204,8 @@ class BrandComparisonAlert(models.Model):
                 difference = ""
 
             worksheet.write(row, col, difference, currency_format)
+        elif curr_normal_price:
+            worksheet.write(row, col, 'Nuevo', right_align_format)
         else:
             worksheet.write(row, col, '')
         col += 1
@@ -224,9 +227,11 @@ class BrandComparisonAlert(models.Model):
                 difference = ""
 
             worksheet.write(row, col, difference, currency_format)
+        elif curr_offer_price:
+            worksheet.write(row, col, 'Nuevo', right_align_format)
         else:
             worksheet.write(row, col, '')
-        col += 1
+        col += 2
 
         if product_2:
             worksheet.write(row, col, str(product_2))

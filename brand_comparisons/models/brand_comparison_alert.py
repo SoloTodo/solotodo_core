@@ -3,8 +3,12 @@ import xlsxwriter
 
 from django.db import models
 from django.contrib.auth import get_user_model
-from django.core.mail import EmailMessage
+from django.contrib.sites.models import Site
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.utils import timezone
+from django.conf import settings
 
 from .brand_comparison import BrandComparison
 from solotodo.models import Store, Entity, EntityHistory, SoloTodoUser
@@ -96,15 +100,26 @@ class BrandComparisonAlert(models.Model):
             date = timezone.now().strftime('%Y-%m-%d')
             stores = ", ".join([s.name for s in self.stores.all()])
 
-            message = 'Se adjunta los cambios de la comparativa {} para el ' \
+            message = 'Se adjuntan los cambios de la comparativa {} para el ' \
                 'día {} de las tiendas {}'.format(
-                self.brand_comparison.name, date, stores)
+                    self.brand_comparison.name, date, stores)
+
+            html_message = render_to_string(
+                'brand_comparison_alert_mail.html',
+                {
+                    'summary': mark_safe(message),
+                    'brand_comparison': self.brand_comparison,
+                    'solotodo_com_domain': Site.objects.get(
+                        pk=settings.SOLOTODO_PRICING_SITE_ID).domain
+                })
+
             subject = 'Reporte comparativa {} - {}'.format(
                 self.brand_comparison.name, date)
             filename = '{}-{}.xlsx'.format(self.brand_comparison.name, date)
 
-            email = EmailMessage(
+            email = EmailMultiAlternatives(
                 subject, message, sender, [self.user.email])
+            email.attach_alternative(html_message, 'text/html')
 
             email.attach(
                 filename, file_value,
@@ -206,6 +221,8 @@ class BrandComparisonAlert(models.Model):
             worksheet.write(row, col, difference, currency_format)
         elif curr_normal_price:
             worksheet.write(row, col, 'Nuevo', right_align_format)
+        elif prev_normal_price:
+            worksheet.write(row, col, 'Agotado', right_align_format)
         else:
             worksheet.write(row, col, '')
         col += 1
@@ -229,6 +246,8 @@ class BrandComparisonAlert(models.Model):
             worksheet.write(row, col, difference, currency_format)
         elif curr_offer_price:
             worksheet.write(row, col, 'Nuevo', right_align_format)
+        elif prev_offer_price:
+            worksheet.write(row, col, 'Agotado', right_align_format)
         else:
             worksheet.write(row, col, '')
         col += 2

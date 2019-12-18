@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import BrandComparison, BrandComparisonSegment, \
-    BrandComparisonSegmentRow
+    BrandComparisonSegmentRow, BrandComparisonAlert
 
 
 @admin.register(BrandComparison)

@@ -241,6 +241,38 @@ class Store(models.Model):
 
         return sanitized_categories
 
+    def check_and_fill_active_registries(self):
+        from solotodo.models import Entity, EntityHistory, StoreUpdateLog
+        success = 3
+        today = timezone.now().date()
+
+        logs = StoreUpdateLog.objects.filter(
+            store=self, creation_date__date=today, status=success)
+
+        if logs:
+            return
+
+        entities = Entity.objects.filter(
+            store=self, active_registry__isnull=False)
+
+        for entity in entities:
+            current_eh = entity.active_registry
+
+            new_eh = EntityHistory.objects.create(
+                entity=entity,
+                timestamp=timezone.now(),
+                stock=current_eh.stock,
+                normal_price=current_eh.normal_price,
+                offer_price=current_eh.offer_price,
+                cell_monthly_payment=current_eh.cell_monthly_payment,
+                picture_count=current_eh.picture_count,
+                video_count=current_eh.video_count,
+                review_count=current_eh.review_count,
+                review_avg_score=current_eh.review_avg_score)
+
+            entity.active_registry = new_eh
+            entity.save()
+
     def update_banners(self):
         from banners.models import BannerUpdate, Banner, BannerAsset, \
             BannerSection, BannerSubsection, BannerSubsectionType

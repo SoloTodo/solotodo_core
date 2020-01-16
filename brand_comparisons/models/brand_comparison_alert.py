@@ -39,7 +39,7 @@ class BrandComparisonAlert(models.Model):
             'Variación',
             'P. oferta',
             'Variación',
-            '',
+            '-',
             'Producto comparado',
             'P. normal',
             'Diferencia',
@@ -84,12 +84,40 @@ class BrandComparisonAlert(models.Model):
                     if add_row:
                         row += 1
 
+        for segment in self.brand_comparison.segments.all():
+            for segment_row in segment.rows.all():
+                for store in self.stores.all():
+                    product_1 = segment_row.product_1
+                    product_2 = segment_row.product_2
+                    entity_1 = None
+                    entity_2 = None
+
+                    if product_1:
+                        entities_1 = Entity.objects.filter(
+                            store=store, product=product_1,
+                            active_registry__cell_monthly_payment__isnull=True
+                        ).order_by('-id')
+
+                        if entities_1:
+                            entity_1 = entities_1[0]
+
+                    if product_2:
+                        entities_2 = Entity.objects.filter(
+                            store=store, product=product_2,
+                            active_registry__cell_monthly_payment__isnull=True
+                        ).order_by('-id')
+
+                        if entities_2:
+                            entity_2 = entities_2[0]
+
                     add_row = self.write_report_row(
                         workbook, worksheet, row,
                         entity_2, entity_1, product_1)
 
                     if add_row:
                         row += 1
+
+        worksheet.autofilter(0, 0, row - 1, len(headers) - 1)
 
         workbook.close()
         output.seek(0)

@@ -90,7 +90,8 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     RatingFullSerializer, StoreRatingSerializer, RatingCreateSerializer, \
     ProductPictureSerializer, BrandSerializer, \
     ProductAvailableEntitiesMinimalSerializer, StoreSectionSerializer, \
-    EntitySectionPositionSerializer, ProductVideoSerializer
+    EntitySectionPositionSerializer, ProductVideoSerializer, \
+    StaffProductSerializer
 from solotodo.tasks import store_update, \
     send_historic_entity_positions_report_task
 from solotodo.utils import get_client_ip, iterable_to_dict
@@ -1072,6 +1073,12 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = ProductFilterSet
     ordering_fields = None
     pagination_class = ProductPagination
+
+    def get_serializer_class(self):
+        if self.request.user.is_staff:
+            return StaffProductSerializer
+        else:
+            return ProductSerializer
 
     @list_route(methods=['GET', 'POST'])
     def available_entities(self, request):

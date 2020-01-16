@@ -158,6 +158,16 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
                   'specs')
 
 
+class StaffProductSerializer(ProductSerializer):
+    creator = UserSerializer()
+
+    class Meta:
+        model = Product
+        fields = ('url', 'id', 'name', 'category', 'slug', 'instance_model_id',
+                  'creation_date', 'last_updated', 'picture_url', 'brand',
+                  'specs', 'creator')
+
+
 class NestedProductSerializerWithCategory(NestedProductSerializer):
     category = serializers.HyperlinkedRelatedField(
         view_name='category-detail', read_only=True,

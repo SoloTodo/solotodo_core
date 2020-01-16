@@ -4,7 +4,7 @@ from django_filters import rest_framework
 from solotodo.custom_model_multiple_choice_filter import \
     CustomModelMultipleChoiceFilter
 from solotodo.filter_querysets import create_model_filter, \
-    create_category_filter, create_store_filter
+    create_category_filter, create_store_filter, create_product_filter
 from wtb.models import WtbBrand, WtbEntity, WtbBrandUpdateLog
 
 create_wtb_brand_filter = create_model_filter(WtbBrand, 'view_wtb_brand')
@@ -24,6 +24,11 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
     keys = rest_framework.CharFilter(
         name='key',
         label='Key'
+    )
+    products = rest_framework.ModelChoiceFilter(
+        queryset=create_product_filter(),
+        name='product',
+        label='Products'
     )
 
     is_associated = rest_framework.BooleanFilter(

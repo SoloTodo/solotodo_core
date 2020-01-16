@@ -69,7 +69,7 @@ def additional_es_fields(instance_model, elastic_search_original):
             result['sorting_weight'] = big_value
         return result
 
-    if m == 'StorageDrive' or m == 'SolidStateDrive':
+    if m == 'SolidStateDrive':
         result = {}
 
         sequential_read_speed = \

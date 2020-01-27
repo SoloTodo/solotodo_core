@@ -162,7 +162,9 @@ class ReportPricesHistoryForm(forms.Form):
             'Fecha',
             'Hora',
             'Precio normal',
-            'Precio oferta'
+            'Precio oferta',
+            'Número reviews',
+            'Puntaje reviews'
         ])
 
         cell_monthly_payments_in_entities = ehs.filter(
@@ -265,9 +267,19 @@ class ReportPricesHistoryForm(forms.Form):
             worksheet.write(row, col, eh.normal_price)
             col += 1
 
-            # Min offer price
+            # Offer price
 
             worksheet.write(row, col, eh.offer_price)
+            col += 1
+
+            # Review count
+
+            worksheet.write(row, col, eh.review_count or 'N/A')
+            col += 1
+
+            # Review score
+
+            worksheet.write(row, col, eh.review_avg_score or 'N/A')
             col += 1
 
             # Cell monthly payment

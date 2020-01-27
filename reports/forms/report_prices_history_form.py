@@ -276,12 +276,18 @@ class ReportPricesHistoryForm(forms.Form):
 
             # Review count
 
-            worksheet.write(row, col, eh.review_count or 'N/A')
+            review_count = eh.review_count
+            if review_count is None:
+                review_count = 'N/A'
+            worksheet.write(row, col, review_count)
             col += 1
 
             # Review score
 
-            worksheet.write(row, col, eh.review_avg_score or 'N/A')
+            review_score = eh.review_avg_score
+            if review_score is None:
+                review_score = 'N/A'
+            worksheet.write(row, col, review_score)
             col += 1
 
             # Cell monthly payment

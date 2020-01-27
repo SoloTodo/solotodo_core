@@ -108,8 +108,10 @@ class ReportPricesHistoryForm(forms.Form):
         if categories.count() == 1:
             category = categories[0]
 
-            product_ids = [x['entity__product']
-                           for x in ehs.values('entity__product')]
+            product_ids = list(set(
+                [x['entity__product']
+                    for x in ehs.values('entity__product')]
+            ))
             es_search = EsProduct.search().filter(
                 'terms', product_id=product_ids)
             es_dict = {e.product_id: e.to_dict()

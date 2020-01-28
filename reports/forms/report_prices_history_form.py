@@ -108,8 +108,10 @@ class ReportPricesHistoryForm(forms.Form):
         if categories.count() == 1:
             category = categories[0]
 
-            product_ids = [x['entity__product']
-                           for x in ehs.values('entity__product')]
+            product_ids = list(set(
+                [x['entity__product']
+                    for x in ehs.values('entity__product')]
+            ))
             es_search = EsProduct.search().filter(
                 'terms', product_id=product_ids)
             es_dict = {e.product_id: e.to_dict()
@@ -162,7 +164,9 @@ class ReportPricesHistoryForm(forms.Form):
             'Fecha',
             'Hora',
             'Precio normal',
-            'Precio oferta'
+            'Precio oferta',
+            'Número reviews',
+            'Puntaje reviews'
         ])
 
         cell_monthly_payments_in_entities = ehs.filter(
@@ -265,9 +269,25 @@ class ReportPricesHistoryForm(forms.Form):
             worksheet.write(row, col, eh.normal_price)
             col += 1
 
-            # Min offer price
+            # Offer price
 
             worksheet.write(row, col, eh.offer_price)
+            col += 1
+
+            # Review count
+
+            review_count = eh.review_count
+            if review_count is None:
+                review_count = 'N/A'
+            worksheet.write(row, col, review_count)
+            col += 1
+
+            # Review score
+
+            review_score = eh.review_avg_score
+            if review_score is None:
+                review_score = 'N/A'
+            worksheet.write(row, col, review_score)
             col += 1
 
             # Cell monthly payment

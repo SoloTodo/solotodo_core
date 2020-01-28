@@ -4,7 +4,7 @@ import xlsxwriter
 from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.db.models import Min, DateField
+from django.db.models import Min, DateField, Max, Avg
 from django.db.models.functions import Cast
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
@@ -89,7 +89,9 @@ class ReportDailyPricesForm(forms.Form):
         ehs = ehs.values('entity', 'date').annotate(
             min_normal_price=Min('normal_price'),
             min_offer_price=Min('offer_price'),
-            min_cell_monthly_payment=Min('cell_monthly_payment')
+            min_cell_monthly_payment=Min('cell_monthly_payment'),
+            review_count=Max('review_count'),
+            review_avg_score=Avg('review_avg_score')
         ).order_by('entity', 'date')
 
         entity_ids = [eh['entity'] for eh in ehs]
@@ -155,7 +157,9 @@ class ReportDailyPricesForm(forms.Form):
             'Fecha muestra',
             'Moneda',
             'Mín Precio normal',
-            'Mín Precio oferta'
+            'Mín Precio oferta',
+            'Conteo reviews',
+            'Puntaje promedio reviews'
         ])
 
         cell_monthly_payments_in_entities = ehs.filter(
@@ -248,6 +252,20 @@ class ReportDailyPricesForm(forms.Form):
 
             # Offer price
             worksheet.write(row, col, eh['min_offer_price'])
+            col += 1
+
+            # Review count
+            review_count = eh['review_count']
+            if review_count is None:
+                review_count = 'N/A'
+            worksheet.write(row, col, review_count)
+            col += 1
+
+            # Review score
+            review_score = eh['review_avg_score']
+            if review_score is None:
+                review_score = 'N/A'
+            worksheet.write(row, col, review_score)
             col += 1
 
             # Cell monthly payment

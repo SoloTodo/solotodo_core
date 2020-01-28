@@ -9,7 +9,10 @@ from wtb.models import WtbEntity, WtbBrand
 class Command(BaseCommand):
     def handle(self, *args, **options):
         categories_dict = {
-            "Televisor": 11
+            "Televisor": 11,
+            "Refrigerador": 15,
+            "Congelador": 15,
+            "Refrigerador-congelador": 15
         }
         csv_reader = csv.reader(open('datos_sec.csv', 'r'), delimiter=';')
 
@@ -44,5 +47,7 @@ class Command(BaseCommand):
                     picture_url=picture_url)
 
                 created += 1
+            except WtbEntity.MultipleObjectsReturned:
+                continue
 
         print("{} existentes / {} creados".format(existing, created))

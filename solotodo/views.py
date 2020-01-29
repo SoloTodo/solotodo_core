@@ -697,6 +697,18 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         return paginator.get_paginated_response(serializer.data)
 
     @list_route()
+    def pending_stats(self, request):
+        qs = self.get_queryset().get_pending()
+        annotated_categories = qs.order_by('category').values('category').annotate(c=Count('*'))
+
+        response_dict = {}
+
+        for category in annotated_categories:
+            response_dict[category['category']] = category['c']
+
+        return Response(response_dict)
+
+    @list_route()
     def by_url(self, request):
         form = EntityByUrlForm(request.query_params)
 

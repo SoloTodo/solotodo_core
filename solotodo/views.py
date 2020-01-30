@@ -682,11 +682,11 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     @list_route()
     def pending(self, request):
         filterset = EntityStaffFilterSet(
-            queryset=self.get_queryset(),
+            queryset=self.filter_queryset(self.get_queryset()),
             data=request.query_params,
             request=request)
 
-        qs = filterset.qs.get_pending().order_by('-pk')
+        qs = filterset.qs.get_pending()
 
         paginator = self.paginator
         page = paginator.paginate_queryset(qs, request)

@@ -699,7 +699,8 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     @list_route()
     def pending_stats(self, request):
         qs = self.get_queryset().get_pending()
-        annotated_categories = qs.order_by('category').values('category').annotate(c=Count('*'))
+        annotated_categories = qs.order_by('category').values(
+            'category').annotate(c=Count('*'))
 
         response_dict = {}
 

@@ -162,6 +162,7 @@ class WtbEntity(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE,
                                 blank=True, null=True)
     key = models.CharField(max_length=255, db_index=True)
+    section = models.CharField(max_length=255, blank=True, null=True)
     url = models.URLField()
     picture_url = models.URLField()
     creation_date = models.DateTimeField(auto_now_add=True)
@@ -211,6 +212,9 @@ class WtbEntity(models.Model):
             else:
                 picture_url = 'https://via.placeholder.com/200'
 
+            if scraped_product.positions:
+                self.section = list(scraped_product.positions.keys())[0]
+
             self.name = scraped_product.name[:254]
             self.model_name = scraped_product.sku
             self.url = scraped_product.url
@@ -254,6 +258,11 @@ class WtbEntity(models.Model):
         else:
             picture_url = 'https://via.placeholder.com/200'
 
+        if scraped_product.positions:
+            section = list(scraped_product.positions.keys())[0]
+        else:
+            section = None
+
         cls.objects.create(
             name=scraped_product.name[:254],
             model_name=scraped_product.sku,
@@ -262,6 +271,7 @@ class WtbEntity(models.Model):
             key=scraped_product.key,
             url=scraped_product.url,
             picture_url=picture_url,
+            section=section
         )
 
     class Meta:

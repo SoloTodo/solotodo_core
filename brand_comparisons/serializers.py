@@ -87,7 +87,6 @@ class BrandComparisonAlertCreationSerializer(
 
         raise serializers.ValidationError('User not in group')
 
-
     def create(self, validated_data):
         user = self.context['request'].user
         brand_comparison = validated_data['brand_comparison']

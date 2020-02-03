@@ -127,7 +127,7 @@ class LgWtbViewSet(ViewSet):
             'item_id',
             'active',
             'brand',
-            'category',
+            'category_path',
             'category_level_1',
             'category_level_2',
             'category_level_3',
@@ -158,12 +158,12 @@ class LgWtbViewSet(ViewSet):
             category_level_1 = None
             category_level_2 = None
             category_level_3 = None
+            category = None
 
             if wtb_entity.section:
-                category = wtb_entity.section
+                category = wtb_entity.section.replace('>', '|')
                 category_levels = wtb_entity.section.split(' > ')
                 category_level_count = len(category_levels)
-                print(category_levels)
 
                 if category_level_count:
                     category_level_1 = category_levels[0]

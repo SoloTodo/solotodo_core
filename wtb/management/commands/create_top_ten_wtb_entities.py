@@ -12,8 +12,12 @@ class Command(BaseCommand):
             "Televisor": 11,
             "Refrigerador": 15,
             "Congelador": 15,
-            "Refrigerador-congelador": 15
+            "Refrigerador-congelador": 15,
+            "Horno de cocción por microondas": 17,
+            "Lavadora de ropa": 18,
+            "Secadora de ropa tipo tambor": 18
         }
+
         csv_reader = csv.reader(open('datos_sec.csv', 'r'), delimiter=';')
 
         brand = WtbBrand.objects.get(id=2)

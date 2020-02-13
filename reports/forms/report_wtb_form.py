@@ -140,6 +140,7 @@ class ReportWtbForm(forms.Form):
         headers = [
             'Identificador',
             'Nombre',
+            'URL',
             'Producto'
         ]
 
@@ -202,7 +203,6 @@ class ReportWtbForm(forms.Form):
                 col = 0
                 if wtb_entity:
                     worksheet.write(row, col, wtb_entity.key)
-
                     col += 1
 
                     worksheet.write_url(
@@ -212,13 +212,18 @@ class ReportWtbForm(forms.Form):
                         cell_format=url_format)
 
                     col += 1
+
+                    worksheet.write(row, col, wtb_entity.external_site_url(e))
+
+                    col += 1
                 else:
                     worksheet.write(row, col, 'N/A')
-
                     col += 1
 
                     worksheet.write(row, col, 'N/A')
+                    col += 1
 
+                    worksheet.write(row, col, 'N/A')
                     col += 1
 
                 # Product

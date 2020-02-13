@@ -101,7 +101,8 @@ class LgWtbViewSet(ViewSet):
     @action(detail=False, methods=['get'])
     def exponea_catalog(self, request):
         brand = WtbBrand.objects.get(pk=1)
-        wtb_entities = brand.wtbentity_set.select_related('product')
+        wtb_entities = brand.wtbentity_set.filter(
+            product__isnull=False).select_related('product')
         product_ids = list(set(
             [e['product'] for e in wtb_entities.values('product')]))
 

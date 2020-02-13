@@ -251,6 +251,36 @@ class WtbEntity(models.Model):
         self.product = None
         self.save()
 
+    def _lg_external_site_url(self, entity):
+        from django.conf import settings
+
+        keys = self.key.split('_')
+        country_codes = {
+            settings.WTB_LG_CHILE_BRAND: 'cl',
+            settings.WTB_LG_PANAMA_BRAND: 'pa'
+        }
+
+        url = 'https://www.lg.com/{}/products/wtb?modelId={}'.format(
+            country_codes[self.brand_id],
+            keys[0]
+        )
+
+        if len(keys) > 1:
+            url += '&subModelId={}'.format(keys[1])
+
+        url += '&country={}'.format(entity.store.country.iso_code)
+
+        return url
+
+    def external_site_url(self, entity):
+        from django.conf import settings
+
+        if self.brand_id in [settings.WTB_LG_CHILE_BRAND,
+                             settings.WTB_LG_PANAMA_BRAND]:
+            return self._lg_external_site_url(entity)
+
+        return self.url
+
     @classmethod
     def create_from_scraped_product(cls, scraped_product, brand, category):
         if scraped_product.picture_urls:

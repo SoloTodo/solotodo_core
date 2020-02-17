@@ -329,7 +329,8 @@ class ReportCurrentPricesForm(forms.Form):
                     worksheet.write(
                         row, col, e.active_registry.cell_monthly_payment)
 
-                    if e.active_registry.cell_monthly_payment:
+                    #TODO: solucion parche. Hay que revisar con mas calma
+                    if e.active_registry.cell_monthly_payment and e.cell_plan:
                         plan_brand = e.cell_plan.specs['brand_unicode']
                         installments = cell_plan_installments.get(
                             plan_brand, 'N/A')

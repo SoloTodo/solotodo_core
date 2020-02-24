@@ -16,7 +16,8 @@ class Command(BaseCommand):
             "Horno de cocción por microondas": 17,
             "Lavadora de ropa": 19,
             "Secadora de ropa tipo tambor": 19,
-            "Impresora": 16
+            "Impresora": 16,
+            "Acondicionadores de Aire": 43
         }
 
         csv_reader = csv.reader(open('datos_sec.csv', 'r'), delimiter=';')

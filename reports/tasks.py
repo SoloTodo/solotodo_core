@@ -40,8 +40,8 @@ def send_current_prices_task(user_id, query_string):
             file=report_path)
 
         sender = SoloTodoUser().get_bot().email_recipient_text()
-        message = 'Se adjunta el reporte de precios actuales para la categoría  ' \
-                  '"{}"'.format(form.cleaned_data['category'])
+        message = 'Se adjunta el reporte de precios actuales para la ' \
+                  'categoría "{}"'.format(form.cleaned_data['category'])
 
         subject = 'Reporte precios actuales {} - %Y-%m-%d'.format(category)
         subject = timezone.now().strftime(subject)
@@ -51,7 +51,8 @@ def send_current_prices_task(user_id, query_string):
                              [user.email])
         email.attach(
             report_filename, report_file,
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+            'application/'
+            'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
 
         email.send()
         print('Exito')

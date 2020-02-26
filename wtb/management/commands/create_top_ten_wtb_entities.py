@@ -17,7 +17,10 @@ class Command(BaseCommand):
             "Lavadora de ropa": 19,
             "Secadora de ropa tipo tambor": 19,
             "Impresora": 16,
-            "Acondicionadores de Aire": 43
+            "Acondicionadores de Aire": 43,
+            "Calefactor para combustión de leña de potencia hasta 25 kW": 47,
+            "Calefactor para combustión "
+            "de pellets de madera de potencia hasta 25 kW": 47
         }
 
         csv_reader = csv.reader(open('datos_sec.csv', 'r'), delimiter=';')

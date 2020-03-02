@@ -20,7 +20,8 @@ class Command(BaseCommand):
             "Acondicionadores de Aire": 43,
             "Calefactor para combustión de leña de potencia hasta 25 kW": 47,
             "Calefactor para combustión "
-            "de pellets de madera de potencia hasta 25 kW": 47
+            "de pellets de madera de potencia hasta 25 kW": 47,
+            "Calefones": 44
         }
 
         csv_reader = csv.reader(open('datos_sec.csv', 'r'), delimiter=';')

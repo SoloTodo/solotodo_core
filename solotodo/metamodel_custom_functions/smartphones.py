@@ -136,6 +136,15 @@ def additional_es_fields(instance_model, elastic_search_result):
 
         result['front_camera'] = front_camera
 
+        model_name = elastic_search_result['base_model_unicode']
+        model_name = model_name.replace('Samsung ', '').split(' (')[0]
+
+        result['galaxy_s20_key'] = '{} - {} - {}'.format(
+            model_name,
+            elastic_search_result['color_unicode'],
+            elastic_search_result['internal_storage_unicode'],
+        )
+
         return result
     elif m == 'CellPlan':
         result = {

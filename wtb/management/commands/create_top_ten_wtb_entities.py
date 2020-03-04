@@ -14,8 +14,14 @@ class Command(BaseCommand):
             "Congelador": 15,
             "Refrigerador-congelador": 15,
             "Horno de cocción por microondas": 17,
-            "Lavadora de ropa": 18,
-            "Secadora de ropa tipo tambor": 18
+            "Lavadora de ropa": 19,
+            "Secadora de ropa tipo tambor": 19,
+            "Impresora": 16,
+            "Acondicionadores de Aire": 43,
+            "Calefactor para combustión de leña de potencia hasta 25 kW": 47,
+            "Calefactor para combustión "
+            "de pellets de madera de potencia hasta 25 kW": 47,
+            "Calefones": 44
         }
 
         csv_reader = csv.reader(open('datos_sec.csv', 'r'), delimiter=';')
@@ -32,7 +38,13 @@ class Command(BaseCommand):
                 continue
 
             category_key = row[1]
-            category = Category.objects.get(id=categories_dict[category_key])
+
+            try:
+                category_id = categories_dict[category_key]
+            except KeyError:
+                continue
+
+            category = Category.objects.get(id=category_id)
             p_brand = row[2]
             model = row[3]
             name = "{} {}".format(p_brand, model)

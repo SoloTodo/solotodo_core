@@ -1350,7 +1350,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def s20_bucket(self, request, *args, **kwargs):
         # Please remove this method after S20 release window
         products = Product.objects.filter(
-            instance_model__unicode_representation__contains='(G97'
+            instance_model__unicode_representation__contains='(G98'
         ).select_related('instance_model__model__category')
 
         serializer = ProductSerializer(

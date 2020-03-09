@@ -161,10 +161,11 @@ def additional_es_fields(instance_model, elastic_search_result):
         for score_field, max_score in score_fields:
             field_name = 'soc_' + score_field
 
-            if not elastic_search_result[field_name]:
+            if not elastic_search_result.get(field_name):
                 continue
 
-            relative_score = int(1000 * elastic_search_result[field_name] / max_score)
+            relative_score = int(
+                1000 * elastic_search_result.get(field_name, 0) / max_score)
 
             if relative_score > 1000:
                 relative_score = 1000

@@ -145,6 +145,39 @@ def additional_es_fields(instance_model, elastic_search_result):
             elastic_search_result['internal_storage_unicode'],
         )
 
+        # General score computation
+
+        scores = []
+
+        # Maxes based on current Snapdragon 855 scores (March 2020)
+        score_fields = [
+            ('geekbench_44_single_core_score', 3500),
+            ('geekbench_44_multi_core_score', 11000),
+            ('geekbench_5_single_core_score', 750),
+            ('geekbench_5_multi_core_score', 2600),
+            ('passmark_score', 250000),
+        ]
+
+        for score_field, max_score in score_fields:
+            field_name = 'soc_' + score_field
+
+            if not elastic_search_result[field_name]:
+                continue
+
+            relative_score = int(1000 * elastic_search_result[field_name] / max_score)
+
+            if relative_score > 1000:
+                relative_score = 1000
+
+            scores.append(relative_score)
+
+        if scores:
+            general_score = int(sum(scores) / len(scores))
+        else:
+            general_score = 0
+
+        result['general_score'] = general_score
+
         return result
     elif m == 'CellPlan':
         result = {

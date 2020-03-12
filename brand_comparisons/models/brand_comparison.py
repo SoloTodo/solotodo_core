@@ -61,40 +61,119 @@ class BrandComparison(models.Model):
 
         header_format = workbook.add_format({
             'bold': True,
+            'font_name': 'Arial Narrow',
             'font_size': 10,
             'align': 'center',
-            'valign': 'vcenter'
+            'valign': 'vcenter',
+            'bg_color': '#F2F1F0',
+            'bottom': 1,
         })
 
-        currency_format = workbook.add_format()
-        currency_format.set_font_size(10)
+        product_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#F2F1F0',
+        })
+
+        ata_format = workbook.add_format({
+            'bold': True,
+            'font_name': 'Arial Narrow',
+            'font_size': 11,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bottom': 1,
+        })
+
+        bottom_currency_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'bottom': 1,
+        })
+        bottom_currency_format.set_num_format(
+            preferred_currency.excel_format())
+
+        bottom_product_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bg_color': '#F2F1F0',
+            'bottom': 1,
+        })
+
+        highlight_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#66FFCC',
+        })
+
+        blanks_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+        })
+
+        currency_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+        })
         currency_format.set_num_format(preferred_currency.excel_format())
+
+        percentage_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+        })
+        percentage_format.set_num_format('0%')
+
+        bottom_percentage_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'bottom': 1,
+        })
+        bottom_percentage_format.set_num_format('0%')
 
         worksheet = workbook.add_worksheet()
 
         stores = self.stores.all()
-        data = ['Promedio', 'Mínimo', 'Mediana']
+        data = ['Promedio', 'Mínimo', 'Moda']
         data_formula = [
-            '=IFERROR(AVERAGE({}:{}), "")',
-            '=IFERROR(MIN({}:{}), "")',
-            '=IFERROR(MEDIAN({}:{}), "")'
+            '=IFERROR(AVERAGE({0}:{1}), "")',
+            '=IFERROR(MIN({0}:{1}), "")',
+            '=IFERROR(MODE({0}:{1}), IFERROR(AVERAGE({0}:{1}), ""))'
         ]
 
         headers = []
         headers.extend([s.name for s in stores])
         headers.extend(data)
-        headers.extend([self.brand_1.name, 'Segmentos', self.brand_2.name])
-        headers.extend([s.name for s in stores])
+        headers.extend([self.brand_1.name, 'ATA', self.brand_2.name])
+        headers.extend(data[::-1])
+        headers.extend([s.name for s in stores[::-1]])
+        headers.extend([""])
         headers.extend(data)
 
         for idx, header in enumerate(headers):
-            worksheet.write(0, idx, header, header_format)
+            worksheet.write(1, idx, header, header_format)
 
-        row = 1
+        row = 2
         brand_1_data_start = len(stores)
         segment_step = brand_1_data_start + len(data)
-        brand_2_start = segment_step + 3
-        brand_2_data_start = brand_2_start + len(stores)
+        brand_2_start = segment_step + 6
+        brand_2_data_start = brand_2_start - 1
+        stats_table_start = brand_2_start + len(stores) + 1
+
+        avg_col_1 = brand_1_data_start
+        min_col_1 = avg_col_1 + 1
+        mode_col_1 = min_col_1 + 1
+
+        avg_col_2 = brand_2_data_start
+        min_col_2 = avg_col_2 - 1
+        mode_col_2 = min_col_2 - 1
 
         worksheet.set_column(0, segment_step-1, 12)
         worksheet.set_column(brand_2_start, brand_2_start + segment_step-1, 12)
@@ -107,16 +186,26 @@ class BrandComparison(models.Model):
 
             if len(segment_rows) == 1:
                 worksheet.write(row, segment_step + 1,
-                                segment.name, header_format)
+                                segment.name, ata_format)
             else:
                 worksheet.merge_range(
                     row, segment_step + 1,
                     row + len(segment_rows) - 1,
                     segment_step + 1,
                     segment.name,
-                    header_format)
+                    ata_format)
 
-            for segment_row in segment_rows:
+            for idx, segment_row in enumerate(segment_rows):
+                rows_count = len(segment_rows)
+
+                currency_format_to_use = currency_format
+                product_format_to_use = product_format
+                percentage_format_to_use = percentage_format
+                if rows_count - 1 == idx:
+                    currency_format_to_use = bottom_currency_format
+                    product_format_to_use = bottom_product_format
+                    percentage_format_to_use = bottom_percentage_format
+
                 col = 0
                 for store in stores:
                     if segment_row.product_1:
@@ -129,7 +218,7 @@ class BrandComparison(models.Model):
 
                         worksheet.write(row, segment_step,
                                         segment_row.product_1.name,
-                                        header_format)
+                                        product_format_to_use)
 
                         if entity1 and entity1.active_registry:
                             entity_currency = entity1.currency
@@ -137,7 +226,16 @@ class BrandComparison(models.Model):
                                             .format(self.price_type))
                             price = preferred_currency.convert_from(
                                 price, entity_currency)
-                            worksheet.write(row, col, price, currency_format)
+                            worksheet.write(
+                                row, col, price, currency_format_to_use)
+                        else:
+                            worksheet.write(
+                                row, col, "", currency_format_to_use)
+
+                    else:
+                        worksheet.write(
+                            row, segment_step, "", product_format_to_use)
+                        worksheet.write(row, col, "", currency_format_to_use)
 
                     if segment_row.product_2:
                         entity2 = Entity.objects.filter(
@@ -150,7 +248,7 @@ class BrandComparison(models.Model):
                         worksheet.write(
                             row, segment_step + 2,
                             segment_row.product_2.name,
-                            header_format)
+                            product_format_to_use)
 
                         if entity2 and entity2.active_registry:
                             entity_currency = entity2.currency
@@ -158,8 +256,19 @@ class BrandComparison(models.Model):
                                             .format(self.price_type))
                             price = preferred_currency.convert_from(
                                 price, entity_currency)
-                            worksheet.write(row, col + brand_2_start, price,
-                                            currency_format)
+                            worksheet.write(
+                                row, brand_2_start + len(stores) - col - 1,
+                                price, currency_format_to_use)
+                        else:
+                            worksheet.write(
+                                row, brand_2_start + len(stores) - col - 1,
+                                "", currency_format_to_use)
+                    else:
+                        worksheet.write(
+                            row, segment_step + 2, "", product_format_to_use)
+                        worksheet.write(
+                            row, brand_2_start + len(stores) - col - 1, "",
+                            currency_format_to_use)
 
                     col += 1
 
@@ -169,18 +278,101 @@ class BrandComparison(models.Model):
                         xl_rowcol_to_cell(row, 0),
                         xl_rowcol_to_cell(row, len(stores)-1))
 
-                    rowcol_2 = xl_rowcol_to_cell(row, brand_2_data_start+index)
+                    worksheet.conditional_format('{}:{}'.format(
+                        xl_rowcol_to_cell(row, 0),
+                        xl_rowcol_to_cell(row, len(stores) - 1),
+                    ), {
+                        'type': 'blanks',
+                        'format': blanks_format
+                    })
+
+                    worksheet.conditional_format('{}:{}'.format(
+                        xl_rowcol_to_cell(row, 0),
+                        xl_rowcol_to_cell(row, len(stores) - 1),
+                    ), {
+                        'type': 'bottom',
+                        'value': 1,
+                        'format': highlight_format
+                    })
+
+                    rowcol_2 = xl_rowcol_to_cell(row, brand_2_data_start-index)
                     formula_2 = formula.format(
                         xl_rowcol_to_cell(row, brand_2_start),
+                        xl_rowcol_to_cell(row, brand_2_start+len(stores)-1))
+
+                    worksheet.conditional_format('{}:{}'.format(
+                        xl_rowcol_to_cell(row, brand_2_start),
                         xl_rowcol_to_cell(row, brand_2_start + len(stores) - 1)
-                    )
+                    ), {
+                        'type': 'blanks',
+                        'format': blanks_format
+                    })
+
+                    worksheet.conditional_format('{}:{}'.format(
+                        xl_rowcol_to_cell(row, brand_2_start),
+                        xl_rowcol_to_cell(row, brand_2_start + len(stores) - 1)
+                    ), {
+                        'type': 'bottom',
+                        'value': 1,
+                        'format': highlight_format
+                    })
 
                     worksheet.write_formula(rowcol_1, formula_1,
-                                            currency_format)
+                                            currency_format_to_use)
                     worksheet.write_formula(rowcol_2, formula_2,
-                                            currency_format)
+                                            currency_format_to_use)
+
+                avg_rowcol = xl_rowcol_to_cell(row, stats_table_start)
+                avg_formula = '=IF({0}=0, "", IFERROR({0}/{1}, ""))'.format(
+                    xl_rowcol_to_cell(row, avg_col_1),
+                    xl_rowcol_to_cell(row, avg_col_2)
+                )
+                worksheet.write_formula(
+                    avg_rowcol, avg_formula, percentage_format_to_use)
+
+                min_rowcol = xl_rowcol_to_cell(row, stats_table_start + 1)
+                min_formula = '=IF({0}=0, "", IFERROR({0}/{1}, ""))'.format(
+                    xl_rowcol_to_cell(row, min_col_1),
+                    xl_rowcol_to_cell(row, min_col_2)
+                )
+                worksheet.write_formula(min_rowcol, min_formula,
+                                        percentage_format_to_use)
+
+                mode_rowcol = xl_rowcol_to_cell(row, stats_table_start+2)
+                mode_formula = '=IF({0}=0, "", IFERROR({0}/{1}, ""))'.format(
+                    xl_rowcol_to_cell(row, mode_col_1),
+                    xl_rowcol_to_cell(row, mode_col_2)
+                )
+                worksheet.write_formula(
+                    mode_rowcol, mode_formula, percentage_format_to_use)
 
                 row += 1
+
+        average_formula = '=AVERAGE({}: {})'
+
+        avg_average_rowcol = xl_rowcol_to_cell(0, stats_table_start)
+        avg_average_formula = average_formula.format(
+            xl_rowcol_to_cell(2, stats_table_start),
+            xl_rowcol_to_cell(row, stats_table_start))
+
+        worksheet.write_formula(
+            avg_average_rowcol, avg_average_formula, percentage_format)
+
+        min_average_rowcol = xl_rowcol_to_cell(0, stats_table_start+1)
+        min_average_formula = average_formula.format(
+            xl_rowcol_to_cell(2, stats_table_start+1),
+            xl_rowcol_to_cell(row, stats_table_start+1))
+
+        worksheet.write_formula(
+            min_average_rowcol, min_average_formula, percentage_format)
+
+        mode_average_rowcol = xl_rowcol_to_cell(0, stats_table_start + 2)
+        mode_average_formula = average_formula.format(
+            xl_rowcol_to_cell(2, stats_table_start + 2),
+            xl_rowcol_to_cell(row, stats_table_start + 2))
+
+        worksheet.write_formula(
+            mode_average_rowcol, mode_average_formula, percentage_format)
 
         workbook.close()
         output.seek(0)

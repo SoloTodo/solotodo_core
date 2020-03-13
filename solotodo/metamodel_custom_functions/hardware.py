@@ -83,20 +83,6 @@ def additional_es_fields(instance_model, elastic_search_original):
             format_optional_field(sequential_write_speed, 'MB/s')
 
         return result
-
-    if m == 'Tablet':
-        result = dict()
-        result['pretty_dimensions'] = \
-            pretty_dimensions(elastic_search_original,
-                              ['length', 'width', 'depth'])
-        battery_mah = \
-            elastic_search_original['battery_mah']
-        result['pretty_battery'] = \
-            format_optional_field(battery_mah, 'mAh')
-        result['model_name'] = \
-            '{} {}'.format(elastic_search_original['line_name'],
-                           elastic_search_original['name']).strip()
-        return result
     if m == 'Monitor':
         result = {}
         contrast = elastic_search_original['contrast']

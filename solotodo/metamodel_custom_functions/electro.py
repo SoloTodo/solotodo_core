@@ -183,6 +183,51 @@ def additional_es_fields(instance_model, elastic_search_original):
             10 * elastic_search_original['bundle_id'] + \
             100 * elastic_search_original['internal_storage_id'] + \
             1000 * elastic_search_original['cell_connectivity_id']
+
+        result['pretty_dimensions'] = \
+            pretty_dimensions(elastic_search_original,
+                              ['length', 'width', 'depth'])
+        battery_mah = \
+            elastic_search_original['battery_mah']
+        result['pretty_battery'] = \
+            format_optional_field(battery_mah, 'mAh')
+        result['model_name'] = \
+            '{} {}'.format(elastic_search_original['line_name'],
+                           elastic_search_original['name']).strip()
+
+        # General score computation
+        scores = []
+
+        # Maxes based on current A12X Bionic scores (March 2020)
+        score_fields = [
+            ('geekbench_44_single_core_score', 5000),
+            ('geekbench_44_multi_core_score', 18000),
+            ('geekbench_5_single_core_score', 1200),
+            ('geekbench_5_multi_core_score', 4700),
+            ('passmark_score', 760000),
+        ]
+
+        for score_field, max_score in score_fields:
+            field_name = 'soc_' + score_field
+
+            if not elastic_search_original.get(field_name):
+                continue
+
+            relative_score = int(
+                1000 * elastic_search_original.get(field_name, 0) / max_score)
+
+            if relative_score > 1000:
+                relative_score = 1000
+
+            scores.append(relative_score)
+
+        if scores:
+            general_score = int(sum(scores) / len(scores))
+        else:
+            general_score = 0
+
+        result['general_score'] = general_score
+
         return result
 
     if m == 'Wearable':

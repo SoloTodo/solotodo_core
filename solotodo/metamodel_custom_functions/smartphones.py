@@ -155,7 +155,7 @@ def additional_es_fields(instance_model, elastic_search_result):
             ('geekbench_44_multi_core_score', 11000),
             ('geekbench_5_single_core_score', 750),
             ('geekbench_5_multi_core_score', 2600),
-            ('passmark_score', 250000),
+            ('passmark_score', 500000),
         ]
 
         for score_field, max_score in score_fields:

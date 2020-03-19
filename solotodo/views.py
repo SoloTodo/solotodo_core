@@ -1351,6 +1351,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         # Please remove this method after S20 release window
         products = Product.objects.filter(
             instance_model__unicode_representation__contains='(G98'
+        ).exclude(
+            instance_model__unicode_representation__contains=' + '
         ).select_related('instance_model__model__category')
 
         serializer = ProductSerializer(

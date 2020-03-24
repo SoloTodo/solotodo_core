@@ -113,12 +113,16 @@ class BrandComparison(models.Model):
         product_1_highlight_format = workbook.add_format({
             'font_name': 'Arial Narrow',
             'font_size': 10,
+            'align': 'center',
+            'valign': 'vcenter',
             'bg_color': '#d99694',
         })
 
         product_2_highlight_format = workbook.add_format({
             'font_name': 'Arial Narrow',
             'font_size': 10,
+            'align': 'center',
+            'valign': 'vcenter',
             'bg_color': '#95b3d7',
         })
 

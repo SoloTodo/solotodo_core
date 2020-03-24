@@ -110,6 +110,18 @@ class BrandComparison(models.Model):
             'bg_color': '#66FFCC',
         })
 
+        product_1_highlight_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#d99694',
+        })
+
+        product_2_highlight_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#95b3d7',
+        })
+
         blanks_format = workbook.add_format({
             'font_name': 'Arial Narrow',
             'font_size': 10,
@@ -199,12 +211,23 @@ class BrandComparison(models.Model):
                 rows_count = len(segment_rows)
 
                 currency_format_to_use = currency_format
-                product_format_to_use = product_format
+                product_1_format_to_use = product_format
+                product_2_format_to_use = product_format
                 percentage_format_to_use = percentage_format
-                if rows_count - 1 == idx:
+
+                is_bottom = rows_count - 1 == idx
+
+                if is_bottom:
                     currency_format_to_use = bottom_currency_format
-                    product_format_to_use = bottom_product_format
+                    product_1_format_to_use = bottom_product_format
+                    product_2_format_to_use = bottom_product_format
                     percentage_format_to_use = bottom_percentage_format
+
+                if segment_row.is_product_1_highlighted:
+                    product_1_format_to_use = product_1_highlight_format
+
+                if segment_row.is_product_2_highlighted:
+                    product_2_format_to_use = product_2_highlight_format
 
                 col = 0
                 for store in stores:
@@ -218,7 +241,7 @@ class BrandComparison(models.Model):
 
                         worksheet.write(row, segment_step,
                                         segment_row.product_1.name,
-                                        product_format_to_use)
+                                        product_1_format_to_use)
 
                         if entity1 and entity1.active_registry:
                             entity_currency = entity1.currency
@@ -234,7 +257,7 @@ class BrandComparison(models.Model):
 
                     else:
                         worksheet.write(
-                            row, segment_step, "", product_format_to_use)
+                            row, segment_step, "", product_1_format_to_use)
                         worksheet.write(row, col, "", currency_format_to_use)
 
                     if segment_row.product_2:
@@ -248,7 +271,7 @@ class BrandComparison(models.Model):
                         worksheet.write(
                             row, segment_step + 2,
                             segment_row.product_2.name,
-                            product_format_to_use)
+                            product_2_format_to_use)
 
                         if entity2 and entity2.active_registry:
                             entity_currency = entity2.currency
@@ -265,7 +288,7 @@ class BrandComparison(models.Model):
                                 "", currency_format_to_use)
                     else:
                         worksheet.write(
-                            row, segment_step + 2, "", product_format_to_use)
+                            row, segment_step + 2, "", product_2_format_to_use)
                         worksheet.write(
                             row, brand_2_start + len(stores) - col - 1, "",
                             currency_format_to_use)

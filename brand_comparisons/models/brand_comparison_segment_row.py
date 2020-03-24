@@ -15,6 +15,8 @@ class BrandComparisonSegmentRow(models.Model):
     segment = models.ForeignKey(BrandComparisonSegment,
                                 on_delete=models.CASCADE,
                                 related_name='rows')
+    is_product_1_highlighted = models.BooleanField(default=False)
+    is_product_2_highlighted = models.BooleanField(default=False)
 
     def move(self, direction):
         ordering = self.ordering

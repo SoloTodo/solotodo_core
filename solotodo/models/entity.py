@@ -526,6 +526,10 @@ class Entity(models.Model):
             raise IntegrityError(
                 'Entities must be associated to products of the same category')
 
+        if self.cell_plan_name and not cell_plan:
+            raise IntegrityError(
+                'Entities with cell plan name must specify a plan.')
+
         now = timezone.now()
 
         update_dict = {

@@ -48,8 +48,7 @@ class LgRsEntitySectionPosition(models.Model):
         positions_to_synchronize = EntitySectionPosition.objects.filter(
             entity_history__entity__store__in=stores,
             entity_history__entity__category__in=categories,
-            entity_history__entity__product__isnull=False,
-            value__lte=20
+            entity_history__entity__product__isnull=False
         )
 
         last_synchronization = cls.objects.aggregate(Max('date'))['date__max']

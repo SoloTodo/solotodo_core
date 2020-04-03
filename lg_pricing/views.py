@@ -10,8 +10,9 @@ from rest_framework.exceptions import ParseError
 from django.http import HttpResponse
 
 from wtb.models import WtbEntity, WtbBrand
-from solotodo.models import Entity
+from solotodo.models import Entity, Product
 from solotodo.utils import format_currency
+from solotodo.serializers import ProductAvailableEntitiesMinimalSerializer
 
 import json
 
@@ -207,3 +208,47 @@ class LgWtbViewSet(ViewSet):
             output.getvalue(),
             content_type='text/csv'
         )
+
+    @action(detail=False, methods=['get'])
+    def product_entries(self, request):
+        with open('lg_pricing/products.json') as f:
+            json_entries = json.loads(f.read())
+
+        products_metadata = {x['productId']: x for x in json_entries}
+
+        store_ids = [9, 18, 11, 5, 30, 60, 67, 37, 38, 61, 12, 85, 43, 23,
+                     97, 87, 167, 86, 181, 195, 197, 224]
+
+        products = Product.objects.filter(
+            pk__in=list(products_metadata.keys()))
+        Product.prefetch_specs(products)
+
+        entities = Entity.objects.filter(
+            product__in=products,
+            store__in=store_ids,
+            condition='https://schema.org/NewCondition',
+            active_registry__cell_monthly_payment__isnull=True
+        ).get_available().order_by('active_registry__offer_price')
+
+        result_dict = {}
+
+        for product in products:
+            result_dict[product] = []
+
+        for entity in entities:
+            result_dict[entity.product].append(entity)
+
+        result_array = [{
+            'product': product,
+            'entities': entities
+        } for product, entities in result_dict.items()]
+
+        serializer = ProductAvailableEntitiesMinimalSerializer(
+            result_array, many=True, context={'request': request})
+
+        result = serializer.data
+
+        for entry in result:
+            entry['custom_fields'] = products_metadata[entry['product']['id']]
+
+        return Response(result)

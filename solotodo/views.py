@@ -1110,10 +1110,6 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             .order_by('active_registry__offer_price',
                       'active_registry__normal_price')
 
-        if request.query_params.get('exclude_with_monthly_payment'):
-            entities = entities.filter(
-                active_registry__cell_monthly_payment__isnull=True)
-
         entity_query_params = request.query_params.copy()
         entity_query_params.pop('ids', None)
         entity_filterset = EntityFilterSet(data=entity_query_params,

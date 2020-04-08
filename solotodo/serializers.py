@@ -307,6 +307,7 @@ class EntityWithoutDescriptionSerializer(EntitySerializer):
             'cell_plan',
             'currency',
             'picture_urls',
+            'seller',
             'key',
             'creation_date',
             'last_updated',

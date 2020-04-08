@@ -211,6 +211,7 @@ class Entity(models.Model):
     review_count = models.IntegerField(blank=True, null=True)
     review_avg_score = models.FloatField(blank=True, null=True)
     has_virtual_assistant = models.NullBooleanField(blank=True)
+    seller = models.CharField(max_length=256, blank=True, null=True)
     is_visible = models.BooleanField(default=True)
 
     # Metadata
@@ -322,6 +323,7 @@ class Entity(models.Model):
                 'description': scraped_product.description,
                 'scraped_condition': scraped_product.condition,
                 'flixmedia_id': scraped_product.flixmedia_id,
+                'seller': scraped_product.seller,
                 'review_count': scraped_product.review_count,
                 'review_avg_score': scraped_product.review_avg_score,
                 'has_virtual_assistant': scraped_product.has_virtual_assistant,
@@ -359,6 +361,7 @@ class Entity(models.Model):
             video_urls=scraped_product.video_urls_as_json(),
             description=scraped_product.description,
             flixmedia_id=scraped_product.flixmedia_id,
+            seller=scraped_product.seller,
             review_count=scraped_product.review_count,
             review_avg_score=scraped_product.review_avg_score,
             has_virtual_assistant=scraped_product.has_virtual_assistant,

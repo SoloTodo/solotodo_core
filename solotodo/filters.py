@@ -142,6 +142,16 @@ class EntityFilterSet(rest_framework.FilterSet):
     sku = rest_framework.CharFilter(
         lookup_expr='icontains'
     )
+    exclude_marketplace = rest_framework.BooleanFilter(
+        name='exclude_marketplace',
+        method='_exclude_marketplace',
+        label='Exclude marketplace?'
+    )
+    exclude_with_monthly_payment = rest_framework.BooleanFilter(
+        name='exclude_with_monthly_payment',
+        method='_exclude_with_monthly_payment',
+        label='Exclude with cell monthly payment?'
+    )
 
     is_available = rest_framework.BooleanFilter(
         name='is_available', method='_is_available', label='Is available?')
@@ -185,6 +195,19 @@ class EntityFilterSet(rest_framework.FilterSet):
     def _exclude_refurbished(self, queryset, name, value):
         if value:
             return queryset.filter(condition='https://schema.org/NewCondition')
+        else:
+            return queryset
+
+    def _exclude_marketplace(self, queryset, name, value):
+        if value:
+            return queryset.filter(seller__isnull=True)
+        else:
+            return queryset
+
+    def _exclude_with_monthly_payment(self, queryset, name, value):
+        if value:
+            return queryset.filter(
+                active_registry__cell_monthly_payment__isnull=True)
         else:
             return queryset
 

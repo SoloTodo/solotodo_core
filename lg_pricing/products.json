@@ -1,16 +1,32 @@
  [
    {
-     "productId": 36116,
-     "categoryId": 25,
-     "customTitle": "XBOOM 720W",
+     "productId": 64831,
+     "categoryId": 6,
+     "pageCategories": ["Home", "Cell"],
+     "showCategory": "Celulares",
+     "lgSku": "LMG810EA",
+     "customTitle": "G8s ThinQ",
      "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
      "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45"
    },
    {
-        "productId": 36117,
-        "categoryId": 25,
-        "customTitle": "XBOOM 2900W",
-        "mainPictureId": "1g9sPIx-wzur1vRXjEHKDv4Qx9iWws8X2",
-        "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ88"
-    }
+     "productId": 37175,
+     "categoryId": 19,
+     "pageCategories": ["Home", "WashingMachine"],
+     "showCategory": "Lavadoras",
+     "lgSku": "LMG810EA",
+     "customTitle": "WD20VVS6",
+     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
+     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45"
+   },
+   {
+     "productId": 36116,
+     "categoryId": 25,
+     "pageCategories": ["Home"],
+     "showCategory": "Audio",
+     "lgSku": "LMG810EA",
+     "customTitle": "XBOOM 720W",
+     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
+     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45"
+   }
  ]

@@ -17,6 +17,7 @@ from solotodo_core.s3utils import PrivateSaS3Boto3Storage
 
 class LgRsEntitySectionPosition(models.Model):
     average_value = models.FloatField()
+    latest_value = models.IntegerField()
     section_id = models.IntegerField()
     section_name = models.CharField(max_length=256)
     store_id = models.IntegerField()
@@ -49,7 +50,7 @@ class LgRsEntitySectionPosition(models.Model):
             entity_history__entity__store__in=stores,
             entity_history__entity__category__in=categories,
             entity_history__entity__product__isnull=False
-        )
+        ).annotate(date=TruncDate('entity_history__timestamp'))
 
         last_synchronization = cls.objects.aggregate(Max('date'))['date__max']
 
@@ -63,8 +64,18 @@ class LgRsEntitySectionPosition(models.Model):
 
         print('Obtaining data')
 
+        latest_positions = positions_to_synchronize\
+            .order_by('entity_history__entity',
+                      'section',
+                      'entity_history__timestamp')\
+            .select_related('entity_history')
+        latest_positions_dict = {}
+
+        for x in latest_positions:
+            latest_positions_dict[
+                (x.entity_history.entity_id, x.section_id, x.date)] = x.value
+
         aggregated_positions = positions_to_synchronize \
-            .annotate(date=TruncDate('entity_history__timestamp'))\
             .order_by(
                 'date',
                 'entity_history__entity',
@@ -99,6 +110,7 @@ class LgRsEntitySectionPosition(models.Model):
             print('Processing: {} / {}'.format(idx + 1, data_count))
             entity = entities_dict[entry['entity_history__entity']]
             section = sections_dict[entry['section']]
+            latest_position = latest_positions_dict[(entity.id, section.id, entry['date'])]
 
             writer.writerow([
                 entry['avg_value'],
@@ -116,7 +128,8 @@ class LgRsEntitySectionPosition(models.Model):
                 entity.product.brand.id,
                 str(entity.product.brand),
                 entity.sku,
-                entity.url
+                entity.url,
+                latest_position
             ])
 
         output.seek(0)

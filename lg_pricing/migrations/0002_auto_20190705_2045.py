@@ -31,6 +31,7 @@ class Migration(migrations.Migration):
                 ('brand_name', models.CharField(max_length=256)),
                 ('sku', models.CharField(blank=True, max_length=256, null=True)),
                 ('url', models.URLField(max_length=512)),
+                ('latest_value', models.IntegerField())
             ],
             options={
                 'ordering': ['date'],

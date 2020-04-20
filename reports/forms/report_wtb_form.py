@@ -240,9 +240,9 @@ class ReportWtbForm(forms.Form):
             # that was discussed above
             for wtb_entity in wtb_entities:
                 if wtb_entity is None or wtb_entity in wtb_entity_blacklist:
-                    key = (specs['base_model_unicode'],
-                           specs['internal_storage_unicode'],
-                           specs['color_unicode'])
+                    key = (specs.get('base_model_unicode', None),
+                           specs.get('internal_storage_unicode', None),
+                           specs.get('color_unicode', None))
                     wtb_entities = samsung_correction_dict.get(key, [None])
                     break
 

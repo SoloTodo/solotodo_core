@@ -7,7 +7,25 @@
      "lgSku": "LMG810EA",
      "customTitle": "G8s ThinQ",
      "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45"
+     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
+     "filters": {
+       "serie": "Serie G",
+       "screen_type": "Full HD"
+     }
+   },
+   {
+     "productId": 48281,
+     "categoryId": 6,
+     "pageCategories": ["Home", "Cell"],
+     "showCategory": "Celulares",
+     "lgSku": "LMG810EA",
+     "customTitle": "K11 Plus",
+     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
+     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
+     "filters": {
+       "serie": "Serie K",
+       "screen_type": "HD"
+     }
    },
    {
      "productId": 37175,

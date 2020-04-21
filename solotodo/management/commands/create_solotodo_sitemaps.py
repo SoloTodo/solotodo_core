@@ -39,7 +39,7 @@ class Command(BaseCommand):
                 lastmod.text = product.last_updated.isoformat()
 
             et = ET.ElementTree(urlset)
-            file = open('sitemap_products_{}.xml'.format(page + 1), 'wb')
+            file = open('sitemap_products_{}_mx.xml'.format(page + 1), 'wb')
             et.write(file, encoding='utf-8', xml_declaration=True)
             file.close()
 
@@ -107,7 +107,7 @@ class Command(BaseCommand):
         for local_page in range(page):
             sitemap = ET.SubElement(sitemapindex, 'sitemap')
             loc = ET.SubElement(sitemap, 'loc')
-            loc.text = 'https://solotodo-core.s3.amazonaws.com/sitemaps/sitemap_products_{}_mx.xml' \
+            loc.text = 'https://www.solotodo.com.mx/sitemaps/sitemap_products_{}_mx.xml' \
                        ''.format(local_page + 1)
             lastmod = ET.SubElement(sitemap, 'lastmod')
             lastmod.text = timezone.now().isoformat()
@@ -116,7 +116,7 @@ class Command(BaseCommand):
         loc = ET.SubElement(sitemap, 'loc')
         lastmod = ET.SubElement(sitemap, 'lastmod')
         lastmod.text = timezone.now().isoformat()
-        loc.text = 'https://solotodo-core.s3.amazonaws.com/sitemaps/sitemap_others_mx.xml'
+        loc.text = 'https://www.solotodo.com.mx/sitemaps/sitemap_others_mx.xml'
 
         et = ET.ElementTree(sitemapindex)
         file = open('sitemap_mx.xml', 'wb')

@@ -32,7 +32,7 @@ class Command(BaseCommand):
             for product in products:
                 url = ET.SubElement(urlset, 'url')
                 loc = ET.SubElement(url, 'loc')
-                loc.text = 'https://www.solotodo.com/products/{}-{}'.format(
+                loc.text = 'https://www.solotodo.com.mx/products/{}-{}'.format(
                     product.id, product.slug
                 )
                 lastmod = ET.SubElement(url, 'lastmod')
@@ -53,34 +53,34 @@ class Command(BaseCommand):
         for category in categories:
             url = ET.SubElement(urlset, 'url')
             loc = ET.SubElement(url, 'loc')
-            loc.text = 'https://www.solotodo.com/{}'.format(category.slug)
+            loc.text = 'https://www.solotodo.com.mx/{}'.format(category.slug)
 
         # Notebook processors
 
         url = ET.SubElement(urlset, 'url')
         loc = ET.SubElement(url, 'loc')
-        loc.text = 'https://www.solotodo.com/notebook_processors'
+        loc.text = 'https://www.solotodo.com.mx/notebook_processors'
 
         model = MetaModel.objects.get(name='NotebookProcessor')
 
         for notebook_processor in model.instancemodel_set.all():
             url = ET.SubElement(urlset, 'url')
             loc = ET.SubElement(url, 'loc')
-            loc.text = 'https://www.solotodo.com/notebook_processors?id={}' \
+            loc.text = 'https://www.solotodo.com.mx/notebook_processors?id={}' \
                        ''.format(notebook_processor.id)
 
         # Notebook video cards
 
         url = ET.SubElement(urlset, 'url')
         loc = ET.SubElement(url, 'loc')
-        loc.text = 'https://www.solotodo.com/notebook_video_cards'
+        loc.text = 'https://www.solotodo.com.mx/notebook_video_cards'
 
         model = MetaModel.objects.get(name='NotebookVideoCard')
 
         for notebook_video_card in model.instancemodel_set.all():
             url = ET.SubElement(urlset, 'url')
             loc = ET.SubElement(url, 'loc')
-            loc.text = 'https://www.solotodo.com/notebook_video_cards?id={}' \
+            loc.text = 'https://www.solotodo.com.mx/notebook_video_cards?id={}' \
                        ''.format(notebook_video_card.id)
 
         # Video card GPUs
@@ -90,11 +90,11 @@ class Command(BaseCommand):
         for video_card_gpu in model.instancemodel_set.all():
             url = ET.SubElement(urlset, 'url')
             loc = ET.SubElement(url, 'loc')
-            loc.text = 'https://www.solotodo.com/video_card_gpus/{}'.format(
+            loc.text = 'https://www.solotodo.com.mx/video_card_gpus/{}'.format(
                 video_card_gpu.id)
 
         et = ET.ElementTree(urlset)
-        file = open('sitemap_others.xml', 'wb')
+        file = open('sitemap_others_mx.xml', 'wb')
         et.write(file, encoding='utf-8', xml_declaration=True)
         file.close()
 
@@ -107,7 +107,7 @@ class Command(BaseCommand):
         for local_page in range(page):
             sitemap = ET.SubElement(sitemapindex, 'sitemap')
             loc = ET.SubElement(sitemap, 'loc')
-            loc.text = 'https://www.solotodo.com/sitemap_products_{}.xml' \
+            loc.text = 'https://solotodo-core.s3.amazonaws.com/sitemaps/sitemap_products_{}_mx.xml' \
                        ''.format(local_page + 1)
             lastmod = ET.SubElement(sitemap, 'lastmod')
             lastmod.text = timezone.now().isoformat()
@@ -116,9 +116,9 @@ class Command(BaseCommand):
         loc = ET.SubElement(sitemap, 'loc')
         lastmod = ET.SubElement(sitemap, 'lastmod')
         lastmod.text = timezone.now().isoformat()
-        loc.text = 'https://www.solotodo.com/sitemap_others.xml'
+        loc.text = 'https://solotodo-core.s3.amazonaws.com/sitemaps/sitemap_others_mx.xml'
 
         et = ET.ElementTree(sitemapindex)
-        file = open('sitemap.xml', 'wb')
+        file = open('sitemap_mx.xml', 'wb')
         et.write(file, encoding='utf-8', xml_declaration=True)
         file.close()

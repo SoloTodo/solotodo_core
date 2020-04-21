@@ -120,6 +120,9 @@ def additional_es_fields(instance_model, elastic_search_result):
             if 'back_camera_quaternary_value' in elastic_search_result:
                 back_camera += ' + {} MP'.format(
                     elastic_search_result['back_camera_quaternary_value'])
+            if 'back_camera_quinary_value' in elastic_search_result:
+                back_camera += ' + {} MP'.format(
+                    elastic_search_result['back_camera_quinary_value'])
         else:
             back_camera = 'N/A'
 

@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
         # Products
 
-        step = 50000
+        step = 20000
         page = 0
 
         while True:
@@ -107,7 +107,7 @@ class Command(BaseCommand):
         for local_page in range(page):
             sitemap = ET.SubElement(sitemapindex, 'sitemap')
             loc = ET.SubElement(sitemap, 'loc')
-            loc.text = 'https://www.solotodo.com.mx/sitemaps/sitemap_products_{}_mx.xml' \
+            loc.text = 'https://solotodo-core.s3.amazonaws.com/sitemaps/sitemap_products_{}_mx.xml' \
                        ''.format(local_page + 1)
             lastmod = ET.SubElement(sitemap, 'lastmod')
             lastmod.text = timezone.now().isoformat()
@@ -116,7 +116,7 @@ class Command(BaseCommand):
         loc = ET.SubElement(sitemap, 'loc')
         lastmod = ET.SubElement(sitemap, 'lastmod')
         lastmod.text = timezone.now().isoformat()
-        loc.text = 'https://www.solotodo.com.mx/sitemaps/sitemap_others_mx.xml'
+        loc.text = 'https://solotodo-core.s3.amazonaws.com/sitemaps/sitemap_others_mx.xml'
 
         et = ET.ElementTree(sitemapindex)
         file = open('sitemap_mx.xml', 'wb')

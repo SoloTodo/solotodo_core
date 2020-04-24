@@ -330,15 +330,12 @@ madre es socket {}
                 pass
             elif processor.specs.core_id in update_cores:
                 warnings.append("""
-Para usar el procesador {} en la placa madre {} la placa madre requiere de
-actualización de BIOS previa. \z\z
+Para usar el procesador {} en la placa madre {} la placa madre puede que 
+requiera de actualización de BIOS previa, por favor confirme con la tienda 
+donde la vaya a comprar si es el caso y si la pueden entregar actualizada. \z\z
 
-Para actualizar una BIOS normalmente se requiere de un procesador inicialmente
-compatible con la placa madre, lo que usualmente no es el caso.
-
-La solución más común es solicitar a la tienda donde compres la placa madre
-para que te la entreguen con la BIOS actualizada. Las tiendas que ofrecen este
-servicio actualmente son: \z\z
+Para Chile, las tiendas que ofrecen el servicio de actualización de placas 
+madre actualmente son:
 
 AllTec (gratis), Infor-Ingen (gratis), PC Express (gratis), TtChile (con un
 costo adicional) y Winpy (con un costo adicional, seleccionando "Actualización

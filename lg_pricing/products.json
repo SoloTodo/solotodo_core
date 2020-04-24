@@ -1,5 +1,57 @@
  [
    {
+     "productId": 46663,
+     "categoryId": 11,
+     "pageCategories": ["Home", "Television"],
+     "showCategory": "Televisores",
+     "lgSku": "LMG810EA",
+     "customTitle": "Televisor LG",
+     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
+     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
+     "filters": {
+       "screen_type": "Full HD"
+     }
+   },
+   {
+     "productId": 50129,
+     "categoryId": 11,
+     "pageCategories": ["Home", "Television"],
+     "showCategory": "Televisores",
+     "lgSku": "LMG810EA",
+     "customTitle": "Televisor LG",
+     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
+     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
+     "filters": {
+       "screen_type": "Full HD"
+     }
+   },
+   {
+     "productId": 50910,
+     "categoryId": 11,
+     "pageCategories": ["Home", "Television"],
+     "showCategory": "Televisores",
+     "lgSku": "LMG810EA",
+     "customTitle": "Televisor LG",
+     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
+     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
+     "filters": {
+       "screen_type": "Full HD"
+     }
+   },
+   {
+     "productId": 45898,
+     "categoryId": 11,
+     "pageCategories": ["Home", "Television"],
+     "showCategory": "Televisores",
+     "lgSku": "LMG810EA",
+     "customTitle": "Televisor LG",
+     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
+     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
+     "filters": {
+       "screen_type": "Full HD"
+     }
+   },
+   {
      "productId": 64831,
      "categoryId": 6,
      "pageCategories": ["Home", "Cell"],

@@ -19,7 +19,7 @@ class Command(BaseCommand):
             'mx': 'https://www.solotodo.com.mx',
         }
 
-        country_code = options['country_code'].lower()
+        country_code = options['country_code'][0].lower()
         domain = domains_dict[country_code]
 
         group = Group.objects.get(name='base')

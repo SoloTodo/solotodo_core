@@ -17,13 +17,17 @@
      "categoryId": 11,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",
-     "lgSku": "LMG810EA",
-     "customTitle": "Televisor LG",
+     "lgSku": "OLED55B8SSC",
+     "customTitle": "TV OLED 55\"",
      "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
      "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
      "filters": {
        "screen_type": "Full HD"
-     }
+     },
+     "referencePrice": "1499990",
+     "badges": [
+       "includesInstallation"
+     ]
    },
    {
      "productId": 50910,
@@ -63,7 +67,11 @@
      "filters": {
        "serie": "Serie G",
        "screen_type": "Full HD"
-     }
+     },
+     "referencePrice": "450000",
+     "badges": [
+       "includesInstallation"
+     ]
    },
    {
      "productId": 48281,

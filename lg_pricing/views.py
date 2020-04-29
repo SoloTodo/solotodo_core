@@ -216,8 +216,7 @@ class LgWtbViewSet(ViewSet):
 
         products_metadata = {x['productId']: x for x in json_entries}
 
-        store_ids = [9, 18, 11, 5, 30, 60, 67, 37, 38, 61, 12, 85, 43, 23,
-                     97, 87, 167, 86, 181, 195, 197, 224]
+        store_ids = [9, 18, 11]
 
         products = Product.objects.filter(
             pk__in=list(products_metadata.keys()))

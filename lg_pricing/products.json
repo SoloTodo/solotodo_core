@@ -1,69 +1,63 @@
  [
    {
      "productId": 46663,
-     "categoryId": 11,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",
      "lgSku": "LMG810EA",
      "customTitle": "Televisor LG",
-     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
      "filters": {
        "screen_type": "Full HD"
      }
    },
    {
      "productId": 50129,
-     "categoryId": 11,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",
      "lgSku": "OLED55B8SSC",
      "customTitle": "TV OLED 55\"",
-     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
-     "filters": {
-       "screen_type": "Full HD"
-     },
      "referencePrice": "1499990",
      "badges": [
        "includesInstallation"
      ]
    },
    {
+     "productId": 68037,
+     "pageCategories": ["Home", "Television"],
+     "showCategory": "Televisores",
+     "lgSku": "55SM8000PSA",
+     "customTitle": "NanoCell 55\" SMART AI TV",
+     "customDescription": "NanoCell TV, La vanguardia de la tecnología de TV",
+     "referencePrice": "499990",
+     "badges": [
+       "includesInstallation"
+     ]
+   },
+   {
      "productId": 50910,
-     "categoryId": 11,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",
      "lgSku": "LMG810EA",
      "customTitle": "Televisor LG",
-     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
      "filters": {
        "screen_type": "Full HD"
      }
    },
    {
      "productId": 45898,
-     "categoryId": 11,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",
      "lgSku": "LMG810EA",
      "customTitle": "Televisor LG",
-     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
      "filters": {
        "screen_type": "Full HD"
      }
    },
    {
      "productId": 64831,
-     "categoryId": 6,
      "pageCategories": ["Home", "Cell"],
      "showCategory": "Celulares",
      "lgSku": "LMG810EA",
      "customTitle": "G8s ThinQ",
-     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
      "filters": {
        "serie": "Serie G",
        "screen_type": "Full HD"
@@ -75,13 +69,10 @@
    },
    {
      "productId": 48281,
-     "categoryId": 6,
      "pageCategories": ["Home", "Cell"],
      "showCategory": "Celulares",
      "lgSku": "LMG810EA",
      "customTitle": "K11 Plus",
-     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45",
      "filters": {
        "serie": "Serie K",
        "screen_type": "HD"
@@ -89,22 +80,17 @@
    },
    {
      "productId": 37175,
-     "categoryId": 19,
      "pageCategories": ["Home", "WashingMachine"],
      "showCategory": "Lavadoras",
      "lgSku": "LMG810EA",
-     "customTitle": "WD20VVS6",
-     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45"
+     "customTitle": "WD20VVS6"
    },
    {
      "productId": 36116,
-     "categoryId": 25,
      "pageCategories": ["Home"],
      "showCategory": "Audio",
-     "lgSku": "LMG810EA",
+     "lgSku": "CJ45",
      "customTitle": "XBOOM 720W",
-     "mainPictureId": "1MxRM8DAjMejL8eMfts2yipyOoIvcReds",
-     "lgUrl": "https://www.lg.com/cl/equipos-de-musica/lg-CJ45"
+     "customDescription": "LG XBOOM CJ45"
    }
  ]

@@ -83,6 +83,17 @@
      }
    },
    {
+     "productId": 63424,
+     "pageCategories": ["Home", "Cell"],
+     "showCategory": "Celulares",
+     "lgSku": "LMG810EA",
+     "customTitle": "Q60",
+     "filters": {
+       "serie": "Serie Q",
+       "screen_type": "HD"
+     }
+   },
+   {
      "productId": 37175,
      "pageCategories": ["Home", "WashingMachine"],
      "showCategory": "Lavadoras",

@@ -1,15 +1,5 @@
  [
    {
-     "productId": 46663,
-     "pageCategories": ["Home", "Television"],
-     "showCategory": "Televisores",
-     "lgSku": "LMG810EA",
-     "customTitle": "Televisor LG",
-     "filters": {
-       "screen_type": "Full HD"
-     }
-   },
-   {
      "productId": 50129,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",
@@ -33,24 +23,38 @@
      ]
    },
    {
+     "productId": 63743,
+     "pageCategories": ["Television"],
+     "showCategory": "Televisores",
+     "lgSku": "43LM6300PSB",
+     "customTitle": "FHD 43\" LG SMART AI TV",
+     "customDescription": "Pantalla LED diseño simple",
+     "referencePrice": "329990"
+   },
+   {
+     "productId": 46663,
+     "pageCategories": ["Home", "Television"],
+     "showCategory": "Televisores",
+     "lgSku": "65UK6350PSC",
+     "customTitle": "65UK6350PSC",
+     "customDescription": "Alta resolución para una imagen nítida",
+     "referencePrice": "899990"
+   },
+   {
      "productId": 50910,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",
-     "lgSku": "LMG810EA",
-     "customTitle": "Televisor LG",
-     "filters": {
-       "screen_type": "Full HD"
-     }
+     "lgSku": "49UK6200PSA",
+     "customTitle": "UHD 49\" LG SMART TV AI",
+     "customDescription": "Alta resolución para una imagen nítida",
+     "referencePrice": "379990"
    },
    {
      "productId": 45898,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",
      "lgSku": "LMG810EA",
-     "customTitle": "Televisor LG",
-     "filters": {
-       "screen_type": "Full HD"
-     }
+     "customTitle": "Televisor LG"
    },
    {
      "productId": 64831,

@@ -1,5 +1,6 @@
 import io
 import csv
+from collections import OrderedDict
 
 from django.db.models import Min
 from django.utils import timezone
@@ -216,11 +217,12 @@ class LgWtbViewSet(ViewSet):
 
         products_metadata = {x['productId']: x for x in json_entries}
 
-        store_ids = [9, 18, 11]
+        store_ids = [9, 18, 11, 30]
 
         products = Product.objects.filter(
             pk__in=list(products_metadata.keys()))
         Product.prefetch_specs(products)
+        products_dict = {p.id: p for p in products}
 
         entities = Entity.objects.filter(
             product__in=products,
@@ -229,7 +231,10 @@ class LgWtbViewSet(ViewSet):
             active_registry__cell_monthly_payment__isnull=True
         ).get_available().order_by('active_registry__offer_price')
 
-        result_dict = {}
+        result_dict = OrderedDict()
+
+        for json_entry in json_entries:
+            result_dict[products_dict[json_entry['productId']]] = []
 
         for product in products:
             result_dict[product] = []

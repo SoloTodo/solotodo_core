@@ -178,6 +178,7 @@ class ReportWtbForm(forms.Form):
             'Identificador',
             'Nombre',
             'URL',
+            'Estado'
             'Producto'
         ]
 
@@ -259,13 +260,22 @@ class ReportWtbForm(forms.Form):
                         wtb_entity.url,
                         string=wtb_entity.name,
                         cell_format=url_format)
-
                     col += 1
 
                     worksheet.write(row, col, wtb_entity.external_site_url(e))
+                    col += 1
 
+                    if wtb_entity.is_active:
+                        wtb_entity_status = 'Activa'
+                    else:
+                        wtb_entity_status = 'Inactiva'
+
+                    worksheet.write(row, col, wtb_entity_status)
                     col += 1
                 else:
+                    worksheet.write(row, col, 'N/A')
+                    col += 1
+
                     worksheet.write(row, col, 'N/A')
                     col += 1
 

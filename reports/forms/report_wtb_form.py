@@ -178,7 +178,7 @@ class ReportWtbForm(forms.Form):
             'Identificador',
             'Nombre',
             'URL',
-            'Estado'
+            'Estado',
             'Producto'
         ]
 

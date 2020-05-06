@@ -11,6 +11,17 @@
      ]
    },
    {
+     "productId": 61984,
+     "pageCategories": ["Home", "Television"],
+     "showCategory": "Televisores",
+     "lgSku": "OLED55C9PSA",
+     "customTitle": "TV OLED 55\"",
+     "referencePrice": "1399990",
+     "badges": [
+       "includesInstallation"
+     ]
+   },
+   {
      "productId": 68037,
      "pageCategories": ["Home", "Television"],
      "showCategory": "Televisores",

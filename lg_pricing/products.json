@@ -120,5 +120,21 @@
      "lgSku": "CJ45",
      "customTitle": "XBOOM 720W",
      "customDescription": "LG XBOOM CJ45"
+   },
+   {
+     "productId": 67754,
+     "pageCategories": ["Home", "Refrigerator"],
+     "showCategory": "Refrigeradores",
+     "lgSku": "LM57MXTAF",
+     "customTitle": "Refrigerador Instaview Door-in-Door",
+     "customDescription": "Motor Inverter Linear Compressor con 10 años de Garantía"
+   },
+   {
+     "productId": 68927,
+     "pageCategories": ["Home", "WashingMachine"],
+     "showCategory": "Lavadoras",
+     "lgSku": "WD12WVC4S6",
+     "customTitle": "Lavadora-Secadora carga frontal",
+     "customDescription": "AI DD™ - Inteligencia Artificial"
    }
  ]

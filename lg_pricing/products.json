@@ -136,5 +136,21 @@
      "lgSku": "WD12WVC4S6",
      "customTitle": "Lavadora-Secadora carga frontal",
      "customDescription": "AI DD™ - Inteligencia Artificial"
+   },
+   {
+     "productId": 62567,
+     "pageCategories": ["Home", "Refrigerator"],
+     "showCategory": "Refrigeradores",
+     "lgSku": "LB37MPGK",
+     "customTitle": "Refrigerador Bottom Freezer con motor Inverter",
+     "customDescription": "Motor Inverter Linear Compressor con 10 años de Garantía"
+   },
+   {
+     "productId": 63637,
+     "pageCategories": ["Home", "WashingMachine"],
+     "showCategory": "Lavadoras",
+     "lgSku": "WT22BSS6H",
+     "customTitle": "Lavadora de Carga Superior con Motor Inverter",
+     "customDescription": "Motor Inverter Direct Drive y capacidad total de 22 Kilos"
    }
  ]

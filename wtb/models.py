@@ -262,10 +262,7 @@ class WtbEntity(models.Model):
         # even if the visitor is checking from another one. This is useful
         # for example for people in Korea to check the WTB for Paraguay,
         # which would normally display Chile's prices by default.
-
-        # At this particular moment this is not implemented due to the change
-        # in LG's website from v4 to v5.
-        return self.url
+        return '{}?country={}'.format(self.url, entity.store.country.iso_code)
 
     def external_site_url(self, entity):
         from django.conf import settings

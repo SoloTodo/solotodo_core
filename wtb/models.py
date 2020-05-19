@@ -252,25 +252,20 @@ class WtbEntity(models.Model):
         self.save()
 
     def _lg_external_site_url(self, entity):
-        from django.conf import settings
+        # Returns the URL in LG.com website that has the WTB widget.
+        # Since a regional website of LG handles multiple countries
+        # (e.g. lg.com/cl handles Chile and Paraguay) we may want to modify
+        # the URL to manually include the country as a parameter
+        # (e.g. https://www.lg.com/cl/televisores/lg-43LF5100?country=PY)
+        # so that the WTB widget embedded in that page reads the paramenter
+        # and forcefully display the pricing information for that country,
+        # even if the visitor is checking from another one. This is useful
+        # for example for people in Korea to check the WTB for Paraguay,
+        # which would normally display Chile's prices by default.
 
-        keys = self.key.split('_')
-        country_codes = {
-            settings.WTB_LG_CHILE_BRAND: 'cl',
-            settings.WTB_LG_PANAMA_BRAND: 'pa'
-        }
-
-        url = 'https://www.lg.com/{}/products/wtb?modelId={}'.format(
-            country_codes[self.brand_id],
-            keys[0]
-        )
-
-        if len(keys) > 1:
-            url += '&subModelId={}'.format(keys[1])
-
-        url += '&country={}'.format(entity.store.country.iso_code)
-
-        return url
+        # At this particular moment this is not implemented due to the change
+        # in LG's website from v4 to v5.
+        return self.url
 
     def external_site_url(self, entity):
         from django.conf import settings

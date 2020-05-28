@@ -280,6 +280,8 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'description',
             'picture_urls',
             'key',
+            'seller',
+            'scraped_condition',
             'creation_date',
             'last_updated',
             'last_pricing_update',

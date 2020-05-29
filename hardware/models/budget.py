@@ -354,7 +354,8 @@ posible esta placa madre en específico sea compatible con el procesador, pero
 depende del modelo. Por favor confirma con la página oficial del fabricante
 de la placa madre.
 """.format(mb.name, processor.name))
-        if processor and not processor.specs.includes_cooler and not cooler:
+        if processor and processor.specs.cooler.name == 'No posee' and not \
+                cooler:
             errors.append("""
 El procesador de tu cotización no incluye cooler de fábrica, y tu cotización
 no considera un cooler dedicado.

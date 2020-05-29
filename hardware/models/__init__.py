@@ -22,12 +22,10 @@ post_save.connect(create_budget_entries, sender=Budget)
 
 
 def handle_instance_model_saved(instance_model, created, creator_id, **kwargs):
-    from hardware.tasks import video_card_gpu_save, processor_save
+    from hardware.tasks import video_card_gpu_save
 
     if instance_model.model.name == 'VideoCardGpu':
         video_card_gpu_save.delay(instance_model.pk)
-    elif instance_model.model.name == 'Processor':
-        processor_save.delay(instance_model.pk)
 
 
 instance_model_saved.connect(handle_instance_model_saved)

@@ -85,7 +85,8 @@ INSTALLED_APPS = [
     'keyword_search_positions',
     'lg_pricing',
     'soicos_conversions',
-    'store_subscriptions'
+    'store_subscriptions',
+    'microsite'
 ]
 
 SITE_ID = 1

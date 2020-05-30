@@ -149,10 +149,10 @@ class Product(models.Model):
         self.brand = Brand.objects.get_or_create(
             name=es_document[0]['brand_unicode'])[0]
 
-        part_number = es_document[0].get('part_number', '').strip()
+        part_number = es_document[0].get('part_number', '') or ''
 
         if part_number:
-            self.part_number = part_number
+            self.part_number = part_number.strip()
 
         if creator_id:
             self.creator_id = creator_id

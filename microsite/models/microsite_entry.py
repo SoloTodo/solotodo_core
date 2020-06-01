@@ -1,7 +1,15 @@
 from django.db import models
+from guardian.shortcuts import get_objects_for_user
 
 from microsite.models import MicrositeBrand
 from solotodo.models import Product
+
+
+class MicrositeEntryQuerySet(models.QuerySet):
+    def filter_by_user_perms(self, user, permission):
+        brands_with_permissions = MicrositeBrand.objects.filter_by_user_perms(
+            user, permission)
+        return self.filter(brand__in=brands_with_permissions)
 
 
 class MicrositeEntry(models.Model):

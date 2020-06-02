@@ -1,5 +1,4 @@
 from django.db import models
-from guardian.shortcuts import get_objects_for_user
 
 from microsite.models import MicrositeBrand
 from solotodo.models import Product
@@ -25,6 +24,8 @@ class MicrositeEntry(models.Model):
     reference_price = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True)
     custom_attr_1_str = models.CharField(max_length=256, null=True, blank=True)
+
+    objects = MicrositeEntryQuerySet.as_manager()
 
     class Meta:
         app_label = 'microsite'

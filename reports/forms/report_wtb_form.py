@@ -179,6 +179,7 @@ class ReportWtbForm(forms.Form):
             'Nombre',
             'URL',
             'Estado',
+            'Precio WTB',
             'Producto'
         ]
 
@@ -272,7 +273,18 @@ class ReportWtbForm(forms.Form):
 
                     worksheet.write(row, col, wtb_entity_status)
                     col += 1
+
+                    if wtb_entity.price:
+                        price = wtb_entity.price
+                    else:
+                        price = 'N/A'
+
+                    worksheet.write(row, col, price)
+                    col += 1
                 else:
+                    worksheet.write(row, col, 'N/A')
+                    col += 1
+
                     worksheet.write(row, col, 'N/A')
                     col += 1
 

@@ -514,7 +514,7 @@ El cooler no es compatible con el socket del procesador.
 El cooler no entra en el gabinete.
                 """)
 
-            if processor and processor.specs.includes_cooler:
+            if processor and processor.specs.cooler_unicode != 'No posee':
                 warnings.append("""
 Tu cotización incluye un cooler pero el procesador viene con un cooler
 incluido. Puedes usar un cooler distinto al de fábrica pero usualmente no es

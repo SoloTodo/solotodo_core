@@ -77,6 +77,7 @@ class ProductQuerySet(models.QuerySet):
 class Product(models.Model):
     instance_model = models.ForeignKey(InstanceModel, on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT)
+    part_number = models.CharField(max_length=255, blank=True, null=True)
     creation_date = models.DateTimeField(db_index=True, auto_now_add=True)
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     last_updated = models.DateTimeField(auto_now=True)
@@ -147,6 +148,11 @@ class Product(models.Model):
 
         self.brand = Brand.objects.get_or_create(
             name=es_document[0]['brand_unicode'])[0]
+
+        part_number = es_document[0].get('part_number', '') or ''
+
+        if part_number:
+            self.part_number = part_number.strip()
 
         if creator_id:
             self.creator_id = creator_id

@@ -55,16 +55,3 @@ def get_tdmark_fire_strike_score(tdmark_id):
 def _get_tdmark_score(tdmark_id, test_id, test_mode):
     return get_futuremark_score(
         tdmark_id, 'gpu', test_id, test_mode)
-
-
-def get_pcmark_7_score(pcmark_id):
-    return _get_pcmark_score(pcmark_id, 'pcm7')
-
-
-def get_pcmark_8_score(pcmark_id):
-    return _get_pcmark_score(pcmark_id, 'pcm8hm3', 'O')
-
-
-def _get_pcmark_score(pcmark_id, test_id, test_mode='D'):
-    return get_futuremark_score(
-        pcmark_id, 'cpu', test_id, test_mode)

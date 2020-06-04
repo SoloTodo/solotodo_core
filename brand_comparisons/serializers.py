@@ -176,8 +176,8 @@ class BrandComparisonCreationSerializer(
             brand_2=brand_2,
         )
 
-        brand_comparison.stores.set(
-            settings.BRAND_COMPARISON_DEFAULT_STORE_IDS)
+        store = Store.objects.filter_by_user_perms(user, 'view_store')[0]
+        brand_comparison.stores.set([store])
 
         segment = BrandComparisonSegment.objects.create(
             name='Segmento Inicial',

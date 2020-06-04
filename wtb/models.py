@@ -165,6 +165,8 @@ class WtbEntity(models.Model):
     section = models.CharField(max_length=255, blank=True, null=True)
     url = models.URLField()
     picture_url = models.URLField()
+    price = models.DecimalField(max_digits=12, decimal_places=2,
+                                blank=True, null=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     is_visible = models.BooleanField(default=True)
@@ -220,6 +222,10 @@ class WtbEntity(models.Model):
             self.url = scraped_product.url
             self.picture_url = picture_url
             self.is_active = True
+
+            if scraped_product.normal_price:
+                self.price = scraped_product.normal_price
+
             self.save()
         elif self.is_active:
             self.is_active = False
@@ -285,6 +291,11 @@ class WtbEntity(models.Model):
         else:
             section = None
 
+        if scraped_product.normal_price:
+            price = scraped_product.normal_price
+        else:
+            price = None
+
         cls.objects.create(
             name=scraped_product.name[:254],
             model_name=scraped_product.sku,
@@ -293,7 +304,8 @@ class WtbEntity(models.Model):
             key=scraped_product.key,
             url=scraped_product.url,
             picture_url=picture_url,
-            section=section
+            section=section,
+            price=price
         )
 
     class Meta:

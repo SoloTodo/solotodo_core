@@ -6,7 +6,7 @@ from solotodo.models import Product
 from solotodo.tasks import product_save
 from .futuremark_utils import \
     get_tdmark_11_score, get_tdmark_cloud_gate_score, \
-    get_tdmark_fire_strike_score, get_pcmark_7_score, get_pcmark_8_score
+    get_tdmark_fire_strike_score
 from metamodel.models import InstanceModel
 
 
@@ -39,17 +39,3 @@ def video_card_gpu_save(instance_model_id, update_scores=True):
             logging.info(u'saving {}'.format(im.parent))
             product = Product.objects.get(instance_model=im.parent)
             product_save.delay(product.id)
-
-
-@shared_task(queue='general', ignore_result=True)
-def processor_save(instance_model_id):
-    instance_model = InstanceModel.objects.get(pk=instance_model_id)
-
-    # Update the processor score in various benchmarks
-    pcmark_id = instance_model.pcmark_id
-
-    instance_model.pcmark_7_score = get_pcmark_7_score(pcmark_id)
-    instance_model.pcmark_8_score = get_pcmark_8_score(pcmark_id)
-
-    product = Product.objects.get(instance_model=instance_model)
-    product.save()

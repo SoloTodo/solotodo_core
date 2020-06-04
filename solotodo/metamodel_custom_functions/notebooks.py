@@ -40,19 +40,6 @@ def pretty_battery(elastic_dict):
     return result
 
 
-def pretty_video_ports(elastic_dict):
-    """
-    Returns a prettified version of the video ports of the notebook or a
-    default message if no info is available
-    """
-    result = ' | '.join([vp for vp in elastic_dict['video_port_unicode']])
-
-    if not result:
-        result = 'No posee salidas'
-
-    return result
-
-
 def get_score_general(elastic_dict):
     """
     Calculates and returns the score of this notebook when running normal
@@ -201,8 +188,6 @@ def additional_es_fields(instance_model, elastic_search_result):
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_result,
                               ['width', 'height', 'thickness'])
-        result['pretty_video_ports'] = \
-            pretty_video_ports(elastic_search_result)
         result['model_name'] = '{} {}'.format(
             elastic_search_result['line_name'],
             elastic_search_result['name'],

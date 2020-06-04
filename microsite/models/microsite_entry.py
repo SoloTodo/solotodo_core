@@ -17,7 +17,7 @@ class MicrositeEntry(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     ordering = models.IntegerField(default=1)
     home_ordering = models.IntegerField(null=True, blank=True)
-    sku = models.CharField(max_length=256)
+    sku = models.CharField(default='', max_length=256)
     brand_url = models.URLField(null=True, blank=True)
     title = models.CharField(max_length=256, null=True, blank=True)
     description = models.TextField(null=True, blank=True)

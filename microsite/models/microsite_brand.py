@@ -1,6 +1,8 @@
 from django.db import models
 from guardian.shortcuts import get_objects_for_user
 
+from solotodo.models import Product
+
 
 class MicrositeBrandQuerySet(models.QuerySet):
     def filter_by_user_perms(self, user, permission):
@@ -12,6 +14,11 @@ class MicrositeBrand(models.Model):
     fields = models.CharField(max_length=512)
 
     objects = MicrositeBrandQuerySet.as_manager()
+
+    def create_entry_from_product(self, product_id):
+        from microsite.models import MicrositeEntry
+        product = Product.objects.get(id=product_id)
+        MicrositeEntry.objects.create(brand=self, product=product)
 
     class Meta:
         app_label = 'microsite'

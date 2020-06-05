@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import MicrositeBrand, MicrositeEntry
-from solotodo.serializers import NestedProductSerializerWithCategory
+from solotodo.serializers import NestedProductSerializerWithCategory, BrandSerializer
 
 
 class MicrositeEntrySerializer(serializers.HyperlinkedModelSerializer):
@@ -15,8 +15,9 @@ class MicrositeEntrySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class MicrositeBrandSerializer(serializers.HyperlinkedModelSerializer):
+    brand = BrandSerializer()
     entries = MicrositeEntrySerializer(many=True)
 
     class Meta:
         model = MicrositeBrand
-        fields = ('url', 'id', 'name', 'fields', 'entries')
+        fields = ('url', 'id', 'name', 'brand', 'fields', 'entries')

@@ -29,4 +29,5 @@ class MicrositeEntry(models.Model):
 
     class Meta:
         app_label = 'microsite'
+        ordering = ('product__instance_model__model__category', 'ordering',)
         unique_together = ('brand', 'product')

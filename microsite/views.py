@@ -37,6 +37,7 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
 
 class MicrositeEntryViewset(mixins.RetrieveModelMixin,
                             mixins.ListModelMixin,
+                            mixins.UpdateModelMixin,
                             viewsets.GenericViewSet):
     queryset = MicrositeEntry.objects.all()
     serializer_class = MicrositeEntrySerializer

@@ -5,7 +5,7 @@ from .models import MicrositeBrand, MicrositeEntry
 
 @admin.register(MicrositeBrand)
 class MicrositeBrandAdmin(admin.ModelAdmin):
-    list_display = ('name', 'fields')
+    list_display = ('name', 'brand', 'fields')
 
 
 @admin.register(MicrositeEntry)

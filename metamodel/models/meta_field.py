@@ -93,7 +93,7 @@ class MetaField(models.Model):
                     + '?popup=1'
 
                 result += ' <a href="{}" data-model="{}" ' \
-                          'class="add_new_link">Add new</a>' \
+                          'class="add_new_link" tabindex="-1">Add new</a>' \
                           ''.format(url, self.meta_field.model.id)
 
                 return result
@@ -119,7 +119,7 @@ class MetaField(models.Model):
                     + '?popup=1'
 
                 result += ' <a href="{}" data-model="{}" ' \
-                          'class="add_new_link">Add new</a>' \
+                          'class="add_new_link" tabindex="-1">Add new</a>' \
                           ''.format(url, self.meta_field.model.id)
 
                 return result

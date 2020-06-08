@@ -21,6 +21,9 @@ class MicrositeBrand(models.Model):
         product = Product.objects.get(id=product_id)
         MicrositeEntry.objects.create(brand=self, product=product)
 
+    def __str__(self):
+        return '{} - {}'.format(self.name, self.brand)
+
     class Meta:
         app_label = 'microsite'
         permissions = (

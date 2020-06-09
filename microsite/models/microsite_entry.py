@@ -20,6 +20,7 @@ class MicrositeEntry(models.Model):
     sku = models.CharField(max_length=256, null=True, blank=True)
     brand_url = models.URLField(null=True, blank=True)
     title = models.CharField(max_length=256, null=True, blank=True)
+    subtitle = models.CharField(max_length=256, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     reference_price = models.DecimalField(
         max_digits=10, decimal_places=2, null=True, blank=True)

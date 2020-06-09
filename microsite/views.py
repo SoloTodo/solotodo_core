@@ -1,9 +1,13 @@
+from collections import OrderedDict
+
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import detail_route
 from rest_framework.response import Response
 
 from .models import MicrositeBrand, MicrositeEntry
-from .serializers import MicrositeBrandSerializer, MicrositeEntrySerializer
+from solotodo.models import Product, Entity
+from .serializers import MicrositeBrandSerializer, MicrositeEntrySerializer, \
+    MicrositeEntrySiteSerializer
 
 
 class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
@@ -39,6 +43,44 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
             microsite_brand, context={'request': request})
 
         return Response(serializer.data)
+
+    @detail_route(methods=['get'])
+    def site_data(self, request, pk, *args, **kwargs):
+        microsite_brand = self.get_object()
+        entries = microsite_brand.entries.all()
+
+        stores = microsite_brand.stores.all()
+
+        products = [entry.product for entry in entries]
+        Product.prefetch_specs(products)
+
+        entities = Entity.objects.filter(
+            product__in=products,
+            store__in=stores,
+            condition='https://schema.org/NewCondition',
+            active_registry__cell_monthly_payment__isnull=True
+        ).get_available().order_by('active_registry__offer_price')
+
+        entities_dict = OrderedDict()
+
+        for entry in entries:
+            entities_dict[entry.product] = []
+
+        for entity in entities:
+            entities_dict[entity.product].append(entity)
+
+        result_array = [{
+            'metadata': entry,
+            'product': entry.product,
+            'entities': entities_dict[entry.product]
+        } for entry in entries]
+
+        serializer = MicrositeEntrySiteSerializer(
+            result_array, many=True, context={'request': request})
+
+        result = serializer.data
+
+        return Response(result)
 
 
 class MicrositeEntryViewset(mixins.RetrieveModelMixin,

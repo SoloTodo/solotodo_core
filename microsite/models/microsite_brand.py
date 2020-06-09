@@ -1,7 +1,7 @@
 from django.db import models
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.models import Product, Brand
+from solotodo.models import Product, Brand, Store
 
 
 class MicrositeBrandQuerySet(models.QuerySet):
@@ -13,6 +13,7 @@ class MicrositeBrand(models.Model):
     name = models.CharField(max_length=512)
     fields = models.CharField(max_length=512)
     brand = models.ForeignKey(Brand, on_delete=models.CASCADE)
+    stores = models.ManyToManyField(Store)
 
     objects = MicrositeBrandQuerySet.as_manager()
 

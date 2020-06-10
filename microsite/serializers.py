@@ -12,7 +12,7 @@ class MicrositeEntrySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = MicrositeEntry
         fields = ('url', 'id', 'brand', 'product', 'ordering', 'home_ordering', 'sku',
-                  'brand_url', 'title', 'description', 'reference_price',
+                  'brand_url', 'title', 'subtitle', 'description', 'reference_price',
                   'custom_attr_1_str')
 
 
@@ -23,7 +23,7 @@ class MicrositeEntryWithoutProductSerializer(
         model = MicrositeEntry
         fields = (
             'url', 'id', 'brand', 'ordering', 'home_ordering',
-            'sku', 'brand_url', 'title', 'description', 'reference_price',
+            'sku', 'brand_url', 'title', 'subtitle', 'description', 'reference_price',
             'custom_attr_1_str')
 
 

@@ -225,6 +225,8 @@ class WtbEntity(models.Model):
 
             if scraped_product.normal_price:
                 self.price = scraped_product.normal_price
+            else:
+                self.price = None
 
             self.save()
         elif self.is_active:

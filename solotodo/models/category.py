@@ -73,7 +73,6 @@ class Category(models.Model):
         app_label = 'solotodo'
         ordering = ['name']
         permissions = (
-            ['view_category', 'Can view the category'],
             ['is_category_staff', 'Is staff of the category'],
             ['view_category_leads',
              'View the leads associated to this category'],

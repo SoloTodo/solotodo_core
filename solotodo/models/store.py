@@ -374,7 +374,6 @@ class Store(models.Model):
         app_label = 'solotodo'
         ordering = ['name']
         permissions = (
-            ['view_store', 'Can view the store'],
             ['view_store_update_logs', 'Can view the store update logs'],
             ['view_store_stocks', 'Can view the store entities stock'],
             ['update_store_pricing', 'Can update the store pricing'],

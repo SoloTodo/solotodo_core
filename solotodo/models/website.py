@@ -20,7 +20,6 @@ class Website(models.Model):
         app_label = 'solotodo'
         ordering = ('name', )
         permissions = [
-            ('view_website', 'Can view the website'),
             ('view_website_visits',
              'Can view the visits associated to this website'),
             ('view_website_leads',

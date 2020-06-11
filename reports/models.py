@@ -14,7 +14,6 @@ class Report(models.Model):
     class Meta:
         ordering = ('name',)
         permissions = (
-            ('view_report', 'Can view the report'),
             ('backend_list_reports', 'Can view report list in backend'),
         )
 

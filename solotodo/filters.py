@@ -355,6 +355,11 @@ class ProductFilterSet(rest_framework.FilterSet):
         label='Available in stores',
         method='_availability_stores'
     )
+    brands = CustomModelMultipleChoiceFilter(
+        queryset=Brand.objects.all(),
+        name='brand',
+        label='Brands'
+    )
     last_updated = IsoDateTimeFromToRangeFilter(
         name='last_updated'
     )

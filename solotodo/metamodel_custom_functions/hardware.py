@@ -19,6 +19,12 @@ def unicode_function(im):
 
 def additional_es_fields(instance_model, elastic_search_original):
     m = instance_model.model.name
+    if m == 'VideoCard':
+        result = {
+            'display_core_clock':
+                elastic_search_original['core_clock'] > elastic_search_original['gpu_boost_core_clock']
+        }
+        return result
     if m == 'Processor':
         result = {}
         result['has_turbo_frequencies'] = \

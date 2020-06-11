@@ -1,10 +1,11 @@
 from django.contrib import admin
+from guardian.admin import GuardedModelAdmin
 
 from .models import MicrositeBrand, MicrositeEntry
 
 
 @admin.register(MicrositeBrand)
-class MicrositeBrandAdmin(admin.ModelAdmin):
+class MicrositeBrandAdmin(GuardedModelAdmin):
     list_display = ('name', 'brand', 'fields')
 
 

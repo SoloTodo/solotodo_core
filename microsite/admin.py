@@ -14,6 +14,7 @@ class MicrositeEntryAdmin(admin.ModelAdmin):
     list_display = (
         'brand', 'product', 'ordering', 'home_ordering', 'sku',
         'brand_url', 'title', 'subtitle', 'description',
-        'reference_price', 'custom_attr_1_str')
+        'reference_price', 'custom_attr_1_str', 'custom_attr_2_str',
+        'custom_attr_3_str', 'custom_attr_4_str', 'custom_attr_5_str')
 
     readonly_fields = ('product',)

@@ -14,5 +14,7 @@ class EsProductRelationship(Document):
         name = 'products_metadata'
         settings = {
             'index.mapping.total_fields.limit': 10000,
-            'index.max_result_window': 100000
+            'index.max_result_window': 100000,
+            # Update this value if solotodo grows to more than 1000000 products
+            'index.max_terms_count': 1000000
         }

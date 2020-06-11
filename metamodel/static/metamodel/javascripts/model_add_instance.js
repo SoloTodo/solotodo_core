@@ -14,7 +14,7 @@ function popup_callback(model_instance) {
     var matching_links = $('a[data-model="' + model_instance.model + '"');
 
     $.each(matching_links, function(idx, link) {
-        var container = $(link).prev();
+        var container = $(link).parent().find('select');
 
         container.append('<option value="' + model_instance.id + '">' + model_instance.name + '</option>');
 

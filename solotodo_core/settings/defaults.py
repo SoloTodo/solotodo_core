@@ -14,7 +14,7 @@ import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from decimal import Decimal
-from django_filters import STRICTNESS
+# from django_filters import STRICTNESS
 
 # I know this import is not used, but the plugin gets loaded this way
 from elasticsearch import Elasticsearch
@@ -308,7 +308,7 @@ CRISPY_TEMPLATE_PACK = 'bootstrap3'
 # Django filter configuration
 ###############################################################################
 
-FILTERS_STRICTNESS = STRICTNESS.RAISE_VALIDATION_ERROR
+# FILTERS_STRICTNESS = STRICTNESS.RAISE_VALIDATION_ERROR
 
 ##############################################################################
 # Premailer configuration

@@ -13,51 +13,51 @@ from .models import \
 
 class BannerFilterSet(rest_framework.FilterSet):
     timestamp = IsoDateTimeFromToRangeFilter(
-        name='update__timestamp'
+        field_name='update__timestamp'
     )
 
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter('view_store_banners'),
-        name='update__store',
+        field_name='update__store',
         label='Stores'
     )
 
     sections = CustomModelMultipleChoiceFilter(
         queryset=BannerSection.objects.all(),
-        name='subsection__section',
+        field_name='subsection__section',
         label='Sections'
     )
 
     asset = CustomModelMultipleChoiceFilter(
         queryset=BannerAsset.objects.all(),
-        name='asset',
+        field_name='asset',
         label='Assets'
     )
 
     brands = CustomModelMultipleChoiceFilter(
         queryset=Brand.objects.all(),
-        name='asset__contents__brand',
+        field_name='asset__contents__brand',
         label='Brand'
     )
 
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter('view_category_report'),
-        name='asset__contents__category',
+        field_name='asset__contents__category',
         label='Category'
     )
 
     types = CustomModelMultipleChoiceFilter(
         queryset=BannerSubsectionType.objects.all(),
-        name='subsection__type',
+        field_name='subsection__type',
         label='Types'
     )
 
     creation_date = IsoDateTimeFromToRangeFilter(
-        name='update__timestamp'
+        field_name='update__timestamp'
     )
 
     is_active = rest_framework.BooleanFilter(
-        name='is_active', method='_is_active', label='Is active?')
+        field_name='is_active', method='_is_active', label='Is active?')
 
     @property
     def qs(self):
@@ -81,17 +81,17 @@ class BannerFilterSet(rest_framework.FilterSet):
 
 class BannerUpdateFilterSet(rest_framework.FilterSet):
     timestamp = IsoDateTimeFromToRangeFilter(
-        name='timestamp'
+        field_name='timestamp'
     )
 
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter('view_banners'),
-        name='store',
+        field_name='store',
         label='Stores'
     )
 
     is_active = rest_framework.BooleanFilter(
-        name='is_active', method='_is_active', label='Is active?')
+        field_name='is_active', method='_is_active', label='Is active?')
 
     ids = CustomModelMultipleChoiceFilter(
         queryset=BannerUpdate.objects.all(),
@@ -127,14 +127,14 @@ class BannerUpdateFilterSet(rest_framework.FilterSet):
 
 class BannerAssetFilterSet(rest_framework.FilterSet):
     creation_date = IsoDateTimeFromToRangeFilter(
-        name='creation_date'
+        field_name='creation_date'
     )
 
     is_active = rest_framework.BooleanFilter(
-        name='is_active', method='_is_active', label='Is active?')
+        field_name='is_active', method='_is_active', label='Is active?')
 
     is_complete = rest_framework.BooleanFilter(
-        name='is_complete', method='_is_complete', label='Is complete?'
+        field_name='is_complete', method='_is_complete', label='Is complete?'
     )
 
     @property

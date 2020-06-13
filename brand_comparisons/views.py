@@ -1,7 +1,7 @@
 from django_filters import rest_framework
 
 from rest_framework import viewsets, mixins, status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from solotodo_core.s3utils import PrivateS3Boto3Storage
@@ -68,7 +68,7 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
         return super().retrieve(self, request, *args, **kwargs)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def add_segment(self, request, pk, *args, **kwargs):
         brand_comparison = self.get_object()
         segment_name = request.data.get('name')
@@ -85,7 +85,7 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def add_manual_product(self, request, pk, *args, **kwargs):
         brand_comparison = self.get_object()
         product_id = request.data.get('product_id')
@@ -102,7 +102,7 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def remove_manual_product(self, request, pk, *args, **kwargs):
         brand_comparison = self.get_object()
         product_id = request.data.get('product_id')
@@ -138,7 +138,7 @@ class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,
         else:
             return BrandComparisonSegment.objects.filter(comparison__user=user)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def move(self, request, pk, *args, **kwargs):
         segment = self.get_object()
         direction = request.data.get('direction')
@@ -150,7 +150,7 @@ class BrandComparisonSegmentViewSet(mixins.RetrieveModelMixin,
 
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def add_row(self, request, pk, *args, ** kwargs):
         segment = self.get_object()
         ordering = request.data.get('ordering')
@@ -186,7 +186,7 @@ class BrandComparisonSegmentRowViewSet(mixins.RetrieveModelMixin,
                 'errors': 'Cant delete last row of segment.'
             }, status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def move(self, request, pk, *args, **kwargs):
         row = self.get_object()
         direction = request.data.get('direction')

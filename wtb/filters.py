@@ -13,26 +13,26 @@ create_wtb_brand_filter = create_model_filter(WtbBrand, 'view_wtb_brand')
 class WtbEntityFilterSet(rest_framework.FilterSet):
     brands = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_wtb_brand_filter(),
-        name='brand',
+        field_name='brand',
         label='Brands'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_category_filter(),
-        name='category',
+        field_name='category',
         label='Categories'
     )
     keys = rest_framework.CharFilter(
-        name='key',
+        field_name='key',
         label='Key'
     )
     products = rest_framework.ModelChoiceFilter(
         queryset=create_product_filter(),
-        name='product',
+        field_name='product',
         label='Products'
     )
 
     is_associated = rest_framework.BooleanFilter(
-        name='is_associated', method='_is_associated', label='Is associated?')
+        field_name='is_associated', method='_is_associated', label='Is associated?')
 
     @property
     def qs(self):
@@ -60,12 +60,12 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
 class WtbEntityStaffFilterSet(rest_framework.FilterSet):
     brands = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_wtb_brand_filter('is_wtb_brand_staff'),
-        name='brand',
+        field_name='brand',
         label='Brands'
     )
     categories = rest_framework.ModelMultipleChoiceFilter(
         queryset=create_category_filter('is_category_staff'),
-        name='category',
+        field_name='category',
         label='Categories'
     )
 

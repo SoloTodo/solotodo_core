@@ -1,7 +1,7 @@
 from django.db import IntegrityError
 from django_filters import rest_framework
 from rest_framework import viewsets, status
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.response import Response
@@ -38,7 +38,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ('product__instance_model__unicode_representation',
                      'name', 'key', 'url')
 
-    @list_route()
+    @action(detail=False)
     def pending(self, request):
         filterset = WtbEntityStaffFilterSet(
             queryset=self.filter_queryset(self.get_queryset()),
@@ -55,7 +55,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return paginator.get_paginated_response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def staff_info(self, request, pk):
         wtb_entity = self.get_object()
         if not wtb_entity.user_has_staff_perms(request.user):
@@ -64,7 +64,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
             wtb_entity, context={'request': request})
         return Response(serialializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def toggle_visibility(self, request, *args, **kwargs):
         wtb_entity = self.get_object()
         if not wtb_entity.user_has_staff_perms(request.user):
@@ -80,7 +80,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': str(err)},
                             status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def change_category(self, request, *args, **kwargs):
         wtb_entity = self.get_object()
         if not wtb_entity.user_has_staff_perms(request.user):
@@ -109,7 +109,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def associate(self, request, *args, **kwargs):
         wtb_entity = self.get_object()
         if not wtb_entity.user_has_staff_perms(request.user):
@@ -134,7 +134,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
             wtb_entity, context={'request': self.request}).data
         return Response(serialized_data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def dissociate(self, request, *args, **kwargs):
         wtb_entity = self.get_object()
         if not wtb_entity.user_has_staff_perms(request.user):
@@ -151,7 +151,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
             wtb_entity, context={'request': self.request}).data
         return Response(serialized_data)
 
-    @detail_route()
+    @action(detail=True)
     def available_alternatives(self, request, pk):
         wtb_entity = self.get_object()
 

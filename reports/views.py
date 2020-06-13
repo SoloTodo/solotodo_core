@@ -1,6 +1,6 @@
 from guardian.shortcuts import get_objects_for_user
 from rest_framework import viewsets, status
-from rest_framework.decorators import list_route
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 
@@ -28,7 +28,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         return get_objects_for_user(self.request.user, 'view_report', Report)
 
-    @list_route()
+    @action(detail=False)
     def current_prices(self, request):
         report = Report.objects.get(slug='current_prices')
         user = request.user
@@ -49,7 +49,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'message': 'ok'
         }, status=status.HTTP_200_OK)
 
-    @list_route()
+    @action(detail=False)
     def store_analysis(self, request):
         report = Report.objects.get(slug='store_analysis')
         user = request.user
@@ -78,7 +78,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @list_route()
+    @action(detail=False)
     def weekly_prices(self, request):
         report = Report.objects.get(slug='weekly_prices')
         user = request.user
@@ -107,7 +107,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @list_route()
+    @action(detail=False)
     def prices_history(self, request):
         report = Report.objects.get(slug='prices_history')
         user = request.user
@@ -136,7 +136,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @list_route()
+    @action(detail=False)
     def websites_traffic(self, request):
         report = Report.objects.get(slug='websites_traffic')
         user = request.user
@@ -165,7 +165,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @list_route()
+    @action(detail=False)
     def sec_prices(self, request):
         report = Report.objects.get(slug='sec_prices')
         user = request.user
@@ -194,7 +194,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @list_route()
+    @action(detail=False)
     def daily_prices(self, request):
         report = Report.objects.get(slug='daily_prices')
         user = request.user
@@ -215,7 +215,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'message': 'ok'
         }, status=status.HTTP_200_OK)
 
-    @list_route()
+    @action(detail=False)
     def wtb_report(self, request):
         report = Report.objects.get(slug='wtb_report')
         user = request.user
@@ -244,7 +244,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @list_route()
+    @action(detail=False)
     def soicos_conversions(self, request):
         report = Report.objects.get(slug='soicos_conversions')
         user = request.user
@@ -273,7 +273,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @list_route()
+    @action(detail=False)
     def pc_factory_sku_analysis(self, request):
         report = Report.objects.get(slug='pc_factory_sku_analysis')
         user = request.user

@@ -4,7 +4,7 @@ from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.decorators import list_route, detail_route
+from rest_framework.decorators import action
 
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 from .forms.keyword_search_active_positions_form import \
@@ -42,7 +42,7 @@ class KeywordSearchViewSet(mixins.RetrieveModelMixin,
         else:
             return KeywordSearchSerializer
 
-    @list_route(methods=['get'])
+    @action(methods=['get'], detail=False)
     def active_positions_report(self, request):
         user = request.user
         form = KeywordSearchActivePositionsForm(user, request.GET)
@@ -81,7 +81,7 @@ class KeywordSearchUpdateViewSet(mixins.RetrieveModelMixin,
         else:
             return KeywordSearchUpdate.objects.filter(search__user=user)
 
-    @detail_route()
+    @action(detail=True)
     def positions(self, request, pk):
         update = self.get_object()
         positions = update.positions.all().select_related('entity')

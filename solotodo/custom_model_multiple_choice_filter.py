@@ -31,9 +31,9 @@ class CustomMultipleChoiceFilter(MultipleChoiceFilter):
 
     def get_filter_predicate(self, v, field_name):
         try:
-            return {self.name: getattr(v, field_name)}
+            return {self.field_name: getattr(v, field_name)}
         except (AttributeError, TypeError):
-            return {self.name: v}
+            return {self.field_name: v}
 
 
 class CustomModelMultipleChoiceFilter(

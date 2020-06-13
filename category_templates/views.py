@@ -1,6 +1,6 @@
 from django_filters import rest_framework
 from rest_framework import viewsets, status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from category_templates.filters import CategoryTemplateFilterSet
@@ -22,7 +22,7 @@ class CategoryTemplateViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (rest_framework.DjangoFilterBackend, )
     filter_class = CategoryTemplateFilterSet
 
-    @detail_route()
+    @action(detail=True)
     def render(self, request, pk, *args, **kwargs):
         category_template = self.get_object()
         form = ProductForm.from_user_and_category(

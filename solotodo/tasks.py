@@ -77,26 +77,6 @@ def product_save(product_id):
 
 
 @shared_task(queue='general', ignore_result=True)
-def product_save_ports(im_id):
-    from metamodel.models import InstanceModel
-
-    im = InstanceModel.objects.get(pk=im_id)
-    d = {0: 1173231,
-         1: 1173150,
-         2: 1173152,
-         3: 1173154,
-         4: 1173156,
-         5: 1173227,
-         6: 1173229}
-
-    ports = [vp.mapping for vp in im.video_port]
-    usb_port = InstanceModel.objects.get(pk=d[im.usb_port_count])
-    ports.append(usb_port)
-    im.ports = ports
-    im.save()
-
-
-@shared_task(queue='general', ignore_result=True)
 def es_leads_index():
     from solotodo.models import Lead
     from solotodo.es_models.es_lead import EsLead

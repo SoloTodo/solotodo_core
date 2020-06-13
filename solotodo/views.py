@@ -18,7 +18,7 @@ from geoip2.errors import AddressNotFoundError
 from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 from rest_framework import viewsets, permissions, status, mixins
-from rest_framework.decorators import list_route, detail_route, action
+from rest_framework.decorators import action
 from rest_framework import exceptions
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.filters import OrderingFilter, \
@@ -107,8 +107,9 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = UserFilterSet
 
-    @list_route(methods=['get', 'patch'],
-                permission_classes=(permissions.IsAuthenticated, ))
+    @action(methods=['get', 'patch'],
+            permission_classes=(permissions.IsAuthenticated, ),
+            detail=False)
     def me(self, request):
         user = request.user
 
@@ -127,7 +128,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         payload['url'] = reverse('solotodouser-me', request=request)
         return Response(payload)
 
-    @list_route()
+    @action(detail=False)
     def with_staff_actions(self, request):
         users = self.get_queryset()
         users_with_staff_actions = users.filter_with_staff_actions()
@@ -135,7 +136,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                                  many=True, context={'request': request})
         return Response(payload.data)
 
-    @detail_route()
+    @action(detail=True)
     def staff_summary(self, request, pk, *args, **kwargs):
         request_user = request.user
 
@@ -167,7 +168,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(result)
 
-    @detail_route()
+    @action(detail=True)
     def staff_actions(self, request, pk, *args, **kwargs):
         request_user = request.user
 
@@ -234,7 +235,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
     def get_queryset(self):
         return create_category_filter()(self.request)
 
-    @detail_route()
+    @action(detail=True)
     def specs_filters(self, request, pk, *args, **kwargs):
         category = self.get_object()
 
@@ -244,7 +245,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def specs_orders(self, request, pk, *args, **kwargs):
         category = self.get_object()
 
@@ -253,7 +254,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def products(self, request, pk, *args, **kwargs):
         category = self.get_object()
         form_class = category.specs_form()
@@ -306,7 +307,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route()
+    @action(detail=True)
     def browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
         form = EsProductsBrowseForm(request.user, request.query_params)
@@ -318,7 +319,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
         return Response(result)
 
-    @detail_route()
+    @action(detail=True)
     def es_browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
         form = EsProductsBrowseForm(request.user, request.query_params)
@@ -330,7 +331,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
         return Response(result)
 
-    @detail_route()
+    @action(detail=True)
     def full_browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
         form = EsProductsBrowseForm(request.user, request.query_params)
@@ -342,7 +343,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
             'price_ranges': result['price_ranges'],
         })
 
-    @detail_route()
+    @action(detail=True)
     def share_of_shelves(self, request, pk, *args, **kwargs):
         category = self.get_object()
         user = request.user
@@ -373,7 +374,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
             except ValidationError as e:
                 return Response(e, status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route()
+    @action(detail=True)
     def historic_share_of_shelves(self, request, pk, *args, **kwargs):
         category = self.get_object()
         user = request.user
@@ -400,7 +401,7 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Country.objects.all()
     serializer_class = CountrySerializer
 
-    @list_route()
+    @action(detail=False)
     def by_ip(self, request):
         if request.is_crawler:
             country = Country.get_default()
@@ -430,7 +431,7 @@ class CountryViewSet(viewsets.ReadOnlyModelViewSet):
             context={'request': request})
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def navigation(self, request, pk, *args, **kwargs):
         country = self.get_object()
         nav_departments = NavDepartment.objects.filter(
@@ -446,7 +447,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                        OrderingFilter)
     filter_class = StoreFilterSet
 
-    @list_route()
+    @action(detail=False)
     def average_ratings(self, request, *args, **kwargs):
         stores = self.filter_queryset(self.get_queryset())
 
@@ -468,7 +469,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                                            context={'request': request})
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def current_entity_positions_report(self, request, *args, **kwargs):
         user = request.user
         store = self.get_object()
@@ -488,7 +489,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
             'url': report_url
         })
 
-    @detail_route()
+    @action(detail=True)
     def historic_entity_positions_report(self, request, *args, **kwargs):
         user = request.user
         store = self.get_object()
@@ -533,7 +534,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
 
         return Response(result)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def update_pricing(self, request, pk):
         store = self.get_object()
 
@@ -599,7 +600,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = StoreUpdateLogFilterSet
     ordering_fields = ('last_updated', )
 
-    @list_route()
+    @action(detail=False)
     def latest(self, request, *args, **kwargs):
         stores = create_store_filter('view_store_update_logs')(self.request)
 
@@ -640,7 +641,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                      'url',
                      'discovery_url')
 
-    @list_route()
+    @action(detail=False)
     def estimated_sales(self, request):
         if not request.user.is_authenticated:
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -667,7 +668,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
 
-    @list_route()
+    @action(detail=False)
     def conflicts(self, request):
         filterset = EntityStaffFilterSet(
             queryset=self.get_queryset(),
@@ -679,7 +680,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(serializer.data)
 
-    @list_route()
+    @action(detail=False)
     def pending(self, request):
         filterset = EntityStaffFilterSet(
             queryset=self.filter_queryset(self.get_queryset()),
@@ -696,7 +697,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return paginator.get_paginated_response(serializer.data)
 
-    @list_route()
+    @action(detail=False)
     def pending_stats(self, request):
         qs = self.get_queryset().get_pending()
         annotated_categories = qs.order_by('category').values(
@@ -709,7 +710,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(response_dict)
 
-    @list_route()
+    @action(detail=False)
     def by_url(self, request):
         form = EntityByUrlForm(request.query_params)
 
@@ -726,7 +727,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         serializer = EntitySerializer(entity, context={'request': request})
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def register_staff_access(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
@@ -743,7 +744,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             entity, context={'request': self.request}).data
         return Response(serialized_data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def update_pricing(self, request, *args, **kwargs):
         entity = self.get_object()
         user = request.user
@@ -771,7 +772,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': str(e)},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @detail_route()
+    @action(detail=True)
     def events(self, request, *args, **kwargs):
         entity = self.get_object()
         serialized_events = []
@@ -802,7 +803,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(serialized_events)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def toggle_visibility(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
@@ -821,7 +822,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': str(err)},
                             status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def change_category(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
@@ -853,7 +854,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             return Response({'detail': form.errors},
                             status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def set_condition(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
@@ -874,7 +875,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(serialized_data)
 
-    @detail_route(methods=['post', ])
+    @action(methods=['post', ], detail=True)
     def associate(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
@@ -903,7 +904,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             entity, context={'request': self.request}).data
         return Response(serialized_data)
 
-    @detail_route(methods=['post', ])
+    @action(methods=['post', ], detail=True)
     def dissociate(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
@@ -926,7 +927,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             entity, context={'request': self.request}).data
         return Response(serialized_data)
 
-    @detail_route()
+    @action(detail=True)
     def pricing_history(self, request, pk):
         entity = self.get_object()
 
@@ -946,7 +947,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         )
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def position_history(self, request, pk):
         entity = self.get_object()
 
@@ -970,7 +971,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         )
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def staff_info(self, request, pk):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
@@ -979,7 +980,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             entity, context={'request': request})
         return Response(serialializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def cell_plan_choices(self, request, *args, **kwargs):
         entity = self.get_object()
         if not entity.user_has_staff_perms(request.user):
@@ -1009,7 +1010,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
                                              context={'request': request})
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def register_lead(self, request, pk):
         entity = self.get_object()
 
@@ -1050,7 +1051,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return Response(form.errors)
 
-    @detail_route()
+    @action(detail=True)
     def affiliate_url(self, request, pk, *args, **kwargs):
         entity = self.get_object()
 
@@ -1069,7 +1070,7 @@ class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (rest_framework.DjangoFilterBackend, )
     filter_class = EntityHistoryFilterSet
 
-    @detail_route()
+    @action(detail=True)
     def stock(self, request, pk):
         entity_history = self.get_object()
         if entity_history.entity.user_can_view_stocks(request.user):
@@ -1093,7 +1094,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return ProductSerializer
 
-    @list_route(methods=['GET', 'POST'])
+    @action(methods=['GET', 'POST'], detail=False)
     def available_entities(self, request):
         if request.method == 'GET':
             queryset = self.filter_queryset(self.get_queryset())
@@ -1145,7 +1146,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(result)
 
-    @list_route()
+    @action(detail=False)
     def browse(self, request, *args, **kwargs):
         form = EsProductsBrowseForm(request.user, request.query_params)
 
@@ -1155,7 +1156,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         result = form.get_products(request)
         return Response(result)
 
-    @list_route()
+    @action(detail=False)
     def es_browse(self, request, *args, **kwargs):
         form = EsProductsBrowseForm(request.user, request.query_params)
 
@@ -1165,7 +1166,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         result = form.get_products(request)
         return Response(result)
 
-    @detail_route()
+    @action(detail=True)
     def entities(self, request, pk):
         product = self.get_object()
         stores = Store.objects.filter_by_user_perms(request.user, 'view_store')
@@ -1174,7 +1175,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                                       context={'request': request})
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def videos(self, request, pk):
         product = self.get_object()
         specs = product.specs
@@ -1198,7 +1199,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(serializer.data)
 
-    @detail_route(methods=['post', ])
+    @action(methods=['post', ], detail=True)
     def clone(self, request, pk):
         product = self.get_object()
         if not product.user_has_staff_perms(request.user):
@@ -1210,7 +1211,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             'instance_id': cloned_instance.id
         })
 
-    @detail_route()
+    @action(detail=True)
     def min_history_price(self, request, pk):
         product = self.get_object()
         entity_histories = EntityHistory.objects\
@@ -1249,7 +1250,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(result)
 
-    @detail_route()
+    @action(detail=True)
     def pricing_history(self, request, pk):
         product = self.get_object()
         entity_histories = EntityHistory.objects.filter(
@@ -1282,7 +1283,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def register_visit(self, request, pk):
         product = self.get_object()
 
@@ -1309,7 +1310,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return Response(form.errors)
 
-    @detail_route()
+    @action(detail=True)
     def bucket(self, request, pk):
         product = self.get_object()
 
@@ -1342,7 +1343,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             bucket_products, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @list_route()
+    @action(detail=False)
     def s20_bucket(self, request, *args, **kwargs):
         # Please remove this method after S20 release window
         products = Product.objects.filter(
@@ -1353,7 +1354,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             products, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def render(self, request, pk):
         from category_templates.models import CategoryTemplate
         from category_templates.forms import ProductRenderForm
@@ -1381,7 +1382,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         except Exception:
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
-    @detail_route()
+    @action(detail=True)
     def picture(self, request, pk):
         product = self.get_object()
 
@@ -1410,7 +1411,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         response['Location'] = resized_picture.url
         return response
 
-    @detail_route()
+    @action(detail=True)
     def average_rating(self, request, pk):
         product = self.get_object()
 
@@ -1435,7 +1436,7 @@ class LeadViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return LeadSerializer
 
-    @list_route()
+    @action(detail=False)
     def grouped(self, request):
         filterset = LeadFilterSet(
             data=request.query_params,
@@ -1473,7 +1474,7 @@ class VisitViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return VisitSerializer
 
-    @list_route()
+    @action(detail=False)
     def grouped(self, request):
         filterset = VisitFilterSet(
             data=request.query_params,
@@ -1548,7 +1549,7 @@ class RatingViewSet(viewsets.ModelViewSet):
 
         return RatingSerializer
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def approve(self, request, pk, *args, **kwargs):
         if not request.user.has_perm('solotodo.is_ratings_staff'):
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -1574,7 +1575,7 @@ class ProductPictureViewSet(viewsets.ModelViewSet):
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = ProductPictureFilterSet
 
-    @detail_route()
+    @action(detail=True)
     def thumbnail(self, request, pk):
         product_picture = self.get_object()
 

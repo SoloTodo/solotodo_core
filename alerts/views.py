@@ -1,5 +1,5 @@
 from rest_framework import viewsets, mixins, status
-from rest_framework.decorators import list_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters import rest_framework
 from django.db.models import Q
@@ -43,7 +43,7 @@ class ProductPriceAlertViewSet(mixins.CreateModelMixin,
         else:
             return ProductPriceAlertSerializer
 
-    @list_route(methods=['post'])
+    @action(methods=['post'], detail=False)
     def delete_by_key(self, request, *args, **kwargs):
         form = AlertDeleteByKeyForm(request.data)
         if not form.is_valid():

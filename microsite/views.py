@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 from rest_framework import viewsets, mixins, status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from .models import MicrositeBrand, MicrositeEntry
@@ -21,7 +21,7 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
         return MicrositeBrand.objects.filter_by_user_perms(
             user, 'view_microsite_brand')
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def add_entry(self, request, pk, *args, **kwargs):
         user = self.request.user
         microsite_brand = self.get_object()
@@ -44,7 +44,7 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
 
         return Response(serializer.data)
 
-    @detail_route(methods=['get'])
+    @action(methods=['get'], detail=True)
     def site_data(self, request, pk, *args, **kwargs):
         microsite_brand = self.get_object()
         entries = microsite_brand.entries.all()

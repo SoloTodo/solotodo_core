@@ -54,12 +54,12 @@ class StoreFilterSet(rest_framework.FilterSet):
     )
     countries = rest_framework.ModelMultipleChoiceFilter(
         queryset=Country.objects.all(),
-        name='country',
+        field_name='country',
         label='Countries'
     )
     types = rest_framework.ModelMultipleChoiceFilter(
         queryset=StoreType.objects.all(),
-        name='type',
+        field_name='type',
         label='Types'
     )
 
@@ -106,36 +106,36 @@ class EntityFilterSet(rest_framework.FilterSet):
     )
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter(),
-        name='store',
+        field_name='store',
         label='Stores'
     )
     products = CustomModelMultipleChoiceFilter(
         queryset=create_product_filter(),
-        name='product',
+        field_name='product',
         label='Products'
     )
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter(),
-        name='category',
+        field_name='category',
         label='Categories'
     )
     countries = rest_framework.ModelMultipleChoiceFilter(
         queryset=Country.objects.all(),
-        name='store__country',
+        field_name='store__country',
         label='Countries'
     )
     store_types = rest_framework.ModelMultipleChoiceFilter(
         queryset=StoreType.objects.all(),
-        name='store__type',
+        field_name='store__type',
         label='Store types'
     )
     db_brands = rest_framework.ModelMultipleChoiceFilter(
         queryset=Brand.objects.all(),
-        name='product__brand',
+        field_name='product__brand',
         label='Brands'
     )
     exclude_refurbished = rest_framework.BooleanFilter(
-        name='exclude_refurbished',
+        field_name='exclude_refurbished',
         method='_exclude_refurbished',
         label='Exclude refurbished?'
     )
@@ -143,22 +143,22 @@ class EntityFilterSet(rest_framework.FilterSet):
         lookup_expr='icontains'
     )
     exclude_marketplace = rest_framework.BooleanFilter(
-        name='exclude_marketplace',
+        field_name='exclude_marketplace',
         method='_exclude_marketplace',
         label='Exclude marketplace?'
     )
     exclude_with_monthly_payment = rest_framework.BooleanFilter(
-        name='exclude_with_monthly_payment',
+        field_name='exclude_with_monthly_payment',
         method='_exclude_with_monthly_payment',
         label='Exclude with cell monthly payment?'
     )
 
     is_available = rest_framework.BooleanFilter(
-        name='is_available', method='_is_available', label='Is available?')
+        field_name='is_available', method='_is_available', label='Is available?')
     is_active = rest_framework.BooleanFilter(
-        name='is_active', method='_is_active', label='Is active?')
+        field_name='is_active', method='_is_active', label='Is active?')
     is_associated = rest_framework.BooleanFilter(
-        name='is_associated', method='_is_associated', label='Is associated?')
+        field_name='is_associated', method='_is_associated', label='Is associated?')
 
     @property
     def qs(self):
@@ -219,11 +219,11 @@ class EntityFilterSet(rest_framework.FilterSet):
 class CategoryFullBrowseEntityFilterSet(EntityFilterSet):
     normal_price_usd = rest_framework.RangeFilter(
         label='Normal price (USD)',
-        name='normal_price_usd'
+        field_name='normal_price_usd'
     )
     offer_price_usd = rest_framework.RangeFilter(
         label='Offer price (USD)',
-        name='offer_price_usd'
+        field_name='offer_price_usd'
     )
 
     @classmethod
@@ -273,12 +273,12 @@ class CategoryFullBrowseEntityFilterSet(EntityFilterSet):
 class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter('view_store_stocks'),
-        name='store',
+        field_name='store',
         label='Stores'
     )
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter(),
-        name='category',
+        field_name='category',
         label='Categories'
     )
     ids = CustomModelMultipleChoiceFilter(
@@ -307,17 +307,17 @@ class EntityEstimatedSalesFilterSet(rest_framework.FilterSet):
 class EntityStaffFilterSet(rest_framework.FilterSet):
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter(),
-        name='store',
+        field_name='store',
         label='Stores'
     )
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter('is_category_staff'),
-        name='category',
+        field_name='category',
         label='Categories'
     )
     countries = rest_framework.ModelMultipleChoiceFilter(
         queryset=Country.objects.all(),
-        name='store__country',
+        field_name='store__country',
         label='Countries'
     )
 
@@ -342,7 +342,7 @@ class ProductFilterSet(rest_framework.FilterSet):
     )
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter(),
-        name='instance_model__model__category',
+        field_name='instance_model__model__category',
         label='Categories'
     )
     availability_countries = CustomModelMultipleChoiceFilter(
@@ -357,14 +357,14 @@ class ProductFilterSet(rest_framework.FilterSet):
     )
     brands = CustomModelMultipleChoiceFilter(
         queryset=Brand.objects.all(),
-        name='brand',
+        field_name='brand',
         label='Brands'
     )
     last_updated = IsoDateTimeFromToRangeFilter(
-        name='last_updated'
+        field_name='last_updated'
     )
     creation_date = IsoDateTimeFromToRangeFilter(
-        name='creation_date'
+        field_name='creation_date'
     )
     search = rest_framework.CharFilter(
         label='Search',
@@ -408,20 +408,20 @@ class ProductFilterSet(rest_framework.FilterSet):
 
 class EntityHistoryFilterSet(rest_framework.FilterSet):
     timestamp = IsoDateTimeFromToRangeFilter(
-        name='timestamp'
+        field_name='timestamp'
     )
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter(),
-        name='entity__store',
+        field_name='entity__store',
         label='Stores'
     )
     countries = rest_framework.ModelMultipleChoiceFilter(
         queryset=Country.objects.all(),
-        name='entity__store__country',
+        field_name='entity__store__country',
         label='Countries'
     )
     exclude_unavailable = rest_framework.BooleanFilter(
-        name='exclude_unavailable', method='_exclude_unavailable',
+        field_name='exclude_unavailable', method='_exclude_unavailable',
         label='Exclude unavailable?')
 
     @property
@@ -449,36 +449,36 @@ class EntityHistoryFilterSet(rest_framework.FilterSet):
 
 class LeadFilterSet(rest_framework.FilterSet):
     timestamp = IsoDateTimeFromToRangeFilter(
-        name='timestamp'
+        field_name='timestamp'
     )
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter('view_store_leads'),
-        name='entity_history__entity__store',
+        field_name='entity_history__entity__store',
         label='Stores'
     )
     products = CustomModelMultipleChoiceFilter(
         queryset=create_product_filter(),
-        name='entity_history__entity__product',
+        field_name='entity_history__entity__product',
         label='Products'
     )
     websites = CustomModelMultipleChoiceFilter(
         queryset=create_website_filter(),
-        name='website',
+        field_name='website',
         label='Websites'
     )
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter('view_category_leads'),
-        name='entity_history__entity__category',
+        field_name='entity_history__entity__category',
         label='Categories'
     )
     countries = rest_framework.ModelMultipleChoiceFilter(
         queryset=Country.objects.all(),
-        name='entity_history__entity__store__country',
+        field_name='entity_history__entity__store__country',
         label='Countries'
     )
     entities = CustomModelMultipleChoiceFilter(
         queryset=create_entity_filter(),
-        name='entity_history__entity',
+        field_name='entity_history__entity',
         label='Entities'
     )
 
@@ -499,21 +499,21 @@ class LeadFilterSet(rest_framework.FilterSet):
 
 class VisitFilterSet(rest_framework.FilterSet):
     timestamp = IsoDateTimeFromToRangeFilter(
-        name='timestamp'
+        field_name='timestamp'
     )
     products = CustomModelMultipleChoiceFilter(
         queryset=create_product_filter(),
-        name='product',
+        field_name='product',
         label='Products'
     )
     websites = CustomModelMultipleChoiceFilter(
         queryset=create_website_filter('view_website_visits'),
-        name='website',
+        field_name='website',
         label='Websites'
     )
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter('view_category_visits'),
-        name='product__instance_model__model__category',
+        field_name='product__instance_model__model__category',
         label='Categories'
     )
 
@@ -535,17 +535,17 @@ class VisitFilterSet(rest_framework.FilterSet):
 class RatingFilterSet(rest_framework.FilterSet):
     stores = CustomModelMultipleChoiceFilter(
         queryset=create_store_filter(),
-        name='store',
+        field_name='store',
         label='Stores'
     )
     products = CustomModelMultipleChoiceFilter(
         queryset=create_product_filter(),
-        name='product',
+        field_name='product',
         label='Products'
     )
     categories = CustomModelMultipleChoiceFilter(
         queryset=create_category_filter(),
-        name='product__instance_model__model__category',
+        field_name='product__instance_model__model__category',
         label='Categories'
     )
     pending_only = rest_framework.BooleanFilter(
@@ -580,7 +580,7 @@ class RatingFilterSet(rest_framework.FilterSet):
 class ProductPictureFilterSet(rest_framework.FilterSet):
     products = CustomModelMultipleChoiceFilter(
         queryset=create_product_filter(),
-        name='product',
+        field_name='product',
         label='Products'
     )
 
@@ -603,15 +603,15 @@ class ProductPictureFilterSet(rest_framework.FilterSet):
 class EntitySectionPositionFilterSet(rest_framework.FilterSet):
     entities = CustomModelMultipleChoiceFilter(
         queryset=create_entity_filter(),
-        name='entity_history__entity',
+        field_name='entity_history__entity',
         label='Entities'
     )
 
     is_active = rest_framework.BooleanFilter(
-        name='is_active', method='_is_active', label='Is active?')
+        field_name='is_active', method='_is_active', label='Is active?')
 
     timestamp = IsoDateTimeFromToRangeFilter(
-        name='entity_history__timestamp'
+        field_name='entity_history__timestamp'
     )
 
     @property

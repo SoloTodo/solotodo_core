@@ -1,7 +1,6 @@
-from django.conf import settings
 from elasticsearch_dsl import Search
 from rest_framework import viewsets, status
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -27,7 +26,7 @@ class BudgetViewSet(viewsets.ModelViewSet):
     filter_backends = (rest_framework.DjangoFilterBackend, )
     filter_class = BudgetFilterSet
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def add_product(self, request, pk, *args, **kwargs):
         budget = self.get_object()
 
@@ -41,7 +40,7 @@ class BudgetViewSet(viewsets.ModelViewSet):
         serializer = BudgetSerializer(budget, context={'request': request})
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def select_cheapest_stores(self, request, pk, *args, **kwargs):
         budget = self.get_object()
         form = StoresForm.from_user(request.user, request.data)
@@ -62,7 +61,7 @@ class BudgetViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.data)
 
-    @detail_route()
+    @action(detail=True)
     def export(self, request, pk, *args, **kwargs):
         budget = self.get_object()
 
@@ -75,12 +74,12 @@ class BudgetViewSet(viewsets.ModelViewSet):
 
         return Response({'content': exported_budget})
 
-    @detail_route()
+    @action(detail=True)
     def compatibility_issues(self, request, pk, *args, **kwargs):
         budget = self.get_object()
         return Response(budget.compatibility_issues())
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def remove_product(self, request, pk, *args, **kwargs):
         budget = self.get_object()
         form = BudgetProductForm.from_budget(budget, request.data)

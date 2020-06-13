@@ -3,7 +3,7 @@ from django_filters import rest_framework
 
 from rest_framework import viewsets, mixins, status
 from rest_framework.filters import SearchFilter, OrderingFilter
-from rest_framework.decorators import detail_route, list_route
+from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
@@ -39,7 +39,7 @@ class BannerViewSet(mixins.RetrieveModelMixin,
                        'subsection', 'id')
     pagination_class = BannerPagination
 
-    @list_route(methods=['get'])
+    @action(methods=['get'], detail=False)
     def active_participation(self, request):
         user = request.user
         form = BannerActiveParticipationForm(user, request.GET)
@@ -60,7 +60,7 @@ class BannerViewSet(mixins.RetrieveModelMixin,
             result = form.get_banner_participation_as_json()
             return Response(result)
 
-    @list_route(methods=['get'])
+    @action(methods=['get'], detail=False)
     def historic_active_participation(self, request):
         user = request.user
         form = BannerHistoricParticipationForm(user, request.GET)
@@ -103,7 +103,7 @@ class BannerUpdateViewSet(mixins.RetrieveModelMixin,
     filter_class = BannerUpdateFilterSet
     pagination_class = BannerUpdatePagination
 
-    @list_route()
+    @action(detail=False)
     def latest(self, request, *args, **kwargs):
         stores = create_store_filter('view_store_banners')(self.request)\
             .filter_by_banners_support()
@@ -146,7 +146,7 @@ class BannerAssetViewSet(mixins.RetrieveModelMixin,
         else:
             return BannerAsset.objects.none()
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def add_content(self, request, pk, *args, **kwargs):
         user = request.user
         banner_asset = self.get_object()
@@ -173,7 +173,7 @@ class BannerAssetViewSet(mixins.RetrieveModelMixin,
 
         return Response(serializer.data)
 
-    @detail_route(methods=['post'])
+    @action(methods=['post'], detail=True)
     def delete_content(self, request, pk, *args, **kwargs):
         user = request.user
         banner_asset = self.get_object()

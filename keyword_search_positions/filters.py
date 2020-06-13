@@ -8,7 +8,7 @@ from.models import KeywordSearch, KeywordSearchUpdate
 class KeywordSearchUpdateFilterSet(rest_framework.FilterSet):
     searches = CustomModelMultipleChoiceFilter(
         queryset=KeywordSearch.objects.all(),
-        name='search',
+        field_name='search',
         label='Searches')
 
     class Meta:

@@ -8,9 +8,9 @@ from django import forms
 from django.core.files.base import ContentFile
 from django.db.models import Count
 from django.db.models.functions import ExtractWeek, ExtractYear
+from django_filters.fields import IsoDateTimeRangeField
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Category, Brand, EntitySectionPosition, \
     StoreSection
 from solotodo.utils import iterable_to_dict

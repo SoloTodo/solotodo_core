@@ -1,5 +1,6 @@
 import io
 import xlsxwriter
+from django_filters.fields import IsoDateTimeRangeField
 from xlsxwriter.utility import xl_rowcol_to_cell
 from collections import defaultdict
 from datetime import timedelta
@@ -11,7 +12,6 @@ from django.db.models.functions import ExtractWeek, ExtractYear
 from django.core.files.base import ContentFile
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Store, Brand, Category
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 from banners.models import Banner, BannerSection, BannerSubsectionType

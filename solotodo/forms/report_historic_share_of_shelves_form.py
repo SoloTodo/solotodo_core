@@ -6,10 +6,10 @@ from datetime import timedelta
 from django import forms
 from django.core.files.base import ContentFile
 from django.db.models.functions import ExtractWeek, ExtractYear
+from django_filters.fields import IsoDateTimeRangeField
 from guardian.shortcuts import get_objects_for_user
 
 from solotodo.models import Store, Country, Entity, EntityHistory, EsProduct
-from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.forms.share_of_shelves_form import ShareOfShelvesForm
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 

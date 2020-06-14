@@ -1,6 +1,5 @@
 from django import forms
-
-from solotodo.filter_utils import IsoDateTimeRangeField
+from django_filters.fields import IsoDateTimeRangeField
 
 
 class DateRangeForm(forms.Form):

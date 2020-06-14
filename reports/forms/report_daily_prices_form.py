@@ -7,10 +7,10 @@ from django.core.files.base import ContentFile
 from django.db.models import Min, DateField, Max, Avg
 from django.db.models.functions import Cast
 from django.utils import timezone
+from django_filters.fields import IsoDateTimeRangeField
 from guardian.shortcuts import get_objects_for_user
 
 from category_columns.models import CategoryColumn
-from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Category, Store, Country, StoreType, Currency, \
     Entity, EntityHistory, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage

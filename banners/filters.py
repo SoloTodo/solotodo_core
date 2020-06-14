@@ -1,12 +1,11 @@
-from django_filters import rest_framework
+from django_filters import rest_framework, IsoDateTimeFromToRangeFilter
 
 from solotodo.custom_model_multiple_choice_filter import \
     CustomModelMultipleChoiceFilter
-from solotodo.filter_utils import IsoDateTimeFromToRangeFilter
 from solotodo.filter_querysets import \
     create_store_filter, create_category_filter
 
-from solotodo.models import Brand, Category
+from solotodo.models import Brand
 from .models import \
     Banner, BannerUpdate, BannerAsset, BannerSection, BannerSubsectionType
 

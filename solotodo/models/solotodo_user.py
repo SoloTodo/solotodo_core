@@ -174,13 +174,14 @@ class SoloTodoUser(AbstractEmailUser):
 
         wtb_entities_total_amount = \
             wtb_association_amount * associated_wtb_entities_count
-        total_amount += wtb_entities_total_amount
 
         result['wtb_entities'] = {
             'count': associated_wtb_entities_count,
             'individual_amount': str(wtb_association_amount),
             'total_amount': str(wtb_entities_total_amount)
         }
+
+        total_amount += wtb_entities_total_amount
 
         # Products
 

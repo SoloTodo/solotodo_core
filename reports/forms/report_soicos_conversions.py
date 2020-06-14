@@ -4,9 +4,9 @@ import xlsxwriter
 from django import forms
 from django.utils import timezone
 from django.core.files.base import ContentFile
+from django_filters.fields import IsoDateTimeRangeField
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.filter_utils import IsoDateTimeRangeField
 from solotodo.models import Website, Store, Category
 from soicos_conversions.models import SoicosConversion
 from solotodo_core.s3utils import PrivateS3Boto3Storage

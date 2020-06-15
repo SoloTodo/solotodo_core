@@ -33,9 +33,9 @@ class ReportCurrentPricesForm(forms.Form):
     currency = forms.ModelChoiceField(
         queryset=Currency.objects.all(),
         required=False)
-    normal_price_usd_0 = forms.DecimalField(
+    normal_price_usd_min = forms.DecimalField(
         required=False)
-    normal_price_usd_1 = forms.DecimalField(
+    normal_price_usd_max = forms.DecimalField(
         required=False)
     filename = forms.CharField(
         required=False)
@@ -66,8 +66,8 @@ class ReportCurrentPricesForm(forms.Form):
         countries = self.cleaned_data['countries']
         store_types = self.cleaned_data['store_types']
         currency = self.cleaned_data['currency']
-        normal_price_usd_0 = self.cleaned_data['normal_price_usd_0']
-        normal_price_usd_1 = self.cleaned_data['normal_price_usd_1']
+        normal_price_usd_min = self.cleaned_data['normal_price_usd_min']
+        normal_price_usd_max = self.cleaned_data['normal_price_usd_max']
 
         specs_products = [e.product_id
                           for e in es_product_search[:100000].execute()]
@@ -97,13 +97,13 @@ class ReportCurrentPricesForm(forms.Form):
         if store_types:
             entities = entities.filter(store__type__in=store_types)
 
-        if normal_price_usd_0:
+        if normal_price_usd_min:
             entities = entities.filter(
-                normal_price_usd__gte=normal_price_usd_0)
+                normal_price_usd__gte=normal_price_usd_min)
 
-        if normal_price_usd_1:
+        if normal_price_usd_max:
             entities = entities.filter(
-                normal_price_usd__lte=normal_price_usd_1)
+                normal_price_usd__lte=normal_price_usd_max)
 
         product_ids = [x['product'] for x in entities.values('product')]
 

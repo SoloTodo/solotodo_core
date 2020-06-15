@@ -30,16 +30,16 @@ class EntityEstimatedSalesForm(forms.Form):
         choices=ORDERING_CHOICES,
         required=False
     )
-    timestamp_0 = IsoDateTimeField(required=False)
-    timestamp_1 = IsoDateTimeField(required=False)
+    timestamp_after = IsoDateTimeField(required=False)
+    timestamp_before = IsoDateTimeField(required=False)
 
     def estimated_sales(self, qs, request):
         entity_values = qs.select_related(
                 'store',
                 'product__instance_model__model__category',
                 'category', 'currency')\
-            .estimated_sales(self.cleaned_data['timestamp_0'],
-                             self.cleaned_data['timestamp_1'])
+            .estimated_sales(self.cleaned_data['timestamp_after'],
+                             self.cleaned_data['timestamp_before'])
 
         preferred_currency = request.user.preferred_currency_or_default()
 

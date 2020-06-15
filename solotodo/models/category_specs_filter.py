@@ -34,9 +34,9 @@ class CategorySpecsFilter(models.Model):
             field_names = [self.name]
         else:
             if self.type in ['gte', 'range']:
-                field_names = ['{}_0'.format(self.name)]
+                field_names = ['{}_min'.format(self.name)]
             if self.type in ['lte', 'range']:
-                field_names.append('{}_1'.format(self.name))
+                field_names.append('{}_max'.format(self.name))
 
         if self.type == 'exact':
             if self.meta_model.name == 'BooleanField':
@@ -103,7 +103,7 @@ class CategorySpecsFilter(models.Model):
                 result &= Q('terms', **{es_value_field: filter_values})
 
         if self.type in ['gte', 'range']:
-            min_form_field = '{}_0'.format(self.name)
+            min_form_field = '{}_min'.format(self.name)
             if form_data[min_form_field] is not None:
                 if self.meta_model.is_primitive():
                     filter_value = form_data[min_form_field]
@@ -113,7 +113,7 @@ class CategorySpecsFilter(models.Model):
                 result &= Q('range', **{es_value_field: {'gte': filter_value}})
 
         if self.type in ['lte', 'range']:
-            max_form_field = '{}_1'.format(self.name)
+            max_form_field = '{}_max'.format(self.name)
             if form_data[max_form_field] is not None:
                 if self.meta_model.is_primitive():
                     filter_value = form_data[max_form_field]

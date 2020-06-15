@@ -40,14 +40,14 @@ class EsProductsBrowseForm(forms.Form):
         queryset=Brand.objects.all(),
         required=False
     )
-    normal_price_0 = forms.DecimalField(required=False)
-    normal_price_1 = forms.DecimalField(required=False)
-    offer_price_0 = forms.DecimalField(required=False)
-    offer_price_1 = forms.DecimalField(required=False)
-    normal_price_usd_0 = forms.DecimalField(required=False)
-    normal_price_usd_1 = forms.DecimalField(required=False)
-    offer_price_usd_0 = forms.DecimalField(required=False)
-    offer_price_usd_1 = forms.DecimalField(required=False)
+    normal_price_min = forms.DecimalField(required=False)
+    normal_price_max = forms.DecimalField(required=False)
+    offer_price_min = forms.DecimalField(required=False)
+    offer_price_max = forms.DecimalField(required=False)
+    normal_price_usd_min = forms.DecimalField(required=False)
+    normal_price_usd_max = forms.DecimalField(required=False)
+    offer_price_usd_min = forms.DecimalField(required=False)
+    offer_price_usd_max = forms.DecimalField(required=False)
 
     exclude_refurbished = forms.BooleanField(required=False)
 
@@ -416,8 +416,8 @@ class EsProductsBrowseForm(forms.Form):
                         'normal_price_usd', 'offer_price_usd']
 
         for range_field in range_fields:
-            start_value = self.cleaned_data[range_field + '_0']
-            end_value = self.cleaned_data[range_field + '_1']
+            start_value = self.cleaned_data[range_field + '_min']
+            end_value = self.cleaned_data[range_field + '_max']
 
             range_params = {}
 

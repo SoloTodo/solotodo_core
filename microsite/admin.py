@@ -17,4 +17,4 @@ class MicrositeEntryAdmin(admin.ModelAdmin):
         'reference_price', 'custom_attr_1_str', 'custom_attr_2_str',
         'custom_attr_3_str', 'custom_attr_4_str', 'custom_attr_5_str')
 
-    readonly_fields = ('product',)
+    raw_id_fields = ('product',)

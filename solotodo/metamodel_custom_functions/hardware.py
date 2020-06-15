@@ -22,7 +22,9 @@ def additional_es_fields(instance_model, elastic_search_original):
     if m == 'VideoCard':
         result = {
             'display_core_clock':
-                elastic_search_original['core_clock'] > elastic_search_original['gpu_boost_core_clock']
+                elastic_search_original['core_clock'] > elastic_search_original['gpu_boost_core_clock'],
+            'display_memory_clock':
+                elastic_search_original['memory_clock'] - elastic_search_original['gpu_default_memory_clock'] >= 10
         }
         return result
     if m == 'Processor':

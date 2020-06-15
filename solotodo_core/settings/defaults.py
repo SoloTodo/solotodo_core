@@ -254,6 +254,7 @@ AWS_STORAGE_BUCKET_NAME = 'solotodo-core'
 AWS_SA_STORAGE_BUCKET_NAME = 'solotodo-sa'  # Made up, our bucket in SA region
 AWS_S3_SIGNATURE_VERSION = 's3v4'
 AWS_S3_REGION_NAME = 'us-east-1'
+AWS_S3_CUSTOM_DOMAIN = 'd3nezvk666rihe.cloudfront.net'
 
 ##############################################################################
 # DRF Configuration

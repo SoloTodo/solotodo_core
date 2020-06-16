@@ -20,7 +20,10 @@ class MediaRootPrivateS3Boto3Storage(S3Boto3Storage):
 
 
 def PrivateS3Boto3Storage():
-    return S3Boto3Storage(default_acl='private')
+    return S3Boto3Storage(
+        default_acl='private',
+        custom_domain=None
+    )
 
 
 def PrivateSaS3Boto3Storage():

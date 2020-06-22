@@ -12,7 +12,7 @@ from guardian.shortcuts import get_objects_for_user
 
 from category_columns.models import CategoryColumn
 from solotodo.models import Category, Store, Country, StoreType, Currency, \
-    Entity, EntityHistory, EsProduct
+    Entity, EntityHistory, EsProduct, Brand
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -29,14 +29,15 @@ class ReportDailyPricesForm(forms.Form):
     store_types = forms.ModelMultipleChoiceField(
         queryset=StoreType.objects.all(),
         required=False)
+    brands = forms.ModelMultipleChoiceField(
+        queryset=Brand.objects.all(),
+        required=False
+    )
     currency = forms.ModelChoiceField(
         queryset=Currency.objects.all(),
         required=False
     )
     exclude_unavailable = forms.IntegerField(
-        required=False
-    )
-    brand = forms.CharField(
         required=False
     )
     filename = forms.CharField(
@@ -68,10 +69,11 @@ class ReportDailyPricesForm(forms.Form):
         currency = self.cleaned_data['currency']
         timestamp = self.cleaned_data['timestamp']
         exclude_unavailable = self.cleaned_data['exclude_unavailable']
-        brand = self.cleaned_data['brand']
+        brands = self.cleaned_data['brands']
 
         ehs = EntityHistory.objects.filter(
             entity__product__instance_model__model__category=category,
+            entity__product__brand__in=brands,
             entity__store__in=stores,
             timestamp__gte=timestamp.start,
             timestamp__lte=timestamp.stop,
@@ -107,10 +109,6 @@ class ReportDailyPricesForm(forms.Form):
         product_ids = [x['product'] for x in entities.values('product')]
 
         es_search = EsProduct.search().filter('terms', product_id=product_ids)
-
-        if brand:
-            es_search = es_search.filter(
-                'term', **{'brand_unicode.keyword': brand})
 
         es_dict = {e.product_id: e.to_dict()
                    for e in es_search.scan()}

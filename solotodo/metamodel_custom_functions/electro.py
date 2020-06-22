@@ -91,6 +91,29 @@ def additional_es_fields(instance_model, elastic_search_original):
         result['pretty_weight'] = format_optional_field(
             elastic_search_original['weight'], 'kg')
 
+        total_capacity = \
+            elastic_search_original['refrigerator_capacity'] + \
+            elastic_search_original['freezer_capacity']
+
+        result['total_capacity'] = total_capacity
+        result['pretty_total_capacity'] = format_optional_field(
+            total_capacity, 'L.')
+
+        total_capacity_ranges = [
+            ('600 L, o más', 600),
+            ('350 a 599 L.', 650),
+            ('300 a 349 L.', 300),
+            ('299 L. o menos', 0),
+        ]
+
+        lg_cl_total_capacity_segment = None
+
+        for label, threshold in total_capacity_ranges:
+            if total_capacity >= threshold:
+                lg_cl_total_capacity_segment = label
+                break
+
+        result['lg_cl_total_capacity_segment'] = lg_cl_total_capacity_segment
         consumption = elastic_search_original['consumption']
         result['pretty_consumption'] = format_optional_field(
             consumption, 'kWh/mes')
@@ -133,6 +156,29 @@ def additional_es_fields(instance_model, elastic_search_original):
             result['pretty_weight'] = u'{} kg.'.format(0.001*weight)
         else:
             result['pretty_weight'] = 'Desconocido'
+
+        lg_cl_capacity = elastic_search_original['capacity_value'] or \
+                         elastic_search_original['drying_capacity_value']
+
+        total_capacity_ranges = [
+            ('20 kg. o más', 20000),
+            ('16 a 19.9 kg.', 16000),
+            ('10 a 15.9 kg.', 10000),
+            ('9.9 kg. o menos', 0),
+        ]
+
+        lg_cl_capacity_segment = None
+
+        for label, threshold in total_capacity_ranges:
+            if lg_cl_capacity >= threshold:
+                lg_cl_capacity_segment = label
+                break
+
+        result['lg_cl_capacity'] = lg_cl_capacity
+        result['pretty_lg_cl_capacity'] = format_optional_field(
+            round(lg_cl_capacity / 1000), 'kg.')
+        result['lg_cl_capacity_segment'] = lg_cl_capacity_segment
+
         return result
     if m == 'AirConditioner':
         result['pretty_inner_dimensions'] = \

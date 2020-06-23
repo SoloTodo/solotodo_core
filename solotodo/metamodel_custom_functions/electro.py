@@ -100,7 +100,7 @@ def additional_es_fields(instance_model, elastic_search_original):
             total_capacity, 'L.')
 
         total_capacity_ranges = [
-            ('600 L, o más', 600),
+            ('600 L. o más', 600),
             ('350 a 599 L.', 650),
             ('300 a 349 L.', 300),
             ('299 L. o menos', 0),

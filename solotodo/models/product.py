@@ -130,11 +130,11 @@ class Product(models.Model):
         search = EsProduct.search().filter(
             'terms', product_id=product_ids)[:len(product_ids)]
         response = search.execute().to_dict()
-        specs_dict = {e['_source']['product_id']: e['_source']['specs']
+        es_dict = {e['_source']['product_id']: e['_source']
                       for e in response['hits']['hits']}
 
         for product in products:
-            product._es_entry = specs_dict[product.id]
+            product._es_entry = es_dict[product.id]
 
     def user_has_staff_perms(self, user):
         return user.has_perm('is_category_staff', self.category)

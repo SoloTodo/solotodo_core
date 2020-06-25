@@ -89,7 +89,7 @@ class Product(models.Model):
     name = property(lambda self: str(self.instance_model))
 
     def __init__(self, *args, **kwargs):
-        self._specs = None
+        self._es_entry = None
         super(Product, self).__init__(*args, **kwargs)
 
     @property
@@ -98,10 +98,17 @@ class Product(models.Model):
 
     @property
     def specs(self):
-        if not self._specs:
-            self._specs = EsProduct.search().filter(
-                'term', product_id=self.id).execute()[0].to_dict()['specs']
-        return self._specs
+        if not self._es_entry:
+            self._es_entry = EsProduct.search().filter(
+                'term', product_id=self.id).execute()[0].to_dict()
+        return self._es_entry['specs']
+
+    @property
+    def keywords(self):
+        if not self._es_entry:
+            self._es_entry = EsProduct.search().filter(
+                'term', product_id=self.id).execute()[0].to_dict()
+        return self._es_entry['keywords']
 
     @property
     def picture_url(self):
@@ -127,7 +134,7 @@ class Product(models.Model):
                       for e in response['hits']['hits']}
 
         for product in products:
-            product._specs = specs_dict[product.id]
+            product._es_entry = specs_dict[product.id]
 
     def user_has_staff_perms(self, user):
         return user.has_perm('is_category_staff', self.category)
@@ -252,7 +259,7 @@ class Product(models.Model):
             candidate_specs = es_results_dict.get(entity.product_id)
             if not candidate_specs:
                 continue
-            product._specs = candidate_specs['specs']
+            product._es_entry = candidate_specs['specs']
             candidates.append(product)
 
         # Obtain the (field_name, weight) pairs

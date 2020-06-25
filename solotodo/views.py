@@ -289,7 +289,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
             products = []
             for es_product in es_products_page:
                 db_product = db_products_dict[es_product.product_id]
-                db_product._specs = es_product.to_dict()
+                db_product._es_entry = es_product.to_dict()
                 products.append(db_product)
 
             serializer = ProductSerializer(products, many=True,
@@ -1337,7 +1337,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         ).select_related('instance_model__model__category')
 
         for product in bucket_products:
-            product._specs = es_products_dict[product.id]
+            product._es_entry = es_products_dict[product.id]
 
         serializer = ProductSerializer(
             bucket_products, many=True, context={'request': request})

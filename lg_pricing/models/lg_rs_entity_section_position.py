@@ -110,7 +110,8 @@ class LgRsEntitySectionPosition(models.Model):
             print('Processing: {} / {}'.format(idx + 1, data_count))
             entity = entities_dict[entry['entity_history__entity']]
             section = sections_dict[entry['section']]
-            latest_position = latest_positions_dict[(entity.id, section.id, entry['date'])]
+            latest_position = latest_positions_dict[(entity.id, section.id,
+                                                     entry['date'])]
 
             writer.writerow([
                 entry['avg_value'],

@@ -121,7 +121,7 @@ class Command(BaseCommand):
             loc = ET.SubElement(sitemap, 'loc')
             loc.text = 'https://solotodo-core.s3.amazonaws.com/sitemaps/' \
                        'sitemap_products_{}_{}.xml'.format(
-                local_page + 1, country_code)
+                        local_page + 1, country_code)
             lastmod = ET.SubElement(sitemap, 'lastmod')
             lastmod.text = timezone.now().isoformat()
 

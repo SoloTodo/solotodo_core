@@ -158,7 +158,7 @@ def additional_es_fields(instance_model, elastic_search_original):
             result['pretty_weight'] = 'Desconocido'
 
         lg_cl_capacity = elastic_search_original['capacity_value'] or \
-                         elastic_search_original['drying_capacity_value']
+            elastic_search_original['drying_capacity_value']
 
         total_capacity_ranges = [
             ('20 kg. o más', 20000),

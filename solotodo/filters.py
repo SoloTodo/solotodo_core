@@ -153,11 +153,13 @@ class EntityFilterSet(rest_framework.FilterSet):
     )
 
     is_available = rest_framework.BooleanFilter(
-        field_name='is_available', method='_is_available', label='Is available?')
+        field_name='is_available', method='_is_available',
+        label='Is available?')
     is_active = rest_framework.BooleanFilter(
         field_name='is_active', method='_is_active', label='Is active?')
     is_associated = rest_framework.BooleanFilter(
-        field_name='is_associated', method='_is_associated', label='Is associated?')
+        field_name='is_associated', method='_is_associated',
+        label='Is associated?')
 
     @property
     def qs(self):

@@ -326,15 +326,15 @@ madre es socket {}
                     mb.specs.
                     chipset_northbridge_family_socket_socket_unicode))
             elif processor.specs.core_id in default_cores:
-                # No problem, chipset supports the core bu default
+                # No problem, chipset supports the core by default
                 pass
             elif processor.specs.core_id in update_cores:
                 warnings.append("""
-Para usar el procesador {} en la placa madre {} la placa madre puede que 
-requiera de actualización de BIOS previa, por favor confirme con la tienda 
+Para usar el procesador {} en la placa madre {} la placa madre puede que
+requiera de actualización de BIOS previa, por favor confirme con la tienda
 donde la vaya a comprar si es el caso y si la pueden entregar actualizada. \z\z
 
-Para Chile, las tiendas que ofrecen el servicio de actualización de placas 
+Para Chile, las tiendas que ofrecen el servicio de actualización de placas
 madre actualmente son:
 
 AllTec (gratis), Infor-Ingen (gratis), PC Express (gratis), TtChile (con un

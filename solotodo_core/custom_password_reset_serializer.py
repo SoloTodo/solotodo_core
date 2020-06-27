@@ -15,5 +15,6 @@ class CustomPasswordResetSerializer(PasswordResetSerializer):
         return {
             'domain_override': referer_domain,
             'use_https': referer_params.scheme == 'https',
-            'html_email_template_name': 'registration/password_reset_email_html.html'
+            'html_email_template_name':
+                'registration/password_reset_email_html.html'
         }

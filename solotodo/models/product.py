@@ -131,7 +131,7 @@ class Product(models.Model):
             'terms', product_id=product_ids)[:len(product_ids)]
         response = search.execute().to_dict()
         es_dict = {e['_source']['product_id']: e['_source']
-                      for e in response['hits']['hits']}
+                   for e in response['hits']['hits']}
 
         for product in products:
             product._es_entry = es_dict[product.id]

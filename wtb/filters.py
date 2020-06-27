@@ -32,7 +32,8 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
     )
 
     is_associated = rest_framework.BooleanFilter(
-        field_name='is_associated', method='_is_associated', label='Is associated?')
+        field_name='is_associated', method='_is_associated',
+        label='Is associated?')
 
     @property
     def qs(self):

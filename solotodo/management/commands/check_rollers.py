@@ -22,17 +22,21 @@ class Command(BaseCommand):
                     available_entries.append(store)
 
             if available_entries:
+                print('Available rollers found!')
                 message = 'Rodillo disponible en ' + str(available_entries)
                 emails = options['emails']
                 email = EmailMessage('Rodillo disponible!', message, sender,
                                      emails)
                 email.send()
+            else:
+                print('No available rollers found')
         except Exception:
             admin_user = SoloTodoUser.objects.get(pk=507)
             message = 'Error scrapeando rodillos'
             email = EmailMessage('Error scrapeando rodillos', message, sender,
                                  [admin_user.email])
             email.send()
+            print('Error scraping rollers')
 
     def obtain_data(self):
         session = requests.Session()

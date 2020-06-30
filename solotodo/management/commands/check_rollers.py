@@ -1,10 +1,12 @@
+import json
+import traceback
+
 import requests
 from bs4 import BeautifulSoup
 from django.core.mail import EmailMessage
 from django.core.management import BaseCommand
 
-from solotodo.models import SoloTodoUser
-from storescraper.stores import Falabella
+from solotodo.models import SoloTodoUser, Store
 
 
 class Command(BaseCommand):
@@ -30,13 +32,14 @@ class Command(BaseCommand):
                 email.send()
             else:
                 print('No available rollers found')
-        except Exception:
+        except Exception as e:
+            print('Error scraping rollers:', str(e))
+            traceback.print_exc()
             admin_user = SoloTodoUser.objects.get(pk=507)
             message = 'Error scrapeando rodillos'
             email = EmailMessage('Error scrapeando rodillos', message, sender,
                                  [admin_user.email])
             email.send()
-            print('Error scraping rollers')
 
     def obtain_data(self):
         session = requests.Session()
@@ -101,7 +104,9 @@ class Command(BaseCommand):
         # Falabella
         url = 'https://www.falabella.com/falabella-cl/product/8698963/' \
               'Rodillo-Flow-Smart-Tacx/8698967'
-        entry = Falabella.products_for_url(url, 'Roller')[0]
+        s = Store.objects.get(pk=9)
+        entry = s.scraper.products_for_url(
+            url, 'Roller', extra_args=json.loads(s.storescraper_extra_args))[0]
         if entry.is_available():
             data['Falabella'] = 'Available'
         else:

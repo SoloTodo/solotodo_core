@@ -1,15 +1,40 @@
-import json
-
 import requests
 from bs4 import BeautifulSoup
 from django.core.mail import EmailMessage
 from django.core.management import BaseCommand
 
-from solotodo.models import Currency, SoloTodoUser
+from solotodo.models import SoloTodoUser
+from storescraper.stores import Falabella
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('--emails', nargs='+')
+
     def handle(self, *args, **options):
+        sender = SoloTodoUser().get_bot().email_recipient_text()
+
+        try:
+            data = self.obtain_data()
+            available_entries = []
+            for store, status in data.items():
+                if status != 'Unavailable':
+                    available_entries.append(store)
+
+            if available_entries:
+                message = 'Rodillo disponible en ' + str(available_entries)
+                emails = options['emails']
+                email = EmailMessage('Rodillo disponible!', message, sender,
+                                     emails)
+                email.send()
+        except Exception:
+            admin_user = SoloTodoUser.objects.get(pk=507)
+            message = 'Error scrapeando rodillos'
+            email = EmailMessage('Error scrapeando rodillos', message, sender,
+                                 [admin_user.email])
+            email.send()
+
+    def obtain_data(self):
         session = requests.Session()
         data = {}
 
@@ -33,7 +58,7 @@ class Command(BaseCommand):
         # Garmin Buy
         soup = BeautifulSoup(session.get(
             'https://buy.garmin.com/es-CL/CL/p/690890').text,
-            'html.parser')
+                             'html.parser')
         if soup.find('script', {'id': 'productSignup'}):
             data['Garmin Buy'] = 'Unavailable'
         else:
@@ -42,7 +67,7 @@ class Command(BaseCommand):
         # Km 42
         soup = BeautifulSoup(session.get(
             'https://www.kilometro42.cl/rodillo-flow-smart-tacx').text,
-            'html.parser')
+                             'html.parser')
         if soup.find('meta', {'property': 'product:availability'})[
                 'content'] == 'instock':
             data['Km 42'] = 'Available'
@@ -69,6 +94,15 @@ class Command(BaseCommand):
         else:
             data['Ruta del deporte'] = 'Available'
 
+        # Falabella
+        url = 'https://www.falabella.com/falabella-cl/product/8698963/' \
+              'Rodillo-Flow-Smart-Tacx/8698967'
+        entry = Falabella.products_for_url(url, 'Roller')[0]
+        if entry.is_available():
+            data['Falabella'] = 'Available'
+        else:
+            data['Falabella'] = 'Unavailable'
+
         # BikeNew
         soup = BeautifulSoup(session.get(
             'https://bikenew.cl/producto/rodillo-flow-smart-tacx/').text,
@@ -81,7 +115,7 @@ class Command(BaseCommand):
         # GPS Aventura
         soup = BeautifulSoup(session.get(
             'https://www.gpsaventura.com/tacx-flow-smart').text,
-             'html.parser')
+                             'html.parser')
         if soup.find('meta', {'property': 'product:availability'})[
                 'content'] == 'out of stock':
             data['GPS Aventura'] = 'Unavailable'
@@ -97,10 +131,4 @@ class Command(BaseCommand):
         else:
             data['Be Quick'] = 'Available'
 
-        sender = SoloTodoUser().get_bot().email_recipient_text()
-        user = SoloTodoUser.objects.get(pk=507)
-        message = json.dumps(data, indent=2)
-
-        email = EmailMessage('Status rodillo Flow Smart', message, sender,
-                             [user.email])
-        email.send()
+        return data

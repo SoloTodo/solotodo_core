@@ -1178,25 +1178,9 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True)
     def videos(self, request, pk):
         product = self.get_object()
-        specs = product.specs
-        videos = ProductVideo.objects.all()
-        selected_videos = []
-
-        for video in videos:
-            conditions = json.loads(video.conditions)
-            include_video = True
-
-            for key, value in conditions.items():
-                if specs.get(key) not in value:
-                    include_video = False
-                    break
-
-            if include_video:
-                selected_videos.append(video)
-
-        serializer = ProductVideoSerializer(selected_videos, many=True,
+        product_videos = product.videos()
+        serializer = ProductVideoSerializer(product_videos, many=True,
                                             context={'request': request})
-
         return Response(serializer.data)
 
     @action(methods=['post', ], detail=True)

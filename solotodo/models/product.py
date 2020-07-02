@@ -1,4 +1,5 @@
 import collections
+import json
 
 import re
 
@@ -213,6 +214,27 @@ class Product(models.Model):
                     search_query |= name_term_query
 
         return search_query
+
+    def videos(self):
+        from solotodo.models import ProductVideo
+
+        specs = self.specs
+        videos = ProductVideo.objects.all()
+        selected_videos = []
+
+        for video in videos:
+            conditions = json.loads(video.conditions)
+            include_video = True
+
+            for key, value in conditions.items():
+                if specs.get(key) not in value:
+                    include_video = False
+                    break
+
+            if include_video:
+                selected_videos.append(video)
+
+        return selected_videos
 
     @classmethod
     def find_similar_products(cls, query_products,

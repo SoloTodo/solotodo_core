@@ -7,8 +7,8 @@ class ProductVideo(models.Model):
     conditions = models.CharField(max_length=256)
 
     def __str__(self):
-        return '{}-{}'.format(self.youtube_id, self.name)
+        return '{} - {}'.format(self.name, self.youtube_id)
 
     class Meta:
         app_label = 'solotodo'
-        ordering = ('name', )
+        ordering = ('-id', )

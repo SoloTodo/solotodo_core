@@ -281,7 +281,7 @@ class Product(models.Model):
             candidate_specs = es_results_dict.get(entity.product_id)
             if not candidate_specs:
                 continue
-            product._es_entry = candidate_specs['specs']
+            product._es_entry = candidate_specs
             candidates.append(product)
 
         # Obtain the (field_name, weight) pairs

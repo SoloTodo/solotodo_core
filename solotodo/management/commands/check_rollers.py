@@ -122,14 +122,14 @@ class Command(BaseCommand):
             data['BikeNew'] = 'Available'
 
         # GPS Aventura
-        soup = BeautifulSoup(session.get(
-            'https://www.gpsaventura.com/tacx-flow-smart').text,
-                             'html.parser')
-        if soup.find('meta', {'property': 'product:availability'})[
-                'content'] == 'out of stock':
-            data['GPS Aventura'] = 'Unavailable'
-        else:
-            data['GPS Aventura'] = 'Available'
+        # soup = BeautifulSoup(session.get(
+        #     'https://www.gpsaventura.com/tacx-flow-smart').text,
+        #                      'html.parser')
+        # if soup.find('meta', {'property': 'product:availability'})[
+        #         'content'] == 'out of stock':
+        #     data['GPS Aventura'] = 'Unavailable'
+        # else:
+        #     data['GPS Aventura'] = 'Available'
 
         # Be Quick
         response = session.get(

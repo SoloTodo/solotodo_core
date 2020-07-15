@@ -2,6 +2,7 @@ import io
 from collections import defaultdict
 
 import xlsxwriter
+from xlsxwriter.utility import xl_rowcol_to_cell
 from datetime import timedelta
 
 from django import forms
@@ -12,7 +13,7 @@ from django_filters.fields import IsoDateTimeRangeField
 from guardian.shortcuts import get_objects_for_user
 
 from solotodo.models import Category, Brand, EntitySectionPosition, \
-    StoreSection
+    StoreSection, StoreUpdateLog
 from solotodo.utils import iterable_to_dict
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
@@ -103,17 +104,11 @@ class StoreHistoricEntityPositionsForm(forms.Form):
         section_year_week_category_data = self.group_entity_section_positions(
             entity_section_positions, ['section', 'year', 'week', 'category'])
 
-        year_week_category_data = self.group_entity_section_positions(
-            entity_section_positions, ['year', 'week', 'category'])
-
         section_year_week_category_brand_data = \
             self.group_entity_section_positions(
                 entity_section_positions,
                 ['section', 'year', 'week', 'category', 'brand']
             )
-
-        year_week_category_brand_data = self.group_entity_section_positions(
-            entity_section_positions, ['year', 'week', 'category', 'brand'])
 
         category_section_data = self.group_entity_section_positions(
             entity_section_positions, ['category', 'section'])
@@ -149,6 +144,30 @@ class StoreHistoricEntityPositionsForm(forms.Form):
 
             iter_date += one_week
 
+        # UPDATES COUNT
+        updates = StoreUpdateLog.objects.filter(
+            creation_date__gte=timestamp.start,
+            creation_date__lte=timestamp.stop,
+            store=store,
+            status=3,
+        ).annotate(
+            week=ExtractWeek('creation_date'),
+            year=ExtractYear('creation_date')
+        )
+
+        updates = updates.order_by(
+            'year', 'week'
+        ).values(
+            'year', 'week'
+        ).annotate(
+            c=Count('*')
+        )
+
+        updates_dict = {}
+        for update in updates:
+            key = '{}-{}'.format(update['year'], update['week'])
+            updates_dict[key] = update['c']
+
         # # # REPORT # # #
         output = io.BytesIO()
 
@@ -171,6 +190,10 @@ class StoreHistoricEntityPositionsForm(forms.Form):
         percentage_bold_format.set_font_size(10)
         percentage_bold_format.set_bold(True)
 
+        decimal_format = workbook.add_format()
+        decimal_format.set_num_format('0.00')
+        decimal_format.set_font_size(10)
+
         # # # Category WORKSHEET # # #
         for category in categories:
             sections_in_category = sections_per_category[category.id]
@@ -189,10 +212,10 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                 if brands_in_category:
                     worksheet.merge_range(
                         0, col,
-                        0, col + len(brands_in_category) - 1,
+                        0, col + (len(brands_in_category)*2),
                         '{}-{}'.format(year, week),
                         header_format)
-                    col += len(brands_in_category)
+                    col += len(brands_in_category)*2 +1
                 else:
                     worksheet.write(0, col, '{}-{}'.format(year, week))
                     col += 1
@@ -202,14 +225,43 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                 'Sección'
             ]
 
-            for year_week in year_weeks:
-                headers.extend([str(brand) for brand in brands_in_category])
-
             for idx, header in enumerate(headers):
                 worksheet.write(1, idx, header, header_format)
 
-            row = 2
+            col = 2
+            double_headers = []
 
+            for year_week in year_weeks:
+                double_headers.extend([str(brand) for brand in brands_in_category])
+                double_headers.extend(['Total'])
+
+            for header in double_headers:
+                if header == 'Total':
+                    worksheet.write(1, col, 'Total', header_format)
+                    col += 1
+                else:
+                    worksheet.merge_range(
+                        1, col,
+                        1, col+1,
+                        header,
+                        header_format)
+                    col += 2
+
+            row = 2
+            col = 2
+            for header in double_headers:
+                if header == 'Total':
+                    col += 1
+                    continue
+
+                worksheet.write(row, col, 'Promedio apariciones', header_format)
+                col += 1
+                worksheet.write(row, col, 'Porcentaje', header_format)
+                col += 1
+
+            row = 3
+            sum_formula = '=SUM({}:{})'
+            percentage_formula = '={}/{}'
             for section in sections_in_category:
                 col = 0
                 worksheet.write(row, col, str(section.store))
@@ -218,35 +270,61 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                 worksheet.write(row, col, section.name)
 
                 for year, week in year_weeks:
+                    update_count = updates_dict['{}-{}'.format(year, week)]
+                    total = section_year_week_category_data.get(
+                        (section.id, year, week, category.id), 1)
+                    total = total/update_count
+                    total_position = xl_rowcol_to_cell(
+                        row, 1 + col + len(brands_in_category)*2)
                     for brand in brands_in_category:
                         col += 1
                         value = section_year_week_category_brand_data.get(
                             (section.id, year, week, category.id, brand.id), 0)
-                        total = section_year_week_category_data.get(
-                            (section.id, year, week, category.id), 1)
+                        value = value/update_count
+                        worksheet.write(row, col, value, decimal_format)
+                        col += 1
+                        pf = percentage_formula.format(
+                            xl_rowcol_to_cell(row, col-1),
+                            total_position)
+                        rowcol = xl_rowcol_to_cell(row, col)
+                        worksheet.write_formula(rowcol, pf, percentage_format)
 
-                        worksheet.write(row, col, value/total,
-                                        percentage_format)
+                    col += 1
+                    worksheet.write(row, col, total, decimal_format)
+
                 row += 1
 
             col = 1
             for year, week in year_weeks:
+                total_position = xl_rowcol_to_cell(
+                    row, 1 + col + len(brands_in_category) * 2)
                 for brand in brands_in_category:
                     col += 1
-                    value = year_week_category_brand_data.get(
-                        (year, week, category.id, brand.id), 0)
-                    total = year_week_category_data.get(
-                        (year, week, category.id), 1)
+                    sf = sum_formula.format(
+                        xl_rowcol_to_cell(3, col),
+                        xl_rowcol_to_cell(row-1, col))
+                    rowcol = xl_rowcol_to_cell(row, col)
+                    worksheet.write_formula(rowcol, sf, decimal_format)
+                    col += 1
+                    pf = percentage_formula.format(
+                        xl_rowcol_to_cell(row, col - 1),
+                        total_position)
+                    rowcol = xl_rowcol_to_cell(row, col)
+                    worksheet.write_formula(rowcol, pf, percentage_bold_format)
 
-                    worksheet.write(row, col, value / total,
-                                    percentage_bold_format)
+                col += 1
+                sf = sum_formula.format(
+                    xl_rowcol_to_cell(3, col),
+                    xl_rowcol_to_cell(row - 1, col))
+                rowcol = xl_rowcol_to_cell(row, col)
+                worksheet.write_formula(rowcol, sf, decimal_format)
 
         workbook.close()
         output.seek(0)
         file_value = output.getvalue()
         file_for_upload = ContentFile(file_value)
         storage = PrivateS3Boto3Storage()
-        filename = 'reports/historic_sku_positions.xlsx'
+        filename = 'reports/historic_sku_positions'
         path = storage.save(filename, file_for_upload)
 
         return {

@@ -151,6 +151,9 @@ class ProductPriceAlert(models.Model):
                 self.send_email(minimum_dict)
                 self.update_active_history()
 
+    def check_for_expiration(self):
+        pass
+
     def send_email(self, a_dict=None):
         if self.user:
             self._send_full_email(a_dict)

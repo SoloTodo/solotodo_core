@@ -9,5 +9,5 @@ def alert_check_for_changes(alert_id):
 
 
 @shared_task(queue='general', ignore_result=True)
-def alert_check_for_expiration(alert_id):
-    ProductPriceAlert.objects.get(pk=alert_id).check_for_expiration()
+def alert_revoke(alert_id):
+    ProductPriceAlert.objects.get(pk=alert_id).revoke()

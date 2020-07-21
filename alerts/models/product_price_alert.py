@@ -151,8 +151,10 @@ class ProductPriceAlert(models.Model):
                 self.send_email(minimum_dict)
                 self.update_active_history()
 
-    def check_for_expiration(self):
-        pass
+    def revoke(self):
+        self.send_expiration_email()
+        # TODO: uncomment after testing
+        # self.delete()
 
     def send_email(self, a_dict=None):
         if self.user:
@@ -406,6 +408,9 @@ class ProductPriceAlert(models.Model):
 
         send_mail('Actualización de tu producto {}'.format(self.product),
                   summary, sender, [self.email], html_message=html_message)
+
+    def send_expiration_email(self):
+        pass
 
     class Meta:
         app_label = 'alerts'

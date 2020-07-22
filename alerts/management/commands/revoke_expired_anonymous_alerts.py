@@ -12,5 +12,7 @@ class Command(BaseCommand):
         expired_alerts = ProductPriceAlert.objects.filter(
             email__isnull=False,
             creation_date__lte=date)
+        import ipdb
+        ipdb.set_trace()
         for alert in expired_alerts:
             alert_revoke.delay(alert.id)

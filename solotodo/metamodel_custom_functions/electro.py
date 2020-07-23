@@ -53,7 +53,23 @@ def additional_es_fields(instance_model, elastic_search_original):
         k2 = elastic_search_original['bundle_id']
 
         # Cantor pairing function
-        result['family_bundle_key'] = (k1 + k2) * (k1 + k2 + 1)//2 + k2
+        result['family_bundle_key'] = (k1 + k2) * (k1 + k2 + 1) // 2 + k2
+
+        if elastic_search_original['display_unicode'] == 'OLED':
+            lg_cac_segment = 'OLED'
+        elif elastic_search_original['display_unicode'] == 'NanoCell':
+            lg_cac_segment = 'NanoCell'
+        elif elastic_search_original['size_family_value'] >= 70:
+            lg_cac_segment = 'Ultra Large TV'
+        elif elastic_search_original['resolution_id'] == 281518:
+            lg_cac_segment = 'UHD'
+        elif elastic_search_original['resolution_id'] == 281535:
+            lg_cac_segment = 'Full HD'
+        else:
+            lg_cac_segment = 'LED'
+
+        result['lg_cac_segment'] = lg_cac_segment
+
         return result
 
     if m == 'ExternalStorageDrive':

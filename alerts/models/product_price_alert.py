@@ -412,9 +412,9 @@ class ProductPriceAlert(models.Model):
         product_label = '<span class="product-name">{}</span>' \
             .format(self.product)
 
-        summary = 'Tu alerta para el producto {} ha expirado!. Si deseas ' \
-                  'crear otra puedes hacerlo visitando la pagina del producto,' \
-                  ' haciendo click en el boton de abajo'\
+        summary = 'Tu alerta para el producto {} ha expirado! Si deseas ' \
+                  'crear otra puedes hacerlo visitando la página del ' \
+                  'producto haciendo click en el botón de abajo'\
             .format(product_label)
         sender = SoloTodoUser().get_bot().email_recipient_text()
 
@@ -428,7 +428,7 @@ class ProductPriceAlert(models.Model):
             })
 
         send_mail('Aviso expiracion alerta producto {}'.format(self.product),
-                  summary, sender, ['david@fml.cl'], html_message=html_message)
+                  summary, sender, [self.email], html_message=html_message)
 
     class Meta:
         app_label = 'alerts'

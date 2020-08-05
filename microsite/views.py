@@ -58,7 +58,8 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
             product__in=products,
             store__in=stores,
             condition='https://schema.org/NewCondition',
-            active_registry__cell_monthly_payment__isnull=True
+            active_registry__cell_monthly_payment__isnull=True,
+            seller__isnull=True
         ).get_available().order_by('active_registry__offer_price')
 
         entities_dict = OrderedDict()

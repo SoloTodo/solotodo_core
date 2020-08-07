@@ -151,6 +151,10 @@ class ProductPriceAlert(models.Model):
                 self.send_email(minimum_dict)
                 self.update_active_history()
 
+    def revoke(self):
+        self.send_expiration_email()
+        self.delete()
+
     def send_email(self, a_dict=None):
         if self.user:
             self._send_full_email(a_dict)
@@ -402,6 +406,28 @@ class ProductPriceAlert(models.Model):
             })
 
         send_mail('Actualización de tu producto {}'.format(self.product),
+                  summary, sender, [self.email], html_message=html_message)
+
+    def send_expiration_email(self):
+        product_label = '<span class="product-name">{}</span>' \
+            .format(self.product)
+
+        summary = 'Tu alerta para el producto {} ha expirado! Si deseas ' \
+                  'crear otra puedes hacerlo visitando la página del ' \
+                  'producto haciendo click en el botón de abajo'\
+            .format(product_label)
+        sender = SoloTodoUser().get_bot().email_recipient_text()
+
+        html_message = render_to_string(
+            'alert_expiration_mail.html',
+            {
+                'product': self.product,
+                'summary': mark_safe(summary),
+                'solotodo_com_domain': Site.objects.get(
+                    pk=settings.SOLOTODO_COM_SITE_ID).domain
+            })
+
+        send_mail('Aviso expiracion alerta producto {}'.format(self.product),
                   summary, sender, [self.email], html_message=html_message)
 
     class Meta:

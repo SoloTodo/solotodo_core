@@ -1,0 +1,22 @@
+<mjml>
+  <mj-head>
+    <mj-style> .product-name { font-weight: bold; color: #ce5028; } .old-price { text-decoration: line-through; } .text-green { color: #28a745; } .text-red { color: #dc3545; } .text-grey { color: #6c757d; } .unsubscribe-link { color: black; } </mj-style>
+  </mj-head>
+  <mj-body background-color="#f9f9f9">
+    <mj-section>
+      <mj-column>
+        <mj-image src="https://s3.amazonaws.com/solotodo-core/media/logo_500.png" width="250px" align="left" /> </mj-column>
+    </mj-section>
+    <mj-section background-color="#ffffff">
+      <mj-column>
+        <mj-text>{{ summary|safe }}</mj-text>
+      </mj-column>
+    </mj-section>
+
+    <mj-section>
+      <mj-column>
+        <mj-button href="https://{{ solotodo_com_domain }}/products/{{ product.id }}" background-color="#ce5028" width="100%" font-size="16px">Ver en SoloTodo</mj-button>
+      </mj-column>
+    </mj-section>
+  </mj-body>
+</mjml>

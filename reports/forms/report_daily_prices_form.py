@@ -73,11 +73,13 @@ class ReportDailyPricesForm(forms.Form):
 
         ehs = EntityHistory.objects.filter(
             entity__product__instance_model__model__category=category,
-            entity__product__brand__in=brands,
             entity__store__in=stores,
             timestamp__gte=timestamp.start,
             timestamp__lte=timestamp.stop,
         ).annotate(date=Cast('timestamp', DateField()))
+
+        if brands:
+            ehs = ehs.filter(entity__product__brand__in=brands)
 
         if countries:
             ehs = ehs.filter(entity__store__country__in=countries)

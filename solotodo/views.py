@@ -1393,6 +1393,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         response = Response(status=status.HTTP_302_FOUND)
         response['Location'] = resized_picture.url
+        response['Cache-Control'] = 'max-age=3600'
         return response
 
     @action(detail=True)

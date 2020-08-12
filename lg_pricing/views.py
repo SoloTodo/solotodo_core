@@ -1,5 +1,6 @@
 import io
 import csv
+import requests
 from collections import OrderedDict
 
 from django.db.models import Min
@@ -9,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.exceptions import ParseError
 from django.http import HttpResponse
+from django.conf import settings
 
 from wtb.models import WtbEntity, WtbBrand
 from solotodo.models import Entity, Product
@@ -256,3 +258,32 @@ class LgWtbViewSet(ViewSet):
             entry['custom_fields'] = products_metadata[entry['product']['id']]
 
         return Response(result)
+
+
+class SendinblueViewSet(ViewSet):
+    @action(detail=False, methods=['post'])
+    def contacts(self, request):
+        url = "https://api.sendinblue.com/v3/contacts"
+        payload = request.data
+        payload['updateEnabled'] = True
+        headers = {
+            'accept': "application/json",
+            'content-type': "application/json",
+            'api-key': settings.SENDINBLUE_KEY
+        }
+
+        response = requests.request(
+            "POST", url, data=json.dumps(payload), headers=headers)
+        response_headers = {
+            'content-type': 'application/json'
+        }
+
+        if response.text:
+            data = json.loads(response.text)
+        else:
+            data = {}
+
+        return Response(
+            data,
+            status=response.status_code,
+            headers=response_headers)

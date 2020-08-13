@@ -274,6 +274,7 @@ class SendinblueViewSet(ViewSet):
 
         response = requests.request(
             "POST", url, data=json.dumps(payload), headers=headers)
+
         response_headers = {
             'content-type': 'application/json'
         }
@@ -281,9 +282,9 @@ class SendinblueViewSet(ViewSet):
         if response.text:
             data = json.loads(response.text)
         else:
-            data = {}
+            data = None
 
         return Response(
-            data,
+            data=data,
             status=response.status_code,
             headers=response_headers)

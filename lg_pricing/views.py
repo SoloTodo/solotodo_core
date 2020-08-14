@@ -265,7 +265,6 @@ class SendinblueViewSet(ViewSet):
     def contacts(self, request):
         url = "https://api.sendinblue.com/v3/contacts"
         payload = request.data
-        payload['updateEnabled'] = True
         headers = {
             'accept': "application/json",
             'content-type': "application/json",

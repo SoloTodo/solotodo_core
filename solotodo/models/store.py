@@ -57,6 +57,7 @@ class Store(models.Model):
     group = models.OneToOneField(Group, on_delete=models.SET_NULL,
                                  blank=True, null=True,
                                  related_name='preferred_store')
+    last_updated = models.DateTimeField(auto_now=True)
 
     objects = StoreQuerySet.as_manager()
 

@@ -52,6 +52,12 @@ class MicrositeEntrySiteSerializer(serializers.Serializer):
     metadata = MicrositeEntryWithoutProductSerializer()
     product = ProductSerializer()
     entities = CustomEntitySerializer(many=True)
+    keywords = serializers.SerializerMethodField()
+
+    def get_keywords(self, obj):
+        keywords = obj['product'].keywords
+        keywords += ' ' + obj['metadata'].get_keywords()
+        return keywords
 
 
 class MicrositeBrandSerializer(serializers.HyperlinkedModelSerializer):

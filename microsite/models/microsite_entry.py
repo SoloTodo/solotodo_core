@@ -35,6 +35,21 @@ class MicrositeEntry(models.Model):
     def __str__(self):
         return '({}) - {}'.format(self.brand, self.product)
 
+    def get_keywords(self):
+        keywords = ''
+        fields = [
+            'sku', 'title', 'subtitle', 'description', 'custom_attr_1_str',
+            'custom_attr_2_str', 'custom_attr_3_str', 'custom_attr_4_str',
+            'custom_attr_5_str'
+        ]
+
+        for field in fields:
+            value = getattr(self, field, None)
+            if value:
+                keywords += str(value) + ' '
+
+        return keywords
+
     class Meta:
         app_label = 'microsite'
         ordering = ('product__instance_model__model__category', 'ordering',)

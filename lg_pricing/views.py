@@ -16,7 +16,7 @@ class LgWtbViewSet(ViewSet):
     @action(detail=False, methods=['get'])
     def fb_feed(self, request):
         brand = WtbBrand.objects.get(pk=1)
-        store_ids = [9, 18, 11, 30, 60, 5, 43]
+        store_ids = [9, 18, 11, 30, 60, 5, 43, 12]
 
         category_taxonomy_mapping = {
             36: ('Electronics > Electronics Accessories',

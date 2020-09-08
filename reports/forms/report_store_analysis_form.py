@@ -82,6 +82,7 @@ class ReportStoreAnalysisForm(forms.Form):
         ).get_available() \
             .select_related(
             'product__instance_model__model__category',
+            'product__brand',
             'active_registry',
             'currency',
             'store'
@@ -275,11 +276,17 @@ class ReportStoreAnalysisForm(forms.Form):
         workbook.close()
 
         output.seek(0)
-        file_for_upload = ContentFile(output.getvalue())
+        file_value = output.getvalue()
+        file_for_upload = ContentFile(file_value)
 
         storage = PrivateS3Boto3Storage()
         path = storage.save('reports/store_analysis_{}.xlsx'.format(
             timezone.now().strftime('%Y-%m-%d_%H:%M:%S')),
             file_for_upload)
+        filename = timezone.now().strftime('store_analysis_%Y-%m-%d_%H:%M:%S')
 
-        return path
+        return {
+            'file': file_value,
+            'filename': filename,
+            'path': path
+        }

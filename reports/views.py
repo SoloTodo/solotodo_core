@@ -17,7 +17,8 @@ from reports.forms.report_wtb_form import ReportWtbForm
 from reports.forms.report_soicos_conversions import ReportSoicosConversions
 from reports.models import Report, ReportDownload
 from reports.serializers import ReportSerializer
-from reports.tasks import send_daily_prices_task, send_current_prices_task
+from reports.tasks import send_daily_prices_task, send_current_prices_task, \
+    send_store_analysis_report_task
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -64,19 +65,12 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
                 'errors': form.errors
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        report_path = form.generate_report()
+        send_store_analysis_report_task.delay(
+            user.id, request.META['QUERY_STRING'])
 
-        ReportDownload.objects.create(
-            report=report,
-            user=user,
-            file=report_path
-        )
-
-        storage = PrivateS3Boto3Storage()
-        report_url = storage.url(report_path)
         return Response({
-            'url': report_url
-        })
+            'message': 'ok'
+        }, status=status.HTTP_200_OK)
 
     @action(detail=False)
     def weekly_prices(self, request):

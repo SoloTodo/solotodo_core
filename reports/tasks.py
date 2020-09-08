@@ -5,6 +5,7 @@ from django.http import QueryDict
 
 from reports.forms.report_daily_prices_form import ReportDailyPricesForm
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
+from reports.forms.report_store_analysis_form import ReportStoreAnalysisForm
 from reports.models import Report, ReportDownload
 from solotodo.models import SoloTodoUser, EsProduct
 
@@ -58,6 +59,46 @@ def send_current_prices_task(user_id, query_string):
         print('Exito')
     except Exception as e:
         print(e)
+
+
+@shared_task(queue='reports', ignore_result=True, task_time_limit=1800)
+def send_store_analysis_report_task(user_id, query_string):
+    report = Report.objects.get(slug='store_analysis')
+    user = SoloTodoUser.objects.get(id=user_id)
+
+    q_dict = QueryDict(query_string)
+
+    form = ReportStoreAnalysisForm(user, q_dict)
+    assert form.is_valid()
+
+    report_data = form.generate_report()
+
+    report_filename = '{}.xlsx'.format(report_data['filename'])
+    report_file = report_data['file']
+    report_path = report_data['path']
+
+    ReportDownload.objects.create(
+        report=report,
+        user=user,
+        file=report_path)
+
+    sender = SoloTodoUser().get_bot().email_recipient_text()
+    message = 'Se adjunta el reporte de análisis de tienda para ' \
+              '{}'.format(form.cleaned_data['store'])
+
+    subject = 'Reporte de análisis de tienda {} - %Y-%m-%d'.format(
+        form.cleaned_data['store'])
+    subject = timezone.now().strftime(subject)
+
+    email = EmailMessage(subject,
+                         message, sender,
+                         [user.email])
+    email.attach(
+        report_filename, report_file,
+        'application/'
+        'vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+    email.send()
 
 
 @shared_task(queue='reports', ignore_result=True, task_time_limit=1800)

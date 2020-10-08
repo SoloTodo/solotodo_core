@@ -137,7 +137,7 @@ class LgRsEntityHistory(models.Model):
         file_for_upload = ContentFile(output.getvalue().encode('utf-8'))
         storage = PrivateSaS3Boto3Storage()
         storage.file_overwrite = True
-        path = 'lg_pricing/entity_positions.csv'
+        path = 'lg_pricing/entity_prices.csv'
         storage.save(path, file_for_upload)
 
         print('Loading new data into Redshift')

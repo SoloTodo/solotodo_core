@@ -77,6 +77,11 @@ def product_save(product_id):
 
 
 @shared_task(queue='general', ignore_result=True)
+def entity_save(entity_id):
+    Entity.objects.get(pk=entity_id).save()
+
+
+@shared_task(queue='general', ignore_result=True)
 def es_leads_index():
     from solotodo.models import Lead
     from solotodo.es_models.es_lead import EsLead

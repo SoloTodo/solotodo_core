@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from wtb.serializers import WtbEntitySerializer
 from .models import MicrositeBrand, MicrositeEntry
 from solotodo.models import Entity, EntityHistory
 from solotodo.serializers import \
@@ -47,12 +48,14 @@ class MicrositeEntrySiteSerializer(serializers.Serializer):
                 'id',
                 'store',
                 'external_url',
-                'active_registry')
+                'active_registry'
+            )
 
     metadata = MicrositeEntryWithoutProductSerializer()
     product = ProductSerializer()
     entities = CustomEntitySerializer(many=True)
     keywords = serializers.SerializerMethodField()
+    wtb_entity = WtbEntitySerializer()
 
     def get_keywords(self, obj):
         keywords = obj['product'].keywords

@@ -46,13 +46,23 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
 
     @action(methods=['get'], detail=True)
     def site_data(self, request, pk, *args, **kwargs):
+        from wtb.models import WtbEntity
+
         microsite_brand = self.get_object()
         entries = microsite_brand.entries.all()
-
         stores = microsite_brand.stores.all()
 
         products = [entry.product for entry in entries]
         Product.prefetch_specs(products)
+
+        # ad-hoc logic for LG CL
+
+        wtb_entities_dict = {
+            wtb_entity.product: wtb_entity
+            for wtb_entity in WtbEntity.objects.filter(
+                brand=1, product__isnull=False
+            ).select_related('product', 'category', 'brand')
+        }
 
         entities = Entity.objects.filter(
             product__in=products,
@@ -73,7 +83,8 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
         result_array = [{
             'metadata': entry,
             'product': entry.product,
-            'entities': entities_dict[entry.product]
+            'entities': entities_dict[entry.product],
+            'wtb_entity': wtb_entities_dict.get(entry.product, None)
         } for entry in entries]
 
         serializer = MicrositeEntrySiteSerializer(

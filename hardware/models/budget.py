@@ -34,13 +34,21 @@ class Budget(models.Model):
     def __str__(self):
         return self.name
 
+    def expanded_products_pool(self):
+        # Returnes a "fixed" product pool of the budget that also considers
+        # the "selected_product" of each entry
+        products = list(self.products_pool.all())
+        for entry in self.entries.filter(selected_product__isnull=False).select_related('selected_product'):
+            products.append(entry.selected_product)
+        return products
+
     def export(self, export_format):
         stores = [entry.selected_store for entry in
                   self.entries.filter(selected_store__isnull=False)
-                      .prefetch_related('selected_store')]
+                      .select_related('selected_store')]
 
         entities = Entity.objects.filter(
-            product__in=self.products_pool.all(),
+            product__in=self.expanded_products_pool(),
             store__in=stores
         ).get_available() \
             .order_by('active_registry__offer_price') \

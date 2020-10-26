@@ -8,7 +8,8 @@ class BudgetPermission(BasePermission):
 
         if view.action in ['create', 'update', 'partial_update',
                            'destroy', 'add_product', 'select_cheapest_stores',
-                           'compatibility_issues', 'remove_product'] \
+                           'compatibility_issues', 'remove_product',
+                           'available_entities'] \
                 and request.user.is_authenticated:
             return True
 

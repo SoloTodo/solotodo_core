@@ -1,3 +1,6 @@
+import urllib
+
+from django.http import HttpResponseRedirect
 from elasticsearch_dsl import Search
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -5,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from django_filters import rest_framework
+from rest_framework.reverse import reverse
 
 from hardware.filters import BudgetFilterSet
 from hardware.forms.budget_export_format_form import BudgetExportFormatForm
@@ -93,6 +97,21 @@ class BudgetViewSet(viewsets.ModelViewSet):
         budget = self.get_object()
         serializer = BudgetSerializer(budget, context={'request': request})
         return Response(serializer.data)
+
+    @action(detail=True)
+    def available_entities(self, request, *args, **kwargs):
+        budget = self.get_object()
+        query = {
+            'ids': [p.id for p in budget.expanded_products_pool()],
+            'stores': [s.id for s in budget.user.preferred_stores.all()]
+        }
+
+        if budget.user.preferred_exclude_refurbished:
+            query['exclude_refurbished'] = 1
+
+        url = reverse('product-available_entities', request=request) + '?' + \
+              urllib.parse.urlencode(query, True)
+        return HttpResponseRedirect(url)
 
 
 class BudgetEntryViewSet(viewsets.ModelViewSet):

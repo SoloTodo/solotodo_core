@@ -1094,7 +1094,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return ProductSerializer
 
-    @action(methods=['GET', 'POST'], detail=False)
+    @action(methods=['GET', 'POST'], detail=False,
+            url_name='available_entities')
     def available_entities(self, request):
         if request.method == 'GET':
             queryset = self.filter_queryset(self.get_queryset())

@@ -1,13 +1,36 @@
+from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.db import models
-from guardian.shortcuts import get_objects_for_user
+from guardian.shortcuts import get_objects_for_user, get_objects_for_group
 
 from metamodel.models import MetaModel
 from solotodo.models.category_tier import CategoryTier
 
 
 class CategoryQuerySet(models.QuerySet):
-    def filter_by_user_perms(self, user, permission):
+    def filter_by_user_perms(self, user, permission, reload_cache=False):
+        from solotodo_core import settings
+
+        user_group_names = [x['name'] for x in user.groups.values('name')]
+
+        if permission == 'view_category' and (
+                user.is_anonymous or user_group_names ==
+                [settings.DEFAULT_GROUP_NAME]):
+            return self.filter_viewable_by_default_group(
+                reload_cache=reload_cache)
+
         return get_objects_for_user(user, permission, self)
+
+    def filter_viewable_by_default_group(self, reload_cache=False):
+        from solotodo_core import settings
+
+        categories = cache.get('default_group_categories')
+        if not categories or reload_cache:
+            group = Group.objects.get(name=settings.DEFAULT_GROUP_NAME)
+            categories = get_objects_for_group(group, 'view_category', self)
+            cache.set('default_group_categories', categories)
+
+        return self.intersection(categories)
 
 
 class Category(models.Model):

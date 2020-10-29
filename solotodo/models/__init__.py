@@ -52,7 +52,8 @@ def handle_user_creation(sender, instance=None, created=False, **kwargs):
         # Create Authorization token
         Token.objects.create(user=instance)
         # Add user to base group with basic permissions
-        group, created = Group.objects.get_or_create(name='base')
+        group, created = Group.objects.get_or_create(
+            name=settings.DEFAULT_GROUP_NAME)
         instance.groups.add(group)
 
 

@@ -72,35 +72,45 @@ class EsProductsBrowseForm(forms.Form):
         if not requested_stores:
             return Store.objects.filter_by_user_perms(self.user, 'view_store')
 
-        valid_stores = requested_stores.filter_by_user_perms(self.user,
-                                                             'view_store')
-        invalid_stores = requested_stores.exclude(
-            pk__in=[x.id for x in valid_stores])
+        def _get_invalid_stores(reload_cache=False):
+            valid_stores = requested_stores.filter_by_user_perms(
+                self.user, 'view_store', reload_cache=reload_cache)
+            return requested_stores.difference(valid_stores)
 
-        if not invalid_stores:
-            return requested_stores
+        invalid_stores = _get_invalid_stores()
 
-        raise forms.ValidationError('Invalid stores: {}'.format(
-            [x.id for x in invalid_stores]))
+        if invalid_stores:
+            # Try flushing the cache
+            invalid_stores = _get_invalid_stores(reload_cache=True)
+
+            if invalid_stores:
+                raise forms.ValidationError('Invalid stores: {}'.format(
+                    [x.id for x in invalid_stores]))
+
+        return requested_stores
 
     def clean_categories(self):
         requested_categories = self.cleaned_data['categories']
 
         if not requested_categories:
-            return Category.objects.filter_by_user_perms(
-                self.user, 'view_category')
+            return Category.objects.filter_by_user_perms(self.user, 'view_category')
 
-        valid_categories = requested_categories.filter_by_user_perms(
-            self.user, 'view_category')
-        invalid_categories = requested_categories.exclude(
-            pk__in=[x.id for x in valid_categories])
+        def _get_invalid_categories(reload_cache=False):
+            valid_categories = requested_categories.filter_by_user_perms(
+                self.user, 'view_store', reload_cache=reload_cache)
+            return requested_categories.difference(valid_categories)
 
-        if not invalid_categories:
-            return requested_categories
+        invalid_categories = _get_invalid_categories()
 
-        raise forms.ValidationError(
-            'Invalid categories: {}'.format(
-                [x.id for x in invalid_categories]))
+        if invalid_categories:
+            # Try flushing the cache
+            invalid_categories = _get_invalid_categories(reload_cache=True)
+
+            if invalid_categories:
+                raise forms.ValidationError('Invalid categories: {}'.format(
+                    [x.id for x in invalid_categories]))
+
+        return requested_categories
 
     def get_category_entities(self, category, request):
         """

@@ -3,13 +3,13 @@ import io
 import base64
 import traceback
 
-from celery.result import allow_join_result
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-from guardian.shortcuts import get_objects_for_user
+from guardian.shortcuts import get_objects_for_user, get_objects_for_group
 from sorl.thumbnail import ImageField
 
 from .store_type import StoreType
@@ -23,7 +23,17 @@ from storescraper.utils import get_store_class_by_name
 
 
 class StoreQuerySet(models.QuerySet):
-    def filter_by_user_perms(self, user, permission):
+    def filter_by_user_perms(self, user, permission, reload_cache=False):
+        from solotodo_core import settings
+
+        user_group_names = [x['name'] for x in user.groups.values('name')]
+
+        if permission == 'view_store' and (
+                user.is_anonymous or user_group_names ==
+                [settings.DEFAULT_GROUP_NAME]):
+            return self.filter_viewable_by_default_group(
+                reload_cache=reload_cache)
+
         return get_objects_for_user(user, permission, self)
 
     def filter_by_banners_support(self):
@@ -38,6 +48,17 @@ class StoreQuerySet(models.QuerySet):
 
         return self.filter(
             pk__in=[s.id for s in stores_with_banner_compatibility])
+
+    def filter_viewable_by_default_group(self, reload_cache=False):
+        from solotodo_core import settings
+
+        stores = cache.get('default_group_stores')
+        if not stores or reload_cache:
+            group = Group.objects.get(name=settings.DEFAULT_GROUP_NAME)
+            stores = get_objects_for_group(group, 'view_store', self)
+            cache.set('default_group_stores', stores)
+
+        return self.intersection(stores)
 
 
 class Store(models.Model):

@@ -52,13 +52,14 @@ class StoreQuerySet(models.QuerySet):
     def filter_viewable_by_default_group(self, reload_cache=False):
         from solotodo_core import settings
 
-        stores = cache.get('default_group_stores')
-        if not stores or reload_cache:
+        store_ids = cache.get('default_group_store_ids')
+        if not store_ids or reload_cache:
             group = Group.objects.get(name=settings.DEFAULT_GROUP_NAME)
             stores = get_objects_for_group(group, 'view_store', self)
-            cache.set('default_group_stores', stores)
+            store_ids = [x.id for x in stores]
+            cache.set('default_group_store_ids', store_ids)
 
-        return self.intersection(stores)
+        return self.filter(pk__in=store_ids)
 
 
 class Store(models.Model):

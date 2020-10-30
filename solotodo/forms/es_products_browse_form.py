@@ -93,11 +93,12 @@ class EsProductsBrowseForm(forms.Form):
         requested_categories = self.cleaned_data['categories']
 
         if not requested_categories:
-            return Category.objects.filter_by_user_perms(self.user, 'view_category')
+            return Category.objects.filter_by_user_perms(
+                self.user, 'view_category')
 
         def _get_invalid_categories(reload_cache=False):
             valid_categories = requested_categories.filter_by_user_perms(
-                self.user, 'view_store', reload_cache=reload_cache)
+                self.user, 'view_category', reload_cache=reload_cache)
             return requested_categories.difference(valid_categories)
 
         invalid_categories = _get_invalid_categories()

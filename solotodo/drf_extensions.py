@@ -22,12 +22,11 @@ class PermissionListModelMixin(object):
         # Add user permissions
 
         perms_checker = ObjectPermissionChecker(request.user)
-        objects = list(queryset)
-        perms_checker.prefetch_perms(objects)
+        perms_checker.prefetch_perms(queryset)
 
         response_data = serializer.data
 
-        for idx, obj in enumerate(objects):
+        for idx, obj in enumerate(queryset):
             response_data[idx]['permissions'] = perms_checker.get_perms(obj)
 
         return Response(response_data)

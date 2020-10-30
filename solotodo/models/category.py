@@ -24,13 +24,14 @@ class CategoryQuerySet(models.QuerySet):
     def filter_viewable_by_default_group(self, reload_cache=False):
         from solotodo_core import settings
 
-        categories = cache.get('default_group_categories')
-        if not categories or reload_cache:
+        category_ids = cache.get('default_group_category_ids')
+        if not category_ids or reload_cache:
             group = Group.objects.get(name=settings.DEFAULT_GROUP_NAME)
             categories = get_objects_for_group(group, 'view_category', self)
-            cache.set('default_group_categories', categories)
+            category_ids = [x.id for x in categories]
+            cache.set('default_group_category_ids', category_ids)
 
-        return self.intersection(categories)
+        return self.filter(pk__in=category_ids)
 
 
 class Category(models.Model):

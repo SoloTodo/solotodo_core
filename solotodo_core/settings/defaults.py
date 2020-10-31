@@ -135,10 +135,21 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'solotodo_core',
-    }
+    },
+    'reader': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'solotodo_core',
+    },
+    'writer': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'solotodo_core',
+    },
 }
 
-DATABASE_ROUTERS = ['lg_pricing.db_router.LgPricingDbRouter']
+DATABASE_ROUTERS = [
+    'lg_pricing.db_router.LgPricingDbRouter',
+    'solotodo.db_router.RdsDbRouter'
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators

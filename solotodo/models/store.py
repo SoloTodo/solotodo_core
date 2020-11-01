@@ -188,6 +188,7 @@ class Store(models.Model):
             print(entity.id)
             scraped_product_for_update = scraped_products_dict.pop(
                 entity.key, None)
+            print(scraped_product_for_update)
 
             if scraped_product_for_update:
                 category = categories_dict[

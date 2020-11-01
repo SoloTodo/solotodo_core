@@ -268,7 +268,7 @@ class Entity(models.Model):
 
         # If the entity is currently inactive and no scraping information
         # was obtained for it then just return
-        if not self.active_registry and not scraped_product:
+        if not self.active_registry_id and not scraped_product:
             return
 
         updated_data = {

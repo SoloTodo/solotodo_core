@@ -189,6 +189,11 @@ class Store(models.Model):
             scraped_product_for_update = scraped_products_dict.pop(
                 entity.key, None)
 
+            if not entity.active_registry_id and \
+                    not scraped_product_for_update:
+                print('skipping')
+                continue
+
             if scraped_product_for_update:
                 category = categories_dict[
                     scraped_product_for_update.category]

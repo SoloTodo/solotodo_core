@@ -124,6 +124,8 @@ class Store(models.Model):
                 update_log.registry_file = real_filename
                 update_log.save()
 
+        print('Scraping products')
+
         try:
             scraped_products_data = scraper.products(
                 categories=[c.storescraper_name for c in categories],
@@ -137,6 +139,8 @@ class Store(models.Model):
             error_message = 'Unknown error: {}'.format(traceback.format_exc())
             log_update_error(error_message)
             raise
+
+        print('Products scraped')
 
         self.update_with_scraped_products(
             categories,
@@ -166,16 +170,22 @@ class Store(models.Model):
 
         assert self.last_activation is not None
 
+        print('1')
         scraped_products_dict = iterable_to_dict(scraped_products, 'key')
+        print('2')
         entities_to_be_updated = self.entity_set.filter(
             Q(category__in=categories) |
             Q(key__in=scraped_products_dict.keys())).select_related()
+        print('3')
 
         categories_dict = iterable_to_dict(Category, 'storescraper_name')
         currencies_dict = iterable_to_dict(Currency, 'iso_code')
         sections_dict = iterable_to_dict(self.sections.all(), 'name')
 
+        print('4')
+
         for entity in entities_to_be_updated:
+            print(entity.id)
             scraped_product_for_update = scraped_products_dict.pop(
                 entity.key, None)
 
@@ -195,6 +205,7 @@ class Store(models.Model):
                 currency)
 
         for scraped_product in scraped_products_dict.values():
+            print(scraped_product.key)
             Entity.create_from_scraped_product(
                 scraped_product,
                 self,
@@ -202,6 +213,8 @@ class Store(models.Model):
                 currencies_dict[scraped_product.currency],
                 sections_dict
             )
+
+        print('Done')
 
         if update_log:
             update_log.status = update_log.SUCCESS

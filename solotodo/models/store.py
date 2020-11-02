@@ -55,7 +55,7 @@ class StoreQuerySet(models.QuerySet):
         store_ids = cache.get('default_group_store_ids')
         if not store_ids or reload_cache:
             group = Group.objects.get(name=settings.DEFAULT_GROUP_NAME)
-            stores = get_objects_for_group(group, 'view_store', self)
+            stores = get_objects_for_group(group, 'view_store', Store)
             store_ids = [x.id for x in stores]
             cache.set('default_group_store_ids', store_ids)
 

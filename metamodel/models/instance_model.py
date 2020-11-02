@@ -583,19 +583,19 @@ class InstanceModel(models.Model):
 
         InstanceField.objects.bulk_create(new_instance_fields)
 
-        for label_field in ['name', 'part_number']:
-            try:
-                original_value = getattr(cloned_instance, label_field)
-                if original_value is None:
-                    original_value = ''
-
-                setattr(cloned_instance, label_field,
-                        '{} (clone)'.format(original_value))
-
-                break
-            except KeyError:
-                # IM does not have the given attribute
-                pass
+        # for label_field in ['name', 'part_number']:
+        #     try:
+        #         original_value = getattr(cloned_instance, label_field)
+        #         if original_value is None:
+        #             original_value = ''
+        #
+        #         setattr(cloned_instance, label_field,
+        #                 '{} (clone)'.format(original_value))
+        #
+        #         break
+        #     except KeyError:
+        #         IM does not have the given attribute
+        # pass
 
         cloned_instance.save(creator_id=creator_id)
 

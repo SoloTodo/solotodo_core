@@ -13,6 +13,7 @@ class CategoryQuerySet(models.QuerySet):
 
         user_group_names = [x['name'] for x in user.groups.values('name')]
 
+        # TODO: Consider the case for superusers (and staff?)
         if permission == 'view_category' and (
                 user.is_anonymous or user_group_names ==
                 [settings.DEFAULT_GROUP_NAME]):

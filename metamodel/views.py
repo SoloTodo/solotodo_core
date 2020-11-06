@@ -7,6 +7,12 @@ from django.core.files.storage import default_storage
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, FormView
+from django_filters import rest_framework
+from rest_framework import viewsets
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import IsAdminUser
+
+from metamodel.filters import InstanceFilterSet
 from metamodel.forms.meta_field_form import MetaFieldForm
 from metamodel.forms.meta_field_make_non_nullable_meta_field_form import \
     MetaFieldMakeNonNullableMetaFieldForm
@@ -15,7 +21,10 @@ from metamodel.forms.meta_field_make_non_nullable_primitive_form import \
 from metamodel.forms.meta_model_add_field_form import MetaModelAddFieldForm
 from metamodel.forms.meta_model_form import MetaModelForm
 from metamodel.models import MetaModel, MetaField, InstanceModel
+from metamodel.pagination import InstancePagination
 from metamodel.plugin import Plugin
+from metamodel.serializers import MetaModelWithoutFieldsSerializer, \
+    MetaModelSerializer, InstanceSerializer
 
 
 class ModelListView(ListView):
@@ -458,3 +467,22 @@ class InstanceModelPopupRedirect(DetailView):
         context['instance_json'] = json.dumps(instance_dict)
 
         return context
+
+
+class MetaModelViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = MetaModel.objects.all()
+    permission_classes = [IsAdminUser]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return MetaModelWithoutFieldsSerializer
+        if self.action == 'retrieve':
+            return MetaModelSerializer
+
+
+class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = InstanceModel.objects.all()
+    pagination_class = InstancePagination
+    serializer_class = InstanceSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    filter_class = InstanceFilterSet

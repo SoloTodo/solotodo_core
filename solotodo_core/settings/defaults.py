@@ -13,6 +13,7 @@ import logging
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from datetime import timedelta
 from decimal import Decimal
 # from django_filters import STRICTNESS
 
@@ -369,6 +370,14 @@ REST_AUTH_SERIALIZERS = {
 
 THUMBNAIL_FORMAT = 'PNG'
 THUMBNAIL_PADDING = True
+
+##############################################################################
+# Simple JWT settings
+##############################################################################
+
+SIMPLE_JWT = {
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14)
+}
 
 ##############################################################################
 # Made up settings

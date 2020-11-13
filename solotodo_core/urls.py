@@ -20,7 +20,8 @@ from django.contrib import admin
 from django.urls import path
 from rest_auth.registration.views import SocialLoginView
 from rest_framework.authtoken.views import obtain_auth_token
-from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView, \
+    TokenObtainPairView
 from solotodo.router import router as solotodo_router
 from category_templates.router import router as category_templates_router
 from category_specs_forms.router import router as category_specs_forms_router
@@ -38,7 +39,6 @@ from keyword_search_positions.router import router as keyword_search_router
 from store_subscriptions.router import router as store_subscription_router
 from microsite.router import router as microsite_router
 from .custom_default_router import CustomDefaultRouter
-from .jwt import MyTokenObtainPairView
 
 router = CustomDefaultRouter()
 router.extend(solotodo_router)
@@ -72,7 +72,7 @@ urlpatterns = [
     url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
-    path('auth/token/', MyTokenObtainPairView.as_view(),
+    path('auth/token/', TokenObtainPairView.as_view(),
          name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(),
          name='token_refresh'),

@@ -266,6 +266,11 @@ class Entity(models.Model):
 
         assert scraped_product is None or self.key == scraped_product.key
 
+        # If the entity is currently inactive and no scraping information
+        # was obtained for it then just return
+        if not self.active_registry_id and not scraped_product:
+            return
+
         updated_data = {
             'last_pricing_update': timezone.now(),
         }

@@ -35,6 +35,7 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
             'stores'
         ).select_related('user', 'brand_1', 'brand_2', 'category')
 
+        # TODO: Fix this when the user has more than one group
         group = user.groups.get()
 
         if not user.is_authenticated:

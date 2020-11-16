@@ -36,7 +36,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ('name', 'brand', 'last_updated', 'key', 'category',
                        'product')
     search_fields = ('product__instance_model__unicode_representation',
-                     'name', 'key', 'url')
+                     'name', 'model_name', 'key', 'url')
 
     @action(detail=False)
     def pending(self, request):

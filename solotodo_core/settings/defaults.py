@@ -13,6 +13,7 @@ import logging
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from datetime import timedelta
 from decimal import Decimal
 # from django_filters import STRICTNESS
 
@@ -135,10 +136,21 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'solotodo_core',
-    }
+    },
+    'reader': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'solotodo_core',
+    },
+    'writer': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'solotodo_core',
+    },
 }
 
-DATABASE_ROUTERS = ['lg_pricing.db_router.LgPricingDbRouter']
+DATABASE_ROUTERS = [
+    'lg_pricing.db_router.LgPricingDbRouter',
+    'solotodo.db_router.RdsDbRouter'
+]
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -265,6 +277,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
@@ -359,6 +372,14 @@ THUMBNAIL_FORMAT = 'PNG'
 THUMBNAIL_PADDING = True
 
 ##############################################################################
+# Simple JWT settings
+##############################################################################
+
+SIMPLE_JWT = {
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14)
+}
+
+##############################################################################
 # Made up settings
 ##############################################################################
 
@@ -401,6 +422,7 @@ WTB_ENTITY_ASSOCIATION_AMOUNT = Decimal(0)
 
 SOLOTODO_COM_SITE_ID = 1
 SOLOTODO_PRICING_SITE_ID = 2
+DEFAULT_GROUP_NAME = 'base'
 
 LINIO_AFFILIATE_SETTINGS = {
     'STORE_ID': None,

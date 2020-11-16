@@ -17,8 +17,11 @@ from allauth.socialaccount.providers.facebook.views import \
     FacebookOAuth2Adapter
 from django.conf.urls import url, include
 from django.contrib import admin
+from django.urls import path
 from rest_auth.registration.views import SocialLoginView
 from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework_simplejwt.views import TokenRefreshView, \
+    TokenObtainPairView
 from solotodo.router import router as solotodo_router
 from category_templates.router import router as category_templates_router
 from category_specs_forms.router import router as category_specs_forms_router
@@ -64,13 +67,17 @@ class FacebookLogin(SocialLoginView):
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
+    url(r'^obtain-auth-token/$', obtain_auth_token),
     url(r'^accounts/', include('allauth.urls')),
     url(r'^metamodel/', include('metamodel.urls')),
-    url(r'^api-auth/', include('rest_framework.urls')),
+    # url(r'^api-auth/', include('rest_framework.urls')),
     url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
-    url(r'^obtain-auth-token/$', obtain_auth_token),
+    path('auth/token/', TokenObtainPairView.as_view(),
+         name='token_obtain_pair'),
+    path('auth/token/refresh/', TokenRefreshView.as_view(),
+         name='token_refresh'),
     url(r'^', include(router.urls)),
     url(r'^', include('django.contrib.auth.urls')),
 ]

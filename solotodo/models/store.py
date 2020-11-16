@@ -3,13 +3,13 @@ import io
 import base64
 import traceback
 
-from celery.result import allow_join_result
 from django.contrib.auth.models import Group
+from django.core.cache import cache
 from django.core.files.base import ContentFile
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
-from guardian.shortcuts import get_objects_for_user
+from guardian.shortcuts import get_objects_for_user, get_objects_for_group
 from sorl.thumbnail import ImageField
 
 from .store_type import StoreType
@@ -23,7 +23,17 @@ from storescraper.utils import get_store_class_by_name
 
 
 class StoreQuerySet(models.QuerySet):
-    def filter_by_user_perms(self, user, permission):
+    def filter_by_user_perms(self, user, permission, reload_cache=False):
+        from solotodo_core import settings
+
+        user_group_names = [x['name'] for x in user.groups.values('name')]
+
+        if permission == 'view_store' and (
+                user.is_anonymous or user_group_names ==
+                [settings.DEFAULT_GROUP_NAME]):
+            return self.filter_viewable_by_default_group(
+                reload_cache=reload_cache)
+
         return get_objects_for_user(user, permission, self)
 
     def filter_by_banners_support(self):
@@ -38,6 +48,18 @@ class StoreQuerySet(models.QuerySet):
 
         return self.filter(
             pk__in=[s.id for s in stores_with_banner_compatibility])
+
+    def filter_viewable_by_default_group(self, reload_cache=False):
+        from solotodo_core import settings
+
+        store_ids = cache.get('default_group_store_ids')
+        if not store_ids or reload_cache:
+            group = Group.objects.get(name=settings.DEFAULT_GROUP_NAME)
+            stores = get_objects_for_group(group, 'view_store', Store)
+            store_ids = [x.id for x in stores]
+            cache.set('default_group_store_ids', store_ids)
+
+        return self.filter(pk__in=store_ids)
 
 
 class Store(models.Model):
@@ -102,6 +124,8 @@ class Store(models.Model):
                 update_log.registry_file = real_filename
                 update_log.save()
 
+        print('Scraping products')
+
         try:
             scraped_products_data = scraper.products(
                 categories=[c.storescraper_name for c in categories],
@@ -115,6 +139,8 @@ class Store(models.Model):
             error_message = 'Unknown error: {}'.format(traceback.format_exc())
             log_update_error(error_message)
             raise
+
+        print('Products scraped')
 
         self.update_with_scraped_products(
             categories,
@@ -144,18 +170,29 @@ class Store(models.Model):
 
         assert self.last_activation is not None
 
+        print('1')
         scraped_products_dict = iterable_to_dict(scraped_products, 'key')
+        print('2')
         entities_to_be_updated = self.entity_set.filter(
             Q(category__in=categories) |
             Q(key__in=scraped_products_dict.keys())).select_related()
+        print('3')
 
         categories_dict = iterable_to_dict(Category, 'storescraper_name')
         currencies_dict = iterable_to_dict(Currency, 'iso_code')
         sections_dict = iterable_to_dict(self.sections.all(), 'name')
 
+        print('4')
+
         for entity in entities_to_be_updated:
+            print(entity.id)
             scraped_product_for_update = scraped_products_dict.pop(
                 entity.key, None)
+
+            if not entity.active_registry_id and \
+                    not scraped_product_for_update:
+                print('skipping')
+                continue
 
             if scraped_product_for_update:
                 category = categories_dict[
@@ -173,6 +210,7 @@ class Store(models.Model):
                 currency)
 
         for scraped_product in scraped_products_dict.values():
+            print(scraped_product.key)
             Entity.create_from_scraped_product(
                 scraped_product,
                 self,
@@ -180,6 +218,8 @@ class Store(models.Model):
                 currencies_dict[scraped_product.currency],
                 sections_dict
             )
+
+        print('Done')
 
         if update_log:
             update_log.status = update_log.SUCCESS

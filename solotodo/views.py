@@ -1310,7 +1310,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
         for field in fields:
             field_value = product_specs.get(field)
-            search = search.filter('term', **{'specs.' + field: field_value})
+            if isinstance(field_value, str):
+                query_type = 'match_phrase'
+            else:
+                query_type = 'term'
+
+            search = search.filter(query_type,
+                                   **{'specs.' + field: field_value})
 
         es_products_dict = {
             es_product.product_id: es_product.to_dict()

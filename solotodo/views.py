@@ -131,7 +131,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False)
     def with_staff_actions(self, request):
         users = self.get_queryset()
-        users_with_staff_actions = users.filter_with_staff_actions()
+        users_with_staff_actions = users.filter(is_staff=True)
         payload = UserSerializer(users_with_staff_actions,
                                  many=True, context={'request': request})
         return Response(payload.data)

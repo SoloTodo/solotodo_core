@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.files.base import ContentFile
 from django.db import models, connections
-from django.db.models import Max, Avg
+from django.db.models import Max, Min
 from django.db.models.functions import TruncDate
 from django_redshift_backend.distkey import DistKey
 from guardian.shortcuts import get_objects_for_group
@@ -84,7 +84,7 @@ class LgRsEntitySectionPosition(models.Model):
                 'date',
                 'entity_history__entity',
                 'section'
-            ).annotate(avg_value=Avg('value'))
+            ).annotate(min_value=Min('value'))
 
         entity_ids = set([x['entity_history__entity']
                           for x in aggregated_positions])
@@ -114,7 +114,7 @@ class LgRsEntitySectionPosition(models.Model):
                                                      entry['date'])]
 
             writer.writerow([
-                entry['avg_value'],
+                entry['min_value'],
                 section.id,
                 str(section),
                 entity.store.id,

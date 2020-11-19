@@ -10,7 +10,7 @@ from django.views.generic import ListView, DetailView, FormView
 from django_filters import rest_framework
 from rest_framework import viewsets
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, BasePermission
 
 from metamodel.filters import InstanceFilterSet
 from metamodel.forms.meta_field_form import MetaFieldForm
@@ -469,15 +469,28 @@ class InstanceModelPopupRedirect(DetailView):
         return context
 
 
-class MetaModelViewSet(viewsets.ReadOnlyModelViewSet):
+class MetaModelViewSet(viewsets.ModelViewSet):
     queryset = MetaModel.objects.all()
     permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
-        if self.action == 'list':
+        if self.action == 'list' or self.action == 'create':
             return MetaModelWithoutFieldsSerializer
         if self.action == 'retrieve':
             return MetaModelSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            self.permission_classes = [IsSuperUser, ]
+        elif self.action == 'list' or self.action == 'retrieve':
+            self.permission_classes = [IsAdminUser]
+        return super(self.__class__, self).get_permissions()
+
+
+class IsSuperUser(BasePermission):
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_superuser
 
 
 class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):

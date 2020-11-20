@@ -25,6 +25,7 @@ from metamodel.pagination import InstancePagination
 from metamodel.plugin import Plugin
 from metamodel.serializers import MetaModelWithoutFieldsSerializer, \
     MetaModelSerializer, InstanceSerializer
+from solotodo.permissions import IsSuperuser
 
 
 class ModelListView(ListView):
@@ -471,7 +472,6 @@ class InstanceModelPopupRedirect(DetailView):
 
 class MetaModelViewSet(viewsets.ModelViewSet):
     queryset = MetaModel.objects.all()
-    permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'create':
@@ -480,17 +480,12 @@ class MetaModelViewSet(viewsets.ModelViewSet):
             return MetaModelSerializer
 
     def get_permissions(self):
-        if self.action == 'create':
-            self.permission_classes = [IsSuperUser, ]
-        elif self.action == 'list' or self.action == 'retrieve':
-            self.permission_classes = [IsAdminUser]
-        return super(self.__class__, self).get_permissions()
+        if self.action in ['list', 'retrieve']:
+            permission_classes = [IsAdminUser]
+        else:
+            permission_classes = [IsSuperuser]
 
-
-class IsSuperUser(BasePermission):
-
-    def has_permission(self, request, view):
-        return request.user and request.user.is_superuser
+        return [permission() for permission in permission_classes]
 
 
 class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):

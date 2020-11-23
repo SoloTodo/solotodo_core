@@ -493,4 +493,5 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = InstancePagination
     serializer_class = InstanceSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
+    search_fields = ['unicode_representation']
     filter_class = InstanceFilterSet

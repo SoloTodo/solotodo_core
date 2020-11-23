@@ -20,6 +20,7 @@ from metamodel.utils import trim, convert_image_to_inmemoryfile
 from solotodo.models import Product, Entity, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage, \
     MediaRootS3Boto3Storage
+from storescraper.utils import HeadlessChrome
 
 
 class Budget(models.Model):
@@ -724,13 +725,13 @@ El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
         f.write(rendered_html)
         f.close()
 
-        driver = webdriver.PhantomJS()
-        driver.set_window_size(1000, 1000)
-        driver.get('file://{}'.format(filename))
+        with HeadlessChrome() as driver:
+            driver.set_window_size(1000, 1000)
+            driver.get('file://{}'.format(filename))
 
-        image = Image.open(BytesIO(base64.b64decode(
-            driver.get_screenshot_as_base64())))
-        driver.close()
+            image = Image.open(BytesIO(base64.b64decode(
+                driver.get_screenshot_as_base64())))
+            # driver.close()
 
         new_filename = 'budget_screenshots/{}.png'.format(self.id)
         file_to_upload = convert_image_to_inmemoryfile(trim(image))

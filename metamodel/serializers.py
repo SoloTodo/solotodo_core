@@ -14,7 +14,7 @@ class MetaFieldSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = MetaField
-        fields = ['name', 'ordering', 'nullable', 'multiple', 'hidden',
+        fields = ['id','name', 'ordering', 'nullable', 'multiple', 'hidden',
                   'model']
 
 

@@ -495,16 +495,10 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
     search_fields = ['unicode_representation']
     filter_class = InstanceFilterSet
+    permission_classes = [IsAdminUser]
 
 
 class MetaFieldViewSet(viewsets.ModelViewSet):
     queryset = MetaField = MetaField.objects.all()
     serializer_class = MetaFieldSerializer
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            permission_classes = [IsAdminUser]
-        else:
-            permission_classes = [IsSuperuser]
-
-        return [permission() for permission in permission_classes]
+    permission_classes = [IsSuperuser]

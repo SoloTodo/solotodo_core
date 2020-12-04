@@ -371,6 +371,10 @@ class ProductFilterSet(rest_framework.FilterSet):
         label='Search',
         method='_search'
     )
+    part_number = rest_framework.CharFilter(
+        label='Part number',
+        method='_part_number'
+    )
 
     @property
     def qs(self):
@@ -400,6 +404,11 @@ class ProductFilterSet(rest_framework.FilterSet):
     def _search(self, queryset, name, value):
         if value:
             return queryset.filter_by_search_string(value)
+        return queryset
+
+    def _part_number(self, queryset, name, value):
+        if value:
+            return queryset.filter(part_number__icontains=value)
         return queryset
 
     class Meta:

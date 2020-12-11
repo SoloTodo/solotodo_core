@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.core.mail import send_mail
 from django.db import models, IntegrityError
 from django.db.models import Avg, Count, Min, Max
 from django.http import Http404
@@ -55,6 +56,7 @@ from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
 from solotodo.forms.product_picture_form import ProductPictureForm
 from solotodo.forms.resource_names_form import ResourceNamesForm
+from solotodo.forms.send_contact_message_form import SendContactEmailForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
@@ -199,6 +201,19 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         result = user.staff_actions(start_date, end_date)
 
         return Response(result)
+
+    @action(detail=False, methods=['post'])
+    def send_contact_email(self, request, *args, **kwargs):
+        form = SendContactEmailForm(request.data)
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+        superusers = get_user_model().objects.filter(is_superuser=True)
+        emails = [x.email for x in superusers]
+
+        send_mail(form.cleaned_data['subject'], form.cleaned_data['message'],
+                  form.cleaned_data['name'] + '<' + form.cleaned_data['email']
+                  + '>', emails)
+        return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
 
 class WebsiteViewSet(PermissionReadOnlyModelViewSet):

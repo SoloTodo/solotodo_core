@@ -8,8 +8,10 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse_lazy, reverse
 from django.views.generic import ListView, DetailView, FormView
 from django_filters import rest_framework
-from rest_framework import viewsets
+from rest_framework import viewsets, status
+from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
+from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, BasePermission
 
 from metamodel.filters import InstanceFilterSet
@@ -499,6 +501,38 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class MetaFieldViewSet(viewsets.ModelViewSet):
-    queryset = MetaField = MetaField.objects.all()
+    queryset = MetaField.objects.all()
     serializer_class = MetaFieldSerializer
     permission_classes = [IsSuperuser]
+
+    def get_form(self, data=None):
+        meta_field = self.get_object()
+        form = None
+        if not meta_field.multiple:
+            if meta_field.model.is_primitive():
+                form = MetaFieldMakeNonNullablePrimitiveForm(meta_field,
+                                                             data=data)
+            else:
+                form = MetaFieldMakeNonNullableMetaFieldForm(meta_field,
+                                                             data=data)
+
+        return form
+
+    @action(detail=True, methods=["POST"])
+    def make_non_nullable(self, request, pk, *args, **kwargs):
+        meta_field = self.get_object()
+
+        form = self.get_form(data=self.request.POST)
+
+        if form:
+            if form.is_valid():
+                default = form.cleaned_data['default']
+                meta_field.nullable = False
+                meta_field.save(default=default)
+            else:
+                return Response({'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            meta_field.nullable = False
+            meta_field.save()
+
+        return Response({'ok': True}, status=status.HTTP_200_OK)

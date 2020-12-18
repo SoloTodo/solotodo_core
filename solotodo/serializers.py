@@ -165,7 +165,7 @@ class StaffProductSerializer(ProductSerializer):
         model = Product
         fields = ('url', 'id', 'name', 'category', 'slug', 'instance_model_id',
                   'creation_date', 'last_updated', 'picture_url', 'brand',
-                  'specs', 'creator', 'keywords')
+                  'part_number', 'specs', 'creator', 'keywords')
 
 
 class NestedProductSerializerWithCategory(NestedProductSerializer):

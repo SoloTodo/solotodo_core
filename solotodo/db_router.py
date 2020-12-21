@@ -5,10 +5,11 @@ class RdsDbRouter:
         if model._meta.app_label == 'metamodel':
             return 'writer'
         if model._meta.app_label != 'lg_pricing':
-            return 'reader'
-        elif random.random() <= 0.5:
-            return 'reader'
-        return 'writer'
+            if random.random() <= 0.5:
+                return 'reader'
+            else:
+                return 'writer'
+        return None
 
     def db_for_write(self, model, **hints):
         if model._meta.app_label != 'lg_pricing':

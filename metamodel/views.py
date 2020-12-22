@@ -522,7 +522,7 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
     def make_non_nullable(self, request, pk, *args, **kwargs):
         meta_field = self.get_object()
 
-        form = self.get_form(data=self.request.POST)
+        form = self.get_form(data=request.data)
 
         if form:
             if form.is_valid():

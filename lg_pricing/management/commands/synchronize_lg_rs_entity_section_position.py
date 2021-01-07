@@ -7,7 +7,7 @@ from lg_pricing.models import LgRsEntitySectionPosition
 class Command(BaseCommand):
     def handle(self, *args, **options):
         send_mail('Starting position sync', 'Started', 'solobot@solotodo.com',
-                  ['vj@soplotodo.com'])
+                  ['vj@solotodo.com'])
         LgRsEntitySectionPosition.synchronize_with_db_positions()
         send_mail('Finished position sync', 'Started', 'solobot@solotodo.com',
-                  ['vj@soplotodo.com'])
+                  ['vj@solotodo.com'])

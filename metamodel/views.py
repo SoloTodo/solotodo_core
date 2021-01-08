@@ -530,9 +530,11 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
                 meta_field.nullable = False
                 meta_field.save(default=default)
             else:
-                return Response({'ok': False}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
         else:
             meta_field.nullable = False
             meta_field.save()
 
-        return Response({'ok': True}, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(instance=meta_field)
+
+        return Response(serializer.data)

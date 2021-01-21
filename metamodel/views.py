@@ -489,6 +489,21 @@ class MetaModelViewSet(viewsets.ModelViewSet):
 
         return [permission() for permission in permission_classes]
 
+    @action(detail=True, methods=['POST'])
+    def edit_properties(self, request, pk, *args, **kwargs):
+        meta_model = self.get_object()
+        form = MetaModelForm(request.data, instance=meta_model)
+        if form.is_valid():
+            meta_model.name = form.cleaned_data['name']
+            meta_model.unicode_template = form.cleaned_data['unicode_template']
+            meta_model.ordering_field = form.cleaned_data['ordering_field']
+            meta_model.save()
+            serializer = MetaModelWithoutFieldsSerializer(
+                instance=meta_model, context={'request': request})
+            return Response(serializer.data)
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = InstanceModel.objects.all()
@@ -518,7 +533,7 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
 
         return form
 
-    @action(detail=True, methods=["POST"])
+    @action(detail=True, methods=['POST'])
     def make_non_nullable(self, request, pk, *args, **kwargs):
         meta_field = self.get_object()
 
@@ -530,7 +545,8 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
                 meta_field.nullable = False
                 meta_field.save(default=default)
             else:
-                return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+                return Response(form.errors,
+                                status=status.HTTP_400_BAD_REQUEST)
         else:
             meta_field.nullable = False
             meta_field.save()

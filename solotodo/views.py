@@ -1361,6 +1361,17 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(serializer.data)
 
     @action(detail=False)
+    def s21_bucket(self, request, *args, **kwargs):
+        # TODO: Remove this method after S21 release window
+        products = Product.objects.filter(
+            instance_model__unicode_representation__contains='(G99'
+        ).select_related('instance_model__model__category')
+
+        serializer = ProductSerializer(
+            products, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False)
     def note20_bucket(self, request, *args, **kwargs):
         # TODO: Remove this method after Note20 release window
         products = Product.objects.filter(

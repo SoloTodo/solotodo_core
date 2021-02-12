@@ -21,6 +21,13 @@ class MetaFieldSerializer(serializers.HyperlinkedModelSerializer):
                   'multiple', 'hidden', 'model']
 
 
+class MetaModelAddFieldSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MetaField
+        fields = ['parent', 'name', 'ordering', 'nullable',
+                  'multiple', 'hidden', 'model']
+
+
 class MetaModelSerializer(serializers.HyperlinkedModelSerializer):
     fields = MetaFieldSerializer(many=True)
 

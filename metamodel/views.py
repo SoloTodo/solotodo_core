@@ -26,7 +26,8 @@ from metamodel.models import MetaModel, MetaField, InstanceModel
 from metamodel.pagination import InstancePagination
 from metamodel.plugin import Plugin
 from metamodel.serializers import MetaModelWithoutFieldsSerializer, \
-    MetaModelSerializer, InstanceSerializer, MetaFieldSerializer
+    MetaModelSerializer, InstanceSerializer, MetaFieldSerializer, \
+    MetaModelAddFieldSerializer
 from solotodo.permissions import IsSuperuser
 
 
@@ -517,8 +518,13 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
 
 class MetaFieldViewSet(viewsets.ModelViewSet):
     queryset = MetaField.objects.all()
-    serializer_class = MetaFieldSerializer
     permission_classes = [IsSuperuser]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return MetaModelAddFieldSerializer
+        else:
+            return MetaFieldSerializer
 
     def get_form(self, data=None):
         meta_field = self.get_object()
@@ -554,3 +560,4 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance=meta_field)
 
         return Response(serializer.data)
+

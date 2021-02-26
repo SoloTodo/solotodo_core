@@ -14,7 +14,7 @@ from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, BasePermission
 
-from metamodel.filters import InstanceFilterSet
+from metamodel.filters import InstanceFilterSet, MetaFieldFilterSet
 from metamodel.forms.meta_field_form import MetaFieldForm
 from metamodel.forms.meta_field_make_non_nullable_meta_field_form import \
     MetaFieldMakeNonNullableMetaFieldForm
@@ -477,7 +477,8 @@ class MetaModelViewSet(viewsets.ModelViewSet):
     queryset = MetaModel.objects.all()
 
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'create':
+        if self.action == 'list' or self.action == 'create' or self.action == \
+                'partial_update':
             return MetaModelWithoutFieldsSerializer
         if self.action == 'retrieve':
             return MetaModelSerializer
@@ -489,21 +490,6 @@ class MetaModelViewSet(viewsets.ModelViewSet):
             permission_classes = [IsSuperuser]
 
         return [permission() for permission in permission_classes]
-
-    @action(detail=True, methods=['POST'])
-    def edit_properties(self, request, pk, *args, **kwargs):
-        meta_model = self.get_object()
-        form = MetaModelForm(request.data, instance=meta_model)
-        if form.is_valid():
-            meta_model.name = form.cleaned_data['name']
-            meta_model.unicode_template = form.cleaned_data['unicode_template']
-            meta_model.ordering_field = form.cleaned_data['ordering_field']
-            meta_model.save()
-            serializer = MetaModelWithoutFieldsSerializer(
-                instance=meta_model, context={'request': request})
-            return Response(serializer.data)
-        else:
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
@@ -519,6 +505,8 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
 class MetaFieldViewSet(viewsets.ModelViewSet):
     queryset = MetaField.objects.all()
     permission_classes = [IsSuperuser]
+    filter_backends = (rest_framework.DjangoFilterBackend,)
+    filter_class = MetaFieldFilterSet
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -560,4 +548,3 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance=meta_field)
 
         return Response(serializer.data)
-

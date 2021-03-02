@@ -13,11 +13,12 @@ class MetaModelWithoutFieldsSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class MetaFieldSerializer(serializers.HyperlinkedModelSerializer):
+    parent = MetaModelWithoutFieldsSerializer()
     model = MetaModelWithoutFieldsSerializer()
 
     class Meta:
         model = MetaField
-        fields = ['url', 'id', 'name', 'ordering', 'nullable',
+        fields = ['url', 'id', 'name', 'parent', 'ordering', 'nullable',
                   'multiple', 'hidden', 'model']
 
 

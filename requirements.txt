@@ -35,7 +35,7 @@ django-querycount==0.6.0
 django-redshift-backend==1.0.0
 django-rest-auth==0.9.3
 django-storages==1.6.3
-djangorestframework==3.11.0
+djangorestframework==3.11.2
 djangorestframework-simplejwt==4.5.0
 docutils==0.13.1
 elasticsearch==7.0.2

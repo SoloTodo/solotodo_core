@@ -89,7 +89,7 @@ python-memcached==1.59
 python-stdnum==1.7
 python3-openid==3.1.0
 pytz==2018.3
-PyYAML==5.1.1
+PyYAML==5.4
 requests==2.24.0
 requests-oauthlib==0.8.0
 rsa==4.0

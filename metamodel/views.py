@@ -11,10 +11,12 @@ from django_filters import rest_framework
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
+from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAdminUser, BasePermission
 
-from metamodel.filters import InstanceFilterSet, MetaFieldFilterSet
+from metamodel.filters import InstanceFilterSet, MetaFieldFilterSet, \
+    InstanceFieldFilterSet
 from metamodel.forms.meta_field_form import MetaFieldForm
 from metamodel.forms.meta_field_make_non_nullable_meta_field_form import \
     MetaFieldMakeNonNullableMetaFieldForm
@@ -22,12 +24,12 @@ from metamodel.forms.meta_field_make_non_nullable_primitive_form import \
     MetaFieldMakeNonNullablePrimitiveForm
 from metamodel.forms.meta_model_add_field_form import MetaModelAddFieldForm
 from metamodel.forms.meta_model_form import MetaModelForm
-from metamodel.models import MetaModel, MetaField, InstanceModel
+from metamodel.models import MetaModel, MetaField, InstanceModel, InstanceField
 from metamodel.pagination import InstancePagination
 from metamodel.plugin import Plugin
 from metamodel.serializers import MetaModelWithoutFieldsSerializer, \
     MetaModelSerializer, InstanceSerializer, MetaFieldSerializer, \
-    MetaModelAddFieldSerializer
+    MetaModelAddFieldSerializer, InstanceFieldSerializer
 from solotodo.permissions import IsSuperuser
 
 
@@ -477,7 +479,7 @@ class MetaModelViewSet(viewsets.ModelViewSet):
     queryset = MetaModel.objects.all()
 
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'create' or self.action == \
+        if self.action == 'list' or self.action == 'zcreate' or self.action == \
                 'partial_update':
             return MetaModelWithoutFieldsSerializer
         if self.action == 'retrieve':
@@ -491,6 +493,43 @@ class MetaModelViewSet(viewsets.ModelViewSet):
 
         return [permission() for permission in permission_classes]
 
+    @action(detail=True, methods=['POST'])
+    def add_instance(self, request, pk, *args, **kwargs):
+        import ipdb
+        meta_model = self.get_object()
+        form = meta_model.get_form()(request.data,request.FILES)
+        ipdb.set_trace()
+
+
+        if form.is_valid():
+            instance_model = InstanceModel()
+            instance_model.model = meta_model
+
+            instance_model.save(initial=True)
+            instance_model.update_fields(
+                form.cleaned_data,
+                request.data,
+                creator_id=request.user.id)
+
+            # if self.is_popup():
+            #     return HttpResponseRedirect(reverse(
+            #         'metamodel_instance_popup_redirect',
+            #         kwargs={'pk': instance_model.pk}))
+            # else:
+            #     messages.success(
+            #         request,
+            #         u'<a href={0}>{1}</a> creada correctamente'.format(
+            #             reverse('metamodel_instance_detail',
+            #                     kwargs={'pk': instance_model.pk}),
+            #             str(instance_model)
+            #         ))
+            #     return HttpResponseRedirect(reverse(
+            #         'metamodel_model_detail', kwargs={'pk': meta_model.pk}))
+            # serializer = self.get_serializer(instance=instance_model)
+            return Response({})
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = InstanceModel.objects.all()
@@ -500,6 +539,13 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
     search_fields = ['unicode_representation']
     filter_class = InstanceFilterSet
     permission_classes = [IsAdminUser]
+
+
+class InstanceFieldViewSet(viewsets.ModelViewSet):
+    queryset = InstanceField.objects.all()
+    serializer_class = InstanceFieldSerializer
+    filter_backends = (rest_framework.DjangoFilterBackend,)
+    filter_class = InstanceFieldFilterSet
 
 
 class MetaFieldViewSet(viewsets.ModelViewSet):

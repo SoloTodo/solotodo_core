@@ -1,6 +1,6 @@
 from django_filters import rest_framework
 
-from metamodel.models import InstanceModel, MetaModel, MetaField
+from metamodel.models import InstanceModel, MetaModel, MetaField, InstanceField
 
 
 class InstanceFilterSet(rest_framework.FilterSet):
@@ -24,4 +24,16 @@ class MetaFieldFilterSet(rest_framework.FilterSet):
 
     class Meta:
         model = MetaField
+        fields = []
+
+
+class InstanceFieldFilterSet(rest_framework.FilterSet):
+    parents = rest_framework.ModelMultipleChoiceFilter(
+        queryset=InstanceModel.objects.all(),
+        field_name='parent',
+        label='Parent'
+    )
+
+    class Meta:
+        model = InstanceField
         fields = []

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from metamodel.models import MetaModel, MetaField, InstanceModel
+from metamodel.models import MetaModel, MetaField, InstanceModel, InstanceField
 
 
 class MetaModelWithoutFieldsSerializer(serializers.HyperlinkedModelSerializer):
@@ -13,12 +13,11 @@ class MetaModelWithoutFieldsSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class MetaFieldSerializer(serializers.HyperlinkedModelSerializer):
-    parent = MetaModelWithoutFieldsSerializer()
     model = MetaModelWithoutFieldsSerializer()
 
     class Meta:
         model = MetaField
-        fields = ['url', 'id', 'name', 'parent', 'ordering', 'nullable',
+        fields = ['url', 'id', 'name', 'ordering', 'nullable',
                   'multiple', 'hidden', 'model']
 
 
@@ -44,3 +43,13 @@ class InstanceSerializer(serializers.HyperlinkedModelSerializer):
         model = InstanceModel
         fields = ['id', 'url', 'decimal_value', 'unicode_value',
                   'unicode_representation']
+
+
+class InstanceFieldSerializer(serializers.HyperlinkedModelSerializer):
+    parent = InstanceSerializer()
+    field = MetaFieldSerializer()
+    value = InstanceSerializer()
+
+    class Meta:
+        model = InstanceField
+        fields = ['parent','field', 'value']

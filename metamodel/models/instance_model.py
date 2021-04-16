@@ -5,6 +5,7 @@ from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 import importlib
 
+import ipdb
 from PIL import Image
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.template import Template, Context
@@ -431,6 +432,7 @@ class InstanceModel(models.Model):
                 return None
 
     def update_fields(self, form_cleaned_data, data, creator_id=None):
+        ipdb.set_trace()
         for field in self.model.fields.filter(hidden=False):
             cleaned_value = form_cleaned_data[field.name]
 

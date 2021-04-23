@@ -27,7 +27,7 @@ class WtbBrandViewSet(PermissionReadOnlyModelViewSet):
 
 
 class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = WtbEntity.objects.all()
+    queryset = WtbEntity.objects.select_related('product__instance_model')
     serializer_class = WtbEntitySerializer
     pagination_class = WtbEntityPagination
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,

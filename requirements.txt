@@ -92,7 +92,7 @@ pytz==2018.3
 PyYAML==5.1.1
 requests==2.24.0
 requests-oauthlib==0.8.0
-rsa==4.0
+rsa==4.7
 s3transfer==0.1.10
 scikit-learn==0.23.1
 scipy==1.2.1

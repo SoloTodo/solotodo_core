@@ -105,10 +105,10 @@ class Command(BaseCommand):
         """
         message = date_from.strftime(message)
 
-        subject = 'Reporte historico TV %m-%Y'
+        subject = 'Reporte historico {} %m-%Y'.format(category)
         subject = date_from.strftime(subject)
 
-        filename = 'Monthly_price_report.xlsx'
+        filename = 'monthly_price_report.xlsx'
 
         email = EmailMessage(subject, message, sender, emails)
         email.attach(

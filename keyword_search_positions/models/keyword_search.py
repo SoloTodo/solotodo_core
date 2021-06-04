@@ -1,3 +1,5 @@
+import json
+
 from django.db import models
 from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
@@ -35,11 +37,18 @@ class KeywordSearch(models.Model):
         self.active_update = update
         self.save()
 
+        if self.store.storescraper_extra_args:
+            extra_args = json.loads(self.store.storescraper_extra_args)
+        else:
+            extra_args = {}
+
         try:
             products = self.store.scraper.products_for_keyword(
                 self.keyword,
                 self.threshold,
-                use_async=use_async)['products']
+                use_async=use_async,
+                extra_args=extra_args
+            )['products']
         except Exception as e:
             update.status = KeywordSearchUpdate.ERROR
             update.message = str(e)

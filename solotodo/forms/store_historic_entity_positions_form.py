@@ -8,7 +8,7 @@ from datetime import timedelta
 from django import forms
 from django.core.files.base import ContentFile
 from django.db.models import Count
-from django.db.models.functions import ExtractWeek, ExtractYear
+from django.db.models.functions import ExtractWeek, ExtractIsoYear
 from django_filters.fields import IsoDateTimeRangeField
 from guardian.shortcuts import get_objects_for_user
 
@@ -81,7 +81,7 @@ class StoreHistoricEntityPositionsForm(forms.Form):
             entity_history__timestamp__lte=timestamp.stop
         ).annotate(
             week=ExtractWeek('entity_history__timestamp'),
-            year=ExtractYear('entity_history__timestamp')
+            year=ExtractIsoYear('entity_history__timestamp')
         )
 
         if position_threshold:
@@ -152,7 +152,7 @@ class StoreHistoricEntityPositionsForm(forms.Form):
             status=3,
         ).annotate(
             week=ExtractWeek('creation_date'),
-            year=ExtractYear('creation_date')
+            year=ExtractIsoYear('creation_date')
         )
 
         updates = updates.order_by(

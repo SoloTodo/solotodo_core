@@ -8,7 +8,7 @@ from datetime import timedelta
 from django import forms
 
 from django.db.models import F, Avg, Count
-from django.db.models.functions import ExtractWeek, ExtractYear
+from django.db.models.functions import ExtractWeek, ExtractIsoYear
 from django.core.files.base import ContentFile
 from guardian.shortcuts import get_objects_for_user
 
@@ -81,7 +81,7 @@ class BannerHistoricParticipationForm(forms.Form):
             update__timestamp__lte=timestamp.stop
         ).annotate(
             week=ExtractWeek('update__timestamp'),
-            year=ExtractYear('update__timestamp')
+            year=ExtractIsoYear('update__timestamp')
         ).prefetch_related(
             'asset__contents__brand',
             'asset__contents__category',

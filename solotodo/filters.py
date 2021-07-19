@@ -561,6 +561,9 @@ class RatingFilterSet(rest_framework.FilterSet):
     pending_only = rest_framework.BooleanFilter(
         method='_pending_only'
     )
+    with_product_rating_only = rest_framework.BooleanFilter(
+        method='_with_product_rating_only'
+    )
 
     @property
     def qs(self):
@@ -580,6 +583,11 @@ class RatingFilterSet(rest_framework.FilterSet):
     def _pending_only(self, queryset, name, value):
         if value:
             queryset = queryset.filter(approval_date__isnull=True)
+        return queryset
+
+    def _with_product_rating_only(self, queryset, name, value):
+        if value:
+            queryset = queryset.filter(product_rating__isnull=False)
         return queryset
 
     class Meta:

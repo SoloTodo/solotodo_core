@@ -573,7 +573,8 @@ class RatingFullSerializer(RatingSerializer):
 
 class RatingCreateSerializer(serializers.ModelSerializer):
     store_rating = serializers.IntegerField(min_value=1, max_value=5)
-    product_rating = serializers.IntegerField(min_value=1, max_value=5)
+    product_rating = serializers.IntegerField(min_value=1, max_value=5,
+                                              allow_null=True, required=False)
     store = StorePrimaryKeyRelatedField()
     product = ProductPrimaryKeyRelatedField()
 

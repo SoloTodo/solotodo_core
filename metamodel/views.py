@@ -28,8 +28,9 @@ from metamodel.models import MetaModel, MetaField, InstanceModel, InstanceField
 from metamodel.pagination import InstancePagination
 from metamodel.plugin import Plugin
 from metamodel.serializers import MetaModelWithoutFieldsSerializer, \
-    MetaModelSerializer, InstanceSerializer, MetaFieldSerializer, \
-    MetaModelAddFieldSerializer, InstanceFieldSerializer
+    MetaModelSerializer, InstanceModelSerializer, MetaFieldSerializer, \
+    MetaModelAddFieldSerializer, InstanceFieldSerializer, \
+    InstanceModelWithoutMetamodelSerializer
 from solotodo.permissions import IsSuperuser
 
 
@@ -479,7 +480,7 @@ class MetaModelViewSet(viewsets.ModelViewSet):
     queryset = MetaModel.objects.all()
 
     def get_serializer_class(self):
-        if self.action == 'list' or self.action == 'zcreate' or self.action == \
+        if self.action == 'list' or self.action == 'create' or self.action == \
                 'partial_update':
             return MetaModelWithoutFieldsSerializer
         if self.action == 'retrieve':
@@ -495,11 +496,8 @@ class MetaModelViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['POST'])
     def add_instance(self, request, pk, *args, **kwargs):
-        import ipdb
         meta_model = self.get_object()
-        form = meta_model.get_form()(request.data,request.FILES)
-        ipdb.set_trace()
-
+        form = meta_model.get_form()(request.data, request.FILES)
 
         if form.is_valid():
             instance_model = InstanceModel()
@@ -510,46 +508,72 @@ class MetaModelViewSet(viewsets.ModelViewSet):
                 form.cleaned_data,
                 request.data,
                 creator_id=request.user.id)
+            instance_values = list(
+                InstanceModel.objects.filter(id=instance_model.id).values())
 
-            # if self.is_popup():
-            #     return HttpResponseRedirect(reverse(
-            #         'metamodel_instance_popup_redirect',
-            #         kwargs={'pk': instance_model.pk}))
-            # else:
-            #     messages.success(
-            #         request,
-            #         u'<a href={0}>{1}</a> creada correctamente'.format(
-            #             reverse('metamodel_instance_detail',
-            #                     kwargs={'pk': instance_model.pk}),
-            #             str(instance_model)
-            #         ))
-            #     return HttpResponseRedirect(reverse(
-            #         'metamodel_model_detail', kwargs={'pk': meta_model.pk}))
-            # serializer = self.get_serializer(instance=instance_model)
-            return Response({})
+            return Response({'new_instance': instance_values[0]})
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = InstanceModel.objects.all()
+    queryset = InstanceModel.objects.select_related('model').prefetch_related(
+        'model__fields__model', 'model__fields__parent',
+        'fields__field__model', 'fields__field__parent', 'fields__value')
     pagination_class = InstancePagination
-    serializer_class = InstanceSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
     search_fields = ['unicode_representation']
     filter_class = InstanceFilterSet
     permission_classes = [IsAdminUser]
 
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return InstanceModelWithoutMetamodelSerializer
+        if self.action == 'retrieve':
+            return InstanceModelSerializer
+
+    @action(detail=True, methods=['POST'])
+    def edit_instance(self, request, pk, *args, **kwargs):
+        instance_model = self.get_object()
+        form = instance_model.get_form()(request.data, request.FILES)
+        if form.is_valid():
+            instance_model.update_fields(form.cleaned_data, request.POST)
+
+            instance_values = list(
+                InstanceModel.objects.filter(id=instance_model.id).values())
+
+            return Response({'edited_instance': instance_values[0]})
+
+        else:
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk, *args, **kwargs):
+        import ipdb
+        ipdb.set_trace()
+
+        instance_model = self.get_object()
+        dependencies = InstanceField.objects.filter(
+            parent__id=127760) | InstanceField.objects.filter(
+            value__id=127760)
+        if not instance_model.is_model_primitive() and dependencies.count() == 0:
+            instance_model.delete()
+            return Response({})
+        else:
+            return Response({'errors': 'this instance_model has dependencies'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
 
 class InstanceFieldViewSet(viewsets.ModelViewSet):
-    queryset = InstanceField.objects.all()
+    queryset = InstanceField.objects.select_related('field', 'field__model',
+                                                    'field__parent', 'value')
+    pagination_class = InstancePagination
     serializer_class = InstanceFieldSerializer
     filter_backends = (rest_framework.DjangoFilterBackend,)
     filter_class = InstanceFieldFilterSet
 
 
 class MetaFieldViewSet(viewsets.ModelViewSet):
-    queryset = MetaField.objects.all()
+    queryset = MetaField.objects.select_related('model', 'parent')
     permission_classes = [IsSuperuser]
     filter_backends = (rest_framework.DjangoFilterBackend,)
     filter_class = MetaFieldFilterSet

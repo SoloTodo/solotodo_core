@@ -14,11 +14,12 @@ class MetaModelWithoutFieldsSerializer(serializers.HyperlinkedModelSerializer):
 
 class MetaFieldSerializer(serializers.HyperlinkedModelSerializer):
     model = MetaModelWithoutFieldsSerializer()
+    parent = MetaModelWithoutFieldsSerializer()
 
     class Meta:
         model = MetaField
         fields = ['url', 'id', 'name', 'ordering', 'nullable',
-                  'multiple', 'hidden', 'model']
+                  'multiple', 'hidden', 'model', 'parent']
 
 
 class MetaModelAddFieldSerializer(serializers.ModelSerializer):
@@ -38,7 +39,8 @@ class MetaModelSerializer(serializers.HyperlinkedModelSerializer):
             'fields']
 
 
-class InstanceSerializer(serializers.HyperlinkedModelSerializer):
+class InstanceModelWithoutMetamodelSerializer(
+    serializers.HyperlinkedModelSerializer):
     class Meta:
         model = InstanceModel
         fields = ['id', 'url', 'decimal_value', 'unicode_value',
@@ -46,10 +48,19 @@ class InstanceSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class InstanceFieldSerializer(serializers.HyperlinkedModelSerializer):
-    parent = InstanceSerializer()
     field = MetaFieldSerializer()
-    value = InstanceSerializer()
+    value = InstanceModelWithoutMetamodelSerializer()
 
     class Meta:
         model = InstanceField
-        fields = ['parent','field', 'value']
+        fields = ['id', 'url', 'field', 'value']
+
+
+class InstanceModelSerializer(serializers.HyperlinkedModelSerializer):
+    model = MetaModelSerializer()
+    fields = InstanceFieldSerializer(many=True)
+
+    class Meta:
+        model = InstanceModel
+        fields = ['id', 'url', 'decimal_value', 'unicode_value',
+                  'unicode_representation', 'model', 'fields']

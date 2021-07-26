@@ -47,6 +47,7 @@ class InstanceModel(models.Model):
 
     METAMODEL_METAFIELDS_DICT = None
 
+
     def _get_value(self):
         primitive_models_dict = MetaModel.get_primitive_models_dict()
 

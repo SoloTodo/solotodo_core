@@ -477,7 +477,7 @@ class InstanceModelPopupRedirect(DetailView):
 
 
 class MetaModelViewSet(viewsets.ModelViewSet):
-    queryset = MetaModel.objects.all()
+    queryset = MetaModel.get_non_primitive()
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'create' or self.action == \
@@ -548,18 +548,15 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def destroy(self, request, pk, *args, **kwargs):
-        import ipdb
-        ipdb.set_trace()
-
         instance_model = self.get_object()
         dependencies = InstanceField.objects.filter(
-            parent__id=127760) | InstanceField.objects.filter(
-            value__id=127760)
-        if not instance_model.is_model_primitive() and dependencies.count() == 0:
+            value__id=instance_model.id).count()
+        if not instance_model.is_model_primitive() and dependencies == 0:
             instance_model.delete()
+            #TODO agrgear algo para mandar
             return Response({})
         else:
-            return Response({'errors': 'this instance_model has dependencies'},
+            return Response({'errors': 'this instance model has dependencies'},
                             status=status.HTTP_400_BAD_REQUEST)
 
 

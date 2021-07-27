@@ -553,8 +553,7 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
             value__id=instance_model.id).count()
         if not instance_model.is_model_primitive() and dependencies == 0:
             instance_model.delete()
-            #TODO agrgear algo para mandar
-            return Response({})
+            return Response({'status': 'ok'})
         else:
             return Response({'errors': 'this instance model has dependencies'},
                             status=status.HTTP_400_BAD_REQUEST)

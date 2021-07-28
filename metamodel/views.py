@@ -538,11 +538,11 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
         form = instance_model.get_form()(request.data, request.FILES)
         if form.is_valid():
             instance_model.update_fields(form.cleaned_data, request.POST)
+            instance_values = self.queryset.get(id=instance_model.id)
 
-            instance_values = list(
-                InstanceModel.objects.filter(id=instance_model.id).values())
-
-            return Response({'edited_instance': instance_values[0]})
+            return Response({'edited_instance': InstanceModelSerializer(
+                instance_values,
+                context={'request': request}).data})
 
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)

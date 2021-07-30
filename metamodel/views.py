@@ -11,9 +11,8 @@ from django_filters import rest_framework
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
-from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, BasePermission
+from rest_framework.permissions import IsAdminUser
 
 from metamodel.filters import InstanceFilterSet, MetaFieldFilterSet, \
     InstanceFieldFilterSet
@@ -511,7 +510,7 @@ class MetaModelViewSet(viewsets.ModelViewSet):
             instance_values = list(
                 InstanceModel.objects.filter(id=instance_model.id).values())
 
-            return Response({'new_instance': instance_values[0]})
+            return Response(instance_values[0])
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -533,17 +532,16 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
             return InstanceModelSerializer
 
     @action(detail=True, methods=['POST'])
-    def edit_instance(self, request, pk, *args, **kwargs):
+    def edit(self, request, pk, *args, **kwargs):
         instance_model = self.get_object()
         form = instance_model.get_form()(request.data, request.FILES)
         if form.is_valid():
             instance_model.update_fields(form.cleaned_data, request.POST)
-            instance_values = self.queryset.get(id=instance_model.id)
+            instance_model = self.queryset.get(id=instance_model.id)
 
-            return Response({'edited_instance': InstanceModelSerializer(
-                instance_values,
-                context={'request': request}).data})
-
+            return Response(InstanceModelSerializer(
+                instance_model,
+                context={'request': request}).data)
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -545,6 +545,17 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['GET'])
+    def get_dependencies(self, request, pk, *args, **kwargs):
+        instance_model = self.get_object()
+        dependencies = InstanceField.objects.select_related('field',
+                                                            'value').filter(
+            value__id=instance_model.id)
+        serializer = InstanceFieldSerializer(dependencies,
+                                             context={'request': request},
+                                             many=True)
+        return Response(serializer.data)
+
     def destroy(self, request, pk, *args, **kwargs):
         instance_model = self.get_object()
         dependencies = InstanceField.objects.filter(

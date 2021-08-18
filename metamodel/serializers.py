@@ -48,12 +48,13 @@ class InstanceModelWithoutMetamodelSerializer(
 
 
 class InstanceFieldSerializer(serializers.HyperlinkedModelSerializer):
+    parent = InstanceModelWithoutMetamodelSerializer()
     field = MetaFieldSerializer()
     value = InstanceModelWithoutMetamodelSerializer()
 
     class Meta:
         model = InstanceField
-        fields = ['id', 'url', 'field', 'value']
+        fields = ['id', 'url', 'parent','field', 'value']
 
 
 class InstanceModelSerializer(serializers.HyperlinkedModelSerializer):

@@ -514,6 +514,16 @@ class MetaModelViewSet(viewsets.ModelViewSet):
         else:
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=True, methods=['GET'])
+    def get_dependencies(self, request, pk, *args, **kwargs):
+        meta_model = self.get_object()
+        dependencies = MetaField.objects.select_related('model').filter(
+            model__id=meta_model.id)
+        serializer = MetaFieldSerializer(dependencies,
+                                             context={'request': request},
+                                             many=True)
+        return Response(serializer.data)
+
 
 class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = InstanceModel.objects.select_related('model').prefetch_related(
@@ -548,7 +558,7 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True, methods=['GET'])
     def get_dependencies(self, request, pk, *args, **kwargs):
         instance_model = self.get_object()
-        dependencies = InstanceField.objects.select_related('field',
+        dependencies = InstanceField.objects.select_related('parent', 'field',
                                                             'value').filter(
             value__id=instance_model.id)
         serializer = InstanceFieldSerializer(dependencies,
@@ -588,6 +598,13 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
             return MetaModelAddFieldSerializer
         else:
             return MetaFieldSerializer
+
+    def destroy(self, request, pk, *args, **kwargs):
+        meta_field = self.get_object()
+        meta_model = meta_field.parent
+        meta_field.delete()
+        return Response(
+            MetaModelSerializer(meta_model, context={'request': request}).data)
 
     def get_form(self, data=None):
         meta_field = self.get_object()

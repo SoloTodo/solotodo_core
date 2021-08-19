@@ -520,9 +520,20 @@ class MetaModelViewSet(viewsets.ModelViewSet):
         dependencies = MetaField.objects.select_related('model').filter(
             model__id=meta_model.id)
         serializer = MetaFieldSerializer(dependencies,
-                                             context={'request': request},
-                                             many=True)
+                                         context={'request': request},
+                                         many=True)
         return Response(serializer.data)
+
+    def destroy(self, request, *args, **kwargs):
+        meta_model = self.get_object()
+        dependencies = MetaField.objects.select_related('model').filter(
+            model__id=meta_model.id).count()
+        if not meta_model.is_primitive() and dependencies == 0:
+            meta_model.delete()
+            return Response({'status': 'ok'})
+        else:
+            return Response({'errors': 'this meta model has dependencies'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
 
 class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
@@ -599,7 +610,7 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
         else:
             return MetaFieldSerializer
 
-    def destroy(self, request, pk, *args, **kwargs):
+    def destroy(self, request, *args, **kwargs):
         meta_field = self.get_object()
         meta_model = meta_field.parent
         meta_field.delete()

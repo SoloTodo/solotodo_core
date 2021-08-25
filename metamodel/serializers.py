@@ -19,14 +19,14 @@ class MetaFieldSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = MetaField
         fields = ['url', 'id', 'name', 'ordering', 'nullable',
-                  'multiple', 'hidden', 'model', 'parent']
+                  'multiple', 'hidden', 'model', 'parent', 'help_text']
 
 
 class MetaModelAddFieldSerializer(serializers.ModelSerializer):
     class Meta:
         model = MetaField
         fields = ['parent', 'name', 'ordering', 'nullable',
-                  'multiple', 'hidden', 'model']
+                  'multiple', 'hidden', 'model','help_text']
 
 
 class MetaModelSerializer(serializers.HyperlinkedModelSerializer):
@@ -54,7 +54,7 @@ class InstanceFieldSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = InstanceField
-        fields = ['id', 'url', 'parent','field', 'value']
+        fields = ['id', 'url', 'parent', 'field', 'value']
 
 
 class InstanceModelSerializer(serializers.HyperlinkedModelSerializer):

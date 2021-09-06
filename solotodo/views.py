@@ -608,17 +608,19 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
     def matching_report(self, request, *args, **kwargs):
         user = request.user
         store = self.get_object()
-        if user.has_perm('view_store_reports', store):
-            file_for_upload = store.matching_report(store)
-            storage = PrivateS3Boto3Storage()
-            filename = 'reports/matching_report.xlsx'
-            path = storage.save(filename, file_for_upload)
-            report_url = storage.url(path)
-            return Response({
-                'url': report_url
-            })
-        else:
+
+        if not user.has_perm('view_store_reports', store):
             return Response(status=status.HTTP_403_FORBIDDEN)
+
+        file_for_upload = store.matching_report(store)
+        storage = PrivateS3Boto3Storage()
+        filename = 'reports/matching_report.xlsx'
+        path = storage.save(filename, file_for_upload)
+        report_url = storage.url(path)
+
+        return Response({
+            'url': report_url
+        })
 
 
 class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):

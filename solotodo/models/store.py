@@ -413,9 +413,11 @@ class Store(models.Model):
         self.save()
 
     def matching_report(self, store):
-        from solotodo.models import Entity
+        from .entity import Entity
+
         entities = Entity.objects.select_related('active_registry',
-                                                 'product').filter(
+                                                 'product__instance_model',
+                                                 'category').filter(
             store=store, is_visible=True).get_available()
         output = io.BytesIO()
 
@@ -435,9 +437,6 @@ class Store(models.Model):
             'valign': 'right'
         })
 
-        decimal_format = workbook.add_format()
-        decimal_format.set_num_format('0.00')
-        decimal_format.set_font_size(10)
         worksheet = workbook.add_worksheet()
         headers = [
             'Identificador', 'SKU', 'Nombre', 'URL', 'Precio Normal',
@@ -454,7 +453,7 @@ class Store(models.Model):
             col = 0
             worksheet.write(row, col, entity.key)
             col += 1
-            sku = entity.sku if entity.sku else 'N/A'
+            sku = entity.sku or 'N/A'
             worksheet.write(row, col, sku)
             col += 1
             worksheet.write(row, col, entity.name)
@@ -472,7 +471,7 @@ class Store(models.Model):
                                 entity.product.instance_model.unicode_value)
                 col += 1
                 worksheet.write(row, col,
-                                'https://www.solotodo.cl/products/entity' +
+                                'https://www.solotodo.cl/products/' +
                                 str(entity.product.id))
             else:
                 worksheet.write(row, col, 'N/A')

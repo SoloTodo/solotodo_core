@@ -477,7 +477,7 @@ class InstanceModelPopupRedirect(DetailView):
 
 # api
 class MetaModelViewSet(viewsets.ModelViewSet):
-    queryset = MetaModel.get_non_primitive()
+    queryset = MetaModel.objects.all()
 
     def get_serializer_class(self):
         if self.action == 'list' or self.action == 'create' or self.action == \
@@ -524,7 +524,7 @@ class MetaModelViewSet(viewsets.ModelViewSet):
         if form.is_valid():
             meta_field = form.instance
             meta_field.parent = meta_model
-            if request.data['default']:
+            if 'default' in request.data:
                 default_value = request.data['default']
                 cleaned_default = meta_field.clean_value(default_value)
                 meta_field.save(default=cleaned_default)
@@ -630,24 +630,6 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
             return MetaModelAddFieldSerializer
         else:
             return MetaFieldSerializer
-
-    # @action(detail=True, methods=['POST'])
-    # def add_field(self, request, *args, **kwargs):
-    #     meta_model = self.get_object()
-    #
-    #     form = MetaModelAddFieldForm(data=request.data, files=request.FILES)
-    #
-    #     if form.is_valid():
-    #         meta_field = form.instance
-    #         meta_field.parent = meta_model
-    #         if request.data['default']:
-    #             default_value = request.data['default']
-    #             cleaned_default = meta_field.clean_value(default_value)
-    #             meta_field.save(default=cleaned_default)
-    #         else:
-    #             meta_field.save()
-    #
-    #         return Response(meta_field)
 
     def destroy(self, request, *args, **kwargs):
         meta_field = self.get_object()

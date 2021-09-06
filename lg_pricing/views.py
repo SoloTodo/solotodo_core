@@ -1,4 +1,6 @@
 import csv
+
+import boto3
 import requests
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -142,6 +144,28 @@ class LgWtbViewSet(ViewSet):
             writer.writerow(row)
 
         return response
+
+    @action(detail=False, methods=['post'])
+    def register(self, request):
+        uuid = request.data['uuid']
+        aa = request.data['aa']
+        ga = request.data['ga']
+        timestamp = request.data['timestamp']
+        table = boto3.resource(
+            'dynamodb',
+            aws_access_key_id=settings.DYNAMODB_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.DYNAMODB_SECRET_ACCESS_KEY,
+            region_name='sa-east-1').Table(settings.DYNAMODB_TABLE_NAME)
+        payload = {
+            'id': 'WTB',
+            'timestamp': timestamp,
+            'aa': aa,
+            'ga': ga,
+            'uuid': uuid
+        }
+        table.put_item(Item=payload)
+        return Response(payload, status=201)
+
 
 class SendinblueViewSet(ViewSet):
     @action(detail=False, methods=['post'])

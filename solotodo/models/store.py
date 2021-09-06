@@ -3,6 +3,7 @@ import io
 import base64
 import traceback
 
+import xlsxwriter
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import ContentFile
@@ -348,14 +349,14 @@ class Store(models.Model):
         for banner_data in scraped_banners_data:
             if banner_data['section'] not in section_dict:
                 update.status = BannerUpdate.ERROR
-                update.status_message = 'Invalid Section {}'\
+                update.status_message = 'Invalid Section {}' \
                     .format(banner_data['section'])
                 update.save()
                 return
 
             if banner_data['type'] not in subsection_type_dict:
                 update.status = BannerUpdate.ERROR
-                update.status_message = 'Invalid Subsection Type {}'\
+                update.status_message = 'Invalid Subsection Type {}' \
                     .format(banner_data['type'])
                 update.save()
                 return
@@ -411,21 +412,95 @@ class Store(models.Model):
         self.active_banner_update = update
         self.save()
 
-    class Meta:
-        app_label = 'solotodo'
-        ordering = ['name']
-        permissions = (
-            ['view_store_update_logs', 'Can view the store update logs'],
-            ['view_store_stocks', 'Can view the store entities stock'],
-            ['update_store_pricing', 'Can update the store pricing'],
-            ['view_store_leads', 'View the leads associated to this store'],
-            ['view_store_reports',
-             'Download the reports associated to this store'],
-            # "Backend" permissions are used exclusively for UI purposes, they
-            # are not used at the API level
-            ['backend_list_stores', 'Can view store list in backend'],
-            ['view_store_banners', 'Can view store banners'],
-            ['view_store_entity_positions', 'Can view store entity positions'],
-            ['create_store_keyword_search',
-             'Can create keyword searches in this store']
-        )
+    def matching_report(self, store):
+        from solotodo.models import Entity
+        entities = Entity.objects.select_related('active_registry',
+                                                 'product').filter(
+            store=store, is_visible=True).get_available()
+        output = io.BytesIO()
+
+        workbook = xlsxwriter.Workbook(output)
+        workbook.formats[0].set_font_size(10)
+
+        header_format_left = workbook.add_format({
+            'bold': True,
+            'font_size': 10,
+            'align': 'left',
+            'valign': 'left'
+        })
+        header_format_right = workbook.add_format({
+            'bold': True,
+            'font_size': 10,
+            'align': 'right',
+            'valign': 'right'
+        })
+
+        decimal_format = workbook.add_format()
+        decimal_format.set_num_format('0.00')
+        decimal_format.set_font_size(10)
+        worksheet = workbook.add_worksheet()
+        headers = [
+            'Identificador', 'SKU', 'Nombre', 'URL', 'Precio Normal',
+            'Precio Oferta', 'Categoría SoloTodo', 'Producto SoloTodo',
+            'URL SoloTodo'
+        ]
+        for idx, header in enumerate(headers):
+            if 'Precio' in header:
+                worksheet.write(0, idx, header, header_format_right)
+            else:
+                worksheet.write(0, idx, header, header_format_left)
+        row = 1
+        for entity in entities:
+            col = 0
+            worksheet.write(row, col, entity.key)
+            col += 1
+            sku = entity.sku if entity.sku else 'N/A'
+            worksheet.write(row, col, sku)
+            col += 1
+            worksheet.write(row, col, entity.name)
+            col += 1
+            worksheet.write(row, col, entity.url)
+            col += 1
+            worksheet.write(row, col, entity.active_registry.normal_price)
+            col += 1
+            worksheet.write(row, col, entity.active_registry.offer_price)
+            col += 1
+            worksheet.write(row, col, entity.category.name)
+            col += 1
+            if entity.product:
+                worksheet.write(row, col,
+                                entity.product.instance_model.unicode_value)
+                col += 1
+                worksheet.write(row, col,
+                                'https://www.solotodo.cl/products/entity' +
+                                str(entity.product.id))
+            else:
+                worksheet.write(row, col, 'N/A')
+                col += 1
+                worksheet.write(row, col, 'N/A')
+            row += 1
+
+        workbook.close()
+        file_value = output.getvalue()
+        file_for_upload = ContentFile(file_value)
+        return file_for_upload
+
+
+class Meta:
+    app_label = 'solotodo'
+    ordering = ['name']
+    permissions = (
+        ['view_store_update_logs', 'Can view the store update logs'],
+        ['view_store_stocks', 'Can view the store entities stock'],
+        ['update_store_pricing', 'Can update the store pricing'],
+        ['view_store_leads', 'View the leads associated to this store'],
+        ['view_store_reports',
+         'Download the reports associated to this store'],
+        # "Backend" permissions are used exclusively for UI purposes, they
+        # are not used at the API level
+        ['backend_list_stores', 'Can view store list in backend'],
+        ['view_store_banners', 'Can view store banners'],
+        ['view_store_entity_positions', 'Can view store entity positions'],
+        ['create_store_keyword_search',
+         'Can create keyword searches in this store']
+    )

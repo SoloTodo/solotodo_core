@@ -1,11 +1,7 @@
-import io
 import traceback
 from collections import OrderedDict
 
 import datetime
-import json
-
-import xlsxwriter
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
@@ -610,77 +606,19 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
 
     @action(detail=True)
     def matching_report(self, request, *args, **kwargs):
+        user = request.user
         store = self.get_object()
-        entities = Entity.objects.select_related('active_registry',
-                                                 'product').filter(
-            store=store, active_registry__stock__ne=0). \
-            values('key', 'sku',
-                   'name',
-                   'url',
-                   'active_registry__normal_price',
-                   'active_registry__offer_price',
-                   'category__name',
-                   'product__instance_model__unicode_value',
-                   'product__id')
-        output = io.BytesIO()
-
-        workbook = xlsxwriter.Workbook(output)
-        workbook.formats[0].set_font_size(10)
-
-        header_format = workbook.add_format({
-            'bold': True,
-            'font_size': 10,
-            'align': 'center',
-            'valign': 'vcenter'
-        })
-
-        percentage_format = workbook.add_format()
-        percentage_format.set_num_format('0.00%')
-        percentage_format.set_font_size(10)
-
-        percentage_bold_format = workbook.add_format()
-        percentage_bold_format.set_num_format('0.00%')
-        percentage_bold_format.set_font_size(10)
-        percentage_bold_format.set_bold(True)
-
-        decimal_format = workbook.add_format()
-        decimal_format.set_num_format('0.00')
-        decimal_format.set_font_size(10)
-        worksheet = workbook.add_worksheet()
-        headers = [
-            'Identificador', 'SKU', 'Nombre', 'URL', 'Precio Normal',
-            'Precio Oferta',
-            'Categoría SoloTodo', 'Producto SoloTodo', 'URL SoloTodo'
-
-        ]
-        for idx, header in enumerate(headers):
-            worksheet.write(0, idx, header, header_format)
-        row = 1
-        for entity in entities:
-            col = 0
-            for key, value in entity.items():
-                if not value and key in ['sku',
-                                         'product__instance_model__unicode_value',
-                                         'product__id']:
-                    worksheet.write(row, col, 'N/A')
-                elif key == 'product__id':
-                    worksheet.write(row, col,
-                                    'https://www.solotodo.cl/products/' + str(value))
-                else:
-                    worksheet.write(row, col, value)
-                col += 1
-            row += 1
-        workbook.close()
-        file_value = output.getvalue()
-        file_for_upload = ContentFile(file_value)
-
-        storage = PrivateS3Boto3Storage()
-        filename = 'reports/matching_report.xlsx'
-        path = storage.save(filename, file_for_upload)
-        report_url = storage.url(path)
-        return Response({
-            'url': report_url
-        })
+        if user.has_perm('view_store_reports', store):
+            file_for_upload = store.matching_report(store)
+            storage = PrivateS3Boto3Storage()
+            filename = 'reports/matching_report.xlsx'
+            path = storage.save(filename, file_for_upload)
+            report_url = storage.url(path)
+            return Response({
+                'url': report_url
+            })
+        else:
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
 
 class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):

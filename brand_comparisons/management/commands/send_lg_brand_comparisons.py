@@ -10,9 +10,11 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--user_ids', nargs='+', type=int)
         parser.add_argument('--comparison_ids', nargs='+', type=int)
+        parser.add_argument('--export_format', nargs='?', type=str, default='xls')
 
     def handle(self, *args, **options):
         comparison_ids = options['comparison_ids']
+        export_format = options['export_format']
         comparisons = BrandComparison.objects.filter(pk__in=comparison_ids)
         user_ids = options['user_ids']
 
@@ -41,7 +43,11 @@ class Command(BaseCommand):
 
         for comparison_id in comparison_ids:
             comparison = BrandComparison.objects.get(pk=comparison_id)
-            comparison_attachment = comparison.as_xls()['file']
+            if export_format == 'xls_2':
+                comparison_attachment = comparison.as_xls_2(
+                    highlight_strategy='1')['file']
+            else:
+                comparison_attachment = comparison.as_xls()['file']
 
             report_filename = '{}.xlsx'.format(comparison.name)
 

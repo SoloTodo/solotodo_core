@@ -53,7 +53,7 @@ class BrandComparison(models.Model):
         product = Product.objects.get(id=product_id)
         self.manual_products.remove(product)
 
-    def as_xls_2(self):
+    def as_xls_2(self, highlight_strategy='1'):
         stores = self.stores.all()
         preferred_currency = Currency.objects.get(iso_code='CLP')
         relevant_product_ids = []
@@ -298,8 +298,6 @@ class BrandComparison(models.Model):
                     brand_2_cells.append(
                         xl_rowcol_to_cell(
                             row, PRICING_DETAIL_START_COLUMN + 2 * idx + 1))
-                brand_1_cells = ','.join(brand_1_cells)
-                brand_2_cells = ','.join(brand_2_cells)
 
                 is_last_of_segment = (product_row_idx == segment_size - 1)
                 if is_last_of_segment:
@@ -337,7 +335,8 @@ class BrandComparison(models.Model):
                     formula_cell = xl_rowcol_to_cell(row, col)
 
                     worksheet.write_formula(formula_cell,
-                                            data_formula.format(brand_1_cells),
+                                            data_formula.format(
+                                                ','.join(brand_1_cells)),
                                             price_format_to_use)
                     col += 1
 
@@ -355,15 +354,23 @@ class BrandComparison(models.Model):
                 for data_formula in data_formulas:
                     formula_cell = xl_rowcol_to_cell(row, col)
                     worksheet.write_formula(formula_cell,
-                                            data_formula.format(brand_2_cells),
+                                            data_formula.format(
+                                                ','.join(brand_2_cells)),
                                             price_format_to_use)
                     col += 1
+
+                brand_1_cells_with_prices = []
+                brand_2_cells_with_prices = []
 
                 for store in stores:
                     product_1_price = None
                     if product_1:
                         product_1_price = store_product_price_dict.get(
                             (store.id, product_1.id), None)
+                        if product_1_price:
+                            brand_1_cells_with_prices.append(
+                                xl_rowcol_to_cell(row, col))
+
                     worksheet.write(row, col, product_1_price,
                                     brand_1_price_format_to_use)
                     col += 1
@@ -372,11 +379,16 @@ class BrandComparison(models.Model):
                     if product_2:
                         product_2_price = store_product_price_dict.get(
                             (store.id, product_2.id), None)
+                        if product_2_price:
+                            brand_2_cells_with_prices.append(
+                                xl_rowcol_to_cell(row, col))
+
                     worksheet.write(row, col, product_2_price,
                                     brand_2_price_format_to_use)
                     col += 1
 
-                    if product_1_price and product_2_price:
+                    if product_1_price and product_2_price and \
+                            highlight_strategy == '2':
                         worksheet.conditional_format('{}:{}'.format(
                             xl_rowcol_to_cell(row, col-2),
                             xl_rowcol_to_cell(row, col-1),
@@ -385,6 +397,27 @@ class BrandComparison(models.Model):
                             'value': 1,
                             'format': highlighted_price_format
                         })
+
+                if highlight_strategy == '1':
+                    if brand_1_cells_with_prices:
+                        worksheet.conditional_format(
+                            brand_1_cells_with_prices[0], options={
+                                'type': 'bottom',
+                                'value': 1,
+                                'format': highlighted_price_format,
+                                'multi_range':
+                                    ' '.join(brand_1_cells_with_prices)
+                            })
+
+                    if brand_2_cells_with_prices:
+                        worksheet.conditional_format(
+                            brand_2_cells_with_prices[0], options={
+                                'type': 'bottom',
+                                'value': 1,
+                                'format': highlighted_price_format,
+                                'multi_range':
+                                    ' '.join(brand_2_cells_with_prices)
+                            })
 
                 row += 1
 

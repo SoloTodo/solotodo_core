@@ -2,12 +2,15 @@ import csv
 
 import boto3
 import requests
+from rest_framework.parsers import JSONParser
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.http import HttpResponse
 from django.conf import settings
 
+from solotodo_core.drf_parsers import PlainTextJsonParser
+from solotodo_core.drf_authentication_classes import CsrfExemptSessionAuthentication
 from wtb.models import WtbBrand
 from solotodo.models import Entity
 
@@ -145,7 +148,9 @@ class LgWtbViewSet(ViewSet):
 
         return response
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'],
+            parser_classes=[JSONParser, PlainTextJsonParser],
+            authentication_classes=[CsrfExemptSessionAuthentication])
     def register(self, request):
         uuid = request.data['uuid']
         aa = request.data['aa']

@@ -6,7 +6,7 @@ from rest_framework.parsers import JSONParser
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 
 from solotodo_core.drf_parsers import PlainTextJsonParser
@@ -170,6 +170,29 @@ class LgWtbViewSet(ViewSet):
         }
         table.put_item(Item=payload)
         return Response(payload, status=201)
+
+    @action(detail=False)
+    def redirect(self, request):
+        params = request.query_params
+        entity = Entity.objects.get(pk=params['entity'])
+        uuid = params['uuid']
+        aa = int(params['aa'])
+        ga = int(params['ga'])
+        timestamp = int(params['timestamp'])
+        table = boto3.resource(
+            'dynamodb',
+            aws_access_key_id=settings.DYNAMODB_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.DYNAMODB_SECRET_ACCESS_KEY,
+            region_name='sa-east-1').Table(settings.DYNAMODB_TABLE_NAME)
+        payload = {
+            'id': 'WTB',
+            'timestamp': timestamp,
+            'aa': aa,
+            'ga': ga,
+            'uuid': uuid
+        }
+        table.put_item(Item=payload)
+        return HttpResponseRedirect(entity.url)
 
 
 class SendinblueViewSet(ViewSet):

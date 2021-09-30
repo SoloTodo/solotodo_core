@@ -15,6 +15,7 @@ from reports.forms.report_websites_traffic_form import \
 from reports.forms.report_weekly_prices_form import ReportWeeklyPricesForm
 from reports.forms.report_wtb_form import ReportWtbForm
 from reports.forms.report_soicos_conversions import ReportSoicosConversions
+from reports.forms.report_wtb_prices_form import ReportWtbPricesForm
 from reports.models import Report, ReportDownload
 from reports.serializers import ReportSerializer
 from reports.tasks import send_daily_prices_task, send_current_prices_task, \
@@ -218,6 +219,35 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
         form = ReportWtbForm(request.user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report()['path']
+
+        ReportDownload.objects.create(
+            report=report,
+            user=user,
+            file=report_path
+        )
+
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
+
+    @action(detail=False)
+    def wtb_prices_report(self, request):
+        report = Report.objects.get(slug='wtb_prices_report')
+        user = request.user
+
+        if not user.has_perm('view_report', report):
+            raise PermissionDenied
+
+        form = ReportWtbPricesForm(request.user, request.GET)
 
         if not form.is_valid():
             return Response({

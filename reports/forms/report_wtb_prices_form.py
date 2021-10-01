@@ -102,6 +102,24 @@ class ReportWtbPricesForm(forms.Form):
             'font_size': 10
         })
 
+        # Light red fill with dark red text.
+        number_bad_format = workbook.add_format({
+            'bg_color': '#FFC7CE',
+            'font_color': '#9C0006'
+        })
+
+        # Light yellow fill with dark yellow text.
+        number_neutral_format = workbook.add_format({
+            'bg_color': '#FFEB9C',
+            'font_color': '#9C6500'
+        })
+
+        # Green fill with dark green text.
+        number_good_format = workbook.add_format({
+            'bg_color': '#C6EFCE',
+            'font_color': '#006100'
+        })
+
         data_formulas = [
             '=+IFERROR(AVERAGE({stores_range}),"")',
             '=+IFERROR((({wtb_price_cell}-{avg_cell})/{avg_cell}),"")',
@@ -197,6 +215,37 @@ class ReportWtbPricesForm(forms.Form):
                 col += 1
 
             row += 1
+
+        STARTING_DATA_ROW = STARTING_ROW + 1
+        ENDING_DATA_ROW = STARTING_DATA_ROW + len(wtb_entities) - 1
+        AVERAGE_VARIATION_COLUMN = STARTING_COL + 3 + len(stores) + 1
+
+        for i in [0, 2, 4]:
+            target_column = AVERAGE_VARIATION_COLUMN + i
+            starting_cell = xl_rowcol_to_cell(STARTING_DATA_ROW, target_column)
+            ending_cell = xl_rowcol_to_cell(ENDING_DATA_ROW, target_column)
+            cell_range = '{}:{}'.format(starting_cell, ending_cell)
+            worksheet.conditional_format(cell_range, {
+                'type': 'cell',
+                'criteria': 'greater than',
+                'value': 0.1,
+                'format': number_bad_format
+            })
+            worksheet.conditional_format(cell_range, {
+                'type': 'cell',
+                'criteria': 'between',
+                'minimum':  0.05,
+                'maximum':  0.1,
+                'format': number_neutral_format
+            })
+            worksheet.conditional_format(cell_range, {
+                'type': 'cell',
+                'criteria': 'less than',
+                'value': 0.05,
+                'format': number_good_format
+            })
+
+
 
         worksheet.autofilter(0, 0, row - 1, len(stores) + 8)
         workbook.close()

@@ -122,6 +122,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 context={'request': request})
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
+                user = serializer.instance
 
         payload = MyUserSerializer(
             user,

@@ -9,10 +9,19 @@ class MetaFieldMakeNonNullablePrimitiveForm(forms.Form):
             data, *args, **kwargs)
 
         try:
-            field = getattr(forms, meta_field.model.name)(required=True)
+            field_klass = getattr(forms, meta_field.model.name)
+
+            if meta_field.model.name == 'BooleanField':
+                required = False
+            else:
+                required = True
+
+            field = field_klass(required=required)
+
         except AttributeError:
             field = forms.ModelChoiceField(
                 queryset=meta_field.model.instancemodel_set.all(),
                 required=True
             )
+
         self.fields['default'] = field

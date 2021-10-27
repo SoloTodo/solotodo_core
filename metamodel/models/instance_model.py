@@ -22,6 +22,7 @@ from metamodel.utils import strip_whitespace, trim, \
 
 
 class InstanceModelQuerySet(models.QuerySet):
+
     def get_field_values(self, field):
         from metamodel.models import InstanceField
 
@@ -532,7 +533,7 @@ class InstanceModel(models.Model):
                 if isinstance(field_ordering_value, str):
                     len_field = len(field_ordering_value)
                     field_ordering_value = '{}'.format(
-                            field_ordering_value+' '*(30-len_field))
+                        field_ordering_value + ' ' * (30 - len_field))
 
             if result is None:
                 result = field_ordering_value
@@ -542,19 +543,19 @@ class InstanceModel(models.Model):
                 if isinstance(result, str):
                     result = '{0}{1}'.format(result, field_ordering_value)
                 else:
-                    result = result*10**15+field_ordering_value
+                    result = result * 10 ** 15 + field_ordering_value
             else:
                 if isinstance(result, str):
                     field_ordering_value = '{:.0f}'.format(
-                            (field_ordering_value*1000).quantize(0))
+                        (field_ordering_value * 1000).quantize(0))
                     result = '{0}{1}{2}'.format(
-                            result,
-                            '0'*(15-len(field_ordering_value) % 15),
-                            field_ordering_value)
+                        result,
+                        '0' * (15 - len(field_ordering_value) % 15),
+                        field_ordering_value)
                 else:
                     result = '{0}{1}'.format(
-                            str((result*1000).quantize(0)),
-                            field_ordering_value)
+                        str((result * 1000).quantize(0)),
+                        field_ordering_value)
 
         return result
 
@@ -650,7 +651,7 @@ class InstanceModel(models.Model):
                     continue
 
                 for m2m_instance_field in m2m_instance_fields:
-                    m2m_document = m2m_instance_field.value\
+                    m2m_document = m2m_instance_field.value \
                         .elasticsearch_document()
 
                     m2m_documents.append(m2m_document[0])

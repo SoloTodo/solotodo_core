@@ -19,6 +19,7 @@ class MetaField(models.Model):
                               related_name='fields_usage')
     ordering = models.IntegerField(default=1)
     hidden = models.BooleanField(default=False)
+    help_text = models.TextField(null=True, blank=True)
 
     MODEL_ID_FIELD_CLASS_DICT = None
 
@@ -220,14 +221,12 @@ class MetaField(models.Model):
             if old_field.parent != self.parent:
                 raise IntegrityError('Can\'t change parent after creating '
                                      'the field')
-
             if old_field.multiple and not self.multiple:
                 raise IntegrityError('Can\'t change field from multiple to '
                                      'non-multiple')
-
             if not old_field.requires_default_value_for_saving() \
                     and self.requires_default_value_for_saving():
-                if not default:
+                if default is None:
                     raise IntegrityError(
                         'Changing field from null to non-null should include '
                         'a default value for existing entries')

@@ -1,11 +1,16 @@
 import csv
+
+import boto3
 import requests
+from rest_framework.parsers import JSONParser
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
 from rest_framework.decorators import action
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 
+from solotodo_core.drf_parsers import PlainTextJsonParser
+from solotodo_core.drf_authentication_classes import CsrfExemptSessionAuthentication
 from wtb.models import WtbBrand
 from solotodo.models import Entity
 
@@ -142,6 +147,53 @@ class LgWtbViewSet(ViewSet):
             writer.writerow(row)
 
         return response
+
+    @action(detail=False, methods=['post'],
+            parser_classes=[JSONParser, PlainTextJsonParser],
+            authentication_classes=[CsrfExemptSessionAuthentication])
+    def register(self, request):
+        uuid = request.data['uuid']
+        aa = request.data['aa']
+        ga = request.data['ga']
+        timestamp = request.data['timestamp']
+        table = boto3.resource(
+            'dynamodb',
+            aws_access_key_id=settings.DYNAMODB_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.DYNAMODB_SECRET_ACCESS_KEY,
+            region_name='sa-east-1').Table(settings.DYNAMODB_TABLE_NAME)
+        payload = {
+            'id': 'WTB',
+            'timestamp': timestamp,
+            'aa': aa,
+            'ga': ga,
+            'uuid': uuid
+        }
+        table.put_item(Item=payload)
+        return Response(payload, status=201)
+
+    @action(detail=False)
+    def redirect(self, request):
+        params = request.query_params
+        entity = Entity.objects.get(pk=params['entity'])
+        uuid = params['uuid']
+        aa = int(params['aa'])
+        ga = int(params['ga'])
+        timestamp = int(params['timestamp'])
+        table = boto3.resource(
+            'dynamodb',
+            aws_access_key_id=settings.DYNAMODB_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.DYNAMODB_SECRET_ACCESS_KEY,
+            region_name='sa-east-1').Table(settings.DYNAMODB_TABLE_NAME)
+        payload = {
+            'id': 'WTB',
+            'timestamp': timestamp,
+            'aa': aa,
+            'ga': ga,
+            'uuid': uuid
+        }
+        table.put_item(Item=payload)
+        return HttpResponseRedirect(entity.url)
+
 
 class SendinblueViewSet(ViewSet):
     @action(detail=False, methods=['post'])

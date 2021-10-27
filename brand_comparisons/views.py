@@ -35,15 +35,13 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
             'stores'
         ).select_related('user', 'brand_1', 'brand_2', 'category')
 
-        # TODO: Fix this when the user has more than one group
-        group = user.groups.get()
-
         if not user.is_authenticated:
             return qs.none()
         elif user.is_superuser:
             return qs.all()
         else:
-            return qs.filter(user__groups=group)
+            groups = user.groups.all()
+            return qs.filter(user__groups__in=groups)
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -61,6 +59,16 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
         if export_format == 'xls':
             brand_comparison = self.get_object()
             report_path = brand_comparison.as_xls()['path']
+            storage = PrivateS3Boto3Storage()
+            report_url = storage.url(report_path)
+            return Response({
+                'url': report_url
+            })
+
+        if export_format == 'xls_2':
+            brand_comparison = self.get_object()
+            highlight_strategy = request.GET.get('highlight_strategy', '1')
+            report_path = brand_comparison.as_xls_2(highlight_strategy)['path']
             storage = PrivateS3Boto3Storage()
             report_url = storage.url(report_path)
             return Response({

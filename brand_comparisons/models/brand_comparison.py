@@ -1,12 +1,13 @@
 import io
 import xlsxwriter
+from django.db.models import Min
 from xlsxwriter.utility import xl_rowcol_to_cell
 
 from django.db import models
 from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
 
-from solotodo.models import Brand, Store, Category, Entity, Product
+from solotodo.models import Brand, Store, Category, Entity, Product, Currency
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -51,6 +52,387 @@ class BrandComparison(models.Model):
     def remove_manual_product(self, product_id):
         product = Product.objects.get(id=product_id)
         self.manual_products.remove(product)
+
+    def as_xls_2(self, highlight_strategy='1'):
+        stores = self.stores.all()
+        preferred_currency = Currency.objects.get(iso_code='CLP')
+        relevant_product_ids = []
+        pricing_row_count = 0
+        for segment in self.segments.prefetch_related('rows'):
+            for row in segment.rows.all():
+                pricing_row_count += 1
+                if row.product_1_id:
+                    relevant_product_ids.append(row.product_1_id)
+                if row.product_2_id:
+                    relevant_product_ids.append(row.product_2_id)
+
+        es = Entity.objects.filter(
+            store__in=stores,
+            product__in=relevant_product_ids,
+            seller__isnull=True
+        ).get_available()\
+            .order_by('store', 'product')\
+            .values('store', 'product')\
+            .annotate(price=Min('active_registry__{}_price'.format(
+                self.price_type)))
+
+        store_product_price_dict = {(x['store'], x['product']): x['price']
+                                    for x in es}
+
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        worksheet = workbook.add_worksheet()
+
+        # Styling
+        store_header_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bold': True,
+            'align': 'center',
+            'bg_color': '#F2F1F0',
+            'left': 1,
+            'right': 1,
+            'bottom': 1,
+        })
+
+        table_hardcoded_header_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bold': True,
+            'align': 'center',
+            'bg_color': '#F2F1F0',
+            'bottom': 1,
+        })
+
+        table_brand_1_header_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bold': True,
+            'align': 'center',
+            'bg_color': '#F2F1F0',
+            'bottom': 1,
+            'left': 1
+        })
+
+        table_brand_2_header_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bold': True,
+            'align': 'center',
+            'bg_color': '#F2F1F0',
+            'bottom': 1,
+            'right': 1
+        })
+
+        segment_label_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bold': True,
+            'align': 'center',
+            'valign': 'vcenter',
+            'bottom': 1,
+        })
+
+        product_label_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#F2F1F0'
+        })
+
+        bottom_product_label_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#F2F1F0',
+            'bottom': 1
+        })
+
+        highlighted_product_1_label_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#d99694'
+        })
+
+        highlighted_bottom_product_1_label_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#d99694',
+            'bottom': 1
+        })
+
+        highlighted_product_2_label_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#95b3d7'
+        })
+
+        highlighted_bottom_product_2_label_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#95b3d7',
+            'bottom': 1
+        })
+
+        price_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+        })
+        price_format.set_num_format(preferred_currency.excel_format())
+
+        bottom_price_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'bottom': 1
+        })
+        bottom_price_format.set_num_format(preferred_currency.excel_format())
+
+        brand_1_price_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'left': 1
+        })
+        brand_1_price_format.set_num_format(preferred_currency.excel_format())
+
+        bottom_brand_1_price_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'left': 1,
+            'bottom': 1
+        })
+        bottom_brand_1_price_format.set_num_format(
+            preferred_currency.excel_format())
+
+        brand_2_price_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'right': 1
+        })
+        brand_2_price_format.set_num_format(preferred_currency.excel_format())
+
+        bottom_brand_2_price_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'right': 1,
+            'bottom': 1
+        })
+        bottom_brand_2_price_format.set_num_format(
+            preferred_currency.excel_format())
+
+        highlighted_price_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#66FFCC',
+        })
+
+        # Column widths
+        worksheet.set_column(0, 0, 12)
+        worksheet.set_column(1, 1, 16)
+        worksheet.set_column(5, 5, 16)
+
+        PRICING_DETAIL_START_COLUMN = 9
+        row = 0
+
+        # First row, print store labels
+        col = PRICING_DETAIL_START_COLUMN
+
+        for store in stores:
+            worksheet.merge_range(row, col, row, col + 1,
+                                  str(store), cell_format=store_header_format)
+            col += 2
+        row += 1
+
+        # Second row, table titles
+        col = 0
+        hardcoded_titles = [
+            'ATA',
+            str(self.brand_1), 'Moda', 'Promedio', 'Mínimo',
+            str(self.brand_2), 'Moda', 'Promedio', 'Mínimo'
+        ]
+
+        for title in hardcoded_titles:
+            worksheet.write(row, col, title, table_hardcoded_header_format)
+            col += 1
+
+        for idx in range(len(stores)):
+            worksheet.write(row, col, str(self.brand_1),
+                            table_brand_1_header_format)
+            col += 1
+            worksheet.write(row, col, str(self.brand_2),
+                            table_brand_2_header_format)
+            col += 1
+
+        row += 1
+
+        # ATA label column
+        ata_row = row
+        for segment in self.segments.prefetch_related('rows'):
+            segment_length = segment.rows.count()
+            worksheet.merge_range(ata_row, 0, ata_row + segment_length - 1, 0,
+                                  str(segment.name),
+                                  cell_format=segment_label_format)
+            ata_row += segment_length
+
+        # Individual product rows
+
+        data_formulas = [
+            '=IFERROR(MODE({0}), IFERROR(AVERAGE({0}), ""))',
+            '=IFERROR(AVERAGE({}), "")',
+            '=IFERROR(MIN({}), "")',
+        ]
+
+        for segment in self.segments.prefetch_related(
+                'rows__product_1', 'rows__product_2'):
+            segment_size = segment.rows.count()
+            for product_row_idx, product_row in enumerate(segment.rows.all()):
+                brand_1_cells = []
+                brand_2_cells = []
+                for idx, store in enumerate(stores):
+                    brand_1_cells.append(
+                        xl_rowcol_to_cell(
+                            row, PRICING_DETAIL_START_COLUMN + 2 * idx))
+                    brand_2_cells.append(
+                        xl_rowcol_to_cell(
+                            row, PRICING_DETAIL_START_COLUMN + 2 * idx + 1))
+
+                is_last_of_segment = (product_row_idx == segment_size - 1)
+                if is_last_of_segment:
+                    product_label_format_to_use = bottom_product_label_format
+                    highlighted_product_1_label_format_to_use = \
+                        highlighted_bottom_product_1_label_format
+                    highlighted_product_2_label_format_to_use = \
+                        highlighted_bottom_product_2_label_format
+                    price_format_to_use = bottom_price_format
+                    brand_1_price_format_to_use = bottom_brand_1_price_format
+                    brand_2_price_format_to_use = bottom_brand_2_price_format
+                else:
+                    product_label_format_to_use = product_label_format
+                    highlighted_product_1_label_format_to_use = \
+                        highlighted_product_1_label_format
+                    highlighted_product_2_label_format_to_use = \
+                        highlighted_product_2_label_format
+                    price_format_to_use = price_format
+                    brand_1_price_format_to_use = brand_1_price_format
+                    brand_2_price_format_to_use = brand_2_price_format
+
+                col = 1
+                product_1 = product_row.product_1
+                if product_1:
+                    cell_style = highlighted_product_1_label_format_to_use \
+                        if product_row.is_product_1_highlighted \
+                        else product_label_format_to_use
+                    worksheet.write(row, col, str(product_1), cell_style)
+                else:
+                    worksheet.write(row, col, '', product_label_format_to_use)
+
+                col += 1
+
+                for data_formula in data_formulas:
+                    formula_cell = xl_rowcol_to_cell(row, col)
+
+                    worksheet.write_formula(formula_cell,
+                                            data_formula.format(
+                                                ','.join(brand_1_cells)),
+                                            price_format_to_use)
+                    col += 1
+
+                product_2 = product_row.product_2
+                if product_2:
+                    cell_style = highlighted_product_2_label_format_to_use \
+                        if product_row.is_product_2_highlighted \
+                        else product_label_format_to_use
+                    worksheet.write(row, col, str(product_2), cell_style)
+                else:
+                    worksheet.write(row, col, '', product_label_format_to_use)
+
+                col += 1
+
+                for data_formula in data_formulas:
+                    formula_cell = xl_rowcol_to_cell(row, col)
+                    worksheet.write_formula(formula_cell,
+                                            data_formula.format(
+                                                ','.join(brand_2_cells)),
+                                            price_format_to_use)
+                    col += 1
+
+                brand_1_cells_with_prices = []
+                brand_2_cells_with_prices = []
+
+                for store in stores:
+                    product_1_price = None
+                    if product_1:
+                        product_1_price = store_product_price_dict.get(
+                            (store.id, product_1.id), None)
+                        if product_1_price:
+                            brand_1_cells_with_prices.append(
+                                xl_rowcol_to_cell(row, col))
+
+                    worksheet.write(row, col, product_1_price,
+                                    brand_1_price_format_to_use)
+                    col += 1
+
+                    product_2_price = None
+                    if product_2:
+                        product_2_price = store_product_price_dict.get(
+                            (store.id, product_2.id), None)
+                        if product_2_price:
+                            brand_2_cells_with_prices.append(
+                                xl_rowcol_to_cell(row, col))
+
+                    worksheet.write(row, col, product_2_price,
+                                    brand_2_price_format_to_use)
+                    col += 1
+
+                    if product_1_price and product_2_price and \
+                            highlight_strategy == '2':
+                        worksheet.conditional_format('{}:{}'.format(
+                            xl_rowcol_to_cell(row, col-2),
+                            xl_rowcol_to_cell(row, col-1),
+                        ), {
+                            'type': 'bottom',
+                            'value': 1,
+                            'format': highlighted_price_format
+                        })
+
+                if highlight_strategy == '1':
+                    if brand_1_cells_with_prices:
+                        worksheet.conditional_format(
+                            brand_1_cells_with_prices[0], options={
+                                'type': 'bottom',
+                                'value': 1,
+                                'format': highlighted_price_format,
+                                'multi_range':
+                                    ' '.join(brand_1_cells_with_prices)
+                            })
+
+                    if brand_2_cells_with_prices:
+                        worksheet.conditional_format(
+                            brand_2_cells_with_prices[0], options={
+                                'type': 'bottom',
+                                'value': 1,
+                                'format': highlighted_price_format,
+                                'multi_range':
+                                    ' '.join(brand_2_cells_with_prices)
+                            })
+
+                row += 1
+
+        workbook.close()
+        output.seek(0)
+        file_value = output.getvalue()
+        file_for_upload = ContentFile(file_value)
+        storage = PrivateS3Boto3Storage()
+        filename = 'brand_comparison.xlsx'
+        path = storage.save(filename, file_for_upload)
+
+        return {
+            'file': file_value,
+            'path': path
+        }
 
     def as_xls(self):
         preferred_currency = self.user.preferred_currency
@@ -405,11 +787,8 @@ class BrandComparison(models.Model):
         output.seek(0)
         file_value = output.getvalue()
         file_for_upload = ContentFile(file_value)
-
         storage = PrivateS3Boto3Storage()
-
         filename = 'brand_comparison.xlsx'
-
         path = storage.save(filename, file_for_upload)
 
         return {

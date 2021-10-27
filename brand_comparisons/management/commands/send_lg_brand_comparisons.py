@@ -10,7 +10,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--user_ids', nargs='+', type=int)
         parser.add_argument('--comparison_ids', nargs='+', type=int)
-        parser.add_argument('--export_format', nargs='?', type=str, default='xls')
+        parser.add_argument('--export_format', nargs='?', type=str,
+                            default='xls')
 
     def handle(self, *args, **options):
         comparison_ids = options['comparison_ids']

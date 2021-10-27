@@ -123,7 +123,8 @@ class ReportWtbPricesForm(forms.Form):
         data_formulas = [
             '=+IFERROR(AVERAGE({stores_range}),"")',
             '=+IFERROR((({wtb_price_cell}-{avg_cell})/{avg_cell}),"")',
-            '=IFERROR(MODE({stores_range}), IFERROR(AVERAGE({stores_range}), ""))',
+            '=IFERROR(MODE({stores_range}), ' +
+            'IFERROR(AVERAGE({stores_range}), ""))',
             '=+IFERROR((({wtb_price_cell}-{mode_cell})/{mode_cell}),"")',
             '=+IFERROR(MIN({stores_range}),"")',
             '=+IFERROR((({wtb_price_cell}-{min_cell})/{min_cell}),"")'
@@ -244,8 +245,6 @@ class ReportWtbPricesForm(forms.Form):
                 'value': 0.05,
                 'format': number_good_format
             })
-
-
 
         worksheet.autofilter(0, 0, row - 1, len(stores) + 8)
         workbook.close()

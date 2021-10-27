@@ -10,7 +10,8 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.conf import settings
 
 from solotodo_core.drf_parsers import PlainTextJsonParser
-from solotodo_core.drf_authentication_classes import CsrfExemptSessionAuthentication
+from solotodo_core.drf_authentication_classes import \
+    CsrfExemptSessionAuthentication
 from wtb.models import WtbBrand
 from solotodo.models import Entity
 

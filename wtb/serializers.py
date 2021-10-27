@@ -31,7 +31,8 @@ class WtbEntitySerializer(serializers.HyperlinkedModelSerializer):
         model = WtbEntity
         fields = ('url', 'id', 'name', 'model_name', 'brand', 'category',
                   'external_url', 'product', 'key', 'picture_url', 'section',
-                  'creation_date', 'last_updated', 'is_visible', 'is_active')
+                  'creation_date', 'last_updated', 'is_visible', 'is_active',
+                  'price')
 
 
 class WtbEntityStaffInfoSerializer(serializers.HyperlinkedModelSerializer):

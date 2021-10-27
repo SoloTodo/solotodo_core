@@ -15,16 +15,18 @@ from solotodo.models import Category, Store, EntityHistory, SoloTodoUser
 class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--user_ids', nargs='+', type=int)
+        parser.add_argument('--category_id', type=int)
 
     def handle(self, *args, **options):
         group = Group.objects.get(name="LG Chile")
         user_ids = options['user_ids']
+        category_id = options['category_id']
 
         users = SoloTodoUser.objects.filter(pk__in=user_ids)
         emails = [user.email for user in users]
 
         new_condition = 'https://schema.org/NewCondition'
-        category = Category.objects.get(id=11)
+        category = Category.objects.get(id=category_id)
         stores = get_objects_for_group(group, 'view_store', Store)
         brands = [848, 996]
 
@@ -103,10 +105,10 @@ class Command(BaseCommand):
         """
         message = date_from.strftime(message)
 
-        subject = 'Reporte historico TV %m-%Y'
+        subject = 'Reporte historico {} %m-%Y'.format(category)
         subject = date_from.strftime(subject)
 
-        filename = 'Monthly_price_report.xlsx'
+        filename = 'monthly_price_report.xlsx'
 
         email = EmailMessage(subject, message, sender, emails)
         email.attach(

@@ -26,6 +26,7 @@ from solotodo.metamodel_plugin import MetaModelPlugin
 def _(s):
     return s
 
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -247,7 +248,7 @@ LOGGING = {
 CELERY_ENABLE_UTC = True
 
 CELERY_BROKER_URL = \
-    'amqp://solotodo_core:solotodo_core@localhost/solotodo_core'
+    'amqp://solotodo:solotodo@localhost/solotodo'
 CELERY_RESULT_BACKEND = 'rpc://'
 
 CELERY_IMPORTS = (

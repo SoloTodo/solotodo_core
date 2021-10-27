@@ -37,10 +37,11 @@ class InstanceModelQuerySet(models.QuerySet):
 
 class InstanceModel(models.Model):
     decimal_value = models.DecimalField(max_digits=200, decimal_places=5,
-                                        null=True, blank=True)
-    unicode_value = models.CharField(max_length=1024, null=True, blank=True)
+                                        null=True, blank=True, db_index=True)
+    unicode_value = models.CharField(max_length=1024, null=True, blank=True,
+                                     db_index=True)
     unicode_representation = models.CharField(max_length=255, null=True,
-                                              blank=True)
+                                              blank=True, db_index=True)
     model = models.ForeignKey(MetaModel, on_delete=models.CASCADE)
 
     objects = InstanceModelQuerySet.as_manager()

@@ -38,8 +38,8 @@ class Rating(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     store_rating = models.IntegerField()
     store_comments = models.TextField()
-    product_rating = models.IntegerField()
-    product_comments = models.TextField()
+    product_rating = models.IntegerField(blank=True, null=True)
+    product_comments = models.TextField(blank=True, null=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     purchase_proof = models.FileField(
         upload_to='ratings', storage=MediaRootPrivateS3Boto3Storage())

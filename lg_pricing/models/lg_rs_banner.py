@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import models, connections
 from django.db.models import Count
-from django.db.models.functions import ExtractWeek, ExtractYear
+from django.db.models.functions import ExtractWeek, ExtractIsoYear
 from django.utils import timezone
 from django_redshift_backend.distkey import DistKey
 
@@ -51,7 +51,7 @@ class LgRsBanner(models.Model):
 
         banners = banners.annotate(
             week=ExtractWeek('update__timestamp'),
-            year=ExtractYear('update__timestamp')
+            year=ExtractIsoYear('update__timestamp')
         ).select_related(
             'update__store',
             'subsection__section',
@@ -61,7 +61,7 @@ class LgRsBanner(models.Model):
 
         banner_updates = BannerUpdate.objects.annotate(
             week=ExtractWeek('timestamp'),
-            year=ExtractYear('timestamp')
+            year=ExtractIsoYear('timestamp')
         )\
             .order_by('store', 'year', 'week')\
             .values('store', 'year', 'week')\

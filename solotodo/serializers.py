@@ -155,7 +155,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         model = Product
         fields = ('url', 'id', 'name', 'category', 'slug', 'instance_model_id',
                   'creation_date', 'last_updated', 'picture_url', 'brand',
-                  'specs', 'keywords')
+                  'part_number', 'specs', 'keywords')
 
 
 class StaffProductSerializer(ProductSerializer):
@@ -165,7 +165,7 @@ class StaffProductSerializer(ProductSerializer):
         model = Product
         fields = ('url', 'id', 'name', 'category', 'slug', 'instance_model_id',
                   'creation_date', 'last_updated', 'picture_url', 'brand',
-                  'specs', 'creator', 'keywords')
+                  'part_number', 'specs', 'creator', 'keywords')
 
 
 class NestedProductSerializerWithCategory(NestedProductSerializer):
@@ -573,7 +573,8 @@ class RatingFullSerializer(RatingSerializer):
 
 class RatingCreateSerializer(serializers.ModelSerializer):
     store_rating = serializers.IntegerField(min_value=1, max_value=5)
-    product_rating = serializers.IntegerField(min_value=1, max_value=5)
+    product_rating = serializers.IntegerField(min_value=1, max_value=5,
+                                              allow_null=True, required=False)
     store = StorePrimaryKeyRelatedField()
     product = ProductPrimaryKeyRelatedField()
 

@@ -1,11 +1,16 @@
+import random
+
+
 class RdsDbRouter:
     def db_for_read(self, model, **hints):
         if model._meta.app_label == 'metamodel':
             return 'writer'
         if model._meta.app_label != 'lg_pricing':
-            return 'reader'
-        else:
-            return None
+            if random.random() <= 0.75:
+                return 'reader'
+            else:
+                return 'writer'
+        return None
 
     def db_for_write(self, model, **hints):
         if model._meta.app_label != 'lg_pricing':

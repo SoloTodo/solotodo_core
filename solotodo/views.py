@@ -2,13 +2,12 @@ import traceback
 from collections import OrderedDict
 
 import datetime
-import json
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.core.mail import send_mail
 from django.db import models, IntegrityError
 from django.db.models import Avg, Count, Min, Max
 from django.http import Http404
@@ -55,6 +54,7 @@ from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
 from solotodo.forms.product_picture_form import ProductPictureForm
 from solotodo.forms.resource_names_form import ResourceNamesForm
+from solotodo.forms.send_contact_message_form import SendContactEmailForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
@@ -108,7 +108,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = UserFilterSet
 
     @action(methods=['get', 'patch'],
-            permission_classes=(permissions.IsAuthenticated, ),
+            permission_classes=(permissions.IsAuthenticated,),
             detail=False)
     def me(self, request):
         user = request.user
@@ -120,6 +120,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
                 context={'request': request})
             if serializer.is_valid(raise_exception=True):
                 serializer.save()
+                user = serializer.instance
 
         payload = MyUserSerializer(
             user,
@@ -131,7 +132,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False)
     def with_staff_actions(self, request):
         users = self.get_queryset()
-        users_with_staff_actions = users.filter_with_staff_actions()
+        users_with_staff_actions = users.filter(is_staff=True)
         payload = UserSerializer(users_with_staff_actions,
                                  many=True, context={'request': request})
         return Response(payload.data)
@@ -199,6 +200,19 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         result = user.staff_actions(start_date, end_date)
 
         return Response(result)
+
+    @action(detail=False, methods=['post'])
+    def send_contact_email(self, request, *args, **kwargs):
+        form = SendContactEmailForm(request.data)
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+        superusers = get_user_model().objects.filter(is_superuser=True)
+        emails = [x.email for x in superusers]
+
+        send_mail(form.cleaned_data['subject'], form.cleaned_data['message'],
+                  form.cleaned_data['name'] + '<' + form.cleaned_data['email']
+                  + '>', emails)
+        return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
 
 class WebsiteViewSet(PermissionReadOnlyModelViewSet):
@@ -591,6 +605,24 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         else:
             return Response(form.errors)
 
+    @action(detail=True)
+    def matching_report(self, request, *args, **kwargs):
+        user = request.user
+        store = self.get_object()
+
+        if not user.has_perm('view_store_reports', store):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        file_for_upload = store.matching_report(store)
+        storage = PrivateS3Boto3Storage()
+        filename = 'reports/matching_report.xlsx'
+        path = storage.save(filename, file_for_upload)
+        report_url = storage.url(path)
+
+        return Response({
+            'url': report_url
+        })
+
 
 class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StoreUpdateLog.objects.all()
@@ -598,7 +630,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StoreUpdateLogPagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = StoreUpdateLogFilterSet
-    ordering_fields = ('last_updated', )
+    ordering_fields = ('last_updated',)
 
     @action(detail=False)
     def latest(self, request, *args, **kwargs):
@@ -1067,7 +1099,7 @@ class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = EntityHistory.objects.all()
     serializer_class = EntityHistorySerializer
     pagination_class = EntityHistoryPagination
-    filter_backends = (rest_framework.DjangoFilterBackend, )
+    filter_backends = (rest_framework.DjangoFilterBackend,)
     filter_class = EntityHistoryFilterSet
 
     @action(detail=True)
@@ -1199,13 +1231,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True)
     def min_history_price(self, request, pk):
         product = self.get_object()
-        entity_histories = EntityHistory.objects\
+        entity_histories = EntityHistory.objects \
             .filter(
                 entity__product=product,
                 entity__condition='https://schema.org/NewCondition',
-                cell_monthly_payment__isnull=True)\
-            .exclude(
-                stock=0)
+                cell_monthly_payment__isnull=True).exclude(stock=0)
 
         filterset = EntityHistoryFilterSet(
             request.query_params, entity_histories, request=request)
@@ -1213,9 +1243,9 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         min_price = filterset.qs.aggregate(
             Min('offer_price'))['offer_price__min']
 
-        stores_aggs = filterset.qs.filter(offer_price__exact=min_price)\
-            .values('entity__store')\
-            .annotate(max_timestamp=Max('timestamp'))\
+        stores_aggs = filterset.qs.filter(offer_price__exact=min_price) \
+            .values('entity__store') \
+            .annotate(max_timestamp=Max('timestamp')) \
             .order_by('entity__store')
 
         stores_data = []
@@ -1226,7 +1256,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                     'store-detail',
                     kwargs={'pk': agg['entity__store']},
                     request=request),
-                 'timestamp': agg['max_timestamp']})
+                    'timestamp': agg['max_timestamp']})
 
         result = {
             'min_price': min_price,
@@ -1339,6 +1369,17 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         # TODO: Remove this method after S20 release window
         products = Product.objects.filter(
             instance_model__unicode_representation__contains='(G98'
+        ).select_related('instance_model__model__category')
+
+        serializer = ProductSerializer(
+            products, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False)
+    def s21_bucket(self, request, *args, **kwargs):
+        # TODO: Remove this method after S21 release window
+        products = Product.objects.filter(
+            instance_model__unicode_representation__contains='(G99'
         ).select_related('instance_model__model__category')
 
         serializer = ProductSerializer(
@@ -1538,7 +1579,7 @@ class ResourceViewSet(viewsets.ViewSet):
 class RatingViewSet(viewsets.ModelViewSet):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
-    permission_classes = (RatingPermission, )
+    permission_classes = (RatingPermission,)
     pagination_class = RatingPagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = RatingFilterSet
@@ -1573,7 +1614,7 @@ class RatingViewSet(viewsets.ModelViewSet):
 class ProductPictureViewSet(viewsets.ModelViewSet):
     queryset = ProductPicture.objects.all()
     serializer_class = ProductPictureSerializer
-    permission_classes = (DjangoModelPermissionsOrAnonReadOnly, )
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly,)
     pagination_class = ProductPicturePagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = ProductPictureFilterSet

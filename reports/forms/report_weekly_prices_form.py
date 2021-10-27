@@ -5,7 +5,7 @@ from django import forms
 from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db.models import Min
-from django.db.models.functions import ExtractWeek, ExtractYear
+from django.db.models.functions import ExtractWeek, ExtractIsoYear
 from django.utils import timezone
 from django_filters.fields import IsoDateTimeRangeField
 from guardian.shortcuts import get_objects_for_user
@@ -68,7 +68,7 @@ class ReportWeeklyPricesForm(forms.Form):
             timestamp__gte=timestamp.start,
             timestamp__lte=timestamp.stop,
         ).annotate(week=ExtractWeek('timestamp'),
-                   year=ExtractYear('timestamp'))
+                   year=ExtractIsoYear('timestamp'))
 
         if countries:
             ehs = ehs.filter(entity__store__country__in=countries)

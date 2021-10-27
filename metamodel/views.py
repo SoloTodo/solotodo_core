@@ -530,8 +530,8 @@ class MetaModelViewSet(viewsets.ModelViewSet):
                 meta_field.save(default=cleaned_default)
             else:
                 meta_field.save()
-            serializer = MetaFieldSerializer(meta_field,
-                                       context={'request': request})
+            serializer = MetaFieldSerializer(
+                meta_field, context={'request': request})
             return Response(serializer.data)
 
     @action(detail=True, methods=['GET'])

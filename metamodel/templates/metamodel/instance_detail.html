@@ -23,8 +23,7 @@
             </div>
             {% endfor %}
 
-            <form method="post" action="." enctype="
-            /form-data">
+            <form method="post" action="." enctype="multipart/form-data">
                 {% csrf_token %}
                 <table class="table table-bordered" id="instance_edit_table">
                     {{ form.as_table }}

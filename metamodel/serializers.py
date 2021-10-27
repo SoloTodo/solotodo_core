@@ -40,7 +40,7 @@ class MetaModelSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class InstanceModelWithoutMetamodelSerializer(
-    serializers.HyperlinkedModelSerializer):
+        serializers.HyperlinkedModelSerializer):
     class Meta:
         model = InstanceModel
         fields = ['id', 'url', 'decimal_value', 'unicode_value',

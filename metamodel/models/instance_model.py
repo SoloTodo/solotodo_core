@@ -48,7 +48,6 @@ class InstanceModel(models.Model):
 
     METAMODEL_METAFIELDS_DICT = None
 
-
     def _get_value(self):
         primitive_models_dict = MetaModel.get_primitive_models_dict()
 
@@ -692,7 +691,7 @@ class InstanceModel(models.Model):
                     keywords.extend(fk_result[1])
 
         for function_path in settings.METAMODEL[
-            'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS']:
+                'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS']:
             path_components = function_path.split('.')
             f_module = importlib.import_module('.'.join(path_components[:-1]))
             additional_es_fields_function = getattr(

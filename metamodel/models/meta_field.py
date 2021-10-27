@@ -91,7 +91,7 @@ class MetaField(models.Model):
 
                 url = reverse('metamodel_model_add_instance',
                               kwargs={'pk': self.meta_field.model.id}) \
-                      + '?popup=1'
+                    + '?popup=1'
 
                 result += ' <a href="{}" data-model="{}" ' \
                           'class="add_new_link" tabindex="-1">Add new</a>' \
@@ -117,7 +117,7 @@ class MetaField(models.Model):
 
                 url = reverse('metamodel_model_add_instance',
                               kwargs={'pk': self.meta_field.model.id}) \
-                      + '?popup=1'
+                    + '?popup=1'
 
                 result += ' <a href="{}" data-model="{}" ' \
                           'class="add_new_link" tabindex="-1">Add new</a>' \

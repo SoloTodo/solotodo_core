@@ -215,7 +215,7 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                         0, col + (len(brands_in_category)*2),
                         '{}-{}'.format(year, week),
                         header_format)
-                    col += len(brands_in_category)*2 +1
+                    col += len(brands_in_category)*2 + 1
                 else:
                     worksheet.write(0, col, '{}-{}'.format(year, week))
                     col += 1
@@ -232,7 +232,8 @@ class StoreHistoricEntityPositionsForm(forms.Form):
             double_headers = []
 
             for year_week in year_weeks:
-                double_headers.extend([str(brand) for brand in brands_in_category])
+                double_headers.extend([str(brand) for brand
+                                       in brands_in_category])
                 double_headers.extend(['Total'])
 
             for header in double_headers:
@@ -254,7 +255,8 @@ class StoreHistoricEntityPositionsForm(forms.Form):
                     col += 1
                     continue
 
-                worksheet.write(row, col, 'Promedio apariciones', header_format)
+                worksheet.write(row, col, 'Promedio apariciones',
+                                header_format)
                 col += 1
                 worksheet.write(row, col, 'Porcentaje', header_format)
                 col += 1

@@ -134,7 +134,7 @@ class EntityByUrlForm(forms.Form):
             sku = url.path
         elif url.netloc == 'www.easy.cl':
             store = Store.objects.get(name='Easy')
-            m = re.search('(\d+)p$', url.path)
+            m = re.search(r'(\d+)p$', url.path)
             if not m:
                 return None
             sku = m.groups()[0]
@@ -146,13 +146,13 @@ class EntityByUrlForm(forms.Form):
             sku = m.groups()[0][:-3]
         elif url.netloc == 'www.lider.cl':
             store = Store.objects.get(name='Lider')
-            m = re.search('/(\d+)$', url.path)
+            m = re.search(r'/(\d+)$', url.path)
             if not m:
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'www.netnow.cl':
             store = Store.objects.get(name='NetNow')
-            m = re.search('/\d+-.+/(\d+)-', url.path)
+            m = re.search(r'/\d+-.+/(\d+)-', url.path)
             if not m:
                 return None
             sku = m.groups()[0]
@@ -161,7 +161,7 @@ class EntityByUrlForm(forms.Form):
             sku = url.path
         elif url.netloc == 'www.sodimac.cl':
             store = Store.objects.get(name='Sodimac')
-            m = re.search('/product/(\d+)', url.path)
+            m = re.search(r'/product/(\d+)', url.path)
             if not m:
                 return None
             sku = m.groups()[0]
@@ -173,15 +173,15 @@ class EntityByUrlForm(forms.Form):
             sku = m.groups()[0]
         elif url.netloc == 'www.spdigital.cl':
             store = Store.objects.get(name='SpDigital')
-            m = re.search('products/view/(\d+)$', url.path)
+            m = re.search(r'products/view/(\d+)$', url.path)
             if not m:
-                m = re.search('products/cyberday_view/(\d+)$', url.path)
+                m = re.search(r'products/cyberday_view/(\d+)$', url.path)
             if not m:
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'cyber.cloud.spdigital.cl':
             store = Store.objects.get(name='SpDigital')
-            m = re.search('id=(\d+)$', url.query)
+            m = re.search(r'id=(\d+)$', url.query)
             if not m:
                 return None
             sku = m.groups()[0]

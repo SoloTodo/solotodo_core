@@ -110,7 +110,7 @@ class BudgetViewSet(viewsets.ModelViewSet):
             query['exclude_refurbished'] = 1
 
         url = reverse('product-available_entities', request=request) + '?' + \
-              urllib.parse.urlencode(query, True)
+            urllib.parse.urlencode(query, True)
         return HttpResponseRedirect(url)
 
 

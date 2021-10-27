@@ -2,8 +2,6 @@ import traceback
 from collections import OrderedDict
 
 import datetime
-import json
-
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.gis.geoip2 import GeoIP2
@@ -110,7 +108,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = UserFilterSet
 
     @action(methods=['get', 'patch'],
-            permission_classes=(permissions.IsAuthenticated, ),
+            permission_classes=(permissions.IsAuthenticated,),
             detail=False)
     def me(self, request):
         user = request.user
@@ -607,6 +605,24 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
         else:
             return Response(form.errors)
 
+    @action(detail=True)
+    def matching_report(self, request, *args, **kwargs):
+        user = request.user
+        store = self.get_object()
+
+        if not user.has_perm('view_store_reports', store):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        file_for_upload = store.matching_report(store)
+        storage = PrivateS3Boto3Storage()
+        filename = 'reports/matching_report.xlsx'
+        path = storage.save(filename, file_for_upload)
+        report_url = storage.url(path)
+
+        return Response({
+            'url': report_url
+        })
+
 
 class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = StoreUpdateLog.objects.all()
@@ -614,7 +630,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = StoreUpdateLogPagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = StoreUpdateLogFilterSet
-    ordering_fields = ('last_updated', )
+    ordering_fields = ('last_updated',)
 
     @action(detail=False)
     def latest(self, request, *args, **kwargs):
@@ -1083,7 +1099,7 @@ class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = EntityHistory.objects.all()
     serializer_class = EntityHistorySerializer
     pagination_class = EntityHistoryPagination
-    filter_backends = (rest_framework.DjangoFilterBackend, )
+    filter_backends = (rest_framework.DjangoFilterBackend,)
     filter_class = EntityHistoryFilterSet
 
     @action(detail=True)
@@ -1215,13 +1231,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=True)
     def min_history_price(self, request, pk):
         product = self.get_object()
-        entity_histories = EntityHistory.objects\
+        entity_histories = EntityHistory.objects \
             .filter(
                 entity__product=product,
                 entity__condition='https://schema.org/NewCondition',
-                cell_monthly_payment__isnull=True)\
-            .exclude(
-                stock=0)
+                cell_monthly_payment__isnull=True).exclude(stock=0)
 
         filterset = EntityHistoryFilterSet(
             request.query_params, entity_histories, request=request)
@@ -1229,9 +1243,9 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         min_price = filterset.qs.aggregate(
             Min('offer_price'))['offer_price__min']
 
-        stores_aggs = filterset.qs.filter(offer_price__exact=min_price)\
-            .values('entity__store')\
-            .annotate(max_timestamp=Max('timestamp'))\
+        stores_aggs = filterset.qs.filter(offer_price__exact=min_price) \
+            .values('entity__store') \
+            .annotate(max_timestamp=Max('timestamp')) \
             .order_by('entity__store')
 
         stores_data = []
@@ -1242,7 +1256,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
                     'store-detail',
                     kwargs={'pk': agg['entity__store']},
                     request=request),
-                 'timestamp': agg['max_timestamp']})
+                    'timestamp': agg['max_timestamp']})
 
         result = {
             'min_price': min_price,
@@ -1565,7 +1579,7 @@ class ResourceViewSet(viewsets.ViewSet):
 class RatingViewSet(viewsets.ModelViewSet):
     queryset = Rating.objects.all()
     serializer_class = RatingSerializer
-    permission_classes = (RatingPermission, )
+    permission_classes = (RatingPermission,)
     pagination_class = RatingPagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = RatingFilterSet
@@ -1600,7 +1614,7 @@ class RatingViewSet(viewsets.ModelViewSet):
 class ProductPictureViewSet(viewsets.ModelViewSet):
     queryset = ProductPicture.objects.all()
     serializer_class = ProductPictureSerializer
-    permission_classes = (DjangoModelPermissionsOrAnonReadOnly, )
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly,)
     pagination_class = ProductPicturePagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
     filter_class = ProductPictureFilterSet

@@ -484,22 +484,21 @@ class Store(models.Model):
         file_for_upload = ContentFile(file_value)
         return file_for_upload
 
-
-class Meta:
-    app_label = 'solotodo'
-    ordering = ['name']
-    permissions = (
-        ['view_store_update_logs', 'Can view the store update logs'],
-        ['view_store_stocks', 'Can view the store entities stock'],
-        ['update_store_pricing', 'Can update the store pricing'],
-        ['view_store_leads', 'View the leads associated to this store'],
-        ['view_store_reports',
-         'Download the reports associated to this store'],
-        # "Backend" permissions are used exclusively for UI purposes, they
-        # are not used at the API level
-        ['backend_list_stores', 'Can view store list in backend'],
-        ['view_store_banners', 'Can view store banners'],
-        ['view_store_entity_positions', 'Can view store entity positions'],
-        ['create_store_keyword_search',
-         'Can create keyword searches in this store']
-    )
+    class Meta:
+        app_label = 'solotodo'
+        ordering = ['name']
+        permissions = (
+            ['view_store_update_logs', 'Can view the store update logs'],
+            ['view_store_stocks', 'Can view the store entities stock'],
+            ['update_store_pricing', 'Can update the store pricing'],
+            ['view_store_leads', 'View the leads associated to this store'],
+            ['view_store_reports',
+             'Download the reports associated to this store'],
+            # "Backend" permissions are used exclusively for UI purposes, they
+            # are not used at the API level
+            ['backend_list_stores', 'Can view store list in backend'],
+            ['view_store_banners', 'Can view store banners'],
+            ['view_store_entity_positions', 'Can view store entity positions'],
+            ['create_store_keyword_search',
+             'Can create keyword searches in this store']
+        )

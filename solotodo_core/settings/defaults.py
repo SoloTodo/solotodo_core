@@ -136,15 +136,15 @@ WSGI_APPLICATION = 'solotodo_core.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'solotodo_core',
+        'NAME': 'solotodo',
     },
     'reader': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'solotodo_core',
+        'NAME': 'solotodo',
     },
     'writer': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'solotodo_core',
+        'NAME': 'solotodo',
     },
 }
 

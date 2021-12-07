@@ -17,9 +17,11 @@ from datetime import timedelta
 from decimal import Decimal
 # from django_filters import STRICTNESS
 
-# I know this import is not used, but the plugin gets loaded this way
-from elasticsearch import Elasticsearch
 
+from elasticsearch import Elasticsearch
+from elasticsearch_dsl import connections
+
+# I know this import is not used, but the plugin gets loaded this way
 from solotodo.metamodel_plugin import MetaModelPlugin
 
 
@@ -413,6 +415,7 @@ METAMODEL = {
 }
 
 ES = Elasticsearch([{"host": "localhost", "port": 9200}])
+connections.create_connection(hosts=['localhost'], timeout=20)
 
 CURRENCYLAYER_API_ACCESS_KEY = ''
 

@@ -10,7 +10,8 @@ from django.db.models import Count
 from django.utils import timezone
 from guardian.shortcuts import get_objects_for_user
 
-from solotodo.models import Category, Store, Entity, Product
+from solotodo.models import Category, Store, Entity, Product, Country, \
+    StoreType
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -22,6 +23,14 @@ class ReportStoreAnalysisForm(forms.Form):
         required=False)
     categories = forms.ModelMultipleChoiceField(
         queryset=Category.objects.all(),
+        required=False
+    )
+    countries = forms.ModelMultipleChoiceField(
+        queryset=Country.objects.all(),
+        required=False
+    )
+    store_types = forms.ModelMultipleChoiceField(
+        queryset=StoreType.objects.all(),
         required=False
     )
     price_type = forms.ChoiceField(
@@ -67,6 +76,8 @@ class ReportStoreAnalysisForm(forms.Form):
         competing_stores = self.cleaned_data['competing_stores']
         categories = self.cleaned_data['categories']
         price_type = self.cleaned_data['price_type']
+        countries = self.cleaned_data['countries']
+        store_types = self.cleaned_data['store_types']
         layout = self.cleaned_data['layout']
 
         all_stores = list(competing_stores)
@@ -87,6 +98,12 @@ class ReportStoreAnalysisForm(forms.Form):
             'currency',
             'store'
         ).order_by('active_registry__{}'.format(price_type))
+
+        if countries:
+            es = es.filter(store__country__in=countries)
+
+        if store_types:
+            es = es.filter(store__type__in=store_types)
 
         product_ids = list(set([e.product_id for e in es]))
 

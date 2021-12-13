@@ -56,7 +56,7 @@ jedi==0.10.2
 jmespath==0.9.3
 joblib==0.15.1
 kombu==4.6.10
-lxml==4.3.3
+lxml==4.6.5
 maxminddb==2.0.2
 mock==2.0.0
 multidict==4.7.6

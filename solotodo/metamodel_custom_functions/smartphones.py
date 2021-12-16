@@ -71,6 +71,8 @@ def additional_es_fields(instance_model, elastic_search_result):
         result = {
             'pretty_battery': pretty_cell_battery(elastic_search_result),
             'grouped_networks': cell_grouped_networks(elastic_search_result),
+            'grouped_network_generations': ', '.join(set(
+                elastic_search_result['networks_generation_unicode'])),
             'model_name': '{} {}'.format(
                 elastic_search_result['line_name'] or '',
                 elastic_search_result['name']).strip(),

@@ -19,8 +19,8 @@ class RdsDbRouter:
             return None
 
     def allow_relation(self, obj1, obj2, **hints):
-        if obj1._state.db in ['reader', 'writer'] and \
-                obj2._state.db in ['reader', 'writer']:
+        if obj1._state.db in ['default', 'reader', 'writer'] and \
+                obj2._state.db in ['default', 'reader', 'writer']:
             return True
         else:
             return None

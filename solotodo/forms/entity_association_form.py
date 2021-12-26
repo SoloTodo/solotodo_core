@@ -1,7 +1,7 @@
 from django import forms
 from django.conf import settings
 
-from solotodo.models import Product
+from solotodo.models import Product, Bundle
 
 
 class EntityAssociationForm(forms.Form):
@@ -10,3 +10,5 @@ class EntityAssociationForm(forms.Form):
         queryset=Product.objects.filter_by_category(
             settings.CELL_PLAN_CATEGORY),
         required=False)
+    bundle = forms.ModelChoiceField(queryset=Bundle.objects.all(),
+                                    required=False)

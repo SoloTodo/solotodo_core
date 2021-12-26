@@ -24,7 +24,8 @@ from rest_framework.filters import OrderingFilter, \
     SearchFilter
 from rest_framework.generics import get_object_or_404
 from rest_framework.parsers import JSONParser
-from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
+from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly, \
+    IsAdminUser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
 from sorl.thumbnail import get_thumbnail
@@ -68,7 +69,7 @@ from solotodo.forms.store_historic_entity_positions_form import \
 from solotodo.models import Store, Language, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, Product, NumberFormat, Website, Lead, \
     EntityHistory, Visit, Rating, ProductPicture, Brand, StoreSection, \
-    EntitySectionPosition, EsProduct, ProductVideo
+    EntitySectionPosition, EsProduct, ProductVideo, Bundle
 from solotodo.pagination import StoreUpdateLogPagination, EntityPagination, \
     ProductPagination, UserPagination, LeadPagination, \
     EntitySalesEstimatePagination, EntityHistoryPagination, VisitPagination, \
@@ -91,7 +92,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductPictureSerializer, BrandSerializer, \
     ProductAvailableEntitiesMinimalSerializer, StoreSectionSerializer, \
     EntitySectionPositionSerializer, ProductVideoSerializer, \
-    StaffProductSerializer
+    StaffProductSerializer, BundleSerializer, BundleModelSerializer
 from solotodo.tasks import store_update, \
     send_historic_entity_positions_report_task
 from solotodo.utils import get_client_ip, iterable_to_dict
@@ -240,6 +241,24 @@ class StoreTypeViewSet(viewsets.ReadOnlyModelViewSet):
 class CurrencyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Currency.objects.all()
     serializer_class = CurrencySerializer
+
+
+class BundleViewSet(viewsets.ModelViewSet):
+    queryset = Bundle.objects.all()
+
+    def get_serializer_class(self):
+        if self.action in ['list', 'retrieve']:
+            return BundleSerializer
+        else:
+            return BundleModelSerializer
+
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            permission_classes = []
+        else:
+            permission_classes = [IsAdminUser]
+
+        return [permission() for permission in permission_classes]
 
 
 class CategoryViewSet(PermissionReadOnlyModelViewSet):
@@ -664,6 +683,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     filter_class = EntityFilterSet
     search_fields = ('product__instance_model__unicode_representation',
                      'cell_plan__instance_model__unicode_representation',
+                     'bundle__name',
                      'name',
                      'cell_plan_name',
                      'part_number',
@@ -921,9 +941,10 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         product = form.cleaned_data['product']
         cell_plan = form.cleaned_data['cell_plan']
+        bundle = form.cleaned_data['bundle']
 
         try:
-            entity.associate(request.user, product, cell_plan)
+            entity.associate(request.user, product, cell_plan, bundle)
         except Exception as ex:
             return Response(
                 {'detail': str(ex)},
@@ -1142,7 +1163,8 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             .filter(product__in=products) \
             .get_available() \
             .order_by('active_registry__offer_price',
-                      'active_registry__normal_price')
+                      'active_registry__normal_price') \
+            .select_related('bundle')
 
         entity_query_params = request.query_params.copy()
         entity_query_params.pop('ids', None)

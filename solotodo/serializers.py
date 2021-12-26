@@ -8,7 +8,8 @@ from metamodel.models import InstanceModel
 from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
     Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating, \
-    ProductPicture, Brand, StoreSection, EntitySectionPosition, ProductVideo
+    ProductPicture, Brand, StoreSection, EntitySectionPosition, ProductVideo, \
+    Bundle
 from solotodo.serializer_utils import StorePrimaryKeyRelatedField, \
     ProductPrimaryKeyRelatedField
 from solotodo.utils import get_client_ip
@@ -115,6 +116,24 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
                   'storescraper_class', 'logo')
 
 
+class BundleSerializer(serializers.HyperlinkedModelSerializer):
+    class Meta:
+        model = Bundle
+        fields = ('url', 'id', 'name')
+
+
+class BundleModelSerializer(serializers.ModelSerializer):
+    def to_representation(self, instance):
+        serializer = BundleSerializer(instance, context={'request': self.context['request']})
+        return serializer.data
+
+    class Meta:
+        model = Bundle
+        fields = ['name']
+
+
+
+
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Category
@@ -217,6 +236,7 @@ class EntityWithInlineProductSerializer(
     url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
     external_url = serializers.URLField(source='url')
     product = NestedProductSerializer()
+    bundle = BundleSerializer()
 
     class Meta:
         model = Entity
@@ -228,6 +248,7 @@ class EntityWithInlineProductSerializer(
             'currency',
             'external_url',
             'product',
+            'bundle',
             'store',
         )
 
@@ -244,6 +265,7 @@ class EntityConflictSerializer(serializers.Serializer):
     )
     product = NestedProductSerializer()
     cell_plan = NestedProductSerializer()
+    bundle = BundleSerializer()
     entities = EntityMinimalSerializer(many=True)
 
 
@@ -251,6 +273,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
     active_registry = EntityHistorySerializer(read_only=True)
     product = NestedProductSerializer(read_only=True)
     cell_plan = NestedProductSerializer(read_only=True)
+    bundle = BundleSerializer(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
     external_url = serializers.URLField(source='url')
     picture_urls = serializers.ListField(
@@ -276,6 +299,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'active_registry',
             'product',
             'cell_plan',
+            'bundle',
             'currency',
             'description',
             'picture_urls',
@@ -289,6 +313,8 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
 
 
 class EntityWithoutDescriptionSerializer(EntitySerializer):
+    bundle = BundleSerializer()
+
     class Meta:
         model = Entity
         fields = (
@@ -297,6 +323,7 @@ class EntityWithoutDescriptionSerializer(EntitySerializer):
             'name',
             'cell_plan_name',
             'store',
+            'bundle',
             'category',
             'sku',
             'external_url',

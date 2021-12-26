@@ -15,6 +15,7 @@ from .product import Product
 from .currency import Currency
 from .category import Category
 from .store import Store
+from .bundle import Bundle
 from .es_product import EsProduct
 
 
@@ -123,13 +124,14 @@ class EntityQueryset(models.QuerySet):
     def conflicts(self):
         raw_conflicts = self.filter(product__isnull=False) \
             .get_available() \
-            .values('store', 'product', 'cell_plan') \
+            .values('store', 'product', 'cell_plan', 'bundle') \
             .annotate(conflict_count=Count('pk')) \
-            .order_by('store', 'product', 'cell_plan') \
+            .order_by('store', 'product', 'cell_plan', 'bundle') \
             .filter(conflict_count__gt=1)
 
         store_ids = set()
         product_ids = set()
+        bundle_ids = set()
 
         entities_query = Q()
         for entry in raw_conflicts:
@@ -137,16 +139,20 @@ class EntityQueryset(models.QuerySet):
             product_ids.add(entry['product'])
             if entry['cell_plan']:
                 product_ids.add(entry['cell_plan'])
+            if entry['bundle']:
+                bundle_ids.add(entry['bundle'])
 
             entities_query |= Q(store=entry['store']) & \
                 Q(product=entry['product']) & \
-                Q(cell_plan=entry['cell_plan'])
+                Q(cell_plan=entry['cell_plan']) & \
+                Q(bundle=entry['bundle'])
 
         entities = Entity.objects.filter(entities_query).select_related()
 
         entities_dict = {}
         for entity in entities:
-            key = (entity.store_id, entity.product_id, entity.cell_plan_id)
+            key = (entity.store_id, entity.product_id, entity.cell_plan_id,
+                   entity.bundle_id)
             if key not in entities_dict:
                 entities_dict[key] = []
             entities_dict[key].append(entity)
@@ -158,14 +164,20 @@ class EntityQueryset(models.QuerySet):
         )
         products_dict[None] = None
 
+        bundles_dict = iterable_to_dict(Bundle.objects.filter(
+            pk__in=bundle_ids))
+        bundles_dict[None] = None
+
         result = []
         for entry in raw_conflicts:
             result.append({
                 'store': stores_dict[entry['store']],
                 'product': products_dict[entry['product']],
                 'cell_plan': products_dict[entry['cell_plan']],
+                'bundle': bundles_dict[entry['bundle']],
                 'entities': entities_dict[(entry['store'], entry['product'],
-                                           entry['cell_plan'])]
+                                           entry['cell_plan'],
+                                           entry['bundle'])]
             })
 
         return result
@@ -188,6 +200,7 @@ class Entity(models.Model):
     condition = models.URLField(choices=CONDITION_CHOICES)
     scraped_condition = models.URLField(choices=CONDITION_CHOICES)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE, null=True)
     cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
                                   related_name='+')
     active_registry = models.OneToOneField('EntityHistory',
@@ -438,7 +451,8 @@ class Entity(models.Model):
             entity_log.save()
 
     def save(self, *args, **kwargs):
-        is_associated = bool(self.product_id or self.cell_plan_id)
+        is_associated = bool(self.product_id or self.cell_plan_id or
+                             self.bundle)
 
         if bool(self.last_association_user_id) != bool(self.last_association):
             raise IntegrityError('Entity must have both last_association '
@@ -450,6 +464,10 @@ class Entity(models.Model):
 
         if not self.product_id and self.cell_plan_id:
             raise IntegrityError('Entity cannot have a cell plan but '
+                                 'not a primary product')
+
+        if not self.product_id and self.bundle_id:
+            raise IntegrityError('Entity cannot have a bundle plan but '
                                  'not a primary product')
 
         if is_associated != bool(self.last_association_user_id):
@@ -521,14 +539,15 @@ class Entity(models.Model):
         return user.has_perm('view_category', self.category) \
                and user.has_perm('view_store_stocks', self.store)
 
-    def associate(self, user, product, cell_plan=None):
+    def associate(self, user, product, cell_plan=None, bundle=None):
         if not self.is_visible:
             raise IntegrityError('Non-visible cannot be associated')
 
-        if self.product == product and self.cell_plan == cell_plan:
+        if self.product == product and self.cell_plan == cell_plan and \
+                self.bundle == bundle:
             raise IntegrityError(
                 'Re-associations must be made to a different product / '
-                'cell plan pair')
+                'cell plan / bundle combination')
 
         if self.category != product.category:
             raise IntegrityError(
@@ -544,7 +563,8 @@ class Entity(models.Model):
             'last_association': now,
             'last_association_user': user,
             'product': product,
-            'cell_plan': cell_plan
+            'cell_plan': cell_plan,
+            'bundle': bundle
         }
 
         self.update_keeping_log(update_dict, user)
@@ -561,7 +581,8 @@ class Entity(models.Model):
             'last_association': None,
             'last_association_user': None,
             'product': None,
-            'cell_plan': None
+            'cell_plan': None,
+            'bundle': None
         }
 
         if reason:
@@ -615,8 +636,10 @@ class Entity(models.Model):
                 cell_plan = cell_plans_dict[entity.cell_plan_name]
                 print('Matching plan found: {}'.format(cell_plan))
                 if entity.product != self.product or \
-                        entity.cell_plan != cell_plan:
-                    entity.associate(user, self.product, cell_plan)
+                        entity.cell_plan != cell_plan or \
+                        entity.bundle != self.bundle:
+                    entity.associate(user, self.product, cell_plan,
+                                     self.bundle)
             else:
                 print('No matching cell plan found')
 

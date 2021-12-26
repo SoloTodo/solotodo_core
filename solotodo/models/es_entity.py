@@ -16,6 +16,8 @@ class EsEntity(EsProductRelationship):
     condition = Keyword()
     product_id = Integer()
     product_name = Text(fields={'raw': Keyword()})
+    bundle_id = Integer()
+    bundle_name = Text(fields={'raw': Keyword()})
     brand_id = Integer()
     brand_name = Text(fields={'raw': Keyword()})
     country_id = Integer()
@@ -83,6 +85,13 @@ class EsEntity(EsProductRelationship):
             timestamp__gte=timestamp - timedelta(hours=72)
         ).count()
 
+        if entity.bundle:
+            bundle_name = entity.bundle.name
+            bundle_id = entity.bundle.id
+        else:
+            bundle_name = None
+            bundle_id = None
+
         return cls(
             entity_id=entity.id,
             store_id=entity.store_id,
@@ -94,6 +103,8 @@ class EsEntity(EsProductRelationship):
             condition=entity.condition,
             product_id=entity.product_id,
             product_name=str(entity.product),
+            bundle_id=bundle_id,
+            bundle_name=bundle_name,
             brand_id=entity.product.brand_id,
             brand_name=str(entity.product.brand),
             country_id=entity.store.country_id,

@@ -6,7 +6,8 @@ from solotodo.views import UserViewSet, StoreViewSet, LanguageViewSet, \
     NumberFormatViewSet, WebsiteViewSet, \
     LeadViewSet, EntityHistoryViewSet, VisitViewSet, ResourceViewSet, \
     RatingViewSet, ProductPictureViewSet, FilesViewSet, BrandViewSet, \
-    EntitySectionPositionViewSet, StoreSectionViewSet, ProductVideoViewSet
+    EntitySectionPositionViewSet, StoreSectionViewSet, ProductVideoViewSet, \
+    BundleViewSet
 
 router = routers.SimpleRouter()
 router.register(r'users', UserViewSet)
@@ -18,6 +19,7 @@ router.register(r'store_types', StoreTypeViewSet)
 router.register(r'currencies', CurrencyViewSet)
 router.register(r'countries', CountryViewSet)
 router.register(r'categories', CategoryViewSet)
+router.register(r'bundles', BundleViewSet)
 router.register(r'store_update_logs', StoreUpdateLogViewSet)
 router.register(r'entities', EntityViewSet)
 router.register(r'entity_histories', EntityHistoryViewSet)

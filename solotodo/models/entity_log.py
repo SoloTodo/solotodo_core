@@ -3,6 +3,7 @@ from django.db import models
 
 from gtin_fields import fields as gtin_fields
 
+from .bundle import Bundle
 from .entity import Entity
 from .category import Category
 from .currency import Currency
@@ -34,6 +35,7 @@ class EntityLog(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
                                   related_name='+')
+    bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE, null=True)
     name = models.CharField(max_length=256)
     cell_plan_name = models.CharField(max_length=60, null=True)
     part_number = models.CharField(max_length=50, null=True)
@@ -58,6 +60,7 @@ class EntityLog(models.Model):
         'scraped_condition',
         'product',
         'cell_plan',
+        'bundle',
         'name',
         'cell_plan_name',
         'part_number',

@@ -24,6 +24,7 @@ from .store_type import StoreType
 from .category_tier import CategoryTier
 from .store import Store
 from .category import Category
+from .bundle import Bundle
 from .brand import Brand
 from .product import Product
 from .product_picture import ProductPicture

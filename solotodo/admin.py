@@ -1,10 +1,9 @@
+from custom_user.admin import EmailUserAdmin
+from django.contrib import admin
 from django.contrib.auth.models import Permission
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from custom_user.admin import EmailUserAdmin
-from django.contrib import admin
-
 # Register your models here.
 from guardian.admin import GuardedModelAdmin
 
@@ -12,7 +11,8 @@ from solotodo.models import Currency, Entity, EntityHistory, Category, \
     SoloTodoUser, Store, Country, Product, StoreUpdateLog, Language, \
     StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
     CategorySpecsFilter, CategorySpecsOrder, Lead, Visit, Rating, \
-    ProductPicture, Brand, StoreSection, EntitySectionPosition, ProductVideo
+    ProductPicture, Brand, StoreSection, EntitySectionPosition, ProductVideo, \
+    Bundle
 
 
 @admin.register(Permission)
@@ -29,19 +29,24 @@ admin.site.register(Language)
 admin.site.register(Country)
 admin.site.register(Currency)
 admin.site.register(NumberFormat)
+admin.site.register(Bundle)
 
 
 @admin.register(Entity)
 class EntityModelAdmin(admin.ModelAdmin):
     readonly_fields = ['store', 'category', 'scraped_category',
-                       'currency', 'product', 'cell_plan', 'active_registry',
-                       'last_association_user', 'last_staff_access_user', ]
+                       'currency', 'product', 'bundle', 'cell_plan',
+                       'active_registry', 'last_association_user',
+                       'last_staff_access_user', ]
+
+    def get_queryset(self, request):
+        return Entity.objects.select_related('store', 'bundle')
 
 
 @admin.register(EntityLog)
 class EntityLogModelAdmin(admin.ModelAdmin):
     readonly_fields = ['entity', 'category', 'scraped_category',
-                       'currency', 'product', 'cell_plan', 'user']
+                       'currency', 'product', 'cell_plan', 'bundle', 'user']
 
     def get_queryset(self, request):
         return EntityLog.objects.select_related()

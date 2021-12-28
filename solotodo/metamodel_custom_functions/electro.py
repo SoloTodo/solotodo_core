@@ -49,12 +49,6 @@ def additional_es_fields(instance_model, elastic_search_original):
             elastic_search_original['name']).strip()
         result['brand_unicode'] = elastic_search_original['line_brand_unicode']
 
-        k1 = elastic_search_original['family_id']
-        k2 = elastic_search_original['bundle_id']
-
-        # Cantor pairing function
-        result['family_bundle_key'] = (k1 + k2) * (k1 + k2 + 1) // 2 + k2
-
         if elastic_search_original['display_unicode'] == 'OLED':
             lg_cac_segment = 'OLED'
         elif elastic_search_original['display_unicode'] == 'NanoCell':

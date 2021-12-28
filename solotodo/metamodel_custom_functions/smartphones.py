@@ -94,15 +94,15 @@ def additional_es_fields(instance_model, elastic_search_result):
         else:
             result['pretty_weight'] = 'N/A'
 
-        base_model_with_bundle = elastic_search_result['base_model_unicode']
+        result['base_model_internal_storage_ram_key'] = \
+            elastic_search_result['base_model_id'] + \
+            100 * elastic_search_result['internal_storage_id'] + \
+            1000 * elastic_search_result['ram_id']
 
-        if elastic_search_result['bundle_unicode'].lower() != 'sin bundle':
-            base_model_with_bundle += ' + {}'.format(
-                elastic_search_result['bundle_unicode'])
-            result['model_name'] += ' + {}'.format(
-                elastic_search_result['bundle_unicode'])
-
-        result['base_model_with_bundle'] = base_model_with_bundle
+        result['storage_and_ram'] = '{} / {}'.format(
+            elastic_search_result['internal_storage_unicode'],
+            elastic_search_result['ram_unicode'],
+        )
 
         result['base_model_bundle_internal_storage_ram_key'] = \
             elastic_search_result['base_model_id'] + \
@@ -140,15 +140,6 @@ def additional_es_fields(instance_model, elastic_search_result):
             front_camera = 'N/A'
 
         result['front_camera'] = front_camera
-
-        model_name = elastic_search_result['base_model_unicode']
-        model_name = model_name.replace('Samsung ', '').split(' (')[0]
-
-        result['galaxy_s20_key'] = '{} - {} - {}'.format(
-            model_name,
-            elastic_search_result['color_unicode'],
-            elastic_search_result['internal_storage_unicode'],
-        )
 
         # General score computation
 
@@ -193,16 +184,4 @@ def additional_es_fields(instance_model, elastic_search_result):
                 elastic_search_result['name'] or '').strip(),
             'brand_unicode': elastic_search_result['line_brand_unicode']
         }
-        return result
-
-
-def unicode_function(im):
-    m = im.model.name
-    if m == 'Cell':
-        result = u'{} {}'.format(im.line, im.name)
-
-        bundle_text = im.bundle.unicode_representation
-        if bundle_text.lower() != 'sin bundle':
-            result = u'{} + {}'.format(result, bundle_text)
-
         return result

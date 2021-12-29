@@ -105,43 +105,6 @@ class ReportWtbForm(forms.Form):
         es_dict = {e.product_id: e.to_dict()
                    for e in es_search.scan()}
 
-        # Start correction dict for Galaxy / Notes bundles
-        # Feel free to delete this part if Samsung no longer uses it
-
-        # Dictionary that maps a base model, storage and color of a cell to
-        # the part numbers of its variation without bundle
-        # ("Galaxy S20 Ultra", "128 GB", "Cosmic Black") => ["SM-G988BZK5CHO"]
-        # Used to set this part number to the report entries taht come with
-        # a bundle but share the same base model / storage / color
-        samsung_correction_dict = {}
-
-        cell_products = Product.objects.filter(
-            pk__in=product_ids, brand__name='Samsung').filter_by_category(6)
-        for cell in cell_products:
-            wtb_es = product_to_wtb_entity_dict.get(cell.id)
-            if not wtb_es:
-                continue
-
-            specs = es_dict[cell.id]['specs']
-            if specs['bundle_unicode'] != 'Sin bundle':
-                continue
-
-            key = (specs['base_model_unicode'],
-                   specs['internal_storage_unicode'],
-                   specs['color_unicode'])
-            if key in samsung_correction_dict:
-                print(wtb_es)
-                print(samsung_correction_dict[key])
-                raise Exception('Duplicate key: ' + str(key))
-            samsung_correction_dict[key] = wtb_es
-
-        # wtb entities corresponding to the S20 variants with a specific
-        # bundle, which need to be replaced with the part numbers of the
-        # variant without bundle (SM-...)
-        wtb_entity_blacklist = WtbEntity.objects.filter(key__startswith='F-')
-
-        # End correction dict for Galaxy / Notes bundle correction
-
         output = io.BytesIO()
 
         # Create a workbook and add a worksheet
@@ -237,18 +200,6 @@ class ReportWtbForm(forms.Form):
             # Wtb
             wtb_entities = product_to_wtb_entity_dict.get(
                 e.product_id, [None])
-
-            # Manipulate the wtb entities for the case of galaxy / note phones
-            # that was discussed above
-            for wtb_entity in wtb_entities:
-                if wtb_entity is None or wtb_entity in wtb_entity_blacklist:
-                    key = (specs.get('base_model_unicode', None),
-                           specs.get('internal_storage_unicode', None),
-                           specs.get('color_unicode', None))
-                    wtb_entities = samsung_correction_dict.get(key, [None])
-                    break
-
-            # End wtb entities manipulation
 
             for wtb_entity in wtb_entities:
                 col = 0

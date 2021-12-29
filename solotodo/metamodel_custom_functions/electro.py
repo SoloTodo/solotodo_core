@@ -234,11 +234,10 @@ def additional_es_fields(instance_model, elastic_search_original):
             elastic_search_original['storage_drives_unicode'])
         return result
     if m == 'Tablet':
-        result['base_model_bundle_internal_storage_cell_connectivity_key'] = \
+        result['base_model_internal_storage_cell_connectivity_key'] = \
             elastic_search_original['base_model_id'] + \
-            10 * elastic_search_original['bundle_id'] + \
-            100 * elastic_search_original['internal_storage_id'] + \
-            1000 * elastic_search_original['cell_connectivity_id']
+            10 * elastic_search_original['internal_storage_id'] + \
+            100 * elastic_search_original['cell_connectivity_id']
 
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_original,

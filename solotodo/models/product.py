@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
 from django.db import models, IntegrityError
 from django.db.models import Q
+from django.db.models.deletion import Collector
 from django.utils.text import slugify
 from sklearn.neighbors import NearestNeighbors
 
@@ -394,6 +395,39 @@ class Product(models.Model):
             [self], stores=stores, brands=brands,
             initial_candidate_entities=initial_candidate_entities,
             results_per_product=results_per_product)[0]
+
+    def fuse(self, target_product):
+        # Transfers all related objects that point to this product to the
+        # target, then deletes self
+
+        self.productpricealert_set.update(product=target_product)
+        self.product_1.update(product_1=target_product)
+        self.product_2.update(product_2=target_product)
+        self.budgetentry_set.update(selected_product=target_product)
+
+        for budget in self.budget_set.all():
+            budget.products_pool.add(target_product)
+
+        self.micrositeentry_set.update(product=target_product)
+
+        for e in self.entity_set.all():
+            e.category = target_product.category
+            e.product = target_product
+            e.save()
+
+        self.pictures.update(product=target_product)
+        self.entitylog_set.update(product=target_product)
+        self.rating_set.update(product=target_product)
+        self.visit_set.update(product=target_product)
+        self.wtbentity_set.update(product=target_product)
+        collector = Collector(using='default')
+        im = self.instance_model
+        collector.collect([im])
+        # Make sure we only are going to delete the instance model and
+        # related product
+        assert len(collector.data) == 2
+        im.delete()
+
 
     class Meta:
         app_label = 'solotodo'

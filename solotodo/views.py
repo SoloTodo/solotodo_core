@@ -53,6 +53,7 @@ from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
+from solotodo.forms.product_form import ProductForm
 from solotodo.forms.product_picture_form import ProductPictureForm
 from solotodo.forms.resource_names_form import ResourceNamesForm
 from solotodo.forms.send_contact_message_form import SendContactEmailForm
@@ -1386,38 +1387,28 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             bucket_products, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=False)
-    def s20_bucket(self, request, *args, **kwargs):
-        # TODO: Remove this method after S20 release window
-        products = Product.objects.filter(
-            instance_model__unicode_representation__contains='(G98'
-        ).select_related('instance_model__model__category')
+    @action(methods=['post', ], detail=True)
+    def fuse(self, request, *args, **kwargs):
+        product = self.get_object()
+        if not product.user_has_staff_perms(request.user):
+            raise PermissionDenied
 
-        serializer = ProductSerializer(
-            products, many=True, context={'request': request})
-        return Response(serializer.data)
+        form = ProductForm(request.data)
 
-    @action(detail=False)
-    def s21_bucket(self, request, *args, **kwargs):
-        # TODO: Remove this method after S21 release window
-        products = Product.objects.filter(
-            instance_model__unicode_representation__contains='(G99'
-        ).select_related('instance_model__model__category')
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ProductSerializer(
-            products, many=True, context={'request': request})
-        return Response(serializer.data)
+        target_product = form.cleaned_data['product']
 
-    @action(detail=False)
-    def note20_bucket(self, request, *args, **kwargs):
-        # TODO: Remove this method after Note20 release window
-        products = Product.objects.filter(
-            instance_model__unicode_representation__contains='(N98'
-        ).select_related('instance_model__model__category')
+        if product.id == target_product.id:
+            return Response(
+                {'message': 'El producto de destino debe ser '
+                            'distinto al original'},
+                status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ProductSerializer(
-            products, many=True, context={'request': request})
-        return Response(serializer.data)
+        product.fuse(target_product)
+
+        return Response({}, status=status.HTTP_200_OK)
 
     @action(detail=True)
     def render(self, request, pk):

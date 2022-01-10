@@ -10,29 +10,6 @@ def pretty_cell_battery(cell):
     return result
 
 
-def cell_grouped_networks(cell):
-    result = []
-    subresult = []
-    last_generation_seen = None
-    for idx, network_unicode in enumerate(cell['networks_unicode']):
-        if last_generation_seen is not None and \
-                        cell['networks_generation_unicode'][idx] != \
-                        last_generation_seen:
-            result.append('{}: {} MHz'.format(
-                last_generation_seen, ' / '.join(subresult)))
-            subresult = []
-
-        subresult.append(cell['networks_name'][idx])
-        last_generation_seen = cell['networks_generation_unicode'][idx]
-
-    # Add the trailing network, if it exists
-    if last_generation_seen is not None:
-        result.append('{}: {} MHz'.format(
-            last_generation_seen, ' / '.join(subresult)))
-
-    return result
-
-
 def cell_plan_main_points(elastic_search_result):
     def cell_plan_navigation_quota_pretty_display(value):
         if value:
@@ -70,9 +47,6 @@ def additional_es_fields(instance_model, elastic_search_result):
     if m == 'Cell':
         result = {
             'pretty_battery': pretty_cell_battery(elastic_search_result),
-            'grouped_networks': cell_grouped_networks(elastic_search_result),
-            'grouped_network_generations': ', '.join(set(
-                elastic_search_result['networks_generation_unicode'])),
             'model_name': '{} {}'.format(
                 elastic_search_result['line_name'] or '',
                 elastic_search_result['name']).strip(),

@@ -2,6 +2,7 @@ import csv
 
 import boto3
 import requests
+from django.db.models import Min
 from rest_framework.parsers import JSONParser
 from rest_framework.viewsets import ViewSet
 from rest_framework.response import Response
@@ -103,37 +104,50 @@ class LgWtbViewSet(ViewSet):
         writer.writerow(titles)
 
         wtb_entities = brand.wtbentity_set.filter(
-            is_active=True, product__isnull=False)
+            is_active=True, product__isnull=False).select_related('product')
+
+        product_ids_meta = wtb_entities.order_by('product').values('product')
+        product_ids = [x['product'] for x in product_ids_meta]
+        entities = Entity.objects.filter(
+            product__in=product_ids,
+            store__in=store_ids,
+            seller__isnull=True) \
+            .get_available() \
+            .order_by('product').values('product').annotate(
+            price=Min('active_registry__offer_price'))
+
+        product_best_prices = {x['product']: x['price'] for x in entities}
 
         for wtb_entity in wtb_entities:
-            product = wtb_entity.product
-            entities = Entity.objects.filter(
-                product=product,
-                store__in=store_ids,
-                seller__isnull=True) \
-                .get_available() \
-                .order_by('active_registry__offer_price')
-            if not entities:
+            best_price = product_best_prices.get(wtb_entity.product_id, None)
+
+            if best_price is None:
                 continue
-            entity = entities[0]
 
-            wtb_entity_name_parts = wtb_entity.name.split(' - ')
-            if len(wtb_entity_name_parts) == 2:
-                title, description = wtb_entity_name_parts
+            model_name = 'LG ' + wtb_entity.model_name.split('.')[0]
+
+            prefix_dict = {
+                4: 'Monitor',
+                11: 'TV',
+                31: 'Proyector',
+                19: 'Lavadora',
+                15: 'Refrigerador'
+            }
+
+            if wtb_entity.category_id in prefix_dict:
+                title = prefix_dict[wtb_entity.category_id] + ' ' + model_name
             else:
-                # A cell phone with color variants
-                title = wtb_entity.name.split(' (')[0]
-                description = wtb_entity.name
+                title = model_name
 
-            price = '{} CLP'.format(entity.active_registry.offer_price)
+            price = '{} CLP'.format(best_price)
 
             google_taxonomy, fb_taxonomy = \
                 category_taxonomy_mapping[wtb_entity.category_id]
 
             row = [
-                wtb_entity.key,
+                wtb_entity.model_name,
                 title,
-                description,
+                wtb_entity.description or 'N/A',
                 'in stock',
                 1,
                 'new',

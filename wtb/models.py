@@ -71,9 +71,6 @@ class WtbBrand(models.Model):
             log_update_error(e)
             raise
 
-        # self.update_with_scraped_products(scraped_products_data['products'],
-        #                                   update_log=update_log)
-
         scraped_products = scraped_products_data['products']
         scraped_products_dict = iterable_to_dict(scraped_products, 'key')
 
@@ -167,6 +164,7 @@ class WtbEntity(models.Model):
     picture_url = models.URLField()
     price = models.DecimalField(max_digits=12, decimal_places=2,
                                 blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     is_visible = models.BooleanField(default=True)
@@ -221,6 +219,7 @@ class WtbEntity(models.Model):
             self.model_name = scraped_product.sku
             self.url = scraped_product.url
             self.picture_url = picture_url
+            self.description = scraped_product.description
             self.is_active = True
 
             if scraped_product.normal_price:
@@ -307,7 +306,8 @@ class WtbEntity(models.Model):
             url=scraped_product.url,
             picture_url=picture_url,
             section=section,
-            price=price
+            price=price,
+            description=scraped_product.description
         )
 
     class Meta:

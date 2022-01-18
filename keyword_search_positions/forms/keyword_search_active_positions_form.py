@@ -49,9 +49,16 @@ class KeywordSearchActivePositionsForm(forms.Form):
 
         keyword_search_positions = KeywordSearchEntityPosition.objects.filter(
             update__search__active_update=F('update'),
-            update__search__user=user,
             update__search__store=store,
             update__search__category__in=categories)
+
+        if not user.is_superuser:
+            # We assume the user only has one group
+            group = user.groups.all()[0]
+
+            keyword_search_positions = keyword_search_positions.filter(
+                update__search__user__groups=group
+            )
 
         category_keyword_raw_data = keyword_search_positions\
             .order_by(

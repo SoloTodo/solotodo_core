@@ -86,7 +86,8 @@ class ReportCurrentPricesForm(forms.Form):
                             'cell_plan__instance_model',
                             'active_registry',
                             'currency',
-                            'store') \
+                            'store',
+                            'bundle') \
             .order_by('product') \
             .annotate(normal_price_usd=F('active_registry__normal_price') /
                       F('currency__exchange_rate'))
@@ -174,6 +175,7 @@ class ReportCurrentPricesForm(forms.Form):
 
         headers = [
             'Producto',
+            'Bundle',
         ]
 
         cell_plan_installments = {
@@ -246,9 +248,16 @@ class ReportCurrentPricesForm(forms.Form):
             es_entry = es_dict[e.product_id]
 
             # Product
-            worksheet.write(
-                row, col, str(e.product))
+            worksheet.write(row, col, str(e.product))
+            col += 1
 
+            # Bundle
+            if e.bundle:
+                bundle_name = str(e.bundle)
+            else:
+                bundle_name = 'N/A'
+
+            worksheet.write(row, col, bundle_name)
             col += 1
 
             # Cell plan

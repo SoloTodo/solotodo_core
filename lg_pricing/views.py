@@ -91,7 +91,6 @@ class LgWtbViewSet(ViewSet):
             'title',
             'description',
             'availability',
-            'inventory',
             'condition',
             'price',
             'link',
@@ -124,20 +123,20 @@ class LgWtbViewSet(ViewSet):
             if best_price is None:
                 continue
 
-            model_name = 'LG ' + wtb_entity.model_name.split('.')[0]
+            model_name = wtb_entity.model_name.split('.')[0]
 
             prefix_dict = {
-                4: 'Monitor',
-                11: 'TV',
-                31: 'Proyector',
-                19: 'Lavadora',
-                15: 'Refrigerador'
+                4: 'Monitor LG',
+                11: 'LG TV',
+                31: 'Proyector LG',
+                19: 'Lavadora LG',
+                15: 'Refrigerador LG'
             }
 
             if wtb_entity.category_id in prefix_dict:
                 title = prefix_dict[wtb_entity.category_id] + ' ' + model_name
             else:
-                title = model_name
+                title = 'LG ' + model_name
 
             price = '{} CLP'.format(best_price)
 
@@ -149,7 +148,6 @@ class LgWtbViewSet(ViewSet):
                 title,
                 wtb_entity.description or 'N/A',
                 'in stock',
-                1,
                 'new',
                 price,
                 wtb_entity.url,

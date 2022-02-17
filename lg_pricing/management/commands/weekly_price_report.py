@@ -1,3 +1,4 @@
+import datetime
 import io
 import xlsxwriter
 
@@ -31,11 +32,11 @@ class Command(BaseCommand):
         brands = [848, 996]
 
         # Determine date from/to
-        date_to = timezone.now().replace(
-            day=1, hour=0, minute=0, second=0, microsecond=0)
 
-        date_from = date_to - timezone.timedelta(days=1)
-        date_from = date_from.replace(day=1)
+        now = timezone.now()
+        date_to = (now - datetime.timedelta(days=now.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0)
+        date_from = date_to - timezone.timedelta(days=7)
 
         # Query for entity histories
         ehs = EntityHistory.objects.filter(
@@ -102,14 +103,14 @@ class Command(BaseCommand):
         message = """
         Buenos días,
 
-        Se adjunta el historico de precios para el mes %Y-%m.
+        Se adjunta el historico de precios para la semana %Y-%U.
         """
         message = date_from.strftime(message)
 
-        subject = 'Reporte historico {} %m-%Y'.format(category)
+        subject = 'Reporte historico {} %Y-%W'.format(category)
         subject = date_from.strftime(subject)
 
-        filename = 'monthly_price_report.xlsx'
+        filename = 'weekly_price_report.xlsx'
 
         email = EmailMessage(subject, message, sender, emails)
         email.attach(
@@ -118,4 +119,4 @@ class Command(BaseCommand):
             'application/vnd.openxmlformats-officedocument.'
             'spreadsheetml.sheet')
 
-        email.send()
+        print(email.send())

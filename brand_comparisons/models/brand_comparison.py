@@ -179,6 +179,13 @@ class BrandComparison(models.Model):
         })
         price_format.set_num_format(preferred_currency.excel_format())
 
+        number_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'num_format': '0_);[RED]\(0\)'
+        })
+
         bottom_price_format = workbook.add_format({
             'font_name': 'Arial Narrow',
             'font_size': 10,
@@ -186,6 +193,14 @@ class BrandComparison(models.Model):
             'bottom': 1
         })
         bottom_price_format.set_num_format(preferred_currency.excel_format())
+
+        bottom_number_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'bottom': 1,
+            'num_format': '0_);[RED]\(0\)'
+        })
 
         brand_1_price_format = workbook.add_format({
             'font_name': 'Arial Narrow',
@@ -232,9 +247,9 @@ class BrandComparison(models.Model):
         # Column widths
         worksheet.set_column(0, 0, 12)
         worksheet.set_column(1, 1, 16)
-        worksheet.set_column(5, 5, 16)
+        worksheet.set_column(7, 7, 16)
 
-        PRICING_DETAIL_START_COLUMN = 9
+        PRICING_DETAIL_START_COLUMN = 11
         row = 0
 
         # First row, print store labels
@@ -249,8 +264,9 @@ class BrandComparison(models.Model):
         # Second row, table titles
         col = 0
         hardcoded_titles = [
-            'ATA',
+            'Category',
             str(self.brand_1), 'Moda', 'Promedio', 'Mínimo',
+            'Line Logic', 'ATA',
             str(self.brand_2), 'Moda', 'Promedio', 'Mínimo'
         ]
 
@@ -307,6 +323,7 @@ class BrandComparison(models.Model):
                     highlighted_product_2_label_format_to_use = \
                         highlighted_bottom_product_2_label_format
                     price_format_to_use = bottom_price_format
+                    number_format_to_use = bottom_number_format
                     brand_1_price_format_to_use = bottom_brand_1_price_format
                     brand_2_price_format_to_use = bottom_brand_2_price_format
                 else:
@@ -316,6 +333,7 @@ class BrandComparison(models.Model):
                     highlighted_product_2_label_format_to_use = \
                         highlighted_product_2_label_format
                     price_format_to_use = price_format
+                    number_format_to_use = number_format
                     brand_1_price_format_to_use = brand_1_price_format
                     brand_2_price_format_to_use = brand_2_price_format
 
@@ -339,6 +357,20 @@ class BrandComparison(models.Model):
                                                 ','.join(brand_1_cells)),
                                             price_format_to_use)
                     col += 1
+
+                worksheet.write_number(row, col, 0, number_format_to_use)
+                col += 1
+
+                worksheet.write_formula(
+                    xl_rowcol_to_cell(row, col),
+                    '=IFERROR({}/({}+{})*100,"-")'.format(
+                        xl_rowcol_to_cell(row, col-2),
+                        xl_rowcol_to_cell(row, col+4),
+                        xl_rowcol_to_cell(row, col-1),
+                    ),
+                    number_format_to_use
+                )
+                col += 1
 
                 product_2 = product_row.product_2
                 if product_2:

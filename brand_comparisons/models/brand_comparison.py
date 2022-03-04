@@ -55,6 +55,17 @@ class BrandComparison(models.Model):
 
     def as_xls_2(self, highlight_strategy='1'):
         stores = self.stores.all()
+
+        # Put Falabella, Ripley and Paris first, this is just hardcoded because
+        # LG are the only ones using this report right now, if a new customer
+        # starts using it then move this functionality to DB level.
+        store_priority = {
+            9: 1,
+            18: 2,
+            11: 3
+        }
+        stores = sorted(stores, key=lambda x: store_priority.get(x.id, 999))
+
         preferred_currency = Currency.objects.get(iso_code='CLP')
         relevant_product_ids = []
         pricing_row_count = 0

@@ -16,7 +16,7 @@ class Command(BaseCommand):
         reference_user = SoloTodoUser.objects.filter(groups=group)[0]
         data = {
             'wtb_brand': 1,
-            'stores': [30, 9, 87, 5, 43, 195, 11, 18, 67],
+            'stores': [30, 9, 87, 5, 43, 195, 11, 18, 67, 170, 12, 86],
             'price_type': 'offer_price'
         }
         form = ReportWtbPricesForm(reference_user, data)

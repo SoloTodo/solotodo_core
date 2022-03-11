@@ -121,13 +121,13 @@ class ReportWtbPricesForm(forms.Form):
         })
 
         data_formulas = [
-            '=+IFERROR(AVERAGE({stores_range}),"")',
-            '=+IFERROR((({wtb_price_cell}-{avg_cell})/{avg_cell}),"")',
+            '=IFERROR(AVERAGE({stores_range}),"")',
+            '=IFERROR((({wtb_price_cell}-{avg_cell})/{avg_cell}),"")',
             '=IFERROR(MODE({stores_range}), ' +
             'IFERROR(AVERAGE({stores_range}), ""))',
-            '=+IFERROR((({wtb_price_cell}-{mode_cell})/{mode_cell}),"")',
-            '=+IFERROR(MIN({stores_range}),"")',
-            '=+IFERROR((({wtb_price_cell}-{min_cell})/{min_cell}),"")'
+            '=IFERROR((({wtb_price_cell}-{mode_cell})/{mode_cell}),"")',
+            '=IF(MIN({stores_range}), MIN({stores_range}), "")',
+            '=IFERROR((({wtb_price_cell}-{min_cell})/{min_cell}),"")'
         ]
 
         STARTING_ROW = 0
@@ -228,22 +228,36 @@ class ReportWtbPricesForm(forms.Form):
             cell_range = '{}:{}'.format(starting_cell, ending_cell)
             worksheet.conditional_format(cell_range, {
                 'type': 'cell',
-                'criteria': 'greater than',
-                'value': 0.1,
+                'criteria': 'less than',
+                'value': -0.1,
                 'format': number_bad_format
             })
             worksheet.conditional_format(cell_range, {
                 'type': 'cell',
                 'criteria': 'between',
-                'minimum':  0.05,
-                'maximum':  0.1,
+                'minimum': -0.1,
+                'maximum': -0.05,
                 'format': number_neutral_format
             })
             worksheet.conditional_format(cell_range, {
                 'type': 'cell',
-                'criteria': 'less than',
-                'value': 0.05,
+                'criteria': 'between',
+                'minimum': -0.05,
+                'maximum': 0.05,
                 'format': number_good_format
+            })
+            worksheet.conditional_format(cell_range, {
+                'type': 'cell',
+                'criteria': 'between',
+                'minimum': 0.05,
+                'maximum': 0.1,
+                'format': number_neutral_format
+            })
+            worksheet.conditional_format(cell_range, {
+                'type': 'cell',
+                'criteria': 'greater than',
+                'value': 0.1,
+                'format': number_bad_format
             })
 
         worksheet.autofilter(0, 0, row - 1, len(stores) + 8)

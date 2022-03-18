@@ -1,2 +1,2 @@
 #!/usr/bin/env sh
-env/bin/celery -A solotodo_core multi start store_update general reports storescraper -Q:store_update store_update -c:store_update 5 -Q:general general -c:general 12 -Q:reports reports -c:reports 5 -Q:storescraper storescraper -c:storescraper 50 --logfile=solotodo_core/logs/celery/%n.log --pidfile=solotodo_core/pids/celery/%n.pid -l info
+env/bin/celery -A solotodo_core multi start store_update general reports storescraper -Q:store_update store_update -c:store_update 5 -Q:general general -c:general 12 -Q:reports reports -c:reports 5 -Q:storescraper storescraper -c:storescraper 30 --logfile=solotodo_core/logs/celery/%n.log --pidfile=solotodo_core/pids/celery/%n.pid -l info

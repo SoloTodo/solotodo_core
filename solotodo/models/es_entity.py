@@ -1,27 +1,27 @@
 from datetime import timedelta
 from django.db.models import Min
-from elasticsearch_dsl import Text, Keyword, Integer, Date, ScaledFloat
-from .es_product_relationship import EsProductRelationship
+from elasticsearch_dsl import Keyword, Integer, Date, ScaledFloat
+from .es_product_entities import EsProductEntities
 from solotodo.models import Lead
 
 
-class EsEntity(EsProductRelationship):
+class EsEntity(EsProductEntities):
     entity_id = Integer()
     store_id = Integer()
-    store_name = Text(fields={'raw': Keyword()})
+    store_name = Keyword()
     category_id = Integer()
-    category_name = Text(fields={'raw': Keyword()})
+    category_name = Keyword()
     currency_id = Integer()
-    currency_name = Text(fields={'raw': Keyword()})
+    currency_name = Keyword()
     condition = Keyword()
     product_id = Integer()
-    product_name = Text(fields={'raw': Keyword()})
+    product_name = Keyword()
     bundle_id = Integer()
-    bundle_name = Text(fields={'raw': Keyword()})
+    bundle_name = Keyword()
     brand_id = Integer()
-    brand_name = Text(fields={'raw': Keyword()})
+    brand_name = Keyword()
     country_id = Integer()
-    country_name = Text(fields={'raw': Keyword()})
+    country_name = Keyword()
 
     normal_price = ScaledFloat(scaling_factor=100)
     offer_price = ScaledFloat(scaling_factor=100)
@@ -33,11 +33,11 @@ class EsEntity(EsProductRelationship):
     reference_normal_price_usd = ScaledFloat(scaling_factor=100)
     reference_offer_price_usd = ScaledFloat(scaling_factor=100)
 
-    name = Text(fields={'raw': Keyword()})
-    part_number = Text(fields={'raw': Keyword()})
-    sku = Text(fields={'raw': Keyword()})
-    key = Text(fields={'raw': Keyword()})
-    url = Text(fields={'raw': Keyword()})
+    name = Keyword()
+    part_number = Keyword()
+    sku = Keyword()
+    key = Keyword()
+    url = Keyword()
 
     leads = Integer()
 

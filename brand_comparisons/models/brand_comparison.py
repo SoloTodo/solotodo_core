@@ -59,12 +59,12 @@ class BrandComparison(models.Model):
         # Put Falabella, Ripley and Paris first, this is just hardcoded because
         # LG are the only ones using this report right now, if a new customer
         # starts using it then move this functionality to DB level.
-        store_priority = {
+        retailer_a_priority = {
             9: 1,
             18: 2,
             11: 3
         }
-        stores = sorted(stores, key=lambda x: store_priority.get(x.id, 999))
+        stores = sorted(stores, key=lambda x: retailer_a_priority.get(x.id, 999))
 
         preferred_currency = Currency.objects.get(iso_code='CLP')
         relevant_product_ids = []
@@ -249,19 +249,14 @@ class BrandComparison(models.Model):
         bottom_brand_2_price_format.set_num_format(
             preferred_currency.excel_format())
 
-        highlighted_price_format = workbook.add_format({
-            'font_name': 'Arial Narrow',
-            'font_size': 10,
-            'bg_color': '#66FFCC',
-        })
-
         # Column widths
         worksheet.set_column(0, 0, 12)
         worksheet.set_column(1, 1, 16)
-        worksheet.set_column(7, 7, 16)
+        worksheet.set_column(5, 5, 16)
 
-        PRICING_DETAIL_START_COLUMN = 11
+        PRICING_DETAIL_START_COLUMN = 7
         row = 0
+        retailer_a_columns = []
 
         # First row, print store labels
         col = PRICING_DETAIL_START_COLUMN
@@ -269,23 +264,33 @@ class BrandComparison(models.Model):
         for store in stores:
             worksheet.merge_range(row, col, row, col + 1,
                                   str(store), cell_format=store_header_format)
+
+            if store.id in retailer_a_priority:
+                retailer_a_columns.append(col)
+
             col += 2
+
+        # Print a final column for the averages of Retail A
+        worksheet.merge_range(row, col, row, col + 1,
+                              "Retail A", cell_format=store_header_format)
+
         row += 1
 
         # Second row, table titles
         col = 0
         hardcoded_titles = [
             'Category',
-            str(self.brand_1), 'Moda', 'Promedio', 'Mínimo',
+            str(self.brand_1), 'Mínimo',
             'Line Logic', 'ATA',
-            str(self.brand_2), 'Moda', 'Promedio', 'Mínimo'
+            str(self.brand_2), 'Mínimo'
         ]
 
         for title in hardcoded_titles:
             worksheet.write(row, col, title, table_hardcoded_header_format)
             col += 1
 
-        for idx in range(len(stores)):
+        # We print an additional column ("+1") for the Retail A averages
+        for idx in range(len(stores) + 1):
             worksheet.write(row, col, str(self.brand_1),
                             table_brand_1_header_format)
             col += 1
@@ -305,10 +310,7 @@ class BrandComparison(models.Model):
             ata_row += segment_length
 
         # Individual product rows
-
         data_formulas = [
-            '=IFERROR(MODE({0}), IFERROR(AVERAGE({0}), ""))',
-            '=IFERROR(AVERAGE({}), "")',
             '=IFERROR(MIN({}), "")',
         ]
 
@@ -374,10 +376,10 @@ class BrandComparison(models.Model):
 
                 worksheet.write_formula(
                     xl_rowcol_to_cell(row, col),
-                    '=IFERROR({}/({}+{})*100,"-")'.format(
+                    '=IFERROR(({}-{})/{}*100,"-")'.format(
                         xl_rowcol_to_cell(row, col-2),
-                        xl_rowcol_to_cell(row, col+4),
                         xl_rowcol_to_cell(row, col-1),
+                        xl_rowcol_to_cell(row, col+2),
                     ),
                     number_format_to_use
                 )
@@ -430,37 +432,30 @@ class BrandComparison(models.Model):
                                     brand_2_price_format_to_use)
                     col += 1
 
-                    if product_1_price and product_2_price and \
-                            highlight_strategy == '2':
-                        worksheet.conditional_format('{}:{}'.format(
-                            xl_rowcol_to_cell(row, col-2),
-                            xl_rowcol_to_cell(row, col-1),
-                        ), {
-                            'type': 'bottom',
-                            'value': 1,
-                            'format': highlighted_price_format
-                        })
+                # Last column for Ratailer A average
+                retailer_a_base_formula = '=IFERROR(AVERAGEA({}), "-")'
 
-                if highlight_strategy == '1':
-                    if brand_1_cells_with_prices:
-                        worksheet.conditional_format(
-                            brand_1_cells_with_prices[0], options={
-                                'type': 'bottom',
-                                'value': 1,
-                                'format': highlighted_price_format,
-                                'multi_range':
-                                    ' '.join(brand_1_cells_with_prices)
-                            })
+                brand_1_retailer_a_cells = [
+                    xl_rowcol_to_cell(row, retailer_a_col)
+                    for retailer_a_col in retailer_a_columns
+                ]
+                worksheet.write_formula(
+                    xl_rowcol_to_cell(row, col),
+                    retailer_a_base_formula.format(
+                        ','.join(brand_1_retailer_a_cells)),
+                    brand_1_price_format_to_use)
+                col += 1
 
-                    if brand_2_cells_with_prices:
-                        worksheet.conditional_format(
-                            brand_2_cells_with_prices[0], options={
-                                'type': 'bottom',
-                                'value': 1,
-                                'format': highlighted_price_format,
-                                'multi_range':
-                                    ' '.join(brand_2_cells_with_prices)
-                            })
+                brand_2_retailer_a_cells = [
+                    xl_rowcol_to_cell(row, retailer_a_col + 1)
+                    for retailer_a_col in retailer_a_columns
+                ]
+                worksheet.write_formula(
+                    xl_rowcol_to_cell(row, col),
+                    retailer_a_base_formula.format(
+                        ','.join(brand_2_retailer_a_cells)),
+                    brand_2_price_format_to_use)
+                col += 1
 
                 row += 1
 

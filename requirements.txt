@@ -26,7 +26,7 @@ django-cors-headers==2.1.0
 django-crispy-forms==1.7.0
 django-custom-user==0.7
 django-extensions==1.8.1
-django-filter==2.3.0
+django-filter==2.4.0
 django-gtin-fields==0.1.2
 django-guardian==1.4.9
 django-mathfilters==0.4.0

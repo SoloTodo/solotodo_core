@@ -657,10 +657,13 @@ class InstanceModel(models.Model):
                     m2m_documents.append(m2m_document[0])
                     keywords.extend(m2m_document[1])
 
-                keys = m2m_documents[0].keys()
+                keys = set()
+                for doc in m2m_documents:
+                    for key in doc.keys():
+                        keys.add(key)
 
                 for key in keys:
-                    key_subresult = [d[key] for d in m2m_documents]
+                    key_subresult = [d[key] for d in m2m_documents if key in d]
                     result[meta_field.name + '_' + key] = key_subresult
             else:
                 try:

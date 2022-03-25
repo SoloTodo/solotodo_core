@@ -62,7 +62,8 @@ class BrandComparison(models.Model):
         retailer_a_priority = {
             9: 1,
             18: 2,
-            11: 3
+            11: 3,
+            43: 4
         }
         stores = sorted(stores, key=lambda x: retailer_a_priority.get(x.id, 999))
 

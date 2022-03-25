@@ -16,18 +16,21 @@ class EsProductEntities(Document):
             {
                 "product_specs_keyword_fields": {
                     "path_match": "specs.*",
-                    "match_mapping_type": "text",
+                    "match_mapping_type": "string",
                     "mapping": {
                         "type": "keyword"
                     }
                 },
-                "product_specs_dynamic_fields": {
+            },
+            {
+                "product_specs_nested_fields": {
                     "path_match": "specs.*",
+                    "match_mapping_type": "object",
                     "mapping": {
-                        "dynamic": True
+                        "type": "nested"
                     }
-                }
-            }
+                },
+            },
         ])
 
     class Index:

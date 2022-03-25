@@ -13,7 +13,7 @@ class EsProduct(EsProductEntities):
     creation_date = Date()
     last_updated = Date()
     keywords = Text()
-    specs = Object()
+    specs = Object(dynamic=True)
 
     @classmethod
     def search(cls, **kwargs):

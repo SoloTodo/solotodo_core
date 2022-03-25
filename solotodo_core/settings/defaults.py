@@ -414,7 +414,7 @@ METAMODEL = {
 }
 
 ES = Elasticsearch('http://localhost:9200')
-connections.create_connection(hosts=['https://localhost:9200'], timeout=20)
+# connections.create_connection(hosts=['https://localhost:9200'], timeout=20)
 
 CURRENCYLAYER_API_ACCESS_KEY = ''
 

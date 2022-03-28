@@ -134,7 +134,8 @@ class Budget(models.Model):
                 'terms', product_id=[e.id for e in selected_products])[
             :len(selected_products)]
 
-        es_products = s.execute()
+        es_products_dict = {x['product_id']: x for x in s.execute()}
+        es_products = [es_products_dict[p.id] for p in selected_products]
 
         products_dict = {
             p.id: p.category.storescraper_name for p in selected_products
@@ -532,9 +533,134 @@ necesario.
 
         # SSD
 
-        # TODO: Check if the SSDs are M.2 and the mothearboard has
-        # M.2 slots. But in this case there are SATA and PCIe
-        # SSDs...
+        if mb and ssds:
+            mb_available_ports = []
+            for mb_has_port in Product.objects.get(
+                    pk=mb.product_id).instance_model.storage_ports:
+                mb_available_ports.extend(
+                    [mb_has_port.port] * mb_has_port.quantity)
+
+            for ssd_hit in ssds:
+                ssd = Product.objects.get(pk=ssd_hit.product_id).instance_model
+                warning_and_error_per_port = []
+                for port in mb_available_ports:
+                    ssd_connector = ssd.ssd_type.connector
+                    local_warnings = []
+                    local_errors = []
+
+                    # Physical check
+
+                    # 1559371 is the ID of the legacy "M.2" connector without
+                    # information of its size (2280, 2242, 2230).
+                    if ssd_connector.id == 1559371:
+                        if 'M.2' in str(port.connector):
+                            local_warnings.append("""
+El SSD {} es de tipo M.2, pero no tenemos información de su tamaño (2280, 
+2242, 2230) para verificar si es compatible fisicamente con la placa madre
+""".format(ssd))
+                        else:
+                            local_errors.append("""
+El SSD {} es de tipo M.2 pero el puerto {} no es M.2""".format(ssd, port))
+
+                    if port.connector.id == 1559371:
+                        if 'M.2' in str(ssd_connector):
+                            local_warnings.append("""
+El puerto de almacenamiento es de tipo M.2, pero no tenemos información de 
+su tamaño (2280, 2242, 2230) para verificar si es compatible fisicamente con 
+el ssd {}""".format(ssd))
+                        else:
+                            local_errors.append("""
+El puerto de almacenamiento es de tipo M.2 pero el SSD {} no es M.2
+""".format(ssd))
+
+                    if ssd_connector.id != 1559371 and \
+                            port.connector.id != 1559371:
+                        if ssd_connector != port.connector and ssd_connector \
+                                not in port.connector.additional_compatibility:
+                            local_errors.append("""
+El puerto {} no es físicamente compatible con el ssd {}""".format(port, ssd))
+
+                    # Bus check
+
+                    if not port.buses:
+                        # Assume it's the legacy M.2 MB port
+                        if 'M.2' in str(ssd_connector):
+                            local_warnings.append("""
+El puerto de almacenamiento es de tipo M.2, pero no tenemos información de su 
+tipo (SATA, PCIe) para verificar si es eléctricamente fisicamente con el SSD {}
+""".format(ssd))
+                        else:
+                            local_errors.append("""
+El puerto {} es de tipo M.2 pero el SSD {} no es M.2""".format(port, ssd))
+
+                    buses_warnings_and_errors = []
+                    ssd_bus = ssd.ssd_type.bus
+                    for bus in port.buses:
+                        bus_warnings = []
+                        bus_errors = []
+
+                        if bus.bus_with_version != ssd_bus.bus_with_version:
+                            if bus.bus_with_version in ssd_bus.bus_with_version.backwards_compatibility:
+                                bus_warnings.append("""
+El SSD {} es eléctricamente compatible con el puerto {}, pero es posible que 
+no funcione al 100% de su rendimiento porque el puerto es de una versión PCIe 
+más antigua. """.format(ssd, port))
+                            else:
+                                bus_errors.append("""
+El bus del puerto {} es incompatible con el bus del SSD ({})
+""".format(port, ssd.ssd_type))
+
+                        # 1559281 is the id of the base PCIe, the lanes check
+                        # should only be run in that case
+                        if bus.bus_with_version.bus.id == 1559281 and \
+                                ssd_bus.bus_with_version.bus.id == 1559281:
+                            if bus.lanes == 1:
+                                bus_warnings.append("""
+No tenemos informacion de la cantidad de lanes PCIe disponibles en el bus {}, 
+así que no podemos saber si el SSD va a funcionar a toda su capacidad en esta 
+placa madre""".format(port))
+                            if ssd_bus.lanes == 1:
+                                bus_warnings.append("""
+No tenemos informacion de la cantidad de lanes PCIe utilizados por el SSD {}, 
+así que no podemos saber si el SSD va a funcionar a toda su capacidad en esta 
+placa madre""".format(ssd))
+                            if ssd_bus.lanes > bus.lanes > 1:
+                                bus_warnings.append("""
+El bus del puerto {} tiene menos lanes (x{}) que el SSD {} ({}), así que 
+el SSD puede que no funcione a plena capacidad""".format(port, bus.lanes,
+                                                         ssd, ssd_bus))
+
+                        buses_warnings_and_errors.append({
+                            'bus': bus,
+                            'warnings': bus_warnings,
+                            'errors': bus_errors
+                        })
+
+                    buses_warnings_and_errors.sort(
+                        key=lambda x: (len(x['errors']), len(x['warnings'])))
+
+                    if buses_warnings_and_errors:
+                        best_bus = buses_warnings_and_errors[0]
+                        local_errors.extend(best_bus['errors'])
+                        local_warnings.extend(best_bus['warnings'])
+
+                    warning_and_error_per_port.append({
+                        'port': port,
+                        'warnings': local_warnings,
+                        'errors': local_errors
+                    })
+
+                warning_and_error_per_port.sort(
+                    key=lambda x: (len(x['errors']), len(x['warnings'])))
+
+                if warning_and_error_per_port:
+                    best_port_entry = warning_and_error_per_port[0]
+                    errors.extend(best_port_entry['errors'])
+                    warnings.extend(best_port_entry['warnings'])
+                    mb_available_ports.remove(best_port_entry['port'])
+                else:
+                    errors.append('No hay puertos disponible para el SSD '
+                                  '{}'.format(ssd))
 
         # Monitors
 

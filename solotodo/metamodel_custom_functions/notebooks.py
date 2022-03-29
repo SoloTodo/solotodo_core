@@ -65,19 +65,14 @@ def get_score_games(elastic_dict):
     processor_rating = min(elastic_dict['processor_speed_score'] / 20000.0,
                            1.0)
     ram_rating = min(float(elastic_dict['ram_quantity_value']) / 16.0, 1.0)
-
     gpu = elastic_dict.get('processor_gpu_speed_score', 0)
-    dedicated = 0
+
     if 'dedicated_video_card_id' in elastic_dict:
         dedicated = elastic_dict['dedicated_video_card_speed_score']
+    else:
+        dedicated = 0
 
     video_card_score = max(gpu, dedicated)
-
-    # In case of SLI or Crossfire consider the addition of the two
-    # gpus with a penalty
-
-    if elastic_dict['is_multi_gpu']:
-        video_card_score = int(1.5 * video_card_score)
 
     # Heuristical calculation based on the current scores in the DB
     video_card_rating = min(video_card_score / 26000.0, 1.0)
@@ -130,54 +125,22 @@ def additional_es_fields(instance_model, elastic_search_result):
     if m == 'Notebook':
         result = {}
 
-        video_cards_id = []
-        video_cards_unicode = []
+        result['gpus'] = []
 
-        if elastic_search_result['is_multi_gpu']:
-            dedicated_video_card_es = \
-                instance_model.dedicated_video_card.elasticsearch_document()[0]
+        if 'processor_gpu_id' in elastic_search_result:
+            integrated_gpu_result = \
+                instance_model.processor.gpu.elasticsearch_document()[0]
+            result['gpus'].append(integrated_gpu_result)
 
-            for key, value in dedicated_video_card_es.items():
-                result[u'video_cards_' + key] = [value] * 2
-                if key == u'id':
-                    video_cards_id.extend([value] * 2)
-                elif key == u'unicode':
-                    video_cards_unicode.extend([value] * 2)
+        if 'dedicated_video_card_id' in elastic_search_result:
+            subresult = instance_model.dedicated_video_card\
+                .elasticsearch_document()[0]
+            result['gpus'].append(subresult)
 
             pretty_dedicated_video_card = \
                 elastic_search_result['dedicated_video_card_unicode']
         else:
-            if 'processor_gpu_id' in elastic_search_result:
-                integrated_gpu_result = \
-                    instance_model.processor.gpu.elasticsearch_document()[0]
-
-                for key, value in integrated_gpu_result.items():
-                    result[u'video_cards_' + key] = [value]
-                    if key == u'id':
-                        video_cards_id.append(value)
-                    elif key == u'unicode':
-                        video_cards_unicode.append(value)
-
-            if 'dedicated_video_card_id' in elastic_search_result:
-                subresult = instance_model.dedicated_video_card\
-                    .elasticsearch_document()[0]
-
-                for key, value in subresult.items():
-                    es_key = u'video_cards_' + key
-                    if es_key in result:
-                        result[es_key].append(value)
-                    else:
-                        result[es_key] = value
-
-                    if key == u'id':
-                        video_cards_id.append(value)
-                    elif key == u'unicode':
-                        video_cards_unicode.append(value)
-
-                pretty_dedicated_video_card = \
-                    elastic_search_result['dedicated_video_card_unicode']
-            else:
-                pretty_dedicated_video_card = 'No posee'
+            pretty_dedicated_video_card = 'No posee'
 
         result['pretty_battery'] = pretty_battery(
             elastic_search_result)
@@ -192,11 +155,7 @@ def additional_es_fields(instance_model, elastic_search_result):
             elastic_search_result['line_name'],
             elastic_search_result['name'],
         ).strip()
-        result[u'pretty_dedicated_video_card'] = pretty_dedicated_video_card
-        result['video_cards_id_unicode'] = {id: value for id, value in
-                                            zip(video_cards_id,
-                                                video_cards_unicode)}
-
+        result['pretty_dedicated_video_card'] = pretty_dedicated_video_card
         result['score_general'] = get_score_general(elastic_search_result)
         result['score_games'] = get_score_games(elastic_search_result)
         result['score_mobility'] = get_score_mobility(elastic_search_result)
@@ -206,18 +165,11 @@ def additional_es_fields(instance_model, elastic_search_result):
         result['suggested_alternatives_parameters'] = \
             get_sugestions_parameters(elastic_search_result)
 
-        storage_drives = zip(
-            elastic_search_result['storage_drive_drive_type_unicode'],
-            elastic_search_result['storage_drive_capacity_value'],
-            elastic_search_result['storage_drive_capacity_unicode'])
+        largest_storage_drive = sorted(
+            elastic_search_result['storage_drive'],
+            key=lambda x: x['capacity_value'], reverse=True)[0]
 
-        storage_drives = sorted(storage_drives, key=lambda x: x[1],
-                                reverse=True)
-
-        result['largest_storage_drive_capacity_unicode'] = \
-            storage_drives[0][2]
-        result['largest_storage_drive_drive_type_unicode'] = \
-            storage_drives[0][0]
+        result['largest_storage_drive'] = largest_storage_drive
 
         result['processor_has_turbo_frequencies'] = \
             elastic_search_result['processor_frequency_value'] != \

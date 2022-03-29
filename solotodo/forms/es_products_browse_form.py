@@ -1,3 +1,4 @@
+import json
 from collections import OrderedDict
 
 from django import forms
@@ -61,6 +62,7 @@ class EsProductsBrowseForm(forms.Form):
 
     ordering = forms.CharField(required=False)
     search = forms.CharField(required=False)
+    bucket_field = forms.CharField(required=False)
 
     def __init__(self, user, *args, **kwargs):
         self.user = user
@@ -112,6 +114,10 @@ class EsProductsBrowseForm(forms.Form):
                     [x.id for x in invalid_categories]))
 
         return requested_categories
+
+    def clean_bucket_field(self):
+        original_bucket_field = self.cleaned_data['bucket_field']
+        return original_bucket_field or 'product_id'
 
     def get_category_entities(self, category, request):
         """
@@ -310,6 +316,44 @@ class EsProductsBrowseForm(forms.Form):
         }
 
     def get_category_products(self, category, request):
+        from solotodo.models import EsProduct
+
+        assert self.is_valid()
+
+        store_ids = [x.id for x in self.cleaned_data['stores']]
+        # global_entity_filters = Q()
+        global_entity_filters = Q('terms', store_id=store_ids)
+
+        if self.cleaned_data['exclude_refurbished']:
+            global_entity_filters &= Q('term', condition='https://schema.org/NewCondition')
+
+        search = EsProduct.search()\
+            .filter('term', category_id=category.id)
+
+        bucket_field = self.cleaned_data['bucket_field']
+        main_results_bucket = A('terms', field=bucket_field)
+        main_results_bucket.metric('docs', 'top_hits', size=10)
+        main_results_bucket\
+            .bucket('entities', 'children', type='entity')\
+            .bucket('filtered_entities', 'filters', filters={'filtered': global_entity_filters})\
+            .metric('min_offer_price_usd', 'min', field='offer_price_usd')\
+            .pipeline(
+                'filter_entries_without_price',
+                'bucket_selector',
+                buckets_path={'min_offer_price_usd': "min_offer_price_usd"},
+                script='params.min_offer_price_usd'
+            )
+
+        search.aggs.bucket('main_results', main_results_bucket)
+        print(json.dumps(search[:0].to_dict()))
+
+        result = search[0:0].execute()
+        return [
+            result.to_dict(),
+            search.to_dict()
+        ]
+
+    def get_category_products_old(self, category, request):
         from solotodo.models import EsProduct
 
         assert self.is_valid()

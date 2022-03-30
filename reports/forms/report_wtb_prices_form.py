@@ -141,6 +141,9 @@ class ReportWtbPricesForm(forms.Form):
         worksheet.write_string(row, col, 'Modelo', header_1_format)
         worksheet.set_column(col, col, 24)
         col += 1
+        worksheet.write_string(row, col, 'Código LG', header_1_format)
+        worksheet.set_column(col, col, 24)
+        col += 1
         worksheet.write_string(row, col, 'Precio LG.com',
                                header_wtb_price_format)
         worksheet.set_column(col, col, 16)
@@ -179,6 +182,8 @@ class ReportWtbPricesForm(forms.Form):
             col += 1
             worksheet.write_string(row, col, str(wtb_e.product))
             col += 1
+            worksheet.write_string(row, col, str(wtb_e.model_name or 'N/A'))
+            col += 1
             worksheet.write_number(row, col, wtb_e.price, currency_format)
             wtb_price_cell = xl_rowcol_to_cell(row, col)
             col += 1
@@ -191,8 +196,8 @@ class ReportWtbPricesForm(forms.Form):
                 col += 1
 
             stores_range = '{}:{}'.format(
-                xl_rowcol_to_cell(row, STARTING_COL + 3),
-                xl_rowcol_to_cell(row, STARTING_COL + 3 + len(stores) - 1),
+                xl_rowcol_to_cell(row, STARTING_COL + 4),
+                xl_rowcol_to_cell(row, STARTING_COL + 4 + len(stores) - 1),
             )
 
             avg_cell = xl_rowcol_to_cell(row, col)
@@ -219,7 +224,7 @@ class ReportWtbPricesForm(forms.Form):
 
         STARTING_DATA_ROW = STARTING_ROW + 1
         ENDING_DATA_ROW = STARTING_DATA_ROW + len(wtb_entities) - 1
-        AVERAGE_VARIATION_COLUMN = STARTING_COL + 3 + len(stores) + 1
+        AVERAGE_VARIATION_COLUMN = STARTING_COL + 4 + len(stores) + 1
 
         for i in [0, 2, 4]:
             target_column = AVERAGE_VARIATION_COLUMN + i
@@ -272,6 +277,8 @@ class ReportWtbPricesForm(forms.Form):
         filename = timezone.now().strftime(filename_template)
         path = storage.save('reports/{}.xlsx'.format(filename),
                             file_for_upload)
+
+        # print(storage.url(path))
 
         return {
             'file': file_value,

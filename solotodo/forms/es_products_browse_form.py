@@ -321,21 +321,57 @@ class EsProductsBrowseForm(forms.Form):
         assert self.is_valid()
 
         store_ids = [x.id for x in self.cleaned_data['stores']]
-        search = EsEntity.search()\
-            .filter('term', category_id=category.id)\
-            .filter('terms', store_id=store_ids)
+        stores_filter = Q('terms', store_id=store_ids)
 
         if self.cleaned_data['exclude_refurbished']:
-            search = search.filter(
-                'term', condition='https://schema.org/NewCondition')
+            condition_filter = Q('term', condition='https://schema.org/NewCondition')
+        else:
+            condition_filter = Q()
 
+        search = EsProduct.search()
+        search = search.update_from_dict({
+            'collapse': {
+                'field': self.cleaned_data['bucket_field'],
+                'inner_hits': {
+                    'name': 'inner_products',
+                    'size': 5
+                }
+            }
+        })
+        query = Q('function_score', query=stores_filter & condition_filter, script_score={'script': "doc['product_id'].value"})
+        search = search.query('has_child', type='entity', query=query, score_mode='min')
+
+        # search = EsEntity.search()\
+        #     .filter('term', category_id=category.id)\
+        #     .filter(stores_filter)\
+        #     .filter(condition_filter)
+        #
+        # price_filter = Q('range', offer_price_usd={'gt': 0})
+        #
+        # all_products_bucket = search.aggs\
+        #     .bucket('all_products', 'parent', type='entity')
+        # products_filtered_by_price_bucket = search.aggs\
+        #     .bucket('price_filter', 'filter', filter=price_filter)\
+        #     .bucket('products', 'parent', type='entity')
+        #
         # Main results bucket
-        results_bucket = A('filter', filter=Q())
-        results_bucket\
-            .bucket('grouped_products', 'terms', field=self.cleaned_data['bucket_field'])\
-            .bucket('individual_products', 'terms', field='product_id')
+        # results_bucket = products_filtered_by_price_bucket.bucket('results', 'filter', filter=Q())
+        # results_bucket\
+        #     .bucket('grouped_products', 'terms', field=self.cleaned_data['bucket_field']) \
+        #     .metric('foo_1', 'top_hits', sort=[{'product_id': 'asc'}]) \
+        #     .pipeline('grouped_products_min_price',
+        #               'min_bucket',
+        #               buckets_path="individual_products>entities>filtered_entities>min_offer_price_usd")\
+        #     .pipeline('sort_by_price', 'bucket_sort', sort=[{'grouped_products_min_price': 'asc'}])\
+        #     .metric('foo_2', 'top_hits', sort=[{'product_id': 'asc'}])\
+        #     .bucket('individual_products', 'terms', field='product_id', size=30) \
+        #     .bucket('entities', 'children', type='entity')\
+        #     .bucket('filtered_entities', 'filter', filter=stores_filter & condition_filter & price_filter)\
+        #     .metric('min_offer_price_usd', 'min', field='offer_price_usd')
 
-        search.aggs.bucket('base_products', 'parent', type='entity').bucket('results', results_bucket)
+        # search.aggs.bucket('results', results_bucket)
+
+        print(json.dumps(search.to_dict()))
 
         # main_results_bucket = A('terms', field=bucket_field)
         # main_results_bucket.metric('docs', 'top_hits', size=10)
@@ -353,7 +389,7 @@ class EsProductsBrowseForm(forms.Form):
         # search.aggs.bucket('main_results', main_results_bucket)
         # print(json.dumps(search[:0].to_dict()))
         #
-        result = search[0:0].execute()
+        result = search.execute()
         return [
             result.to_dict(),
             search.to_dict()

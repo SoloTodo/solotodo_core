@@ -377,10 +377,10 @@ class BrandComparison(models.Model):
 
                 worksheet.write_formula(
                     xl_rowcol_to_cell(row, col),
-                    '=IFERROR(({}-{})/{}*100,"-")'.format(
+                    '=IFERROR({}/({}+{})*100,"-")'.format(
                         xl_rowcol_to_cell(row, col-2),
-                        xl_rowcol_to_cell(row, col-1),
                         xl_rowcol_to_cell(row, col+2),
+                        xl_rowcol_to_cell(row, col-1),
                     ),
                     number_format_to_use
                 )

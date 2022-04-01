@@ -65,7 +65,8 @@ class BrandComparison(models.Model):
             11: 3,
             43: 4
         }
-        stores = sorted(stores, key=lambda x: retailer_a_priority.get(x.id, 999))
+        stores = sorted(stores,
+                        key=lambda x: retailer_a_priority.get(x.id, 999))
 
         preferred_currency = Currency.objects.get(iso_code='CLP')
         relevant_product_ids = []
@@ -253,7 +254,9 @@ class BrandComparison(models.Model):
         # Column widths
         worksheet.set_column(0, 0, 12)
         worksheet.set_column(1, 1, 16)
+        worksheet.set_column(2, 2, 12)
         worksheet.set_column(5, 5, 16)
+        worksheet.set_column(6, 6, 12)
 
         PRICING_DETAIL_START_COLUMN = 7
         row = 0
@@ -281,9 +284,9 @@ class BrandComparison(models.Model):
         col = 0
         hardcoded_titles = [
             'Category',
-            str(self.brand_1), 'Mínimo',
+            str(self.brand_1), 'Mínimo Retail A',
             'Line Logic', 'ATA',
-            str(self.brand_2), 'Mínimo'
+            str(self.brand_2), 'Mínimo Retail A'
         ]
 
         for title in hardcoded_titles:
@@ -321,6 +324,17 @@ class BrandComparison(models.Model):
             for product_row_idx, product_row in enumerate(segment.rows.all()):
                 brand_1_cells = []
                 brand_2_cells = []
+
+                brand_1_retailer_a_cells = [
+                    xl_rowcol_to_cell(row, retailer_a_col)
+                    for retailer_a_col in retailer_a_columns
+                ]
+
+                brand_2_retailer_a_cells = [
+                    xl_rowcol_to_cell(row, retailer_a_col + 1)
+                    for retailer_a_col in retailer_a_columns
+                ]
+
                 for idx, store in enumerate(stores):
                     brand_1_cells.append(
                         xl_rowcol_to_cell(
@@ -366,10 +380,10 @@ class BrandComparison(models.Model):
                 for data_formula in data_formulas:
                     formula_cell = xl_rowcol_to_cell(row, col)
 
-                    worksheet.write_formula(formula_cell,
-                                            data_formula.format(
-                                                ','.join(brand_1_cells)),
-                                            price_format_to_use)
+                    worksheet.write_formula(
+                        formula_cell, data_formula.format(
+                            ','.join(brand_1_retailer_a_cells)),
+                        price_format_to_use)
                     col += 1
 
                 worksheet.write_number(row, col, 0, number_format_to_use)
@@ -399,10 +413,10 @@ class BrandComparison(models.Model):
 
                 for data_formula in data_formulas:
                     formula_cell = xl_rowcol_to_cell(row, col)
-                    worksheet.write_formula(formula_cell,
-                                            data_formula.format(
-                                                ','.join(brand_2_cells)),
-                                            price_format_to_use)
+                    worksheet.write_formula(
+                        formula_cell, data_formula.format(
+                            ','.join(brand_2_retailer_a_cells)),
+                        price_format_to_use)
                     col += 1
 
                 brand_1_cells_with_prices = []
@@ -433,13 +447,9 @@ class BrandComparison(models.Model):
                                     brand_2_price_format_to_use)
                     col += 1
 
-                # Last column for Ratailer A average
+                # Last column for Retailer A average
                 retailer_a_base_formula = '=IFERROR(AVERAGEA({}), "-")'
 
-                brand_1_retailer_a_cells = [
-                    xl_rowcol_to_cell(row, retailer_a_col)
-                    for retailer_a_col in retailer_a_columns
-                ]
                 worksheet.write_formula(
                     xl_rowcol_to_cell(row, col),
                     retailer_a_base_formula.format(
@@ -447,10 +457,6 @@ class BrandComparison(models.Model):
                     brand_1_price_format_to_use)
                 col += 1
 
-                brand_2_retailer_a_cells = [
-                    xl_rowcol_to_cell(row, retailer_a_col + 1)
-                    for retailer_a_col in retailer_a_columns
-                ]
                 worksheet.write_formula(
                     xl_rowcol_to_cell(row, col),
                     retailer_a_base_formula.format(

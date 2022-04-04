@@ -52,17 +52,38 @@ class EsProductsBrowseForm(forms.Form):
 
     exclude_refurbished = forms.BooleanField(required=False)
 
-    PRICING_ORDERING_CHOICES = [
-        'normal_price_usd',
-        'offer_price_usd',
-    ]
-
-    DB_ORDERING_CHOICES = PRICING_ORDERING_CHOICES + \
-        ['leads', 'discount', 'relevance']
-
     ordering = forms.CharField(required=False)
     search = forms.CharField(required=False)
     bucket_field = forms.CharField(required=False)
+
+    ORDERING_CHOICES = {
+        'offer_price_usd': {
+            'script': "doc['offer_price_usd'].value",
+            'direction': 'asc',
+            'score_mode': 'min'
+        },
+        'normal_price_usd': {
+            'script': "doc['normal_price_usd'].value",
+            'direction': 'asc',
+            'score_mode': 'min'
+        },
+        'leads': {
+            'script': "doc['leads'].value",
+            'direction': 'desc',
+            'score_mode': 'sum'
+        },
+        # Discount should consider the difference between the current overall
+        # minimum and reference overall minimum, not per entity
+        # 'discount': {
+        #     'script': "doc['offer_price_usd'].value - doc['reference_offer_price_usd'].value",
+        #     'direction': 'asc',
+        #     'score_mode': 'min'
+        # },
+        # Relevance should consider the product relevance to the given "search" param
+        # 'relevance': {
+        #
+        # }
+    }
 
     def __init__(self, user, *args, **kwargs):
         self.user = user
@@ -320,6 +341,22 @@ class EsProductsBrowseForm(forms.Form):
 
         assert self.is_valid()
 
+        ordering = self.cleaned_data['ordering']
+
+        # Create the sub form for the category-dependant specs
+        specs_form_query = request.query_params.copy()
+        # Determine whether we or the specs form will handle the sorting
+        if ordering in self.ORDERING_CHOICES:
+            # We will handle the sorting, remove the field from the specs
+            # params, otherwise it will be detected as invalid
+            specs_form_query.pop('ordering', None)
+        else:
+            # The specs form will handle the sorting, so set ours to None
+            ordering = None
+
+        specs_form_class = category.specs_form(form_type='es')
+        specs_form = specs_form_class(specs_form_query)
+
         store_ids = [x.id for x in self.cleaned_data['stores']]
         stores_filter = Q('terms', store_id=store_ids)
 
@@ -338,7 +375,8 @@ class EsProductsBrowseForm(forms.Form):
                 }
             }
         })
-        query = Q('function_score', query=stores_filter & condition_filter, script_score={'script': "doc['product_id'].value"})
+        query = Q('function_score', query=stores_filter & condition_filter, script_score={'script': "doc['offer_price_usd'].value"})
+
         search = search.query('has_child', type='entity', query=query, score_mode='min')
 
         # search = EsEntity.search()\

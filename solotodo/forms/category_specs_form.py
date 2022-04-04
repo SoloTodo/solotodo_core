@@ -9,8 +9,6 @@ from solotodo.models import EsProduct
 
 class CategorySpecsForm(forms.Form):
     ordering = forms.ChoiceField(choices=[], required=False)
-    search = forms.CharField(required=False)
-    bucket_field = forms.CharField(required=False)
 
     @classmethod
     def add_filter(cls, category_specs_filter):

@@ -66,7 +66,7 @@ def additional_es_fields(instance_model, elastic_search_original):
             result['sorting_weight'] = big_value
 
         result['included_fans'] = \
-            sum(elastic_search_original['included_fans_quantity'])
+            sum(elastic_search_original.get('included_fans_quantity', []))
 
         return result
     if m == 'CpuCooler':

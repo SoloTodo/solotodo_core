@@ -26,6 +26,43 @@ class EsCategorySpecsForm(forms.Form):
             cls.ordering_value_to_es_field_dict[new_ordering_name] = \
                 new_ordering_field
 
+    def get_filter(self, skip=None):
+        # Returns the ElasticSearch DSL query object that represents
+        # the application of all of the filters represented by this form
+        # Accepts an optional "skip" parameter that represents the name of a
+        # field that must not be skipped when assembling the filter.
+        # This is useful for the faceting part of the products browse query
+        # that needs to ignore a particular field to get all of its facets.
+
+        specs_filter = Q()
+        empty_filter = Q()
+
+        for field in self.category_specs_filters:
+            if field.name == skip:
+                continue
+
+            spec_filter = field.es_filter(self.cleaned_data, prefix='specs.')
+
+            if spec_filter == empty_filter:
+                continue
+
+            specs_filter &= spec_filter
+        return specs_filter
+
+    def get_ordering(self):
+        # If the form has a ordering value, returns a ElasticSearch DSL
+        # compatible string for sorting the results of a ElasticSearch
+        # DSL search object
+        # e.g. search.sort(...)
+        # Otherwise returns None
+
+        ordering = self.cleaned_data['ordering']
+
+        if not ordering:
+            return None
+
+        return self.ordering_value_to_es_field_dict[ordering]
+
     def get_es_products(self, search):
         from solotodo.models import Product
 

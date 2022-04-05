@@ -1,4 +1,3 @@
-import json
 from collections import OrderedDict
 
 from django import forms
@@ -55,6 +54,9 @@ class EsProductsBrowseForm(forms.Form):
     ordering = forms.CharField(required=False)
     search = forms.CharField(required=False)
     bucket_field = forms.CharField(required=False)
+
+    page = forms.IntegerField(min_value=1, required=False)
+    page_size = forms.IntegerField(min_value=1, max_value=200, required=False)
 
     ORDERING_CHOICES = {
         'offer_price_usd': {
@@ -139,6 +141,151 @@ class EsProductsBrowseForm(forms.Form):
     def clean_bucket_field(self):
         original_bucket_field = self.cleaned_data['bucket_field']
         return original_bucket_field or 'product_id'
+
+    def clean_ordering(self):
+        return self.cleaned_data['ordering'] or 'offer_price_usd'
+
+    def clean_page(self):
+        return self.cleaned_data['page'] or 1
+
+    def clean_page_size(self):
+        return self.cleaned_data['page_size'] or 10
+
+    def get_price_filter(self):
+        # Returns the ES DSL Query object that represents the entity-level
+        # filter of the form price parameters
+        price_filter = Q()
+
+        for price_type in ['normal', 'offer']:
+            for currency_choice in ['', '_usd']:
+                subquery_params = {}
+
+                for filter_type in ['min', 'max']:
+                    form_field = '{}_price{}_{}'.format(price_type, currency_choice, filter_type)
+                    form_field_value = self.cleaned_data[form_field]
+
+                    if form_field_value is None:
+                        continue
+
+                    es_range_field_field = 'gte' if filter_type == 'min' else 'lte'
+                    subquery_params[es_range_field_field] = form_field_value
+
+                if subquery_params:
+                    es_field_name = '{}_price{}'.format(price_type, currency_choice)
+                    price_filter &= Q('range', **{es_field_name: subquery_params})
+
+        return price_filter
+
+    def get_category_products(self, category, request):
+        from solotodo.models import EsProduct
+
+        assert self.is_valid()
+
+        ordering = self.cleaned_data['ordering']
+
+        # Create the sub form for the category-dependant specs
+        specs_form_query = request.query_params.copy()
+        # Determine whether we or the specs form will handle the sorting
+        if ordering in self.ORDERING_CHOICES:
+            # We will handle the sorting, remove the field from the specs
+            # params, otherwise it will be detected as invalid
+            specs_form_query.pop('ordering', None)
+        else:
+            # The specs form will handle the sorting, so set ours to None
+            ordering = None
+
+        specs_form_class = category.specs_form(form_type='es')
+        specs_form = specs_form_class(specs_form_query)
+
+        assert specs_form.is_valid()
+
+        store_ids = [x.id for x in self.cleaned_data['stores']]
+        stores_filter = Q('terms', store_id=store_ids)
+        price_filter = self.get_price_filter()
+
+        if self.cleaned_data['exclude_refurbished']:
+            condition_filter = Q('term', condition='https://schema.org/NewCondition')
+        else:
+            condition_filter = Q()
+
+        search = EsProduct.search().filter('term', category_id=category.id)
+
+        # Main part of the query. Returns the products:
+        # * Filtered by store, refurbished status, price and specs
+        # * Ordered by one of the available choices (offer_price_usd by def)
+        # * Grouped ("collapsed") by the given bucket_key, or by product_id by
+        #   default
+
+        search = search.update_from_dict({
+            'collapse': {
+                'field': self.cleaned_data['bucket_field'],
+                'inner_hits': {
+                    'name': 'inner_products',
+                    'size': 5
+                }
+            }
+        })
+
+        entities_filter = stores_filter & condition_filter & price_filter
+
+        if ordering:
+            ordering_metadata = self.ORDERING_CHOICES[ordering]
+            script_score = ordering_metadata['script']
+
+            # Create a query that gives the filtered entities a score
+            # depending on our ordering choice. The filter query itself must be
+            # a bool with an empty "must" field because otherwise ElasticSearch
+            # won't even try and give it a score. Also the filters cannot be
+            # in the "must" field because in that case they alter the
+            # numeric value of the score, I don't know why.
+            query = Q('function_score',
+                      script_score={'script': script_score},
+                      query=Q('bool', filter=entities_filter, must=Q()))
+            score_mode = ordering_metadata['score_mode']
+            sort_field = '_score'
+            sort_direction = ordering_metadata['direction']
+            sort_params = {sort_field: sort_direction}
+        else:
+            query = entities_filter
+            score_mode = 'none'
+            sort_params = specs_form.get_ordering()
+            assert sort_params
+
+        search = search.query('has_child', type='entity', query=query,
+                              score_mode=score_mode)
+        search = search.sort(sort_params)
+
+        all_specs_filter = specs_form.get_filter()
+        search = search.post_filter(all_specs_filter)
+
+        # products_filtered_by_price_bucket = search.aggs\
+        #     .bucket('price_filter', 'filter', filter=price_filter)\
+        #     .bucket('products', 'parent', type='entity')
+        #
+        # Main results bucket
+        # results_bucket = products_filtered_by_price_bucket.bucket('results', 'filter', filter=Q())
+        # results_bucket\
+        #     .bucket('grouped_products', 'terms', field=self.cleaned_data['bucket_field']) \
+        #     .metric('foo_1', 'top_hits', sort=[{'product_id': 'asc'}]) \
+        #     .pipeline('grouped_products_min_price',
+        #               'min_bucket',
+        #               buckets_path="individual_products>entities>filtered_entities>min_offer_price_usd")\
+        #     .pipeline('sort_by_price', 'bucket_sort', sort=[{'grouped_products_min_price': 'asc'}])\
+        #     .metric('foo_2', 'top_hits', sort=[{'product_id': 'asc'}])\
+        #     .bucket('individual_products', 'terms', field='product_id', size=30) \
+        #     .bucket('entities', 'children', type='entity')\
+        #     .bucket('filtered_entities', 'filter', filter=stores_filter & condition_filter & price_filter)\
+        #     .metric('min_offer_price_usd', 'min', field='offer_price_usd')
+
+        page = self.cleaned_data['page']
+        page_size = self.cleaned_data['page_size']
+        offset = (page - 1) * page_size
+        result = search[offset:offset + page_size].execute()
+
+        return [
+            result.to_dict(),
+            search.to_dict()
+        ]
 
     def get_category_entities(self, category, request):
         """
@@ -335,103 +482,6 @@ class EsProductsBrowseForm(forms.Form):
             },
             'results': product_entries,
         }
-
-    def get_category_products(self, category, request):
-        from solotodo.models import EsProduct, EsEntity
-
-        assert self.is_valid()
-
-        ordering = self.cleaned_data['ordering']
-
-        # Create the sub form for the category-dependant specs
-        specs_form_query = request.query_params.copy()
-        # Determine whether we or the specs form will handle the sorting
-        if ordering in self.ORDERING_CHOICES:
-            # We will handle the sorting, remove the field from the specs
-            # params, otherwise it will be detected as invalid
-            specs_form_query.pop('ordering', None)
-        else:
-            # The specs form will handle the sorting, so set ours to None
-            ordering = None
-
-        specs_form_class = category.specs_form(form_type='es')
-        specs_form = specs_form_class(specs_form_query)
-
-        store_ids = [x.id for x in self.cleaned_data['stores']]
-        stores_filter = Q('terms', store_id=store_ids)
-
-        if self.cleaned_data['exclude_refurbished']:
-            condition_filter = Q('term', condition='https://schema.org/NewCondition')
-        else:
-            condition_filter = Q()
-
-        search = EsProduct.search()
-        search = search.update_from_dict({
-            'collapse': {
-                'field': self.cleaned_data['bucket_field'],
-                'inner_hits': {
-                    'name': 'inner_products',
-                    'size': 5
-                }
-            }
-        })
-        query = Q('function_score', query=stores_filter & condition_filter, script_score={'script': "doc['offer_price_usd'].value"})
-
-        search = search.query('has_child', type='entity', query=query, score_mode='min')
-
-        # search = EsEntity.search()\
-        #     .filter('term', category_id=category.id)\
-        #     .filter(stores_filter)\
-        #     .filter(condition_filter)
-        #
-        # price_filter = Q('range', offer_price_usd={'gt': 0})
-        #
-        # all_products_bucket = search.aggs\
-        #     .bucket('all_products', 'parent', type='entity')
-        # products_filtered_by_price_bucket = search.aggs\
-        #     .bucket('price_filter', 'filter', filter=price_filter)\
-        #     .bucket('products', 'parent', type='entity')
-        #
-        # Main results bucket
-        # results_bucket = products_filtered_by_price_bucket.bucket('results', 'filter', filter=Q())
-        # results_bucket\
-        #     .bucket('grouped_products', 'terms', field=self.cleaned_data['bucket_field']) \
-        #     .metric('foo_1', 'top_hits', sort=[{'product_id': 'asc'}]) \
-        #     .pipeline('grouped_products_min_price',
-        #               'min_bucket',
-        #               buckets_path="individual_products>entities>filtered_entities>min_offer_price_usd")\
-        #     .pipeline('sort_by_price', 'bucket_sort', sort=[{'grouped_products_min_price': 'asc'}])\
-        #     .metric('foo_2', 'top_hits', sort=[{'product_id': 'asc'}])\
-        #     .bucket('individual_products', 'terms', field='product_id', size=30) \
-        #     .bucket('entities', 'children', type='entity')\
-        #     .bucket('filtered_entities', 'filter', filter=stores_filter & condition_filter & price_filter)\
-        #     .metric('min_offer_price_usd', 'min', field='offer_price_usd')
-
-        # search.aggs.bucket('results', results_bucket)
-
-        print(json.dumps(search.to_dict()))
-
-        # main_results_bucket = A('terms', field=bucket_field)
-        # main_results_bucket.metric('docs', 'top_hits', size=10)
-        # main_results_bucket\
-        #     .bucket('entities', 'children', type='entity')\
-        #     .bucket('filtered_entities', 'filters', filters={'filtered': global_entity_filters})\
-        #     .metric('min_offer_price_usd', 'min', field='offer_price_usd')\
-        #     .pipeline(
-        #         'filter_entries_without_price',
-        #         'bucket_selector',
-        #         buckets_path={'min_offer_price_usd': "min_offer_price_usd"},
-        #         script='params.min_offer_price_usd'
-        #     )
-        #
-        # search.aggs.bucket('main_results', main_results_bucket)
-        # print(json.dumps(search[:0].to_dict()))
-        #
-        result = search.execute()
-        return [
-            result.to_dict(),
-            search.to_dict()
-        ]
 
     def get_category_products_old(self, category, request):
         from solotodo.models import EsProduct

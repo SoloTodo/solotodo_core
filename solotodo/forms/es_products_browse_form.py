@@ -1,3 +1,4 @@
+import json
 from collections import OrderedDict
 
 from django import forms
@@ -74,14 +75,10 @@ class EsProductsBrowseForm(forms.Form):
             'direction': 'desc',
             'score_mode': 'sum'
         },
-        # Discount should consider the difference between the current overall
-        # minimum and reference overall minimum, not per entity
-        # 'discount': {
-        #     'script': "doc['offer_price_usd'].value - doc['reference_offer_price_usd'].value",
-        #     'direction': 'asc',
-        #     'score_mode': 'min'
-        # },
-        # Relevance should consider the product relevance to the given "search" param
+        # Discount is a special case that has its parameters hardcoded
+        'discount': {},
+        # Relevance should consider the product relevance to the given
+        # "search" param
         # 'relevance': {
         #
         # }
@@ -177,7 +174,7 @@ class EsProductsBrowseForm(forms.Form):
         return price_filter
 
     def get_category_products(self, category, request):
-        from solotodo.models import EsProduct
+        from solotodo.models import EsProduct, EsEntity
 
         assert self.is_valid()
 
@@ -227,8 +224,57 @@ class EsProductsBrowseForm(forms.Form):
         })
 
         entities_filter = stores_filter & condition_filter & price_filter
+        all_specs_filter = specs_form.get_filter()
 
-        if ordering:
+        if ordering == 'discount':
+            # Create a second search to determine the discount of each product.
+            # As far as I know we can't do this calculation inside the main
+            # query because it uses aggregations that can't be associated
+            # with a particular product directly.
+
+            discounts_search = EsEntity.search()\
+                .filter(entities_filter)\
+                .filter('has_parent', parent_type='product',
+                        query=all_specs_filter)
+
+            discounts_search.aggs\
+                .bucket('products', 'terms', field='product_id', size=10000)\
+                .metric('min_price', 'min', field='offer_price_usd')\
+                .metric('min_reference_price', 'min',
+                        field='reference_offer_price_usd')\
+                .pipeline('discount', 'bucket_script',
+                          buckets_path={
+                              'min_price': 'min_price',
+                              'min_reference_price': 'min_reference_price'
+                          },
+                          script="""
+                            if (params.min_reference_price > 0) 
+                                params.min_price / params.min_reference_price; 
+                            else 
+                                1;
+                            """
+                          )
+
+            discount_per_product_dict = {
+                x['key']: x['discount']['value'] for x in
+                discounts_search[:0].execute().aggs.products.buckets
+            }
+
+            search = search.query(
+                Q('script_score',
+                  query=Q(),
+                  script={
+                      'params': discount_per_product_dict,
+                      'source': """
+                  if (params.containsKey(doc['product_id'].value.toString())) 
+                      params.get(doc['product_id'].value.toString()); 
+                  else 
+                      0;
+                  """
+                  }))
+            search = search.filter('has_child', type='entity', query=entities_filter)
+            sort_params = {'_score': 'asc'}
+        elif ordering:
             ordering_metadata = self.ORDERING_CHOICES[ordering]
             script_score = ordering_metadata['script']
 
@@ -241,41 +287,17 @@ class EsProductsBrowseForm(forms.Form):
             query = Q('function_score',
                       script_score={'script': script_score},
                       query=Q('bool', filter=entities_filter, must=Q()))
-            score_mode = ordering_metadata['score_mode']
-            sort_field = '_score'
             sort_direction = ordering_metadata['direction']
-            sort_params = {sort_field: sort_direction}
+            sort_params = {'_score': sort_direction}
+
+            search = search.query('has_child', type='entity', query=query, score_mode=ordering_metadata['score_mode'])
         else:
-            query = entities_filter
-            score_mode = 'none'
             sort_params = specs_form.get_ordering()
             assert sort_params
+            search = search.filter('has_child', type='entity', query=entities_filter)
 
-        search = search.query('has_child', type='entity', query=query,
-                              score_mode=score_mode)
         search = search.sort(sort_params)
-
-        all_specs_filter = specs_form.get_filter()
         search = search.post_filter(all_specs_filter)
-
-        # products_filtered_by_price_bucket = search.aggs\
-        #     .bucket('price_filter', 'filter', filter=price_filter)\
-        #     .bucket('products', 'parent', type='entity')
-        #
-        # Main results bucket
-        # results_bucket = products_filtered_by_price_bucket.bucket('results', 'filter', filter=Q())
-        # results_bucket\
-        #     .bucket('grouped_products', 'terms', field=self.cleaned_data['bucket_field']) \
-        #     .metric('foo_1', 'top_hits', sort=[{'product_id': 'asc'}]) \
-        #     .pipeline('grouped_products_min_price',
-        #               'min_bucket',
-        #               buckets_path="individual_products>entities>filtered_entities>min_offer_price_usd")\
-        #     .pipeline('sort_by_price', 'bucket_sort', sort=[{'grouped_products_min_price': 'asc'}])\
-        #     .metric('foo_2', 'top_hits', sort=[{'product_id': 'asc'}])\
-        #     .bucket('individual_products', 'terms', field='product_id', size=30) \
-        #     .bucket('entities', 'children', type='entity')\
-        #     .bucket('filtered_entities', 'filter', filter=stores_filter & condition_filter & price_filter)\
-        #     .metric('min_offer_price_usd', 'min', field='offer_price_usd')
 
         page = self.cleaned_data['page']
         page_size = self.cleaned_data['page_size']

@@ -75,13 +75,10 @@ class EsProductsBrowseForm(forms.Form):
             'direction': 'desc',
             'score_mode': 'sum'
         },
-        # Discount is a special case that has its parameters hardcoded
+        # Discount and relevance are special cases that have their
+        # parameters hardcoded
         'discount': {},
-        # Relevance should consider the product relevance to the given
-        # "search" param
-        # 'relevance': {
-        #
-        # }
+        'relevance': {}
     }
 
     def __init__(self, user, *args, **kwargs):
@@ -147,6 +144,9 @@ class EsProductsBrowseForm(forms.Form):
 
     def clean_page_size(self):
         return self.cleaned_data['page_size'] or 10
+
+    def clean_search(self):
+        return self.cleaned_data['search'] or ''
 
     def get_price_filter(self):
         # Returns the ES DSL Query object that represents the entity-level
@@ -272,8 +272,15 @@ class EsProductsBrowseForm(forms.Form):
                       0;
                   """
                   }))
-            search = search.filter('has_child', type='entity', query=entities_filter)
+            search = search.filter('has_child', type='entity',
+                                   query=entities_filter)
             sort_params = {'_score': 'asc'}
+            keyword_search_type = 'filter'
+        elif ordering == 'relevance':
+            search = search.filter('has_child', type='entity',
+                                   query=entities_filter)
+            keyword_search_type = 'query'
+            sort_params = {'_score': 'desc'}
         elif ordering:
             ordering_metadata = self.ORDERING_CHOICES[ordering]
             script_score = ordering_metadata['script']
@@ -287,27 +294,151 @@ class EsProductsBrowseForm(forms.Form):
             query = Q('function_score',
                       script_score={'script': script_score},
                       query=Q('bool', filter=entities_filter, must=Q()))
-            sort_direction = ordering_metadata['direction']
-            sort_params = {'_score': sort_direction}
+            search = search.query('has_child', type='entity', query=query,
+                                  score_mode=ordering_metadata['score_mode'])
 
-            search = search.query('has_child', type='entity', query=query, score_mode=ordering_metadata['score_mode'])
+            sort_params = {'_score': ordering_metadata['direction']}
+            keyword_search_type = 'filter'
         else:
             sort_params = specs_form.get_ordering()
             assert sort_params
-            search = search.filter('has_child', type='entity', query=entities_filter)
+            search = search.filter('has_child', type='entity',
+                                   query=entities_filter)
+            keyword_search_type = 'filter'
+
+        keywords = self.cleaned_data['search']
+        if keywords:
+            keywords_query = Q(
+                'multi_match',
+                query=keywords,
+                fields=['name', 'keywords']
+            )
+
+            if keyword_search_type == 'filter':
+                search = search.filter(keywords_query)
+            elif keyword_search_type == 'query':
+                search = search.query(keywords_query)
+            else:
+                raise Exception('Invalid keyword_search_type')
 
         search = search.sort(sort_params)
         search = search.post_filter(all_specs_filter)
 
+        # Second part of the query. Add the aggregations of the specs
+        all_filtered_bucket, active_filters_buckets = specs_form.get_aggregation_buckets()
+
+        filtered_products_bucket = search.aggs.bucket('all_filtered_products', all_filtered_bucket)
+        for field_name, bucket in active_filters_buckets.items():
+            search.aggs.bucket(field_name, bucket)
+
+        # Third part of the query. Obtain the stats aggregation for the price
+        # results
+        search.aggs.bucket('entity_prices', 'children', type='entity')\
+            .metric('offer_price_usd', 'stats', field='offer_price_usd')\
+            .metric('normal_price_usd', 'stats', field='normal_price_usd')
+
+        # Fourth part of the query. Obtain the best price for each product
+        filtered_products_bucket\
+            .bucket('price_per_product', 'terms', field='product_id',
+                    size=10000)\
+            .bucket('product_entities', 'children', type='entity')\
+            .bucket('filtered_entities', 'filter', filter=entities_filter)\
+            .metric('offer_price_usd', 'stats', field='offer_price_usd')\
+            .metric('normal_price_usd', 'stats', field='normal_price_usd')
+
+        # Pagination and execution
         page = self.cleaned_data['page']
         page_size = self.cleaned_data['page_size']
         offset = (page - 1) * page_size
-        result = search[offset:offset + page_size].execute()
+        search_result = search[offset:offset + page_size].execute().to_dict()
 
-        return [
-            result.to_dict(),
-            search.to_dict()
-        ]
+        # Assemble the serialized json
+        product_prices_agg = search_result['aggregations'][
+            'all_filtered_products'].pop('price_per_product')['buckets']
+        product_prices_dict = {
+            bucket['key']: (
+                bucket['product_entities']['filtered_entities']['normal_price_usd']['min'],
+                bucket['product_entities']['filtered_entities']['offer_price_usd']['min']
+            ) for bucket in product_prices_agg
+        }
+
+        collapsed_results = []
+        for hit in search_result['hits']['hits']:
+            product_entries = []
+            for inner_hit in hit['inner_hits']['inner_products']['hits']['hits']:
+                product = inner_hit['_source']
+                product['id'] = product.pop('product_id')
+                product['url'] = reverse('product-detail',
+                                         args=[product['id']],
+                                         request=request)
+                product['category'] = reverse('category-detail',
+                                              args=[product['category_id']],
+                                              request=request)
+                product['slug'] = slugify(product['name'])
+                picture_path = product['specs'].get('picture', None)
+
+                if picture_path:
+                    picture_url = default_storage.url(picture_path)
+                else:
+                    picture_url = None
+
+                product['picture_url'] = picture_url
+
+                for key in ['category_id', 'category_name',
+                            'product_relationships']:
+                    del product[key]
+
+                prices = product_prices_dict.get(product['id'], (None, None))
+
+                product_entries.append({
+                    'product': product,
+                    'metadata': {
+                        'score': inner_hit['_score'],
+                        'normal_price_usd': prices[0],
+                        'offer_price_usd': prices[1],
+                    }
+                })
+
+            collapsed_entry = {
+                'bucket': str(hit['fields'][self.cleaned_data['bucket_field']][0]),
+                'product_entries': product_entries
+            }
+            collapsed_results.append(collapsed_entry)
+
+        price_ranges_agg = search_result['aggregations']['entity_prices']
+        price_ranges = {}
+        for price_type in ['normal_price_usd', 'offer_price_usd']:
+            price_range = price_ranges_agg[price_type]
+            price_ranges[price_type] = {
+                'min': price_range['min'],
+                'max': price_range['max'],
+                # "80th" is a legacy field, please remove once the
+                # frontend no longer uses it
+                '80th': price_range['avg'],
+                'avg': price_range['avg']
+            }
+
+        aggs = {}
+        aggregations = search_result['aggregations']
+        for spec_field_name in specs_form.get_field_names():
+            if spec_field_name in aggregations:
+                agg_data = aggregations[spec_field_name]['terms']['buckets']
+            else:
+                agg_data = aggregations['all_filtered_products'][spec_field_name]['buckets']
+
+            aggs[spec_field_name] = [{
+                'id': x['key'],
+                'doc_count': x['doc_count']
+            } for x in agg_data]
+
+        result = {
+            'count': search_result['hits']['total']['value'],
+            'results': collapsed_results,
+            'price_ranges': price_ranges,
+            'aggs': aggs
+        }
+
+        return result
 
     def get_category_entities(self, category, request):
         """
@@ -503,102 +634,6 @@ class EsProductsBrowseForm(forms.Form):
                 'category_buckets': category_buckets
             },
             'results': product_entries,
-        }
-
-    def get_category_products_old(self, category, request):
-        from solotodo.models import EsProduct
-
-        assert self.is_valid()
-
-        search = EsProduct.search().filter('term', category_id=category.id)
-
-        # Filter entities based on our form fields
-        entities_filter = self.filter_entities()
-        search = search.filter('has_child', type='entity',
-                               query=entities_filter)
-
-        specs_query_params = request.query_params.copy()
-        pagination_params = self.pagination_params(request)
-
-        # Determine the ordering we will need to execute manually in Python
-        if not self.cleaned_data['ordering']:
-            # Default: Offer price USD
-            db_ordering = 'offer_price_usd'
-        elif self.cleaned_data['ordering'] in self.DB_ORDERING_CHOICES:
-            # If the ordering is explicitly given and resolved in Python
-            # remove it from the params that will be passed to the specs form
-            # as the ordering value will be invalid in that form
-            db_ordering = specs_query_params.pop('ordering')[0]
-        else:
-            # The ordering is assumed to be based on a tech spec. If it is
-            # invalid the spec form will handle and raise it
-            db_ordering = None
-
-        # Post_filter, ordering and aggregations based on technical terms.
-        # Post filter is necessary because the specs aggregations rely on
-        # having all of the products. For example if we filter by "Acer"
-        # notebooks we also want to have the aggregations for the other brands
-        # for UI purposes
-        # Also adds a bucket with the normally filtered products to be used
-        # by the metrics aggregation below.
-        specs_form_class = category.specs_form(form_type='es')
-        specs_form = specs_form_class(specs_query_params)
-        search = specs_form.get_es_products(search)
-
-        # Add the metrics to the query (prices, leads)
-        product_stats_bucket = self.pricing_metrics()
-        search.aggs['filtered_products'] \
-            .bucket('entities', 'children', type='entity') \
-            .bucket('filtered_entities', 'filter', filter=entities_filter) \
-            .bucket('product_stats', product_stats_bucket)
-
-        # Obtain the results
-        es_result = search[:10000].execute().to_dict()
-
-        # Assemble product entries with their prices, leads and discount
-        products_metadata = self.calculate_product_metadata(
-            es_result['aggregations']['filtered_products']['entities'][
-                'filtered_entities']['product_stats']['buckets'],
-            request
-        )
-
-        # Create the product_entries (product + metadata)
-        products_metadata_dict = {x['product_id']: x
-                                  for x in products_metadata}
-
-        product_entries = []
-
-        for entry in es_result['hits']['hits']:
-            product = entry['_source']
-
-            product_entries.append({
-                'product': self.serialize_product(product, request),
-                'metadata': products_metadata_dict[product['id']]
-            })
-
-        # Sort based on DB (if given)
-        product_entries = self.order_entries_by_db(product_entries,
-                                                   db_ordering)
-
-        # Obtain the price ranges for the matchign products
-        price_ranges = self.calculate_price_ranges(product_entries)
-
-        # Bucket the results
-        bucket_field = specs_form.cleaned_data['bucket_field']
-        bucketed_results = self.bucket_results(product_entries, bucket_field)
-
-        # Paginate
-        bucketed_results_page = \
-            bucketed_results[pagination_params['offset']:
-                             pagination_params['upper_bound']]
-
-        filter_aggs = specs_form.process_es_aggs(es_result['aggregations'])
-
-        return {
-            'count': len(bucketed_results),
-            'aggs': filter_aggs,
-            'results': bucketed_results_page,
-            'price_ranges': price_ranges
         }
 
     def filter_entities(self):

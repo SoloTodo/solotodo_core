@@ -1,5 +1,3 @@
-# TODO: Remove this class as it will be replace with a full ES Version
-
 from django import forms
 from django.core.exceptions import ValidationError
 from elasticsearch_dsl import Q, A
@@ -7,7 +5,6 @@ from elasticsearch_dsl import Q, A
 
 class EsCategorySpecsForm(forms.Form):
     ordering = forms.ChoiceField(choices=[], required=False)
-    search = forms.CharField(required=False)
 
     @classmethod
     def add_filter(cls, category_specs_filter):
@@ -25,6 +22,9 @@ class EsCategorySpecsForm(forms.Form):
                 (new_ordering_name, new_ordering_field))
             cls.ordering_value_to_es_field_dict[new_ordering_name] = \
                 new_ordering_field
+
+    def get_field_names(self):
+        return [x.name for x in self.category_specs_filters]
 
     def get_filter(self, skip=None):
         # Returns the ElasticSearch DSL query object that represents
@@ -62,6 +62,45 @@ class EsCategorySpecsForm(forms.Form):
             return None
 
         return self.ordering_value_to_es_field_dict[ordering]
+
+    def get_aggregation_buckets(self):
+        # Returns a tuple of two elements
+        #
+        # The first is an ES DSL bucket (A object) that contains the
+        # aggregations of all inactive filters
+        # The second is a dictionary {field_name => Agg object} that represents
+        # the aggregations of the active filters. These aggregations consider
+        # the fact that when we filter by a field (brand "HP" for example)
+        # we want the aggregations for that field to consider the other
+        # options as well (brands "Apple", "ASUS", etc)
+        empty_filter = Q()
+        all_filters = self.get_filter()
+        all_filtered_bucket = A('filter', filter=all_filters)
+        active_filters_buckets = {}
+
+        for category_spec_filter in self.category_specs_filters:
+            spec_filter = category_spec_filter.es_filter(
+                self.cleaned_data, prefix='specs.')
+
+            if spec_filter == empty_filter:
+                bucket = A('terms',
+                           field='specs.{}'.format(
+                               category_spec_filter.es_id_field()),
+                           size=100)
+                all_filtered_bucket.bucket(category_spec_filter.name, bucket)
+            else:
+                other_active_filters = self.get_filter(
+                    skip=category_spec_filter.name)
+                bucket = A('filter', filter=other_active_filters)
+                bucket.bucket(
+                    spec_filter.name,
+                    'terms',
+                    field='specs.{}'.format(category_spec_filter.es_id_field()),
+                    size=100)
+
+                active_filters_buckets[category_spec_filter.name] = bucket
+
+        return all_filtered_bucket, active_filters_buckets
 
     def get_es_products(self, search):
         from solotodo.models import Product

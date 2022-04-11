@@ -349,19 +349,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        result = form.get_category_products(category, request)
-
-        return Response(result)
-
-    @action(detail=True)
-    def es_browse(self, request, pk, *args, **kwargs):
-        category = self.get_object()
-        form = EsProductsBrowseForm(request.user, request.query_params)
-
-        if not form.is_valid():
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        result = form.get_category_products(category, request)
+        result = form.get_category_products(request, category)
 
         return Response(result)
 
@@ -1209,17 +1197,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        result = form.get_products(request)
-        return Response(result)
-
-    @action(detail=False)
-    def es_browse(self, request, *args, **kwargs):
-        form = EsProductsBrowseForm(request.user, request.query_params)
-
-        if not form.is_valid():
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        result = form.get_products(request)
+        result = form.get_category_products(request)
         return Response(result)
 
     @action(detail=True)

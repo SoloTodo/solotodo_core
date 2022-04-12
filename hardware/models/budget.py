@@ -587,7 +587,7 @@ El puerto {} no es físicamente compatible con el ssd {}""".format(port, ssd))
                         if 'M.2' in str(ssd_connector):
                             local_warnings.append("""
 El puerto de almacenamiento es de tipo M.2, pero no tenemos información de su 
-tipo (SATA, PCIe) para verificar si es eléctricamente fisicamente con el SSD {}
+tipo (SATA, PCIe) para verificar si es eléctricamente compatible con el SSD {}
 """.format(ssd))
                         else:
                             local_errors.append("""

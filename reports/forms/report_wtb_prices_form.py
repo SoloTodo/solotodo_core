@@ -47,22 +47,37 @@ class ReportWtbPricesForm(forms.Form):
         stores = self.cleaned_data['stores']
 
         wtb_entities = WtbEntity.objects.filter(
-            brand=wtb_brand, product__isnull=False, is_active=True,
-            price__isnull=False).select_related(
-            'product__instance_model', 'category')
+            brand=wtb_brand,
+            product__isnull=False,
+            is_active=True
+        ).select_related(
+            'product__instance_model', 'category'
+        )
 
         product_ids = [wtb_e.product_id for wtb_e in wtb_entities]
 
-        prices = Entity.objects.get_available().filter(
+        base_entities = Entity.objects.get_available().filter(
             store__in=stores,
             product__in=product_ids,
             active_registry__cell_monthly_payment__isnull=True,
             condition='https://schema.org/NewCondition'
-        ).order_by('product', 'store').values('product', 'store').annotate(
-            price=Min('active_registry__{}'.format(
-                self.cleaned_data['price_type'])))
+        )
+
+        prices = base_entities\
+            .order_by('product', 'store')\
+            .values('product', 'store').annotate(
+                price=Min('active_registry__{}'.format(
+                    self.cleaned_data['price_type'])))
+
+        prices_per_product = base_entities\
+            .order_by('product')\
+            .values('product').annotate(
+                price=Min('active_registry__{}'.format(
+                    self.cleaned_data['price_type'])))
+
         product_store_prices_dict = {(x['product'], x['store']): x['price']
                                      for x in prices}
+        products_available_in_retail = [x['product'] for x in prices_per_product]
 
         output = io.BytesIO()
 
@@ -141,6 +156,12 @@ class ReportWtbPricesForm(forms.Form):
         worksheet.write_string(row, col, 'Modelo', header_1_format)
         worksheet.set_column(col, col, 24)
         col += 1
+        worksheet.write_string(row, col, 'Código LG', header_1_format)
+        worksheet.set_column(col, col, 24)
+        col += 1
+        worksheet.write_string(row, col, 'Status', header_1_format)
+        worksheet.set_column(col, col, 24)
+        col += 1
         worksheet.write_string(row, col, 'Precio LG.com',
                                header_wtb_price_format)
         worksheet.set_column(col, col, 16)
@@ -174,12 +195,22 @@ class ReportWtbPricesForm(forms.Form):
         row += 1
 
         for wtb_e in wtb_entities:
+            if not wtb_e.price and wtb_e.product_id \
+                    not in products_available_in_retail:
+                continue
+
             col = STARTING_COL
             worksheet.write_string(row, col, str(wtb_e.category))
             col += 1
             worksheet.write_string(row, col, str(wtb_e.product))
             col += 1
-            worksheet.write_number(row, col, wtb_e.price, currency_format)
+            worksheet.write_string(row, col, str(wtb_e.model_name or 'N/A'))
+            col += 1
+            worksheet.write_string(
+                row, col, 'Activo' if wtb_e.price else 'Inactivo')
+            col += 1
+            if wtb_e.price:
+                worksheet.write_number(row, col, wtb_e.price, currency_format)
             wtb_price_cell = xl_rowcol_to_cell(row, col)
             col += 1
 
@@ -191,8 +222,8 @@ class ReportWtbPricesForm(forms.Form):
                 col += 1
 
             stores_range = '{}:{}'.format(
-                xl_rowcol_to_cell(row, STARTING_COL + 3),
-                xl_rowcol_to_cell(row, STARTING_COL + 3 + len(stores) - 1),
+                xl_rowcol_to_cell(row, STARTING_COL + 5),
+                xl_rowcol_to_cell(row, STARTING_COL + 5 + len(stores) - 1),
             )
 
             avg_cell = xl_rowcol_to_cell(row, col)
@@ -200,26 +231,33 @@ class ReportWtbPricesForm(forms.Form):
             min_cell = xl_rowcol_to_cell(row, col + 4)
 
             for idx, data_formula in enumerate(data_formulas):
-                number_format = currency_format if idx % 2 == 0 \
-                    else percentage_format
-
                 formula_cell = xl_rowcol_to_cell(row, col)
-                worksheet.write_formula(
-                    formula_cell,
-                    data_formula.format(
-                        stores_range=stores_range,
-                        wtb_price_cell=wtb_price_cell,
-                        avg_cell=avg_cell,
-                        mode_cell=mode_cell,
-                        min_cell=min_cell
-                    ), number_format)
+
+                if 'wtb_price_cell' in data_formula and not wtb_e.price:
+                    worksheet.write_formula(
+                        formula_cell,
+                        '=""'
+                    )
+                else:
+                    number_format = currency_format if idx % 2 == 0 \
+                        else percentage_format
+
+                    worksheet.write_formula(
+                        formula_cell,
+                        data_formula.format(
+                            stores_range=stores_range,
+                            wtb_price_cell=wtb_price_cell,
+                            avg_cell=avg_cell,
+                            mode_cell=mode_cell,
+                            min_cell=min_cell
+                        ), number_format)
                 col += 1
 
             row += 1
 
         STARTING_DATA_ROW = STARTING_ROW + 1
-        ENDING_DATA_ROW = STARTING_DATA_ROW + len(wtb_entities) - 1
-        AVERAGE_VARIATION_COLUMN = STARTING_COL + 3 + len(stores) + 1
+        ENDING_DATA_ROW = STARTING_DATA_ROW + row - 2
+        AVERAGE_VARIATION_COLUMN = STARTING_COL + 5 + len(stores) + 1
 
         for i in [0, 2, 4]:
             target_column = AVERAGE_VARIATION_COLUMN + i
@@ -260,7 +298,7 @@ class ReportWtbPricesForm(forms.Form):
                 'format': number_bad_format
             })
 
-        worksheet.autofilter(0, 0, row - 1, len(stores) + 8)
+        worksheet.autofilter(0, 0, row - 1, len(stores) + 10)
         workbook.close()
 
         output.seek(0)
@@ -272,6 +310,8 @@ class ReportWtbPricesForm(forms.Form):
         filename = timezone.now().strftime(filename_template)
         path = storage.save('reports/{}.xlsx'.format(filename),
                             file_for_upload)
+
+        # print(storage.url(path))
 
         return {
             'file': file_value,

@@ -359,6 +359,8 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         form = EsProductsBrowseForm(request.user, request.query_params)
         result = form.get_category_entities(category, request)
 
+        return Response(result)
+
         return Response({
             'aggs': result['aggs'],
             'results': result['results'],

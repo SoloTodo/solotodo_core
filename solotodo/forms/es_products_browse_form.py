@@ -252,15 +252,12 @@ class EsProductsBrowseForm(forms.Form):
                               'min_reference_price': 'min_reference_price'
                           },
                           script="""
-                            if (params.min_reference_price > 0) 
-                                params.min_price / params.min_reference_price; 
-                            else 
-                                1;
+                                params.min_reference_price - params.min_price; 
                             """
                           )
 
             discount_per_product_dict = {
-                x['key']: x['discount']['value'] for x in
+                x['key']: max(x['discount']['value'], 0) for x in
                 discounts_search[:0].execute().aggs.products.buckets
             }
 
@@ -278,7 +275,7 @@ class EsProductsBrowseForm(forms.Form):
                   }))
             search = search.filter('has_child', type='entity',
                                    query=entities_filter)
-            sort_params = {'_score': 'asc'}
+            sort_params = {'_score': 'desc'}
             keyword_search_type = 'filter'
         elif ordering == 'relevance':
             search = search.filter('has_child', type='entity',
@@ -344,6 +341,8 @@ class EsProductsBrowseForm(forms.Form):
                     size=10000) \
             .bucket('product_entities', 'children', type='entity')\
             .bucket('filtered_entities', 'filter', filter=entities_filter) \
+            .metric('normal_price_usd', 'min', field='normal_price_usd') \
+            .metric('offer_price_usd', 'min', field='offer_price_usd') \
             .bucket('price_per_currency', 'terms', field='currency_id') \
             .metric('normal_price', 'min', field='normal_price') \
             .metric('offer_price', 'min', field='offer_price')
@@ -357,9 +356,13 @@ class EsProductsBrowseForm(forms.Form):
         # Assemble the serialized json
         product_prices_agg = search_result['aggregations'][
             'all_filtered_products'].pop('price_per_product')['buckets']
-        product_prices_dict = {}
+        product_metadata_dict = {}
 
         for product_price_bucket in product_prices_agg:
+            product_pricing_metadata = {
+                'normal_price_usd': product_price_bucket['product_entities']['filtered_entities']['normal_price_usd']['value'],
+                'offer_price_usd': product_price_bucket['product_entities']['filtered_entities']['offer_price_usd']['value']
+            }
             prices_per_currency = []
             for currency_bucket in product_price_bucket['product_entities']['filtered_entities']['price_per_currency']['buckets']:
                 prices_per_currency.append({
@@ -367,7 +370,9 @@ class EsProductsBrowseForm(forms.Form):
                     'normal_price': currency_bucket['normal_price']['value'],
                     'offer_price': currency_bucket['offer_price']['value']
                 })
-            product_prices_dict[product_price_bucket['key']] = prices_per_currency
+
+            product_pricing_metadata['prices_per_currency'] = prices_per_currency
+            product_metadata_dict[product_price_bucket['key']] = product_pricing_metadata
 
         collapsed_results = []
         for hit in search_result['hits']['hits']:
@@ -395,10 +400,10 @@ class EsProductsBrowseForm(forms.Form):
                             'product_relationships']:
                     del product[key]
 
-                prices_per_currency = product_prices_dict.get(
+                product_metadata = product_metadata_dict.get(
                     product['id'], None)
 
-                if not prices_per_currency:
+                if not product_metadata:
                     # This product wasn't included in the price aggregation,
                     # that means that the result count of the query exceeds
                     # 10.000 (the size param of the aggregation). Frontend
@@ -410,7 +415,9 @@ class EsProductsBrowseForm(forms.Form):
                     'product': product,
                     'metadata': {
                         'score': inner_hit['_score'],
-                        'prices_per_currency': prices_per_currency,
+                        'prices_per_currency': product_metadata['prices_per_currency'],
+                        'normal_price_usd': product_metadata['normal_price_usd'],
+                        'offer_price_usd': product_metadata['offer_price_usd']
                     }
                 })
 
@@ -459,6 +466,7 @@ class EsProductsBrowseForm(forms.Form):
         """
         Returns the available entities of queried products
         """
+        # TODO Conditions filter
         from category_columns.models import CategoryColumn
 
         assert self.is_valid()
@@ -469,26 +477,52 @@ class EsProductsBrowseForm(forms.Form):
 
         query_params = request.query_params.copy()
         query_params.pop('ordering', None)
+        specs_form_class = category.specs_form(form_type='es')
+        specs_form = specs_form_class(query_params)
+        assert specs_form.is_valid()
 
         # 2. Create ES search that filters based on technical terms.
         # Also calculates the aggregation count for the form filters
 
-        product_ids = set(entry['product']
-                          for entry in entities.values('product'))
-        es_search = EsProduct.category_search(category).filter(
+        product_ids = [entry['product'] for entry in entities.values('product').distinct()]
+        search = EsProduct.category_search(category).filter(
             'terms', product_id=list(product_ids))
 
-        specs_form_class = category.specs_form()
-        specs_form = specs_form_class(query_params)
+        #####################################
 
-        es_results = specs_form.get_es_products(
-            es_search)[:len(product_ids)].execute()
+        if self.cleaned_data['products']:
+            search = search.filter(
+                'terms', product_id=[x.id for x in
+                                     self.cleaned_data['products']])
 
-        filtered_product_ids = [entry['product_id'] for entry in es_results]
+        if self.cleaned_data['db_brands']:
+            search = search.filter(
+                'terms', brand_id=[x.id for x in
+                                   self.cleaned_data['db_brands']])
+
+        all_specs_filter = specs_form.get_filter()
+
+        keywords = self.cleaned_data['search']
+        if keywords:
+            keywords_query = Q('fuzzy', keywords={'value': keywords}) | \
+                             Q('fuzzy', name={'value': keywords})
+
+            search = search.filter(keywords_query)
+        search = search.post_filter(all_specs_filter)
+
+        # Second part of the query. Add the aggregations of the specs
+        all_filtered_bucket, active_filters_buckets = specs_form.get_aggregation_buckets()
+        search.aggs.bucket('all_filtered_products', all_filtered_bucket)
+        for field_name, bucket in active_filters_buckets.items():
+            search.aggs.bucket(field_name, bucket)
+
+        results = search[:10000].execute().to_dict()
+
+        return results
+
         entities = entities.filter(product__in=filtered_product_ids)
 
-        # 3. Obtain filter aggs
-        filter_aggs = specs_form.process_es_aggs(es_results.aggs)
+        #####################################
 
         # 4. Bucket the results in (product, cell_plan) pairs, also calculate
         # the price ranges

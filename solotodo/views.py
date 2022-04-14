@@ -48,7 +48,7 @@ from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_by_url_form import EntityByUrlForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
-from solotodo.forms.es_products_browse_form import EsProductsBrowseForm
+from solotodo.forms.products_browse_form import ProductsBrowseForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
@@ -344,7 +344,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
     @action(detail=True)
     def browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
-        form = EsProductsBrowseForm(request.user, request.query_params)
+        form = ProductsBrowseForm(request.user, request.query_params)
 
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -356,16 +356,10 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
     @action(detail=True)
     def full_browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
-        form = EsProductsBrowseForm(request.user, request.query_params)
+        form = ProductsBrowseForm(request.user, request.query_params)
         result = form.get_category_entities(category, request)
 
         return Response(result)
-
-        return Response({
-            'aggs': result['aggs'],
-            'results': result['results'],
-            'price_ranges': result['price_ranges'],
-        })
 
     @action(detail=True)
     def share_of_shelves(self, request, pk, *args, **kwargs):
@@ -1194,7 +1188,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     def browse(self, request, *args, **kwargs):
-        form = EsProductsBrowseForm(request.user, request.query_params)
+        form = ProductsBrowseForm(request.user, request.query_params)
 
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)

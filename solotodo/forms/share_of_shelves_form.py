@@ -5,7 +5,7 @@ from django import forms
 from django.core.files.base import ContentFile
 from django.core.exceptions import ValidationError
 
-from solotodo.forms.es_products_browse_form import EsProductsBrowseForm
+from solotodo.forms.products_browse_form import ProductsBrowseForm
 from solotodo.models import CategorySpecsFilter, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
@@ -89,8 +89,8 @@ class ShareOfShelvesForm(forms.Form):
         }
 
     def get_data(self, category, request):
-        product_browse_form = EsProductsBrowseForm(request.user,
-                                                   request.query_params)
+        product_browse_form = ProductsBrowseForm(request.user,
+                                                 request.query_params)
 
         if not product_browse_form.is_valid():
             raise ValidationError(product_browse_form.errors)

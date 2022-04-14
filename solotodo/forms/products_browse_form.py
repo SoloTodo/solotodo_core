@@ -15,7 +15,7 @@ from solotodo.models import Product, Store, Category, \
 from solotodo.serializers import CategoryFullBrowseResultSerializer
 
 
-class EsProductsBrowseForm(forms.Form):
+class ProductsBrowseForm(forms.Form):
     stores = forms.ModelMultipleChoiceField(
         queryset=Store.objects.all(),
         required=False
@@ -70,7 +70,7 @@ class EsProductsBrowseForm(forms.Form):
 
     def __init__(self, user, *args, **kwargs):
         self.user = user
-        super(EsProductsBrowseForm, self).__init__(*args, **kwargs)
+        super(ProductsBrowseForm, self).__init__(*args, **kwargs)
 
     def clean_stores(self):
         requested_stores = self.cleaned_data['stores']
@@ -484,11 +484,10 @@ class EsProductsBrowseForm(forms.Form):
         # 2. Create ES search that filters based on technical terms.
         # Also calculates the aggregation count for the form filters
 
-        product_ids = [entry['product'] for entry in entities.values('product').distinct()]
+        product_ids = [entry['product'] for entry in
+                       entities.values('product').distinct()]
         search = EsProduct.category_search(category).filter(
-            'terms', product_id=list(product_ids))
-
-        #####################################
+            'terms', product_id=product_ids)
 
         if self.cleaned_data['products']:
             search = search.filter(
@@ -511,18 +510,16 @@ class EsProductsBrowseForm(forms.Form):
         search = search.post_filter(all_specs_filter)
 
         # Second part of the query. Add the aggregations of the specs
-        all_filtered_bucket, active_filters_buckets = specs_form.get_aggregation_buckets()
+        all_filtered_bucket, active_filters_buckets = \
+            specs_form.get_aggregation_buckets()
         search.aggs.bucket('all_filtered_products', all_filtered_bucket)
         for field_name, bucket in active_filters_buckets.items():
             search.aggs.bucket(field_name, bucket)
 
         results = search[:10000].execute().to_dict()
-
-        return results
-
+        filtered_product_ids = [x['_source']['product_id']
+                                for x in results['hits']['hits']]
         entities = entities.filter(product__in=filtered_product_ids)
-
-        #####################################
 
         # 4. Bucket the results in (product, cell_plan) pairs, also calculate
         # the price ranges
@@ -589,9 +586,23 @@ class EsProductsBrowseForm(forms.Form):
                 if spec_field not in desired_spec_fields:
                     del serialized_entry['product']['specs'][spec_field]
 
+        aggs = {}
+        aggregations = results['aggregations']
+        for spec_field_name in specs_form.get_field_names():
+            if spec_field_name in aggregations:
+                agg_data = aggregations[spec_field_name]['terms']['buckets']
+            else:
+                agg_data = \
+                aggregations['all_filtered_products'][spec_field_name][
+                    'buckets']
+
+            aggs[spec_field_name] = [{
+                'id': x['key'],
+                'doc_count': x['doc_count']
+            } for x in agg_data]
+
         return {
-            'aggs': filter_aggs,
+            'aggs': aggs,
             'results': serialized_data,
-            'price_ranges': price_ranges,
-            'entities': entities
+            'price_ranges': price_ranges
         }

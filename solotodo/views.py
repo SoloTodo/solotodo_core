@@ -1542,30 +1542,17 @@ class ResourceViewSet(viewsets.ViewSet):
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        resource_names = form.cleaned_data['names']
-        if not resource_names:
-            resource_names = [choice[0] for choice in
-                              ResourceNamesForm.choices]
+        response = form.get_objects(request)
+        return Response(response)
 
-        response = []
+    @action(detail=False)
+    def with_permissions(self, request):
+        form = ResourceNamesForm(request.query_params)
 
-        for resource_name in resource_names:
-            resource_model_and_serializer = \
-                ResourceNamesForm.model_map[resource_name]
-            model = resource_model_and_serializer['model']
-            serializer = resource_model_and_serializer['serializer']
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-            if resource_model_and_serializer['permission']:
-                model_objects = get_objects_for_user(
-                    request.user, resource_model_and_serializer['permission'],
-                    klass=model)
-            else:
-                model_objects = model.objects.all()
-
-            resource_entries = serializer(model_objects, many=True,
-                                          context={'request': request})
-            response.extend(resource_entries.data)
-
+        response = form.get_objects(request, include_permissions=True)
         return Response(response)
 
 

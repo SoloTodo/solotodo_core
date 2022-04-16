@@ -42,7 +42,7 @@ class CategorySpecsForm(forms.Form):
             es_search = es_search.filter(q)
 
         fields_es_filters_dict = {
-            field: field.es_filter(self.cleaned_data, prefix='specs.')
+            field: field.es_filter(self.cleaned_data)
             for field in self.category_specs_filters
         }
 
@@ -61,7 +61,7 @@ class CategorySpecsForm(forms.Form):
             for other_field in other_fields:
                 aggs_filters &= fields_es_filters_dict[other_field]
 
-            field_agg = A('terms', field='specs.' + field.es_id_field(),
+            field_agg = A('terms', field='specs.' + field.es_value_field('id'),
                           size=1000)
 
             if search_bucket_agg:

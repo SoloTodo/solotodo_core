@@ -41,7 +41,7 @@ class EsCategorySpecsForm(forms.Form):
             if field.name == skip:
                 continue
 
-            spec_filter = field.es_filter(self.cleaned_data, prefix='specs.')
+            spec_filter = field.es_filter(self.cleaned_data)
 
             if spec_filter == empty_filter:
                 continue
@@ -80,23 +80,16 @@ class EsCategorySpecsForm(forms.Form):
 
         for category_spec_filter in self.category_specs_filters:
             spec_filter = category_spec_filter.es_filter(
-                self.cleaned_data, prefix='specs.')
+                self.cleaned_data)
+            spec_bucket = category_spec_filter.aggregation_bucket()
 
             if spec_filter == empty_filter:
-                bucket = A('terms',
-                           field='specs.{}'.format(
-                               category_spec_filter.es_id_field()),
-                           size=100)
-                all_filtered_bucket.bucket(category_spec_filter.name, bucket)
+                all_filtered_bucket.bucket(category_spec_filter.name, spec_bucket)
             else:
                 other_active_filters = self.get_filter(
                     skip=category_spec_filter.name)
                 bucket = A('filter', filter=other_active_filters)
-                bucket.bucket(
-                    spec_filter.name,
-                    'terms',
-                    field='specs.{}'.format(category_spec_filter.es_id_field()),
-                    size=100)
+                bucket.bucket(spec_filter.name, spec_bucket)
 
                 active_filters_buckets[category_spec_filter.name] = bucket
 
@@ -122,7 +115,7 @@ class EsCategorySpecsForm(forms.Form):
             search_bucket_agg = A('terms', field=bucket_field, size=10000)
 
         fields_es_filters_dict = {
-            field: field.es_filter(self.cleaned_data, prefix='specs.')
+            field: field.es_filter(self.cleaned_data)
             for field in self.category_specs_filters
         }
 
@@ -136,7 +129,7 @@ class EsCategorySpecsForm(forms.Form):
             for other_field in other_fields:
                 aggs_filters &= fields_es_filters_dict[other_field]
 
-            field_bucket = A('terms', field='specs.' + field.es_id_field(),
+            field_bucket = A('terms', field='specs.' + field.es_value_field('id'),
                              size=1000)
 
             if search_bucket_agg:

@@ -13,6 +13,7 @@ from solotodo.forms.es_product_specs_form import EsProductSpecsForm
 from solotodo.models import Product, Store, Category, \
     Brand, EsProduct
 from solotodo.serializers import CategoryFullBrowseResultSerializer
+from solotodo.utils import recursive_dict_search
 
 
 class ProductsBrowseForm(forms.Form):
@@ -444,9 +445,10 @@ class ProductsBrowseForm(forms.Form):
         aggregations = search_result['aggregations']
         for spec_field_name in specs_form.get_field_names():
             if spec_field_name in aggregations:
-                agg_data = aggregations[spec_field_name]['terms']['buckets']
+                base_agg_data = aggregations[spec_field_name]
+                agg_data = recursive_dict_search(base_agg_data, 'buckets')
             else:
-                agg_data = aggregations['all_filtered_products'][spec_field_name]['buckets']
+                agg_data = recursive_dict_search(aggregations['all_filtered_products'][spec_field_name], 'buckets')
 
             aggs[spec_field_name] = [{
                 'id': x['key'],

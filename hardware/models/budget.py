@@ -169,7 +169,7 @@ class Budget(models.Model):
 
         for component_list, component_name in single_components:
             if len(component_list) > 1:
-                errors.append(u'Tu cotización tiene más de un {}'.format(
+                errors.append('Tu cotización tiene más de un {}'.format(
                     component_name))
                 return warnings, errors
 

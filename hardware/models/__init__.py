@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db.models.signals import post_save
 
 from metamodel.signals import instance_model_saved
@@ -22,10 +23,12 @@ post_save.connect(create_budget_entries, sender=Budget)
 
 
 def handle_instance_model_saved(instance_model, created, creator_id, **kwargs):
-    from hardware.tasks import video_card_gpu_save
-
     if instance_model.model.name == 'VideoCardGpu':
-        video_card_gpu_save.delay(instance_model.pk)
+        es = settings.ES
+        document, keywords = instance_model.elasticsearch_document()
+        es.index(index='videocard-gpus',
+                 id=instance_model.id,
+                 body=document)
 
 
 instance_model_saved.connect(handle_instance_model_saved)

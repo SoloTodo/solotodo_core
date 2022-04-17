@@ -336,7 +336,7 @@ class ProductsBrowseForm(forms.Form):
             .metric('offer_price_usd', 'stats', field='offer_price_usd')\
             .metric('normal_price_usd', 'stats', field='normal_price_usd')
 
-        # Fourth part of the query. Obtain the best price for each product
+        # Fourth part of the query. Obtain the best price for each product and result count
         filtered_products_bucket\
             .bucket('price_per_product', 'terms', field='product_id',
                     size=10000) \
@@ -348,15 +348,21 @@ class ProductsBrowseForm(forms.Form):
             .metric('normal_price', 'min', field='normal_price') \
             .metric('offer_price', 'min', field='offer_price')
 
+        filtered_products_bucket.metric('result_count', 'cardinality',
+                                        field=self.cleaned_data['bucket_field'])
+
         # Pagination and execution
         page = self.cleaned_data['page']
         page_size = self.cleaned_data['page_size']
         offset = (page - 1) * page_size
+        import json
+        print(json.dumps(search[offset:offset + page_size].to_dict()))
         search_result = search[offset:offset + page_size].execute().to_dict()
 
         # Assemble the serialized json
         product_prices_agg = search_result['aggregations'][
             'all_filtered_products'].pop('price_per_product')['buckets']
+        result_count = search_result['aggregations']['all_filtered_products'].pop('result_count')['value']
         product_metadata_dict = {}
 
         for product_price_bucket in product_prices_agg:
@@ -456,7 +462,7 @@ class ProductsBrowseForm(forms.Form):
             } for x in agg_data]
 
         result = {
-            'count': search_result['hits']['total']['value'],
+            'count': result_count,
             'results': collapsed_results,
             'price_ranges': price_ranges,
             'aggs': aggs

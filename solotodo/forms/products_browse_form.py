@@ -9,11 +9,10 @@ from rest_framework.reverse import reverse
 from elasticsearch_dsl import A, Q
 
 from solotodo.filters import CategoryFullBrowseEntityFilterSet
-from solotodo.forms.es_product_specs_form import EsProductSpecsForm
+from solotodo.forms.product_specs_form import ProductSpecsForm
 from solotodo.models import Product, Store, Category, \
     Brand, EsProduct
 from solotodo.serializers import CategoryFullBrowseResultSerializer
-from solotodo.utils import recursive_dict_search
 
 
 class ProductsBrowseForm(forms.Form):
@@ -69,6 +68,8 @@ class ProductsBrowseForm(forms.Form):
         'relevance': {}
     }
 
+    COLLAPSE_SIZE = 5
+
     def __init__(self, user, *args, **kwargs):
         self.user = user
         super(ProductsBrowseForm, self).__init__(*args, **kwargs)
@@ -122,7 +123,7 @@ class ProductsBrowseForm(forms.Form):
 
     def clean_bucket_field(self):
         original_bucket_field = self.cleaned_data['bucket_field']
-        return original_bucket_field or 'product_id'
+        return original_bucket_field or 'specs.default_bucket'
 
     def clean_ordering(self):
         return self.cleaned_data['ordering'] or 'offer_price_usd'
@@ -132,9 +133,6 @@ class ProductsBrowseForm(forms.Form):
 
     def clean_page_size(self):
         return self.cleaned_data['page_size'] or 10
-
-    def clean_search(self):
-        return self.cleaned_data['search'] or ''
 
     def get_price_filter(self):
         # Returns the ES DSL Query object that represents the entity-level
@@ -180,10 +178,10 @@ class ProductsBrowseForm(forms.Form):
                 # The specs form will handle the sorting, so set ours to None
                 ordering = None
 
-            specs_form_class = category.specs_form(form_type='es')
+            specs_form_class = category.specs_form()
             specs_form = specs_form_class(specs_form_query)
         else:
-            specs_form = EsProductSpecsForm(request.query_params)
+            specs_form = ProductSpecsForm(request.query_params)
             assert ordering in self.ORDERING_CHOICES
 
         assert specs_form.is_valid()
@@ -193,7 +191,8 @@ class ProductsBrowseForm(forms.Form):
         price_filter = self.get_price_filter()
 
         if self.cleaned_data['exclude_refurbished']:
-            condition_filter = Q('term', condition='https://schema.org/NewCondition')
+            condition_filter = Q(
+                'term', condition='https://schema.org/NewCondition')
         else:
             condition_filter = Q()
 
@@ -223,7 +222,7 @@ class ProductsBrowseForm(forms.Form):
                 'field': self.cleaned_data['bucket_field'],
                 'inner_hits': {
                     'name': 'inner_products',
-                    'size': 5
+                    'size': self.COLLAPSE_SIZE
                 }
             }
         })
@@ -310,12 +309,13 @@ class ProductsBrowseForm(forms.Form):
 
         keywords = self.cleaned_data['search']
         if keywords:
-            keywords_query = Q('fuzzy', keywords={'value': keywords}) | \
-                             Q('fuzzy', name={'value': keywords})
-
             if keyword_search_type == 'filter':
+                keywords_query = Product.query_es_by_search_string(
+                    keywords, mode='AND')
                 search = search.filter(keywords_query)
             elif keyword_search_type == 'query':
+                keywords_query = Product.query_es_by_search_string(
+                    keywords, mode='OR')
                 search = search.query(keywords_query)
             else:
                 raise Exception('Invalid keyword_search_type')
@@ -324,9 +324,11 @@ class ProductsBrowseForm(forms.Form):
         search = search.post_filter(all_specs_filter)
 
         # Second part of the query. Add the aggregations of the specs
-        all_filtered_bucket, active_filters_buckets = specs_form.get_aggregation_buckets()
+        all_filtered_bucket, active_filters_buckets = \
+            specs_form.get_aggregation_buckets()
 
-        filtered_products_bucket = search.aggs.bucket('all_filtered_products', all_filtered_bucket)
+        filtered_products_bucket = search.aggs.bucket(
+            'all_filtered_products', all_filtered_bucket)
         for field_name, bucket in active_filters_buckets.items():
             search.aggs.bucket(field_name, bucket)
 
@@ -336,55 +338,77 @@ class ProductsBrowseForm(forms.Form):
             .metric('offer_price_usd', 'stats', field='offer_price_usd')\
             .metric('normal_price_usd', 'stats', field='normal_price_usd')
 
-        # Fourth part of the query. Obtain the best price for each product and result count
-        filtered_products_bucket\
-            .bucket('price_per_product', 'terms', field='product_id',
-                    size=10000) \
-            .bucket('product_entities', 'children', type='entity')\
-            .bucket('filtered_entities', 'filter', filter=entities_filter) \
+        # Fifth part, add a bucket to obtain the number of results
+        filtered_products_bucket.metric(
+            'result_count', 'cardinality',
+            field=self.cleaned_data['bucket_field']
+        )
+
+        # Pagination and execution
+        page = self.cleaned_data['page']
+        page_size = self.cleaned_data['page_size']
+        offset = (page - 1) * page_size
+        search_result = search[offset:offset + page_size].execute().to_dict()
+
+        # Obtain the full pricing information of the search results
+        search_result_product_ids = []
+        for hit_1 in search_result['hits']['hits']:
+            for hit_2 in hit_1['inner_hits']['inner_products']['hits']['hits']:
+                search_result_product_ids.append(
+                    hit_2['_source']['product_id'])
+
+        prices_search = EsEntity.search() \
+            .filter(entities_filter).filter(
+            'terms', product_id=search_result_product_ids)
+
+        prices_search.aggs \
+            .bucket('per_product', 'terms', field='product_id',
+                    size=self.COLLAPSE_SIZE * page_size) \
             .metric('normal_price_usd', 'min', field='normal_price_usd') \
             .metric('offer_price_usd', 'min', field='offer_price_usd') \
             .bucket('price_per_currency', 'terms', field='currency_id') \
             .metric('normal_price', 'min', field='normal_price') \
             .metric('offer_price', 'min', field='offer_price')
 
-        filtered_products_bucket.metric('result_count', 'cardinality',
-                                        field=self.cleaned_data['bucket_field'])
-
-        # Pagination and execution
-        page = self.cleaned_data['page']
-        page_size = self.cleaned_data['page_size']
-        offset = (page - 1) * page_size
-        import json
-        print(json.dumps(search[offset:offset + page_size].to_dict()))
-        search_result = search[offset:offset + page_size].execute().to_dict()
+        price_results = prices_search[:0].execute().to_dict()
 
         # Assemble the serialized json
-        product_prices_agg = search_result['aggregations'][
-            'all_filtered_products'].pop('price_per_product')['buckets']
-        result_count = search_result['aggregations']['all_filtered_products'].pop('result_count')['value']
+        product_prices_agg = price_results['aggregations']['per_product'][
+            'buckets']
+        result_count = search_result['aggregations'][
+            'all_filtered_products'].pop('result_count')['value']
         product_metadata_dict = {}
 
         for product_price_bucket in product_prices_agg:
             product_pricing_metadata = {
-                'normal_price_usd': product_price_bucket['product_entities']['filtered_entities']['normal_price_usd']['value'],
-                'offer_price_usd': product_price_bucket['product_entities']['filtered_entities']['offer_price_usd']['value']
+                'normal_price_usd': str(product_price_bucket[
+                                            'normal_price_usd']['value']),
+                'offer_price_usd': str(product_price_bucket[
+                                           'offer_price_usd']['value'])
             }
             prices_per_currency = []
-            for currency_bucket in product_price_bucket['product_entities']['filtered_entities']['price_per_currency']['buckets']:
+            for currency_bucket in product_price_bucket[
+                    'price_per_currency']['buckets']:
                 prices_per_currency.append({
-                    'currency': reverse('currency-detail', args=[currency_bucket['key']], request=request),
-                    'normal_price': currency_bucket['normal_price']['value'],
-                    'offer_price': currency_bucket['offer_price']['value']
+                    'currency': reverse('currency-detail',
+                                        args=[currency_bucket['key']],
+                                        request=request),
+                    'normal_price':
+                        str(currency_bucket['normal_price']['value']),
+                    'offer_price':
+                        str(currency_bucket['offer_price']['value'])
                 })
 
-            product_pricing_metadata['prices_per_currency'] = prices_per_currency
-            product_metadata_dict[product_price_bucket['key']] = product_pricing_metadata
+            product_pricing_metadata['prices_per_currency'] = \
+                prices_per_currency
+            product_metadata_dict[product_price_bucket['key']] = \
+                product_pricing_metadata
 
         collapsed_results = []
         for hit in search_result['hits']['hits']:
             product_entries = []
-            for inner_hit in hit['inner_hits']['inner_products']['hits']['hits']:
+            for inner_hit in hit['inner_hits']['inner_products']['hits'][
+                    'hits']:
                 product = inner_hit['_source']
                 product['id'] = product.pop('product_id')
                 product['url'] = reverse('product-detail',
@@ -410,26 +434,21 @@ class ProductsBrowseForm(forms.Form):
                 product_metadata = product_metadata_dict.get(
                     product['id'], None)
 
-                if not product_metadata:
-                    # This product wasn't included in the price aggregation,
-                    # that means that the result count of the query exceeds
-                    # 10.000 (the size param of the aggregation). Frontend
-                    # clients likely do not handle the case when this param is
-                    # null, so just skip it
-                    continue
-
                 product_entries.append({
                     'product': product,
                     'metadata': {
                         'score': inner_hit['_score'],
-                        'prices_per_currency': product_metadata['prices_per_currency'],
-                        'normal_price_usd': product_metadata['normal_price_usd'],
+                        'prices_per_currency': product_metadata[
+                            'prices_per_currency'],
+                        'normal_price_usd': product_metadata[
+                            'normal_price_usd'],
                         'offer_price_usd': product_metadata['offer_price_usd']
                     }
                 })
 
             collapsed_entry = {
-                'bucket': str(hit['fields'][self.cleaned_data['bucket_field']][0]),
+                'bucket': str(hit['fields'][self.cleaned_data[
+                    'bucket_field']][0]),
                 'product_entries': product_entries
             }
             collapsed_results.append(collapsed_entry)
@@ -447,19 +466,7 @@ class ProductsBrowseForm(forms.Form):
                 'avg': price_range['avg']
             }
 
-        aggs = {}
-        aggregations = search_result['aggregations']
-        for spec_field_name in specs_form.get_field_names():
-            if spec_field_name in aggregations:
-                base_agg_data = aggregations[spec_field_name]
-                agg_data = recursive_dict_search(base_agg_data, 'buckets')
-            else:
-                agg_data = recursive_dict_search(aggregations['all_filtered_products'][spec_field_name], 'buckets')
-
-            aggs[spec_field_name] = [{
-                'id': x['key'],
-                'doc_count': x['doc_count']
-            } for x in agg_data]
+        aggs = specs_form.flatten_es_aggs(search_result['aggregations'])
 
         result = {
             'count': result_count,
@@ -485,7 +492,7 @@ class ProductsBrowseForm(forms.Form):
 
         query_params = request.query_params.copy()
         query_params.pop('ordering', None)
-        specs_form_class = category.specs_form(form_type='es')
+        specs_form_class = category.specs_form()
         specs_form = specs_form_class(query_params)
         assert specs_form.is_valid()
 

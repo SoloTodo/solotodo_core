@@ -287,7 +287,7 @@ Para un arreglo SLI / CrossFire las tarjetas tienen que tener la misma GPU
             elif not vc1.specs.gpu_has_multi_gpu_support:
                 errors.append("""
 La {} no permite SLI / Crossfire
-                """.format(vc1.gpu_unicode))
+                """.format(vc1.specs.gpu_unicode))
             else:
                 gpu_brand = vc1.specs.gpu_brand_unicode
                 if gpu_brand == 'NVIDIA' and mb and \
@@ -503,8 +503,9 @@ buenas.
 
         if cooler:
             cooler_socket_ids = []
-            for socket_ids in cooler.specs.grouped_sockets_sockets_socket_id:
-                cooler_socket_ids.extend(list(socket_ids))
+            for socket_group in cooler.specs.grouped_sockets:
+                for socket in socket_group.sockets:
+                    cooler_socket_ids.append(socket['id'])
 
             if mb:
                 if mb.specs.chipset_northbridge_family_socket_socket_id \
@@ -535,16 +536,15 @@ necesario.
 
         if mb and ssds:
             mb_available_ports = []
-            for mb_has_port in Product.objects.get(
-                    pk=mb.product_id).instance_model.storage_ports:
+            for mb_has_port in mb.specs['storage_ports']:
                 mb_available_ports.extend(
-                    [mb_has_port.port] * mb_has_port.quantity)
+                    [mb_has_port] * mb_has_port.quantity)
 
             for ssd_hit in ssds:
-                ssd = Product.objects.get(pk=ssd_hit.product_id).instance_model
+                ssd = ssd_hit.specs.to_dict()
+
                 warning_and_error_per_port = []
                 for port in mb_available_ports:
-                    ssd_connector = ssd.ssd_type.connector
                     local_warnings = []
                     local_errors = []
 
@@ -552,83 +552,93 @@ necesario.
 
                     # 1559371 is the ID of the legacy "M.2" connector without
                     # information of its size (2280, 2242, 2230).
-                    if ssd_connector.id == 1559371:
-                        if 'M.2' in str(port.connector):
+                    if ssd['ssd_type_connector_id'] == 1559371:
+                        if 'M.2' in port['port_unicode']:
                             local_warnings.append("""
 El SSD {} es de tipo M.2, pero no tenemos información de su tamaño (2280, 
 2242, 2230) para verificar si es compatible fisicamente con la placa madre
-""".format(ssd))
+""".format(ssd['unicode']))
                         else:
                             local_errors.append("""
-El SSD {} es de tipo M.2 pero el puerto {} no es M.2""".format(ssd, port))
+El SSD {} es de tipo M.2 pero el puerto {} no es M.2""".format(ssd['unicode'], port))
 
-                    if port.connector.id == 1559371:
-                        if 'M.2' in str(ssd_connector):
+                    if port['port_connector_id'] == 1559371:
+                        if 'M.2' in ssd['ssd_type_connector_unicode']:
                             local_warnings.append("""
 El puerto de almacenamiento es de tipo M.2, pero no tenemos información de 
 su tamaño (2280, 2242, 2230) para verificar si es compatible fisicamente con 
-el ssd {}""".format(ssd))
+el ssd {}""".format(ssd['unicode']))
                         else:
                             local_errors.append("""
 El puerto de almacenamiento es de tipo M.2 pero el SSD {} no es M.2
-""".format(ssd))
+""".format(ssd['unicode']))
 
-                    if ssd_connector.id != 1559371 and \
-                            port.connector.id != 1559371:
-                        if ssd_connector != port.connector and ssd_connector \
-                                not in port.connector.additional_compatibility:
+                    if ssd['ssd_type_connector_id'] != 1559371 and \
+                            port['port_connector_id'] != 1559371:
+
+                        port_additional_compat_ids = []
+                        if 'port_connector_additional_compatibility' in port:
+                            for x in port['port_connector_additional_compatibility']:
+                                port_additional_compat_ids.append(x['id'])
+
+                        if ssd['ssd_type_connector_id'] != port['port_connector_id'] and ssd['ssd_type_connector_id'] \
+                                not in port_additional_compat_ids:
                             local_errors.append("""
 El puerto {} no es físicamente compatible con el ssd {}""".format(port, ssd))
 
                     # Bus check
 
-                    if not port.buses:
+                    if 'port_buses' not in port:
                         # Assume it's the legacy M.2 MB port
-                        if 'M.2' in str(ssd_connector):
+                        if 'M.2' in ssd['ssd_type_connector_unicode']:
                             local_warnings.append("""
 El puerto de almacenamiento es de tipo M.2, pero no tenemos información de su 
 tipo (SATA, PCIe) para verificar si es eléctricamente compatible con el SSD {}
-""".format(ssd))
+""".format(ssd['unicode']))
                         else:
                             local_errors.append("""
-El puerto {} es de tipo M.2 pero el SSD {} no es M.2""".format(port, ssd))
+El puerto {} es de tipo M.2 pero el SSD {} no es M.2""".format(port, ssd['unicode']))
 
                     buses_warnings_and_errors = []
-                    ssd_bus = ssd.ssd_type.bus
-                    for bus in port.buses:
+
+                    for bus in getattr(port, 'port_buses', []):
                         bus_warnings = []
                         bus_errors = []
 
-                        if bus.bus_with_version != ssd_bus.bus_with_version:
-                            if bus.bus_with_version in ssd_bus.bus_with_version.backwards_compatibility:
+                        if bus['bus_with_version_id'] != ssd['ssd_type_bus_bus_with_version_id']:
+                            bw_compatiblity_ids = []
+                            for x in ssd.get('ssd_type_bus_bus_with_version_backwards_compatibility', []):
+                                bw_compatiblity_ids.append(x['id'])
+
+                            if bus['bus_with_version_id'] in bw_compatiblity_ids:
                                 bus_warnings.append("""
 El SSD {} es eléctricamente compatible con el puerto {}, pero es posible que 
 no funcione al 100% de su rendimiento porque el puerto es de una versión PCIe 
-más antigua. """.format(ssd, port))
+más antigua. """.format(ssd['unicode'], port))
                             else:
                                 bus_errors.append("""
 El bus del puerto {} es incompatible con el bus del SSD ({})
-""".format(port, ssd.ssd_type))
+""".format(port, ssd['ssd_type_unicode']))
 
                         # 1559281 is the id of the base PCIe, the lanes check
                         # should only be run in that case
-                        if bus.bus_with_version.bus.id == 1559281 and \
-                                ssd_bus.bus_with_version.bus.id == 1559281:
-                            if bus.lanes == 1:
+                        if bus['bus_with_version_bus_id'] == 1559281 and \
+                                ssd['ssd_type_bus_bus_with_version_bus_id'] == 1559281:
+                            if bus['lanes'] == 1:
                                 bus_warnings.append("""
 No tenemos informacion de la cantidad de lanes PCIe disponibles en el bus {}, 
 así que no podemos saber si el SSD va a funcionar a toda su capacidad en esta 
 placa madre""".format(port))
-                            if ssd_bus.lanes == 1:
+                            if ssd['ssd_type_bus_lanes'] == 1:
                                 bus_warnings.append("""
 No tenemos informacion de la cantidad de lanes PCIe utilizados por el SSD {}, 
 así que no podemos saber si el SSD va a funcionar a toda su capacidad en esta 
-placa madre""".format(ssd))
-                            if ssd_bus.lanes > bus.lanes > 1:
+placa madre""".format(ssd['unicode']))
+                            if ssd['ssd_type_bus_lanes'] > bus['lanes'] > 1:
                                 bus_warnings.append("""
 El bus del puerto {} tiene menos lanes (x{}) que el SSD {} ({}), así que 
-el SSD puede que no funcione a plena capacidad""".format(port, bus.lanes,
-                                                         ssd, ssd_bus))
+el SSD puede que no funcione a plena capacidad""".format(port['port_unicode'], bus['lanes'],
+                                                         ssd['unicode'], ssd['ssd_type_bus_unicode']))
 
                         buses_warnings_and_errors.append({
                             'bus': bus,
@@ -674,11 +684,12 @@ el SSD puede que no funcione a plena capacidad""".format(port, bus.lanes,
             106001,  # Thunderbolt
         ]
         for monitor in monitors:
-            has_digital_input = False
-            for port_id in digital_video_port_ids:
-                if port_id in monitor.specs.video_ports_port_port_id:
+            for port in monitor.specs.video_ports:
+                if port.id in digital_video_port_ids:
                     has_digital_input = True
                     break
+            else:
+                has_digital_input = False
 
             if not has_digital_input:
                 warnings.append("""

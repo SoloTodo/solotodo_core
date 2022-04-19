@@ -153,6 +153,7 @@ class Product(models.Model):
                                  '(and vice versa)')
 
         es_document = self.instance_model.elasticsearch_document()
+        es_document[0]['default_bucket'] = es_document[0]['id']
 
         self.brand = Brand.objects.get_or_create(
             name=es_document[0]['brand_unicode'])[0]

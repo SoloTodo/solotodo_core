@@ -62,24 +62,12 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
-    def specs_form(self, form_type='db'):
+    def specs_form(self):
         from solotodo.forms.category_specs_form import CategorySpecsForm
-        from solotodo.forms.es_category_specs_form import EsCategorySpecsForm
-
-        # TODO Remove DB form type once browse code path is eliminated
-
-        if form_type == 'db':
-            base_class = CategorySpecsForm
-            prefix = 'DB'
-        elif form_type == 'es':
-            base_class = EsCategorySpecsForm
-            prefix = 'ES'
-        else:
-            raise Exception('Invalid form type')
 
         form_class = type(
-            '{}{}SpecsForm'.format(self.meta_model.name, prefix),
-            (base_class,),
+            'ES{}SpecsForm'.format(self.meta_model.name),
+            (CategorySpecsForm,),
             {
                 'category': self,
                 'category_specs_filters': [],

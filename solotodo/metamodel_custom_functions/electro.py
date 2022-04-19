@@ -242,6 +242,8 @@ def additional_es_fields(instance_model, elastic_search_original):
             elastic_search_original['base_model_id'] + \
             10 * elastic_search_original['internal_storage_id'] + \
             100 * elastic_search_original['cell_connectivity_id']
+        result['default_bucket'] = \
+            result['base_model_internal_storage_cell_connectivity_key']
 
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_original,

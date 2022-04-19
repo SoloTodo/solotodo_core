@@ -2,9 +2,10 @@ from django import forms
 from elasticsearch_dsl import Q, A
 
 from solotodo.models import Category
+from solotodo.utils import recursive_dict_search
 
 
-class EsProductSpecsForm(forms.Form):
+class ProductSpecsForm(forms.Form):
     categories = forms.ModelMultipleChoiceField(
         queryset=Category.objects.all(),
         required=False
@@ -47,3 +48,21 @@ class EsProductSpecsForm(forms.Form):
             active_filters_buckets['categories'] = bucket
 
         return all_filtered_bucket, active_filters_buckets
+
+    # This is the exact same implementation than CategorySpecsForm
+    def flatten_es_aggs(self, aggs):
+        flatened_aggs = {}
+        for spec_field_name in self.get_field_names():
+            if spec_field_name in aggs:
+                base_agg_data = aggs[spec_field_name]
+                agg_data = recursive_dict_search(base_agg_data, 'buckets')
+            else:
+                agg_data = recursive_dict_search(
+                    aggs['all_filtered_products'][spec_field_name],
+                    'buckets')
+
+            flatened_aggs[spec_field_name] = [{
+                'id': x['key'],
+                'doc_count': x['doc_count']
+            } for x in agg_data]
+        return flatened_aggs

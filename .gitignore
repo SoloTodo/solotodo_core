@@ -9,3 +9,4 @@ ghostdriver.log
 node_modules
 cyber.tsv
 http_ca.crt
+elasticsearch-ca.pem

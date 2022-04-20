@@ -101,8 +101,7 @@ class Product(models.Model):
     @property
     def specs(self):
         if not self._es_entry:
-            self._es_entry = EsProduct.search().filter(
-                'term', product_id=self.id).execute()[0].to_dict()
+            self._es_entry = EsProduct.get('PRODUCT_' + str(self.id)).to_dict()
         return self._es_entry['specs']
 
     @property
@@ -154,6 +153,7 @@ class Product(models.Model):
                                  '(and vice versa)')
 
         es_document = self.instance_model.elasticsearch_document()
+        es_document[0]['default_bucket'] = es_document[0]['id']
 
         self.brand = Brand.objects.get_or_create(
             name=es_document[0]['brand_unicode'])[0]

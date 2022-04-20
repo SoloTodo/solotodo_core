@@ -42,7 +42,7 @@ from .entity_section_position import EntitySectionPosition
 from .product_video import ProductVideo
 
 # ElasticSearch DSL persistence models
-from .es_product_relationship import EsProductRelationship
+from .es_product_entities import EsProductEntities
 from .es_product import EsProduct
 from .es_entity import EsEntity
 

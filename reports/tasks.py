@@ -22,7 +22,7 @@ def send_current_prices_task(user_id, query_string):
         assert form.is_valid()
 
         category = form.cleaned_data['category']
-        spec_form_class = category.specs_form(form_type='es')
+        spec_form_class = category.specs_form()
         spec_form = spec_form_class(q_dict)
 
         assert spec_form.is_valid()

@@ -65,7 +65,16 @@ class CategorySpecsForm(forms.Form):
         if not ordering:
             return None
 
-        return self.ordering_value_to_es_field_dict[ordering]
+        ordering_string = self.ordering_value_to_es_field_dict[ordering]
+
+        if ordering_string.startswith('-'):
+            order_field = ordering_string[1:]
+            order_direction = 'desc'
+        else:
+            order_field = ordering_string
+            order_direction = 'asc'
+
+        return {order_field: order_direction}
 
     def get_aggregation_buckets(self):
         # Returns a tuple of two elements

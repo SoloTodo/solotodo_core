@@ -217,16 +217,6 @@ class ProductsBrowseForm(forms.Form):
         # * Grouped ("collapsed") by the given bucket_key, or by product_id by
         #   default
 
-        search = search.update_from_dict({
-            'collapse': {
-                'field': self.cleaned_data['bucket_field'],
-                'inner_hits': {
-                    'name': 'inner_products',
-                    'size': self.COLLAPSE_SIZE
-                }
-            }
-        })
-
         entities_filter = stores_filter & condition_filter & price_filter
         all_specs_filter = specs_form.get_filter()
 
@@ -343,6 +333,19 @@ class ProductsBrowseForm(forms.Form):
             'result_count', 'cardinality',
             field=self.cleaned_data['bucket_field']
         )
+
+        # Collapse (group) the search results based on the given bucket field
+        # or the default one
+        search = search.update_from_dict({
+            'collapse': {
+                'field': self.cleaned_data['bucket_field'],
+                'inner_hits': {
+                    'name': 'inner_products',
+                    'size': self.COLLAPSE_SIZE,
+                    'sort': sort_params
+                }
+            }
+        })
 
         # Pagination and execution
         page = self.cleaned_data['page']

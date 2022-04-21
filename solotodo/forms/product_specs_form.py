@@ -26,7 +26,7 @@ class ProductSpecsForm(forms.Form):
         return Q('terms', category_id=[x.id for x in categories])
 
     def get_ordering(self):
-        return '_score'
+        return {'_score': 'asc'}
 
     def get_aggregation_buckets(self):
         empty_filter = Q()

@@ -330,15 +330,13 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
 
         # Overall aggregations
 
-        aggs = form.flatten_es_aggs(es_products_page.aggs)
+        aggs = form.flatten_es_aggs(es_products_page.aggs.to_dict())
 
         return Response({
             'count': es_products_page.hits.total.to_dict(),
             'results': serializer.data,
             'aggs': aggs,
         })
-
-
 
     @action(detail=True)
     def browse(self, request, pk, *args, **kwargs):

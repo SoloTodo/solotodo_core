@@ -76,7 +76,6 @@ premailer==3.0.0
 prompt-toolkit==3.0.5
 psycopg2==2.8.5
 ptyprocess==0.5.2
-pubnub==4.1.3
 pyasn1==0.4.5
 pyasn1-modules==0.2.5
 pycryptodomex==3.4.7

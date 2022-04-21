@@ -1031,7 +1031,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             matching_cell_plans = EsProduct.category_search(
                 cell_plan_category).filter(
                 'term',
-                specs__association_name__keyword=entity.cell_plan_name) \
+                specs__association_name=entity.cell_plan_name) \
                 .execute()
 
             cell_plan_ids = [x.product_id for x in matching_cell_plans]

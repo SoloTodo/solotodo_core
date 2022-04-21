@@ -317,14 +317,15 @@ El sistema solo puede verificar la compatibilidad de 0, 1 o 2 tarjetas de video
         # TODO Check if the processor / motherboard is for overclocking
 
         if processor and mb:
-            default_cores = getattr(
-                mb.specs,
-                'chipset_supported_processor_cores_by_default_id',
-                [])
-            update_cores = getattr(
-                mb.specs,
-                'chipset_supported_processor_cores_with_bios_update_id',
-                [])
+            default_cores = []
+
+            for x in getattr(mb.specs, 'chipset_supported_processor_cores_by_default', []):
+                default_cores.append(x.id)
+
+            update_cores = []
+
+            for x in getattr(mb.specs, 'chipset_supported_processor_cores_with_bios_update', []):
+                update_cores.append(x.id)
 
             if processor.specs.socket_socket_id != \
                     mb.specs.chipset_northbridge_family_socket_socket_id:
@@ -560,7 +561,7 @@ El SSD {} es de tipo M.2, pero no tenemos información de su tamaño (2280,
 """.format(ssd['unicode']))
                         else:
                             local_errors.append("""
-El SSD {} es de tipo M.2 pero el puerto {} no es M.2""".format(ssd['unicode'], port))
+El SSD {} es de tipo M.2 pero el puerto {} no es M.2""".format(ssd['unicode'], port['port_unicode']))
 
                     if port['port_connector_id'] == 1559371:
                         if 'M.2' in ssd['ssd_type_connector_unicode']:
@@ -584,7 +585,7 @@ El puerto de almacenamiento es de tipo M.2 pero el SSD {} no es M.2
                         if ssd['ssd_type_connector_id'] != port['port_connector_id'] and ssd['ssd_type_connector_id'] \
                                 not in port_additional_compat_ids:
                             local_errors.append("""
-El puerto {} no es físicamente compatible con el ssd {}""".format(port, ssd))
+El puerto {} no es físicamente compatible con el ssd {}""".format(port['port_unicode'], ssd['unicode']))
 
                     # Bus check
 
@@ -597,7 +598,7 @@ tipo (SATA, PCIe) para verificar si es eléctricamente compatible con el SSD {}
 """.format(ssd['unicode']))
                         else:
                             local_errors.append("""
-El puerto {} es de tipo M.2 pero el SSD {} no es M.2""".format(port, ssd['unicode']))
+El puerto {} es de tipo M.2 pero el SSD {} no es M.2""".format(port['port_unicode'], ssd['unicode']))
 
                     buses_warnings_and_errors = []
 
@@ -614,11 +615,11 @@ El puerto {} es de tipo M.2 pero el SSD {} no es M.2""".format(port, ssd['unicod
                                 bus_warnings.append("""
 El SSD {} es eléctricamente compatible con el puerto {}, pero es posible que 
 no funcione al 100% de su rendimiento porque el puerto es de una versión PCIe 
-más antigua. """.format(ssd['unicode'], port))
+más antigua. """.format(ssd['unicode'], port['port_unicode']))
                             else:
                                 bus_errors.append("""
 El bus del puerto {} es incompatible con el bus del SSD ({})
-""".format(port, ssd['ssd_type_unicode']))
+""".format(port['port_unicode'], ssd['ssd_type_unicode']))
 
                         # 1559281 is the id of the base PCIe, the lanes check
                         # should only be run in that case
@@ -628,7 +629,7 @@ El bus del puerto {} es incompatible con el bus del SSD ({})
                                 bus_warnings.append("""
 No tenemos informacion de la cantidad de lanes PCIe disponibles en el bus {}, 
 así que no podemos saber si el SSD va a funcionar a toda su capacidad en esta 
-placa madre""".format(port))
+placa madre""".format(port['port_unicode']))
                             if ssd['ssd_type_bus_lanes'] == 1:
                                 bus_warnings.append("""
 No tenemos informacion de la cantidad de lanes PCIe utilizados por el SSD {}, 
@@ -670,7 +671,7 @@ el SSD puede que no funcione a plena capacidad""".format(port['port_unicode'], b
                     mb_available_ports.remove(best_port_entry['port'])
                 else:
                     errors.append('No hay puertos disponible para el SSD '
-                                  '{}'.format(ssd))
+                                  '{}'.format(ssd['unicode']))
 
         # Monitors
 

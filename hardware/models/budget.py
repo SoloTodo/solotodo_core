@@ -686,7 +686,7 @@ el SSD puede que no funcione a plena capacidad""".format(port['port_unicode'], b
         ]
         for monitor in monitors:
             for port in monitor.specs.video_ports:
-                if port.id in digital_video_port_ids:
+                if port.port_port_id in digital_video_port_ids:
                     has_digital_input = True
                     break
             else:

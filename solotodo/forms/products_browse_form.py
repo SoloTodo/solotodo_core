@@ -57,6 +57,11 @@ class ProductsBrowseForm(forms.Form):
             'direction': 'asc',
             'score_mode': 'min'
         },
+        'price_per_unit': {
+            'script': "doc['offer_price_usd_per_unit'].value",
+            'direction': 'asc',
+            'score_mode': 'min'
+        },
         'leads': {
             'script': "doc['leads'].value",
             'direction': 'desc',

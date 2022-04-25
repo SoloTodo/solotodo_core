@@ -506,7 +506,7 @@ buenas.
             cooler_socket_ids = []
             for socket_group in cooler.specs.grouped_sockets:
                 for socket in socket_group.sockets:
-                    cooler_socket_ids.append(socket['id'])
+                    cooler_socket_ids.append(socket['socket_id'])
 
             if mb:
                 if mb.specs.chipset_northbridge_family_socket_socket_id \

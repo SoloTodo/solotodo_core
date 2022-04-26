@@ -159,14 +159,17 @@ class ReportWtbPricesForm(forms.Form):
         worksheet.write_string(row, col, 'Código LG', header_1_format)
         worksheet.set_column(col, col, 24)
         col += 1
+        worksheet.write_string(row, col, 'URL LG', header_1_format)
+        worksheet.set_column(col, col, 24)
+        col += 1
         worksheet.write_string(row, col, 'Status', header_1_format)
         worksheet.set_column(col, col, 24)
         col += 1
         worksheet.write_string(row, col, 'Precio LG.com',
                                header_wtb_price_format)
         worksheet.set_column(col, col, 16)
-
         col += 1
+        START_RETAILER_COLUMN = col
 
         for store in stores:
             worksheet.write_string(row, col, str(store), header_store_format)
@@ -206,6 +209,8 @@ class ReportWtbPricesForm(forms.Form):
             col += 1
             worksheet.write_string(row, col, str(wtb_e.model_name or 'N/A'))
             col += 1
+            worksheet.write_string(row, col, str(wtb_e.url))
+            col += 1
             worksheet.write_string(
                 row, col, 'Activo' if wtb_e.price else 'Inactivo')
             col += 1
@@ -222,8 +227,8 @@ class ReportWtbPricesForm(forms.Form):
                 col += 1
 
             stores_range = '{}:{}'.format(
-                xl_rowcol_to_cell(row, STARTING_COL + 5),
-                xl_rowcol_to_cell(row, STARTING_COL + 5 + len(stores) - 1),
+                xl_rowcol_to_cell(row, START_RETAILER_COLUMN),
+                xl_rowcol_to_cell(row, START_RETAILER_COLUMN + len(stores) - 1),
             )
 
             avg_cell = xl_rowcol_to_cell(row, col)
@@ -257,7 +262,7 @@ class ReportWtbPricesForm(forms.Form):
 
         STARTING_DATA_ROW = STARTING_ROW + 1
         ENDING_DATA_ROW = STARTING_DATA_ROW + row - 2
-        AVERAGE_VARIATION_COLUMN = STARTING_COL + 5 + len(stores) + 1
+        AVERAGE_VARIATION_COLUMN = START_RETAILER_COLUMN + len(stores) + 1
 
         for i in [0, 2, 4]:
             target_column = AVERAGE_VARIATION_COLUMN + i

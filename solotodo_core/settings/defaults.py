@@ -392,6 +392,7 @@ BACKEND_HOST = 'http://localhost:3000/'
 PRICING_HOST = 'http://localhost:3000/'
 CELL_CATEGORY = 6
 CELL_PLAN_CATEGORY = 20
+GROCERIES_CATEGORY_ID = 120
 
 METAMODEL = {
     'DEBUG': False,
@@ -400,7 +401,8 @@ METAMODEL = {
         'solotodo.metamodel_custom_functions.notebooks.additional_es_fields',
         'solotodo.metamodel_custom_functions.hardware.additional_es_fields',
         'solotodo.metamodel_custom_functions.electro.additional_es_fields',
-        'solotodo.metamodel_custom_functions.smartphones.additional_es_fields'
+        'solotodo.metamodel_custom_functions.smartphones.additional_es_fields',
+        'solotodo.metamodel_custom_functions.groceries.additional_es_fields'
     ],
     'MEDIA_PATH': 'products',
     'UNICODE_FUNCTIONS': [

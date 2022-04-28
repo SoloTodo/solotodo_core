@@ -40,6 +40,7 @@ class EsProduct(EsProductEntities):
         return cls(
             product_id=product.id,
             name=str(product),
+            name_analyzed=str(product),
             category_id=product.category_id,
             category_name=str(product.category),
             brand_id=product.brand_id,

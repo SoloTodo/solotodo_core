@@ -5,6 +5,7 @@ from .es_product_entities import EsProductEntities
 class EsProduct(EsProductEntities):
     product_id = Integer()
     name = Keyword()
+    name_analyzed = Text()
     category_id = Integer()
     category_name = Keyword()
     brand_id = Integer()

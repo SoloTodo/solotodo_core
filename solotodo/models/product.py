@@ -200,7 +200,7 @@ class Product(models.Model):
             keywords_term_query = Q('wildcard',
                                     keywords='*{}*'.format(search_term))
             name_term_query = Q('wildcard',
-                                name={
+                                name_analyzed={
                                     'value': '*{}*'.format(search_term),
                                     'boost': 3.0
                                 })

@@ -126,10 +126,8 @@ class CategorySpecsForm(forms.Form):
 
         all_filters = self.get_filter()
         search = search.filter(all_filters)
-        ordering = self.get_ordering()
-
-        if ordering:
-            search = search.sort(ordering)
+        ordering = self.get_ordering() or 'name'
+        search = search.sort(ordering)
 
         all_filtered_bucket, active_filters_buckets = self.get_aggregation_buckets()
         search.aggs.bucket('all_filtered_products', all_filtered_bucket)

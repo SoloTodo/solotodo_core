@@ -65,8 +65,10 @@ def additional_es_fields(instance_model, elastic_search_original):
         else:
             result['sorting_weight'] = big_value
 
-        result['included_fans'] = \
-            sum(elastic_search_original.get('included_fans_quantity', []))
+        included_fan_count = 0
+        for included_fan in elastic_search_original.get('included_fans', []):
+            included_fan_count += included_fan['quantity']
+        result['included_fan_count'] = included_fan_count
 
         return result
     if m == 'CpuCooler':
@@ -110,19 +112,19 @@ def additional_es_fields(instance_model, elastic_search_original):
                 '{} cd/m<sup>2</sup>'.format(brightness)
         else:
             result['pretty_brightness'] = 'Desconocido'
-        video_ports = elastic_search_original['video_ports_unicode']
+        video_ports = elastic_search_original['video_ports']
         if video_ports:
             result['pretty_video_ports'] = \
-                ' | '.join(str(vp) for vp in video_ports)
+                ' | '.join(vp['unicode'] for vp in video_ports)
         else:
             result['pretty_video_ports'] = ' No posee'
         return result
     if m == 'Printer':
         result = {}
-        networking = elastic_search_original.get('networking_unicode', None)
+        networking = elastic_search_original.get('networking', None)
         if networking:
             result['pretty_networking'] = \
-                ' | '.join(str(vp) for vp in networking)
+                ' | '.join(vp['unicode'] for vp in networking)
         else:
             result['pretty_networking'] = 'No posee'
 

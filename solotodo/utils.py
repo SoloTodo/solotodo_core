@@ -1,12 +1,5 @@
 import collections
-import hashlib
-import json
-
 from decimal import Decimal
-
-from elasticsearch_dsl.aggs import Bucket
-
-import datetime
 
 
 def iterable_to_dict(iterable_or_model, field='id'):
@@ -62,36 +55,14 @@ def format_currency(value, curr='$', places=2, sep='.', dp=','):
     return ''.join(reversed(result))
 
 
-def generate_cache_key(cache_dict):
-    return hashlib.sha1(json.dumps(cache_dict).encode('utf-8')).hexdigest()
+def recursive_dict_search(d, target):
+    # Recursively search in the "d" dictionary for the key given by target
+    # Returns the value of the fictionary for that key or None if it was not found
+    # Only considers dictionary trees, not lists
 
+    if target in d:
+        return d[target]
 
-class Clock(object):
-    def __init__(self):
-        import time
-        self.time = time.monotonic()
-
-    def tick(self, label):
-        import time
-        new_time = time.monotonic()
-        print('{}: {}'.format(label, new_time - self.time))
-        self.time = new_time
-
-
-# REF https://stackoverflow.com/questions/304256/whats-the-best-way-to-
-# find-the-inverse-of-datetime-isocalendar
-def iso_year_start(iso_year):
-    "The gregorian calendar date of the first day of the given ISO year"
-    fourth_jan = datetime.datetime(iso_year, 1, 4)
-    delta = datetime.timedelta(fourth_jan.isoweekday()-1)
-    return fourth_jan - delta
-
-
-def iso_to_gregorian(iso_year, iso_week, iso_day):
-    "Gregorian calendar date for the given ISO year, week and day"
-    year_start = iso_year_start(iso_year)
-    return year_start + datetime.timedelta(days=iso_day-1, weeks=iso_week-1)
-
-
-class Parent(Bucket):
-    name = 'parent'
+    for k, v in d.items():
+        if isinstance(v, dict):
+            return recursive_dict_search(v, target)

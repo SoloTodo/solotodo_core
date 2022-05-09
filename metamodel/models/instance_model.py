@@ -626,11 +626,11 @@ class InstanceModel(models.Model):
             return {}, []
 
         result = {
-            u'id': self.id,
-            u'unicode': str(self)
+            'id': self.id,
+            'unicode': str(self)
         }
 
-        keywords = result[u'unicode'].split()
+        keywords = result['unicode'].split()
 
         meta_fields = MetaModel.get_metafields_by_model_id(
             self.model_id)
@@ -657,14 +657,7 @@ class InstanceModel(models.Model):
                     m2m_documents.append(m2m_document[0])
                     keywords.extend(m2m_document[1])
 
-                keys = set()
-                for doc in m2m_documents:
-                    for key in doc.keys():
-                        keys.add(key)
-
-                for key in keys:
-                    key_subresult = [d[key] for d in m2m_documents if key in d]
-                    result[meta_field.name + '_' + key] = key_subresult
+                result[meta_field.name] = m2m_documents
             else:
                 try:
                     instance_value = instance_values_dict[meta_field]

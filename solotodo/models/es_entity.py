@@ -1,27 +1,29 @@
 from datetime import timedelta
+from decimal import Decimal
+
 from django.db.models import Min
-from elasticsearch_dsl import Text, Keyword, Integer, Date, ScaledFloat
-from .es_product_relationship import EsProductRelationship
+from elasticsearch_dsl import Keyword, Integer, Date, ScaledFloat
+from .es_product_entities import EsProductEntities
 from solotodo.models import Lead
 
 
-class EsEntity(EsProductRelationship):
+class EsEntity(EsProductEntities):
     entity_id = Integer()
     store_id = Integer()
-    store_name = Text(fields={'raw': Keyword()})
+    store_name = Keyword()
     category_id = Integer()
-    category_name = Text(fields={'raw': Keyword()})
+    category_name = Keyword()
     currency_id = Integer()
-    currency_name = Text(fields={'raw': Keyword()})
+    currency_name = Keyword()
     condition = Keyword()
     product_id = Integer()
-    product_name = Text(fields={'raw': Keyword()})
+    product_name = Keyword()
     bundle_id = Integer()
-    bundle_name = Text(fields={'raw': Keyword()})
+    bundle_name = Keyword()
     brand_id = Integer()
-    brand_name = Text(fields={'raw': Keyword()})
+    brand_name = Keyword()
     country_id = Integer()
-    country_name = Text(fields={'raw': Keyword()})
+    country_name = Keyword()
 
     normal_price = ScaledFloat(scaling_factor=100)
     offer_price = ScaledFloat(scaling_factor=100)
@@ -33,11 +35,16 @@ class EsEntity(EsProductRelationship):
     reference_normal_price_usd = ScaledFloat(scaling_factor=100)
     reference_offer_price_usd = ScaledFloat(scaling_factor=100)
 
-    name = Text(fields={'raw': Keyword()})
-    part_number = Text(fields={'raw': Keyword()})
-    sku = Text(fields={'raw': Keyword()})
-    key = Text(fields={'raw': Keyword()})
-    url = Text(fields={'raw': Keyword()})
+    normal_price_per_unit = ScaledFloat(scaling_factor=100)
+    offer_price_per_unit = ScaledFloat(scaling_factor=100)
+    normal_price_usd_per_unit = ScaledFloat(scaling_factor=100)
+    offer_price_usd_per_unit = ScaledFloat(scaling_factor=100)
+
+    name = Keyword()
+    part_number = Keyword()
+    sku = Keyword()
+    key = Keyword()
+    url = Keyword()
 
     leads = Integer()
 
@@ -61,9 +68,12 @@ class EsEntity(EsProductRelationship):
 
     @classmethod
     def from_entity(cls, entity):
-        assert cls.should_entity_be_indexed(entity)
+        from django.conf import settings
 
-        timestamp = entity.active_registry.timestamp
+        assert cls.should_entity_be_indexed(entity)
+        active_registry = entity.active_registry
+
+        timestamp = active_registry.timestamp
 
         reference_prices = entity.entityhistory_set.filter(
             timestamp__gte=timestamp - timedelta(hours=84),
@@ -74,9 +84,9 @@ class EsEntity(EsProductRelationship):
         )
 
         reference_normal_price = reference_prices['min_normal_price'] or \
-            entity.active_registry.normal_price
+            active_registry.normal_price
         reference_offer_price = reference_prices['min_offer_price'] or \
-            entity.active_registry.offer_price
+            active_registry.offer_price
 
         exchange_rate = entity.currency.exchange_rate
 
@@ -91,6 +101,27 @@ class EsEntity(EsProductRelationship):
         else:
             bundle_name = None
             bundle_id = None
+
+        normal_price_usd = entity.active_registry.normal_price / exchange_rate
+        offer_price_usd = entity.active_registry.offer_price / exchange_rate
+
+        if entity.category_id == settings.GROCERIES_CATEGORY_ID:
+            # entity.product is not null because only associated entities
+            # can be indexed
+            specs = entity.product.specs
+            conversion_factor = \
+                Decimal(specs['category_unit_price_per_unit_conversion_factor']) / \
+                Decimal(specs['volume_weight'])
+
+            normal_price_per_unit = (active_registry.normal_price * conversion_factor).quantize(0)
+            offer_price_per_unit = (active_registry.offer_price * conversion_factor).quantize(0)
+            normal_price_usd_per_unit = (normal_price_usd * conversion_factor).quantize(Decimal('0.01'))
+            offer_price_usd_per_unit = (offer_price_usd * conversion_factor).quantize(Decimal('0.01'))
+        else:
+            normal_price_per_unit = active_registry.normal_price
+            offer_price_per_unit = active_registry.offer_price
+            normal_price_usd_per_unit = normal_price_usd
+            offer_price_usd_per_unit = offer_price_usd
 
         return cls(
             entity_id=entity.id,
@@ -109,16 +140,18 @@ class EsEntity(EsProductRelationship):
             brand_name=str(entity.product.brand),
             country_id=entity.store.country_id,
             country_name=str(entity.store.country),
-            normal_price=entity.active_registry.normal_price,
-            offer_price=entity.active_registry.offer_price,
-            normal_price_usd=entity.active_registry.normal_price /
-            exchange_rate,
-            offer_price_usd=entity.active_registry.offer_price /
-            exchange_rate,
+            normal_price=active_registry.normal_price,
+            offer_price=active_registry.offer_price,
+            normal_price_usd=normal_price_usd,
+            offer_price_usd=offer_price_usd,
             reference_normal_price=reference_normal_price,
             reference_offer_price=reference_offer_price,
             reference_normal_price_usd=reference_normal_price / exchange_rate,
             reference_offer_price_usd=reference_offer_price / exchange_rate,
+            normal_price_per_unit=normal_price_per_unit,
+            offer_price_per_unit=offer_price_per_unit,
+            normal_price_usd_per_unit=normal_price_usd_per_unit,
+            offer_price_usd_per_unit=offer_price_usd_per_unit,
             name=entity.name,
             part_number=entity.part_number,
             sku=entity.sku,
@@ -133,6 +166,10 @@ class EsEntity(EsProductRelationship):
             },
             meta={'id': 'ENTITY_{}'.format(entity.id)}
         )
+
+    @classmethod
+    def get_by_entity_id(cls, entity_id):
+        return cls.get('ENTITY_{}'.format(entity_id))
 
     def save(self, **kwargs):
         self.meta.routing = 'PRODUCT_{}'.format(self.product_id)

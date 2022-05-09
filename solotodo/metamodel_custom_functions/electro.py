@@ -3,9 +3,9 @@ from .utils import pretty_dimensions, format_optional_field
 
 
 def pretty_video_ports(elastic_search_original):
-    video_ports = elastic_search_original['video_ports_unicode']
+    video_ports = elastic_search_original['video_ports']
     if video_ports:
-        return ' | '.join(str(vp) for vp in video_ports)
+        return ' | '.join(vp['unicode'] for vp in video_ports)
     else:
         return 'No posee'
 
@@ -230,14 +230,20 @@ def additional_es_fields(instance_model, elastic_search_original):
             elastic_search_original['c_model_base_model_family_brand_unicode']
         return result
     if m == 'AllInOne':
-        result['storage_unicode'] = ' + '.join(
-            elastic_search_original['storage_drives_unicode'])
+        storage_unicodes = []
+
+        for sd in elastic_search_original['storage_drives']:
+            storage_unicodes.append(sd['unicode'])
+
+            result['storage_unicode'] = ' + '.join(storage_unicodes)
         return result
     if m == 'Tablet':
         result['base_model_internal_storage_cell_connectivity_key'] = \
             elastic_search_original['base_model_id'] + \
             10 * elastic_search_original['internal_storage_id'] + \
             100 * elastic_search_original['cell_connectivity_id']
+        result['default_bucket'] = \
+            result['base_model_internal_storage_cell_connectivity_key']
 
         result['pretty_dimensions'] = \
             pretty_dimensions(elastic_search_original,

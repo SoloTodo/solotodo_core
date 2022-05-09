@@ -1,6 +1,6 @@
 from django.db import models
 from django import forms
-from elasticsearch_dsl import Q
+from elasticsearch_dsl import Q, A
 
 from metamodel.models import MetaModel
 from .category import Category
@@ -23,12 +23,16 @@ class CategorySpecsFilter(models.Model):
         return '{} - {}'.format(self.category, self.name)
 
     def choices(self):
+        # Returns a list of InstanceModel representing the choices for
+        # this filter or None if the filter is over a primitive Model
         if self.meta_model.is_primitive():
             return None
         else:
             return self.meta_model.instancemodel_set.all()
 
     def form_fields_dict(self):
+        # Returns a dictionary {field_name: field} representing the Django form
+        # field name(s) and actual fields represented by this filter.
         field_names = []
         if self.type == 'exact':
             field_names = [self.name]
@@ -62,34 +66,42 @@ class CategorySpecsFilter(models.Model):
 
         return {field_name: field for field_name in field_names}
 
-    def value_field_or_default(self):
-        value_field = self.value_field
-        if value_field is None:
-            if self.type == 'exact':
-                value_field = 'id'
-            else:
-                value_field = 'value'
-        return value_field
+    def cleaned_value_field(self):
+        # Returns the normalized value_field for this filter.
+        # For exact queries ("processor", "video_card") this is
+        # usually "id", otherwise (greater than, less than, ranges)
+        # the field is usually "value" ("screen_size", etc)
+        if self.value_field:
+            return self.value_field
 
-    def es_value_field(self):
-        if self.meta_model.is_primitive():
-            return self.es_field
+        if self.type == 'exact':
+            return 'id'
         else:
-            value_field = self.value_field_or_default()
-            return '{}_{}'.format(self.es_field, value_field)
+            return 'value'
 
-    def es_id_field(self):
+    def es_value_field(self, field=None):
+        # Returns the full path to the field in the ElasticSearch object for a particular
+        # field ('id' for example). If not given it determines the field with the numeric
+        # value of the filter ("id" for most non-primitive filters) and uses it.
+        es_field = self.es_field
+
         if self.meta_model.is_primitive():
-            return self.es_field
+            return es_field
+        elif es_field.endswith('.id'):
+            # This is the particular case when querying a nested field directly
+            # (without going further down in the nested tree). For example when filtering
+            # notebooks by specific video_card
+            return es_field
         else:
-            return '{}_id'.format(self.es_field)
+            return '{}_{}'.format(es_field, field or self.cleaned_value_field())
 
-    def es_filter(self, form_data, prefix=''):
-        # TODO: Remove unnecesary prefix parameter once browse codepath is gone
+    def es_filter(self, form_data):
+        # Returns the ES DSL Query (Q object) the represents the application of this
+        # filter with the given form data.
         result = Q()
 
-        mm_value_field = self.value_field_or_default()
-        es_value_field = '{}{}'.format(prefix, self.es_value_field())
+        mm_value_field = self.cleaned_value_field()
+        es_value_field = 'specs.{}'.format(self.es_value_field())
 
         if self.type == 'exact' and form_data[self.name] is not None:
             if self.meta_model.is_primitive():
@@ -122,61 +134,34 @@ class CategorySpecsFilter(models.Model):
                                            mm_value_field)
                 result &= Q('range', **{es_value_field: {'lte': filter_value}})
 
+        # Create the nested query if necessary, but if we are not actually filtering
+        # (empty query) there is no need.
+        if self._is_es_nested() and result != Q():
+            path = 'specs.{}'.format(self.es_field.split('.')[0])
+            result = Q('nested', path=path, query=result)
+
         return result
 
-    def process_buckets(self, buckets):
-        if self.meta_model.is_primitive():
-            sorted_buckets = sorted(buckets, key=lambda bucket: bucket['key'])
+    def aggregation_bucket(self):
+        # Returns the ES DSL Aggregation object (A) that represents the
+        # aggregation of a ES search on this field
+        term_field = 'specs.{}'.format(self.es_value_field('id'))
+        spec_bucket = A('terms', field=term_field, size=100)
 
-            result = []
-            for bucket in sorted_buckets:
-                if 'search_bucket' in bucket:
-                    doc_count = len(bucket['search_bucket']['buckets'])
-                else:
-                    doc_count = bucket['doc_count']
+        if self._is_es_nested():
+            path = 'specs.{}'.format(self.es_field.split('.')[0])
+            bucket = A('nested', path=path)
+            bucket.bucket('nested_field', spec_bucket)
 
-                bucket_result = {
-                    'id': bucket['key'],
-                    'value': bucket['key'],
-                    'doc_count': doc_count
-                }
-                result.append(bucket_result)
-
-            return result
-
-        bucket_key_dict = {bucket['key']: bucket for bucket in buckets}
-        value_field = self.value_field_or_default()
-        instance_models = self.meta_model.instancemodel_set.all()
-
-        if value_field == 'id':
-            instance_models_values_dict = {
-                instance_model: instance_model.id
-                for instance_model in instance_models
-            }
+            return bucket
         else:
-            # Querying metamodel for fields is expensive, so execute them all
-            # at once with a utility queryset method
-            instance_models_values_dict = instance_models.get_field_values(
-                value_field)
 
-        processed_buckets = []
-        for instance_model in instance_models:
-            instance_model_value = instance_models_values_dict[instance_model]
-            bucket = bucket_key_dict.get(instance_model.id)
+            return spec_bucket
 
-            if bucket:
-                if 'search_bucket' in bucket:
-                    # The search is bucketed
-                    doc_count = len(bucket['search_bucket']['buckets'])
-                else:
-                    doc_count = bucket['doc_count']
-
-                processed_buckets.append({
-                    'id': instance_model.id,
-                    'value': instance_model_value,
-                    'doc_count': doc_count
-                })
-        return processed_buckets
+    def _is_es_nested(self):
+        # Returns True if the filter queries for a field inside a nested
+        # field in the ES object representing the object
+        return '.' in self.es_field
 
     class Meta:
         app_label = 'solotodo'

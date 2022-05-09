@@ -72,6 +72,8 @@ def additional_es_fields(instance_model, elastic_search_result):
             elastic_search_result['base_model_id'] + \
             100 * elastic_search_result['internal_storage_id'] + \
             1000 * elastic_search_result['ram_id']
+        result['default_bucket'] = \
+            result['base_model_internal_storage_ram_key']
 
         result['storage_and_ram'] = '{} / {}'.format(
             elastic_search_result['internal_storage_unicode'],

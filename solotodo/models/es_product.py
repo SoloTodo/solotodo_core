@@ -1,19 +1,20 @@
 from elasticsearch_dsl import Text, Keyword, Object, Integer, Date
-from .es_product_relationship import EsProductRelationship
+from .es_product_entities import EsProductEntities
 
 
-class EsProduct(EsProductRelationship):
+class EsProduct(EsProductEntities):
     product_id = Integer()
-    name = Text(fields={'raw': Keyword()})
+    name = Keyword()
+    name_analyzed = Text()
     category_id = Integer()
-    category_name = Text(fields={'raw': Keyword()})
+    category_name = Keyword()
     brand_id = Integer()
-    brand_name = Text(fields={'raw': Keyword()})
+    brand_name = Keyword()
     instance_model_id = Integer()
     creation_date = Date()
     last_updated = Date()
     keywords = Text()
-    specs = Object()
+    specs = Object(dynamic=True)
 
     @classmethod
     def search(cls, **kwargs):
@@ -39,6 +40,7 @@ class EsProduct(EsProductRelationship):
         return cls(
             product_id=product.id,
             name=str(product),
+            name_analyzed=str(product),
             category_id=product.category_id,
             category_name=str(product.category),
             brand_id=product.brand_id,

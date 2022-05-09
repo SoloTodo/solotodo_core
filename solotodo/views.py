@@ -48,7 +48,7 @@ from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_by_url_form import EntityByUrlForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
-from solotodo.forms.es_products_browse_form import EsProductsBrowseForm
+from solotodo.forms.products_browse_form import ProductsBrowseForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
 from solotodo.forms.category_form import CategoryForm
@@ -293,89 +293,70 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         category = self.get_object()
         form_class = category.specs_form()
         form = form_class(request.query_params)
-        if form.is_valid():
-            es_products_search = form.get_es_products()
-
-            paginator = ProductPagination()
-            page = request.query_params.get(paginator.page_query_param, 1)
-            try:
-                page = int(page)
-            except ValueError:
-                page = 1
-
-            page_size = paginator.get_page_size(request)
-
-            offset = (page - 1) * page_size
-            upper_bound = page * page_size
-
-            es_products_page = es_products_search[offset:upper_bound].execute()
-
-            # Page contents
-
-            product_ids = [es_product.product_id
-                           for es_product in es_products_page]
-
-            db_products = Product.objects.filter(
-                pk__in=product_ids).select_related(
-                'instance_model__model__category')
-            db_products_dict = iterable_to_dict(db_products, 'id')
-
-            products = []
-            for es_product in es_products_page:
-                db_product = db_products_dict[es_product.product_id]
-                db_product._es_entry = es_product.to_dict()
-                products.append(db_product)
-
-            serializer = ProductSerializer(products, many=True,
-                                           context={'request': request})
-
-            # Overall aggregations
-
-            aggs = form.process_es_aggs(es_products_page.aggs)
-
-            return Response({
-                'count': es_products_page.hits.total.to_dict(),
-                'results': serializer.data,
-                'aggs': aggs,
-            })
-        else:
+        if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        es_products_search = form.get_es_products()
+
+        paginator = ProductPagination()
+        page = request.query_params.get(paginator.page_query_param, 1)
+        try:
+            page = int(page)
+        except ValueError:
+            page = 1
+
+        page_size = paginator.get_page_size(request)
+        offset = (page - 1) * page_size
+        upper_bound = page * page_size
+        es_products_page = es_products_search[offset:upper_bound].execute()
+
+        # Page contents
+        product_ids = [es_product.product_id
+                       for es_product in es_products_page]
+
+        db_products = Product.objects.filter(
+            pk__in=product_ids).select_related(
+            'instance_model__model__category')
+        db_products_dict = iterable_to_dict(db_products, 'id')
+
+        products = []
+        for es_product in es_products_page:
+            db_product = db_products_dict[es_product.product_id]
+            db_product._es_entry = es_product.to_dict()
+            products.append(db_product)
+
+        serializer = ProductSerializer(products, many=True,
+                                       context={'request': request})
+
+        # Overall aggregations
+
+        aggs = form.flatten_es_aggs(es_products_page.aggs.to_dict())
+
+        return Response({
+            'count': es_products_page.hits.total.to_dict(),
+            'results': serializer.data,
+            'aggs': aggs,
+        })
 
     @action(detail=True)
     def browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
-        form = EsProductsBrowseForm(request.user, request.query_params)
+        form = ProductsBrowseForm(request.user, request.query_params)
 
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        result = form.get_category_products(category, request)
-
-        return Response(result)
-
-    @action(detail=True)
-    def es_browse(self, request, pk, *args, **kwargs):
-        category = self.get_object()
-        form = EsProductsBrowseForm(request.user, request.query_params)
-
-        if not form.is_valid():
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        result = form.get_category_products(category, request)
+        result = form.get_category_products(request, category)
 
         return Response(result)
 
     @action(detail=True)
     def full_browse(self, request, pk, *args, **kwargs):
         category = self.get_object()
-        form = EsProductsBrowseForm(request.user, request.query_params)
+        form = ProductsBrowseForm(request.user, request.query_params)
         result = form.get_category_entities(category, request)
 
-        return Response({
-            'aggs': result['aggs'],
-            'results': result['results'],
-            'price_ranges': result['price_ranges'],
-        })
+        return Response(result)
 
     @action(detail=True)
     def share_of_shelves(self, request, pk, *args, **kwargs):
@@ -414,7 +395,7 @@ class CategoryViewSet(PermissionReadOnlyModelViewSet):
         user = request.user
 
         if not user.has_perm('view_category_share_of_shelves', category):
-            raise Response(status=status.HTTP_403_FORBIDDEN)
+            return Response(status=status.HTTP_403_FORBIDDEN)
 
         form = ReportHistoricShareOfShelvesForm(request.user, request.GET)
 
@@ -1050,7 +1031,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             matching_cell_plans = EsProduct.category_search(
                 cell_plan_category).filter(
                 'term',
-                specs__association_name__keyword=entity.cell_plan_name) \
+                specs__association_name=entity.cell_plan_name) \
                 .execute()
 
             cell_plan_ids = [x.product_id for x in matching_cell_plans]
@@ -1204,22 +1185,12 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False)
     def browse(self, request, *args, **kwargs):
-        form = EsProductsBrowseForm(request.user, request.query_params)
+        form = ProductsBrowseForm(request.user, request.query_params)
 
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        result = form.get_products(request)
-        return Response(result)
-
-    @action(detail=False)
-    def es_browse(self, request, *args, **kwargs):
-        form = EsProductsBrowseForm(request.user, request.query_params)
-
-        if not form.is_valid():
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-
-        result = form.get_products(request)
+        result = form.get_category_products(request)
         return Response(result)
 
     @action(detail=True)

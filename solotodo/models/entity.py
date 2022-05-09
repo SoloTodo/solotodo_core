@@ -614,7 +614,7 @@ class Entity(models.Model):
         matching_cell_plans = EsProduct.category_search(cell_plan_category)\
             .filter(
             'terms',
-            specs__association_name__keyword=other_cell_plan_names)[:100] \
+            specs__association_name=other_cell_plan_names)[:100] \
             .execute()
 
         cell_plan_ids = [cell_plan.product_id

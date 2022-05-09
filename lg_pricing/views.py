@@ -161,53 +161,6 @@ class LgWtbViewSet(ViewSet):
 
         return response
 
-    @action(detail=False, methods=['post'],
-            parser_classes=[JSONParser, PlainTextJsonParser],
-            authentication_classes=[CsrfExemptSessionAuthentication])
-    def register(self, request):
-        uuid = request.data['uuid']
-        aa = request.data['aa']
-        ga = request.data['ga']
-        timestamp = request.data['timestamp']
-        table = boto3.resource(
-            'dynamodb',
-            aws_access_key_id=settings.DYNAMODB_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.DYNAMODB_SECRET_ACCESS_KEY,
-            region_name='sa-east-1').Table(settings.DYNAMODB_TABLE_NAME)
-        payload = {
-            'id': 'WTB',
-            'timestamp': timestamp,
-            'aa': aa,
-            'ga': ga,
-            'uuid': uuid
-        }
-        table.put_item(Item=payload)
-        return Response(payload, status=201)
-
-    @action(detail=False)
-    def redirect(self, request):
-        params = request.query_params
-        entity = Entity.objects.get(pk=params['entity'])
-        uuid = params['uuid']
-        aa = int(params['aa'])
-        ga = int(params['ga'])
-        timestamp = int(params['timestamp'])
-        table = boto3.resource(
-            'dynamodb',
-            aws_access_key_id=settings.DYNAMODB_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.DYNAMODB_SECRET_ACCESS_KEY,
-            region_name='sa-east-1').Table(settings.DYNAMODB_TABLE_NAME)
-        payload = {
-            'id': 'WTB',
-            'timestamp': timestamp,
-            'aa': aa,
-            'ga': ga,
-            'uuid': uuid
-        }
-        table.put_item(Item=payload)
-        return HttpResponseRedirect(entity.url)
-
-
 class SendinblueViewSet(ViewSet):
     @action(detail=False, methods=['post'])
     def contacts(self, request):

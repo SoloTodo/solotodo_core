@@ -49,7 +49,7 @@ def send_current_prices_task(user_ids, query_string):
 
         email = EmailMessage(subject,
                              message, sender,
-                             [user.email])
+                             [x.email for x in users])
         email.attach(
             report_filename, report_file,
             'application/'

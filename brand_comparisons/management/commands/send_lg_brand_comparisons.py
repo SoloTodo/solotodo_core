@@ -45,10 +45,9 @@ class Command(BaseCommand):
         for comparison_id in comparison_ids:
             comparison = BrandComparison.objects.get(pk=comparison_id)
             if export_format == 'xls_2':
-                comparison_attachment = comparison.as_xls_2(
-                    highlight_strategy='1')['file']
+                comparison_attachment = comparison.as_xls('2')['file']
             else:
-                comparison_attachment = comparison.as_xls()['file']
+                comparison_attachment = comparison.as_xls('1')['file']
 
             report_filename = '{}.xlsx'.format(comparison.name)
 

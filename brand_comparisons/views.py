@@ -58,7 +58,7 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
         if export_format == 'xls':
             brand_comparison = self.get_object()
-            report_path = brand_comparison.as_xls()['path']
+            report_path = brand_comparison.as_xls('1')['path']
             storage = PrivateS3Boto3Storage()
             report_url = storage.url(report_path)
             return Response({
@@ -67,8 +67,7 @@ class BrandComparisonViewSet(mixins.CreateModelMixin,
 
         if export_format == 'xls_2':
             brand_comparison = self.get_object()
-            highlight_strategy = request.GET.get('highlight_strategy', '1')
-            report_path = brand_comparison.as_xls_2(highlight_strategy)['path']
+            report_path = brand_comparison.as_xls('2')['path']
             storage = PrivateS3Boto3Storage()
             report_url = storage.url(report_path)
             return Response({

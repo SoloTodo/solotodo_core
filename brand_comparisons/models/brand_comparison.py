@@ -53,7 +53,33 @@ class BrandComparison(models.Model):
         product = Product.objects.get(id=product_id)
         self.manual_products.remove(product)
 
-    def as_xls_2(self, highlight_strategy='1'):
+    def as_xls(self, report_format='1'):
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output)
+        workbook.formats[0].set_font_size(10)
+
+        if report_format == '1':
+            self.as_worksheet(workbook)
+            self.as_worksheet_2(workbook, highlight_prices=True)
+        elif report_format == '2':
+            self.as_worksheet_2(workbook, highlight_prices=False)
+        else:
+            raise Exception('Invalid report format')
+
+        workbook.close()
+        output.seek(0)
+        file_value = output.getvalue()
+        file_for_upload = ContentFile(file_value)
+        storage = PrivateS3Boto3Storage()
+        filename = 'brand_comparison.xlsx'
+        path = storage.save(filename, file_for_upload)
+
+        return {
+            'file': file_value,
+            'path': path
+        }
+
+    def as_worksheet_2(self, workbook, highlight_prices=False):
         stores = self.stores.all()
 
         # Put Falabella, Ripley and Paris first, this is just hardcoded because
@@ -92,8 +118,6 @@ class BrandComparison(models.Model):
         store_product_price_dict = {(x['store'], x['product']): x['price']
                                     for x in es}
 
-        output = io.BytesIO()
-        workbook = xlsxwriter.Workbook(output)
         worksheet = workbook.add_worksheet()
 
         # Styling
@@ -250,6 +274,12 @@ class BrandComparison(models.Model):
         })
         bottom_brand_2_price_format.set_num_format(
             preferred_currency.excel_format())
+
+        highlight_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#66FFCC',
+        })
 
         # Column widths
         worksheet.set_column(0, 0, 12)
@@ -447,6 +477,25 @@ class BrandComparison(models.Model):
                                     brand_2_price_format_to_use)
                     col += 1
 
+                if highlight_prices:
+                    for brand_cells_with_prices in [brand_1_cells_with_prices,
+                                                    brand_2_cells_with_prices]:
+                        if not brand_cells_with_prices:
+                            continue
+
+                        formula = 'MIN({})'.format(','.join(
+                            brand_cells_with_prices))
+                        for cell in brand_cells_with_prices:
+                            worksheet.conditional_format(
+                                cell,
+                                {
+                                    'type': 'cell',
+                                    'criteria': '=',
+                                    'value': formula,
+                                    'format': highlight_format
+                                }
+                            )
+
                 # Last column for Retailer A average
                 retailer_a_base_formula = '=IFERROR(AVERAGEA({}), "-")'
 
@@ -466,24 +515,9 @@ class BrandComparison(models.Model):
 
                 row += 1
 
-        workbook.close()
-        output.seek(0)
-        file_value = output.getvalue()
-        file_for_upload = ContentFile(file_value)
-        storage = PrivateS3Boto3Storage()
-        filename = 'brand_comparison.xlsx'
-        path = storage.save(filename, file_for_upload)
-
-        return {
-            'file': file_value,
-            'path': path
-        }
-
-    def as_xls(self):
+    def as_worksheet(self, workbook):
         preferred_currency = self.user.preferred_currency
 
-        output = io.BytesIO()
-        workbook = xlsxwriter.Workbook(output)
         workbook.formats[0].set_font_size(10)
 
         header_format = workbook.add_format({
@@ -827,19 +861,6 @@ class BrandComparison(models.Model):
 
         worksheet.write_formula(
             mode_average_rowcol, mode_average_formula, percentage_format)
-
-        workbook.close()
-        output.seek(0)
-        file_value = output.getvalue()
-        file_for_upload = ContentFile(file_value)
-        storage = PrivateS3Boto3Storage()
-        filename = 'brand_comparison.xlsx'
-        path = storage.save(filename, file_for_upload)
-
-        return {
-            'file': file_value,
-            'path': path
-        }
 
     def __str__(self):
         return '{} - {} - {} - {} - {}'.format(

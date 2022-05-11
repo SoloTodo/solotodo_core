@@ -609,20 +609,7 @@ class ProductsBrowseForm(forms.Form):
                 if spec_field not in desired_spec_fields:
                     del serialized_entry['product']['specs'][spec_field]
 
-        aggs = {}
-        aggregations = results['aggregations']
-        for spec_field_name in specs_form.get_field_names():
-            if spec_field_name in aggregations:
-                agg_data = aggregations[spec_field_name]['terms']['buckets']
-            else:
-                agg_data = \
-                aggregations['all_filtered_products'][spec_field_name][
-                    'buckets']
-
-            aggs[spec_field_name] = [{
-                'id': x['key'],
-                'doc_count': x['doc_count']
-            } for x in agg_data]
+        aggs = specs_form.flatten_es_aggs(results['aggregations'])
 
         return {
             'aggs': aggs,

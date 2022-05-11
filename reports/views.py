@@ -45,7 +45,7 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
                 'errors': form.errors
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        send_current_prices_task.delay(user.id, request.META['QUERY_STRING'])
+        send_current_prices_task.delay([user.id], request.META['QUERY_STRING'])
 
         return Response({
             'message': 'ok'

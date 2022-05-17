@@ -11,9 +11,11 @@ class CategoryQuerySet(models.QuerySet):
     def filter_by_user_perms(self, user, permission, reload_cache=False):
         from solotodo_core import settings
 
+        if user.is_superuser:
+            return self
+
         user_group_names = [x['name'] for x in user.groups.values('name')]
 
-        # TODO: Consider the case for superusers (and staff?)
         if permission == 'view_category' and (
                 user.is_anonymous or user_group_names ==
                 [settings.DEFAULT_GROUP_NAME]):

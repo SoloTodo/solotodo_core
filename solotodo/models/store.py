@@ -27,6 +27,9 @@ class StoreQuerySet(models.QuerySet):
     def filter_by_user_perms(self, user, permission, reload_cache=False):
         from solotodo_core import settings
 
+        if user.is_superuser:
+            return self
+
         user_group_names = [x['name'] for x in user.groups.values('name')]
 
         if permission == 'view_store' and (
@@ -441,7 +444,7 @@ class Store(models.Model):
         headers = [
             'Identificador', 'SKU', 'Nombre', 'URL', 'Precio Normal',
             'Precio Oferta', 'Categoría SoloTodo', 'Producto SoloTodo',
-            'URL SoloTodo'
+            'URL SoloTodo', 'ID SoloTodo'
         ]
         for idx, header in enumerate(headers):
             if 'Precio' in header:
@@ -473,7 +476,11 @@ class Store(models.Model):
                 worksheet.write(row, col,
                                 'https://www.solotodo.cl/products/' +
                                 str(entity.product.id))
+                col += 1
+                worksheet.write(row, col, entity.product_id)
             else:
+                worksheet.write(row, col, 'N/A')
+                col += 1
                 worksheet.write(row, col, 'N/A')
                 col += 1
                 worksheet.write(row, col, 'N/A')

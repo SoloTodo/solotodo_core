@@ -19,7 +19,8 @@ class Command(BaseCommand):
         data = {
             'wtb_brand': 1,
             'store': 195,
-            'competing_stores': [30, 9, 87, 5, 43, 11, 18, 67, 170, 12, 86],
+            'competing_stores': [30, 9, 87, 5, 43, 11, 18, 67, 170, 12, 86,
+                                 3032],
         }
         form = ReportWtbStorePriceComparisonForm(reference_user, data)
         assert form.is_valid(), form.errors

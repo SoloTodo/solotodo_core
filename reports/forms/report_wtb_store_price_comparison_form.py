@@ -165,9 +165,6 @@ class ReportWtbStorePriceComparisonForm(forms.Form):
         worksheet.write_string(row, col, 'Código LG', header_1_format)
         worksheet.set_column(col, col, 24)
         col += 1
-        worksheet.write_string(row, col, 'URL LG', header_1_format)
-        worksheet.set_column(col, col, 24)
-        col += 1
         worksheet.write_string(row, col, 'Status', header_1_format)
         worksheet.set_column(col, col, 24)
         col += 1
@@ -225,9 +222,6 @@ class ReportWtbStorePriceComparisonForm(forms.Form):
                     worksheet.write_string(
                         row, col, str(wtb_e.model_name
                                       if wtb_e and wtb_e.model_name else 'N/A'))
-                    col += 1
-                    worksheet.write_string(row, col,
-                                           str(wtb_e.url if wtb_e else 'N/A'))
                     col += 1
                     worksheet.write_string(
                         row, col, 'Disponible' if store_entity
@@ -330,7 +324,7 @@ class ReportWtbStorePriceComparisonForm(forms.Form):
                 'format': number_bad_format
             })
 
-        worksheet.autofilter(0, 0, row - 1, len(competing_stores) + 12)
+        worksheet.autofilter(0, 0, row - 1, len(competing_stores) + 11)
         workbook.close()
 
         output.seek(0)

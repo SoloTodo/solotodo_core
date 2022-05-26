@@ -14,7 +14,6 @@ from django.http import Http404
 from django.utils import timezone
 from django_filters import rest_framework
 from geoip2.errors import AddressNotFoundError
-from guardian.shortcuts import get_objects_for_user
 from guardian.utils import get_anonymous_user
 from rest_framework import viewsets, permissions, status, mixins
 from rest_framework.decorators import action
@@ -208,12 +207,10 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
         form = SendContactEmailForm(request.data)
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
-        superusers = get_user_model().objects.filter(is_superuser=True)
-        emails = [x.email for x in superusers]
 
         send_mail(form.cleaned_data['subject'], form.cleaned_data['message'],
                   form.cleaned_data['name'] + '<' + form.cleaned_data['email']
-                  + '>', emails)
+                  + '>', [settings.CONTACT_EMAIL])
         return Response({'status': 'ok'}, status=status.HTTP_200_OK)
 
 

@@ -1,3 +1,5 @@
+import traceback
+
 from celery import shared_task
 from django.utils import timezone
 from django.core.mail import EmailMessage
@@ -58,7 +60,7 @@ def send_current_prices_task(user_ids, query_string):
         email.send()
         print('Exito')
     except Exception as e:
-        print(e)
+        traceback.print_exc()
 
 
 @shared_task(queue='reports', ignore_result=True, task_time_limit=1800)

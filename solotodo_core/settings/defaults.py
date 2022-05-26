@@ -388,6 +388,7 @@ SIMPLE_JWT = {
 DEFAULT_CURRENCY = 4
 DEFAULT_COUNTRY = 1
 BOT_USERNAME = 'solobot@solotodo.com'
+CONTACT_EMAIL = 'contacto@solotodo.com'
 BACKEND_HOST = 'http://localhost:3000/'
 PRICING_HOST = 'http://localhost:3000/'
 CELL_CATEGORY = 6

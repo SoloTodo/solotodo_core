@@ -12,7 +12,7 @@ from guardian.shortcuts import get_objects_for_user
 from category_columns.models import CategoryColumn
 from wtb.models import WtbBrand, WtbEntity
 from solotodo.models import Category, Store, Entity, Country, StoreType, \
-    Currency, EsProduct, Product
+    Currency, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 

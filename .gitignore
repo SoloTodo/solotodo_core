@@ -10,3 +10,4 @@ node_modules
 cyber.tsv
 http_ca.crt
 elasticsearch-ca.pem
+*.csv

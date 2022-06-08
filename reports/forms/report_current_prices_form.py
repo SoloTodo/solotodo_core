@@ -204,6 +204,7 @@ class ReportCurrentPricesForm(forms.Form):
 
         headers.extend([
             'Tienda',
+            'Seller',
             'SKU',
             'URL',
             'Condición',
@@ -296,6 +297,12 @@ class ReportCurrentPricesForm(forms.Form):
             # Store
 
             worksheet.write(row, col, str(e.store))
+            col += 1
+
+            # Seller
+
+            seller_name = str(e.seller) if e.seller else 'N/A'
+            worksheet.write(row, col, seller_name)
             col += 1
 
             # SKU

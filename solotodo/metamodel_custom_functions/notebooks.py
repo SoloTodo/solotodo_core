@@ -142,6 +142,12 @@ def additional_es_fields(instance_model, elastic_search_result):
         else:
             pretty_dedicated_video_card = 'No posee'
 
+        if result['gpus']:
+            main_gpu = result['gpus'][-1]
+        else:
+            main_gpu = None
+
+        result['main_gpu'] = main_gpu
         result['pretty_battery'] = pretty_battery(
             elastic_search_result)
         result['pretty_ram'] = '{} {} ({})'.format(

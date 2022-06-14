@@ -3,7 +3,6 @@ from django.core.mail import EmailMessage
 from django.core.management import BaseCommand
 from django.utils import timezone
 
-from reports.forms.report_wtb_prices_form import ReportWtbPricesForm
 from reports.forms.report_wtb_store_price_comparison_form import \
     ReportWtbStorePriceComparisonForm
 from solotodo.models import SoloTodoUser
@@ -34,11 +33,12 @@ class Command(BaseCommand):
         message = """
         Buenos días,
 
-        Se adjunta la Comparación de Precios WTB del día de hoy %d.%m.%Y
+        Se adjunta la Comparación de Precios de MercadoLibre LG del día de 
+        hoy %d.%m.%Y
         """
         message = timezone.now().strftime(message)
 
-        subject = 'Comparación de precios WTB - %Y-%m-%d'
+        subject = 'Comparación de precios MercadoLibre LG - %Y-%m-%d'
         subject = timezone.now().strftime(subject)
 
         email = EmailMessage(subject,
@@ -48,7 +48,7 @@ class Command(BaseCommand):
         report_file = form.generate_report()['file']
 
         email.attach(
-            'wtb_price_comparison_report.xlsx', report_file,
+            'ml_lg_price_comparison_report.xlsx', report_file,
             'application/vnd.openxmlformats-'
             'officedocument.spreadsheetml.sheet')
 

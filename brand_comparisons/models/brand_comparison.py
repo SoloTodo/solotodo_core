@@ -314,9 +314,9 @@ class BrandComparison(models.Model):
         col = 0
         hardcoded_titles = [
             'Category',
-            str(self.brand_1), 'Mínimo Retail A',
+            str(self.brand_1), 'Promedio Retail A',
             'Line Logic', 'ATA',
-            str(self.brand_2), 'Mínimo Retail A'
+            str(self.brand_2), 'Promedio Retail A'
         ]
 
         for title in hardcoded_titles:
@@ -345,7 +345,7 @@ class BrandComparison(models.Model):
 
         # Individual product rows
         data_formulas = [
-            '=IFERROR(MIN({}), "")',
+            '=IFERROR(AVERAGE({}), "")',
         ]
 
         for segment in self.segments.prefetch_related(

@@ -12,6 +12,7 @@ from guardian.shortcuts import get_objects_for_user
 from category_columns.models import CategoryColumn
 from solotodo.models import Category, Store, Country, StoreType, Currency, \
     Entity, Product, EsProduct
+from solotodo.utils import get_dotted_dict_value
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -417,7 +418,8 @@ class ReportCurrentPricesForm(forms.Form):
             for column in specs_columns:
                 worksheet.write(
                     row, col,
-                    es_entry['specs'].get(column.field.es_field, 'N/A'))
+                    get_dotted_dict_value(
+                        es_entry['specs'], column.field.es_field) or 'N/A')
                 col += 1
 
             row += 1

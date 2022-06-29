@@ -57,7 +57,8 @@ def format_currency(value, curr='$', places=2, sep='.', dp=','):
 
 def recursive_dict_search(d, target):
     # Recursively search in the "d" dictionary for the key given by target
-    # Returns the value of the fictionary for that key or None if it was not found
+    # Returns the value of the dictionary for that key or None if it was
+    # not found
     # Only considers dictionary trees, not lists
 
     if target in d:
@@ -66,3 +67,18 @@ def recursive_dict_search(d, target):
     for k, v in d.items():
         if isinstance(v, dict):
             return recursive_dict_search(v, target)
+
+
+def get_dotted_dict_value(d, key):
+    # Given a dot separated key (e.g. "main_gpu.line_unicode")
+    # return the value for the dictionary for its full path
+    # (e.g. d['main_gpu']['line_unicode']) or None if some part of the key
+    # is not found
+    iterator = d
+
+    for key_part in key.split('.'):
+        if key_part not in iterator:
+            return None
+        iterator = iterator[key_part]
+
+    return iterator

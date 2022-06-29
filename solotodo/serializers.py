@@ -595,7 +595,8 @@ class RatingFullSerializer(RatingSerializer):
         model = Rating
         fields = ('id', 'url', 'product', 'product_rating', 'product_comments',
                   'store', 'store_rating', 'store_comments', 'creation_date',
-                  'user', 'ip', 'purchase_proof', 'approval_date')
+                  'user', 'ip', 'purchase_proof', 'approval_date',
+                  'email_or_phone')
 
 
 class RatingCreateSerializer(serializers.ModelSerializer):

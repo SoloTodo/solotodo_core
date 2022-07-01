@@ -46,6 +46,7 @@ class Rating(models.Model):
     approval_date = models.DateTimeField(null=True, blank=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     ip = models.GenericIPAddressField()
+    email_or_phone = models.CharField(max_length=255, blank=True, null=True)
 
     objects = RatingQuerySet.as_manager()
 

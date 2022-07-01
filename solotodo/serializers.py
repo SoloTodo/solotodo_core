@@ -603,6 +603,8 @@ class RatingCreateSerializer(serializers.ModelSerializer):
     store_rating = serializers.IntegerField(min_value=1, max_value=5)
     product_rating = serializers.IntegerField(min_value=1, max_value=5,
                                               allow_null=True, required=False)
+    email_or_phone = serializers.CharField(max_length=255,
+                                           allow_null=False, required=True)
     store = StorePrimaryKeyRelatedField()
     product = ProductPrimaryKeyRelatedField()
 
@@ -620,7 +622,8 @@ class RatingCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rating
         fields = ('product', 'product_rating', 'product_comments',
-                  'store', 'store_rating', 'store_comments', 'purchase_proof')
+                  'store', 'store_rating', 'store_comments', 'purchase_proof',
+                  'email_or_phone')
 
 
 class StoreRatingSerializer(serializers.Serializer):

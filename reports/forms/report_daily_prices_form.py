@@ -152,6 +152,7 @@ class ReportDailyPricesForm(forms.Form):
 
         headers.extend([
             'Tienda',
+            'Seller',
             'SKU',
             'Condición',
             'Fecha muestra',
@@ -215,6 +216,11 @@ class ReportDailyPricesForm(forms.Form):
             # Store
 
             worksheet.write(row, col, str(entity.store))
+            col += 1
+
+            # Seller
+            seller = entity.seller or 'N/A'
+            worksheet.write(row, col, seller)
             col += 1
 
             # SKU

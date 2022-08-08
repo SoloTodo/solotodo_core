@@ -104,11 +104,6 @@ class ReportWeeklyPricesForm(forms.Form):
         workbook.formats[0].set_font_size(10)
         worksheet = workbook.add_worksheet()
 
-        url_format = workbook.add_format({
-            'font_color': 'blue',
-            'font_size': 10
-        })
-
         header_format = workbook.add_format({
             'bold': True,
             'font_size': 10
@@ -180,12 +175,7 @@ class ReportWeeklyPricesForm(forms.Form):
 
             # Product
 
-            worksheet.write_url(
-                row, col,
-                '{}products/{}'.format(settings.PRICING_HOST,
-                                       entity.product.id),
-                string=str(entity.product),
-                cell_format=url_format)
+            worksheet.write(row, col, str(entity.product))
 
             col += 1
 
@@ -197,12 +187,7 @@ class ReportWeeklyPricesForm(forms.Form):
                     cell_plan_price = cell_plan_prices_dict.get(
                         cell_plan.id, 'N/A')
 
-                    worksheet.write_url(
-                        row, col,
-                        '{}products/{}'.format(settings.PRICING_HOST,
-                                               cell_plan.id),
-                        string=str(entity.cell_plan),
-                        cell_format=url_format)
+                    worksheet.write(row, col, str(entity.cell_plan))
                     worksheet.write(row, col + 1, cell_plan_price)
                 else:
                     worksheet.write(row, col, 'N/A')
@@ -227,11 +212,8 @@ class ReportWeeklyPricesForm(forms.Form):
             else:
                 sku_text = 'N/A'
 
-            worksheet.write_url(
-                row, col,
-                '{}skus/{}'.format(settings.PRICING_HOST, entity.id),
-                string=sku_text,
-                cell_format=url_format)
+            worksheet.write(row, col, sku_text)
+
             col += 1
 
             # Condition

@@ -321,6 +321,7 @@ class ReportWeeklyPricesForm(forms.Form):
                             file_for_upload)
 
         return {
+            'filename': filename,
             'file': file_value,
             'path': path
         }

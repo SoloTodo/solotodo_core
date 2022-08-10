@@ -40,6 +40,7 @@ from store_subscriptions.router import router as store_subscription_router
 from microsite.router import router as microsite_router
 from .custom_default_router import CustomDefaultRouter
 from metamodel.routers import router as metamodel_router
+from website_slides.router import router as website_slides_router
 
 router = CustomDefaultRouter()
 router.extend(solotodo_router)
@@ -59,6 +60,7 @@ router.extend(keyword_search_router)
 router.extend(store_subscription_router)
 router.extend(microsite_router)
 router.extend(metamodel_router)
+router.extend(website_slides_router)
 
 
 class FacebookLogin(SocialLoginView):

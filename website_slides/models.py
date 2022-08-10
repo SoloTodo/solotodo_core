@@ -10,7 +10,8 @@ class WebsiteSlideAsset(models.Model):
 class WebsiteSlide(models.Model):
     asset = models.ForeignKey(WebsiteSlideAsset, on_delete=models.CASCADE)
     destination_url = models.URLField()
-    categories = models.ManyToManyField('solotodo.Category')
+    label = models.CharField(max_length=255)
+    categories = models.ManyToManyField('solotodo.Category', blank=True)
     category_priority = models.IntegerField(null=True, blank=True)
     home_priority = models.IntegerField(null=True, blank=True)
 

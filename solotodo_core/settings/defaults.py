@@ -90,7 +90,8 @@ INSTALLED_APPS = [
     'lg_pricing',
     'soicos_conversions',
     'store_subscriptions',
-    'microsite'
+    'microsite',
+    'website_slides'
 ]
 
 SITE_ID = 1

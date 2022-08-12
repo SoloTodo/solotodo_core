@@ -172,7 +172,7 @@ class EntityByUrlForm(forms.Form):
                 return None
             sku = m.groups()[0]
         elif url.netloc == 'www.spdigital.cl':
-            store = Store.objects.get(name='SpDigital')
+            store = Store.objects.get(name='SP Digital')
             m = re.search(r'products/view/(\d+)$', url.path)
             if not m:
                 m = re.search(r'products/cyberday_view/(\d+)$', url.path)

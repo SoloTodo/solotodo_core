@@ -1,4 +1,5 @@
 from django.db import models
+from sorl.thumbnail import ImageField
 
 from solotodo.models import Country
 
@@ -35,6 +36,9 @@ class NavItem(models.Model):
     name = models.CharField(max_length=100)
     path = models.CharField(max_length=255)
     ordering = models.IntegerField()
+
+    picture = ImageField(upload_to='nav_items', blank=True, null=True)
+    subtitle = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.section, self.name)

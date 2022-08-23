@@ -6,7 +6,7 @@ from navigation.models import NavSection, NavItem
 class NavItemSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = NavItem
-        fields = ['name', 'path']
+        fields = ['name', 'path', 'picture', 'subtitle']
 
 
 class NavSectionSerializer(serializers.HyperlinkedModelSerializer):

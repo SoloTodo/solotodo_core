@@ -181,4 +181,14 @@ def additional_es_fields(instance_model, elastic_search_result):
             elastic_search_result['processor_frequency_value'] != \
             elastic_search_result['processor_turbo_frequency_value']
 
+        tags = []
+        if result['score_games'] >= 300:
+            tags.append('Gamer')
+
+        if elastic_search_result['screen_is_rotating'] and \
+                elastic_search_result['screen_is_touchscreen']:
+            tags.append('Convertible')
+
+        result['tags'] = tags
+
         return result

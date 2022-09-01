@@ -58,6 +58,8 @@ class Category(models.Model):
         max_length=255, null=True, blank=True)
     detail_bucket_key_fields = models.CharField(
         max_length=255, null=True, blank=True)
+    short_description_template = models.TextField(
+        blank=True, null=True)
 
     objects = CategoryQuerySet.as_manager()
 

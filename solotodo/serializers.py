@@ -137,7 +137,8 @@ class BundleModelSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Category
-        fields = ('url', 'id', 'name', 'slug', 'budget_ordering')
+        fields = ('url', 'id', 'name', 'slug', 'budget_ordering',
+                  'short_description_template')
 
 
 class CategorySpecsFilterChoiceSerializer(

@@ -9,8 +9,16 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         templates = CategoryTemplate.objects.filter(
             website=2,
-            purpose=2
+            purpose=3
         )
         for template in templates:
-            template.category.short_description_template = template.body
+            template.category.browse_result_template = template.body
+            template.category.save()
+
+        templates = CategoryTemplate.objects.filter(
+            website=2,
+            purpose=1
+        )
+        for template in templates:
+            template.category.detail_template = template.body
             template.category.save()

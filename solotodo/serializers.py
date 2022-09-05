@@ -138,7 +138,8 @@ class CategorySerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Category
         fields = ('url', 'id', 'name', 'slug', 'budget_ordering',
-                  'short_description_template')
+                  'short_description_template', 'browse_result_template',
+                  'detail_template')
 
 
 class CategorySpecsFilterChoiceSerializer(

@@ -149,7 +149,7 @@ def send_weekly_prices_task(user_id, query_string):
     q_dict = QueryDict(query_string)
 
     form = ReportWeeklyPricesForm(user, q_dict)
-    assert form.is_valid()
+    assert form.is_valid(), form.errors
 
     report_data = form.generate_report()
 

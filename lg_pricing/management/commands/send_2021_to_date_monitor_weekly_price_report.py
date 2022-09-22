@@ -25,4 +25,4 @@ class Command(BaseCommand):
             urllib.parse.quote(date_to.isoformat())
         )
 
-        send_weekly_prices_task(users[0].id, request)
+        send_weekly_prices_task.delay(users[0].id, request)

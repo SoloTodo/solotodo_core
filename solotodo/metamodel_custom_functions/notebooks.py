@@ -119,23 +119,30 @@ def get_sugestions_parameters(elastic_search_result):
     return searching_criteria
 
 
-def additional_es_fields(instance_model, elastic_search_result):
-    m = instance_model.model.name
-
-    if m == 'Notebook':
+def additional_es_fields(elastic_search_result, model_name):
+    if model_name == 'Notebook':
         result = {}
 
         result['gpus'] = []
 
         if 'processor_gpu_id' in elastic_search_result:
-            integrated_gpu_result = \
-                instance_model.processor.gpu.elasticsearch_document()[0]
-            result['gpus'].append(integrated_gpu_result)
+            processor_gpu_dict = {}
+
+            for key, value in elastic_search_result.items():
+                if key.startswith('processor_gpu_'):
+                    processor_gpu_dict[key.replace('processor_gpu_', '')] = value
+
+            result['gpus'].append(processor_gpu_dict)
 
         if 'dedicated_video_card_id' in elastic_search_result:
-            subresult = instance_model.dedicated_video_card\
-                .elasticsearch_document()[0]
-            result['gpus'].append(subresult)
+            dedicated_video_card_dict = {}
+
+            for key, value in elastic_search_result.items():
+                if key.startswith('dedicated_video_card_'):
+                    dedicated_video_card_dict[
+                        key.replace('dedicated_video_card_', '')] = value
+
+            result['gpus'].append(dedicated_video_card_dict)
 
             pretty_dedicated_video_card = \
                 elastic_search_result['dedicated_video_card_unicode']

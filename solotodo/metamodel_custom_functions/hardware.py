@@ -17,8 +17,8 @@ def unicode_function(im):
             return '{} MB'.format(value)
 
 
-def additional_es_fields(instance_model, elastic_search_original):
-    m = instance_model.model.name
+def additional_es_fields(elastic_search_original, model_name):
+    m = model_name
     if m == 'VideoCard':
         result = {
             'display_core_clock':

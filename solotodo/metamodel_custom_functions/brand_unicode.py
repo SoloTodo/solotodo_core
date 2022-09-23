@@ -1,4 +1,4 @@
-def brand_unicode(instance_model, elastic_search_original):
+def brand_unicode(elastic_search_original, model_name):
     if 'brand_unicode' in elastic_search_original:
         return {}
 

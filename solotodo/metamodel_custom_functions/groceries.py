@@ -1,5 +1,5 @@
-def additional_es_fields(instance_model, elastic_search_result):
-    if instance_model.model.name != 'Groceries':
+def additional_es_fields(elastic_search_result, model_name):
+    if model_name != 'Groceries':
         return
 
     result = {}

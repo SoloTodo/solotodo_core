@@ -41,8 +41,8 @@ def cell_plan_main_points(elastic_search_result):
     return result
 
 
-def additional_es_fields(instance_model, elastic_search_result):
-    m = instance_model.model.name
+def additional_es_fields(elastic_search_result, model_name):
+    m = model_name
 
     if m == 'Cell':
         result = {

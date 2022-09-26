@@ -430,23 +430,6 @@ class Product(models.Model):
         assert len(collector.data) == 2
         im.delete()
 
-    @classmethod
-    def batch_es_index(cls, product_ids=None, metamodel_data=None):
-        from metamodel.models import MetaModel
-
-        metamodel_data = metamodel_data or MetaModel.generate_metamodel_structure()
-        products = cls.objects.all().select_related(
-            'instance_model__model__category', 'brand')
-        if product_ids:
-            products = products.filter(pk__in=product_ids)
-
-        for product in products:
-            print(product)
-            es_document = InstanceModel.elasticsearch_document_from_dict(
-                product.instance_model_id, metamodel_data)
-            EsProduct.from_product(product, es_document).save()
-
-
     class Meta:
         app_label = 'solotodo'
         ordering = ('instance_model', )

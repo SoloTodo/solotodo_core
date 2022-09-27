@@ -10,8 +10,8 @@ def pretty_video_ports(elastic_search_original):
         return 'No posee'
 
 
-def additional_es_fields(instance_model, elastic_search_original):
-    m = instance_model.model.name
+def additional_es_fields(elastic_search_original, model_name):
+    m = model_name
     big_value = 1000 * 1000 * 1000 * 100000
     result = {}
     if m == 'Camera':

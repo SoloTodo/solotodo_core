@@ -693,7 +693,99 @@ class InstanceModel(models.Model):
             additional_es_fields_function = getattr(
                 f_module, path_components[-1])
             additional_fields = \
-                additional_es_fields_function(self, result)
+                additional_es_fields_function(result, self.model.name)
+            if additional_fields:
+                result.update(additional_fields)
+
+        return result, keywords
+
+    @staticmethod
+    def elasticsearch_document_from_dict(instance_id, metamodel_dict):
+        def sanitize_value(instance_model, model_name):
+            if instance_model is None:
+                return None
+
+            if model_name == 'BooleanField':
+                return bool(Decimal(instance_model['decimal_value']))
+            if model_name == 'CharField':
+                return instance_model['unicode_value']
+            if model_name == 'DateField':
+                return date.fromordinal(int(instance_model['decimal_value']))
+            if model_name == 'DateTimeField':
+                epoch = datetime.utcfromtimestamp(0)
+                delta = timedelta(seconds=int(instance_model['decimal_value']))
+                return epoch + delta
+            if model_name == 'DecimalField':
+                return float(instance_model['decimal_value'])
+            if model_name == 'FileField':
+                return FieldFile(default_storage.open(instance_model['unicode_value']),
+                                 FileField(), instance_model['unicode_value'])
+            if model_name == 'IntegerField':
+                return int(instance_model['decimal_value'])
+            else:
+                raise Exception('Invalid primitive model name: ' + model_name)
+
+        instance = metamodel_dict['IM_' + str(instance_id)]
+
+        result = {
+            'id': instance['id'],
+            'unicode': instance['unicode_representation']
+        }
+
+        keywords = result['unicode'].split()
+
+        meta_fields = metamodel_dict['MM_' + str(instance['model_id'])]['fields']
+        instance_fields = metamodel_dict['IM_' + str(instance['id'])]['fields']
+
+        instance_values_dict = {instance_field['field_id']: metamodel_dict['IM_' + str(instance_field['value_id'])]
+                                for instance_field in instance_fields}
+
+        for meta_field in meta_fields:
+            if meta_field['multiple']:
+                m2m_documents = []
+
+                m2m_instance_fields = list(filter(lambda x: x['field_id'] == meta_field['id'], instance_fields))
+
+                if not m2m_instance_fields:
+                    continue
+
+                for m2m_instance_field in m2m_instance_fields:
+                    m2m_document = InstanceModel.elasticsearch_document_from_dict(m2m_instance_field['value_id'], metamodel_dict)
+
+                    m2m_documents.append(m2m_document[0])
+                    keywords.extend(m2m_document[1])
+
+                result[meta_field['name']] = m2m_documents
+            else:
+                instance_value = instance_values_dict.get(meta_field['id'], None)
+                model = metamodel_dict['MM_' + str(meta_field['model_id'])]
+
+                if model['name'] == 'FileField':
+                    if instance_value:
+                        result[meta_field['name']] = instance_value['unicode_value']
+                elif model['name'] in MetaModel.NAME_INPUT_TYPES_DICT:
+                    # Is primitive
+                    sanitized_value = sanitize_value(instance_value, model['name'])
+                    result[meta_field['name']] = sanitized_value
+                    keywords.append(str(sanitized_value))
+                elif instance_value:
+                    fk_result = InstanceModel.elasticsearch_document_from_dict(instance_value['id'], metamodel_dict)
+                    for fk_key, fk_value in fk_result[0].items():
+                        try:
+                            result[meta_field['name'] + '_' + fk_key] = fk_value
+                        except TypeError:
+                            pass
+
+                    keywords.extend(fk_result[1])
+
+        for function_path in settings.METAMODEL[
+                'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS']:
+            path_components = function_path.split('.')
+            f_module = importlib.import_module('.'.join(path_components[:-1]))
+            additional_es_fields_function = getattr(
+                f_module, path_components[-1])
+            additional_fields = \
+                additional_es_fields_function(result, metamodel_dict['MM_' + str(instance['model_id'])]['name'])
             if additional_fields:
                 result.update(additional_fields)
 

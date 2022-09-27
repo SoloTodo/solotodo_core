@@ -430,7 +430,6 @@ class Product(models.Model):
         assert len(collector.data) == 2
         im.delete()
 
-
     class Meta:
         app_label = 'solotodo'
         ordering = ('instance_model', )

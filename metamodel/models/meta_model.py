@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django import forms
 from django.db import models, IntegrityError
 from django.db.models import Q
@@ -165,15 +167,62 @@ class MetaModel(models.Model):
             models_dict = get_model_fields_dict(refresh_cache=True)
             return models_dict[model_id]
 
-    def get_descendants_models(self):
-        if self.is_primitive():
-            return []
-        else:
-            result = [self]
-            for meta_field in self.fields.all():
-                result.extend(meta_field.model.get_descendants_models())
+    @staticmethod
+    def generate_metamodel_structure():
+        from . import MetaModel, InstanceModel
 
-            return list(set(result))
+        from metamodel.serializers import MetaModelPlainSerializer
+        from metamodel.serializers import InstanceModelPlainSerializer
+
+        from metamodel.models import MetaField
+        from metamodel.models import InstanceField
+        from metamodel.serializers import MetaFieldPlainSerializer
+        from metamodel.serializers import InstanceFieldPlainSerializer
+        metamodel_data = [
+            {
+                'klass': MetaModel,
+                'fields_klass': MetaField,
+                'prefix': 'MM',
+                'serializer': MetaModelPlainSerializer,
+                'fields_serializer': MetaFieldPlainSerializer
+
+            },
+            {
+                'klass': InstanceModel,
+                'fields_klass': InstanceField,
+                'prefix': 'IM',
+                'serializer': InstanceModelPlainSerializer,
+                'fields_serializer': InstanceFieldPlainSerializer
+            }
+        ]
+
+        d = {}
+
+        for metamodel_entry in metamodel_data:
+            print(metamodel_entry['klass'])
+            print('Loading fields')
+            fields_objects = metamodel_entry['fields_klass'].objects.all()
+            print('Creating field serializer')
+            fields_data = metamodel_entry['fields_serializer'](fields_objects, many=True).data
+            print('Creating field dict')
+            fields_per_parent = defaultdict(lambda: [])
+            for field_data in fields_data:
+                fields_per_parent[field_data['parent_id']].append(field_data)
+
+            print('Loading objects')
+            mm_objects = metamodel_entry['klass'].objects.all()
+            print('Creating objects serializer')
+            serializer = metamodel_entry['serializer']
+            serialized_objects = serializer(mm_objects, many=True).data
+
+            print('Assembling final dict')
+            for serialized_object in serialized_objects:
+                serialized_object['fields'] = fields_per_parent.get(serialized_object['id'], [])
+                d_key = '{}_{}'.format(metamodel_entry['prefix'], serialized_object['id'])
+                d[d_key] = serialized_object
+
+        return d
+
 
     class Meta:
         app_label = 'metamodel'

@@ -65,3 +65,28 @@ class InstanceModelSerializer(serializers.HyperlinkedModelSerializer):
         model = InstanceModel
         fields = ['id', 'url', 'decimal_value', 'unicode_value',
                   'unicode_representation', 'model', 'fields']
+
+
+class MetaFieldPlainSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MetaField
+        fields = ['id', 'name', 'parent_id', 'nullable', 'multiple', 'model_id',
+                  'ordering', 'hidden', 'help_text']
+
+
+class MetaModelPlainSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = MetaModel
+        fields = ['id', 'name', 'unicode_template', 'ordering_field']
+
+
+class InstanceFieldPlainSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstanceField
+        fields = ['id', 'field_id', 'value_id', 'parent_id']
+
+class InstanceModelPlainSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InstanceModel
+        fields = ['id', 'decimal_value', 'unicode_value',
+                  'unicode_representation', 'model_id']

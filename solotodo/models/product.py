@@ -154,9 +154,6 @@ class Product(models.Model):
 
         es_document = self.instance_model.elasticsearch_document()
 
-        if 'default_bucket' not in es_document[0]:
-            es_document[0]['default_bucket'] = es_document[0]['id']
-
         self.brand = Brand.objects.get_or_create(
             name=es_document[0]['brand_unicode'])[0]
 

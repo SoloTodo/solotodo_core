@@ -37,6 +37,9 @@ class EsProduct(EsProductEntities):
 
         specs, keywords = es_document
 
+        if 'default_bucket' not in specs:
+            specs['default_bucket'] = specs['id']
+
         return cls(
             product_id=product.id,
             name=str(product),

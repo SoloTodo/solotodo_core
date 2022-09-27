@@ -41,4 +41,5 @@ class Command(BaseCommand):
             print('{}/{} - {}'.format(idx + 1, product_count, product))
             es_document = InstanceModel.elasticsearch_document_from_dict(
                 product.instance_model_id, d)
+
             EsProduct.from_product(product, es_document).save()

@@ -55,7 +55,7 @@ ipython==7.15.0
 ipython-genutils==0.2.0
 jedi==0.10.2
 jmespath==0.9.3
-joblib==0.15.1
+joblib==1.2.0
 kombu==4.6.10
 lxml==4.3.3
 maxminddb==2.0.2

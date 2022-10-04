@@ -67,7 +67,7 @@ class EsEntity(EsProductEntities):
                entity.active_registry.cell_monthly_payment is None
 
     @classmethod
-    def from_entity(cls, entity):
+    def from_entity(cls, entity, prices_dict=None, leads_dict=None):
         from django.conf import settings
 
         assert cls.should_entity_be_indexed(entity)
@@ -75,25 +75,34 @@ class EsEntity(EsProductEntities):
 
         timestamp = active_registry.timestamp
 
-        reference_prices = entity.entityhistory_set.filter(
-            timestamp__gte=timestamp - timedelta(hours=84),
-            timestamp__lte=timestamp - timedelta(hours=36)
-        ).aggregate(
-            min_normal_price=Min('normal_price'),
-            min_offer_price=Min('offer_price')
-        )
+        if prices_dict:
+            reference_prices = prices_dict.get(entity.id)
+            if reference_prices:
+                reference_normal_price, reference_offer_price = reference_prices
+            else:
+                reference_normal_price = active_registry.normal_price
+                reference_offer_price = active_registry.offer_price
+        else:
+            reference_prices = entity.entityhistory_set.filter(
+                timestamp__gte=timestamp - timedelta(hours=84),
+                timestamp__lte=timestamp - timedelta(hours=36)
+            ).aggregate(
+                min_normal_price=Min('normal_price'),
+                min_offer_price=Min('offer_price')
+            )
 
-        reference_normal_price = reference_prices['min_normal_price'] or \
-            active_registry.normal_price
-        reference_offer_price = reference_prices['min_offer_price'] or \
-            active_registry.offer_price
+            reference_normal_price = reference_prices['min_normal_price'] or \
+                active_registry.normal_price
+            reference_offer_price = reference_prices['min_offer_price'] or \
+                active_registry.offer_price
 
-        exchange_rate = entity.currency.exchange_rate
-
-        leads = Lead.objects.filter(
-            entity_history__entity=entity,
-            timestamp__gte=timestamp - timedelta(hours=72)
-        ).count()
+        if leads_dict:
+            leads = leads_dict.get(entity.id, 0)
+        else:
+            leads = Lead.objects.filter(
+                entity_history__entity=entity,
+                timestamp__gte=timestamp - timedelta(hours=72)
+            ).count()
 
         if entity.bundle:
             bundle_name = entity.bundle.name
@@ -102,6 +111,7 @@ class EsEntity(EsProductEntities):
             bundle_name = None
             bundle_id = None
 
+        exchange_rate = entity.currency.exchange_rate
         normal_price_usd = entity.active_registry.normal_price / exchange_rate
         offer_price_usd = entity.active_registry.offer_price / exchange_rate
 

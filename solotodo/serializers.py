@@ -307,7 +307,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'product',
             'cell_plan',
             'bundle',
-            'coupon',
+            'best_coupon',
             'currency',
             'description',
             'picture_urls',

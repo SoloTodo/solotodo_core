@@ -35,7 +35,8 @@ class Command(BaseCommand):
             'bundle',
             'product__brand',
             'store__country',
-            'category'
+            'category',
+            'best_coupon'
         )
 
         # Ideally each entity should calculate its reference price and leads
@@ -71,4 +72,4 @@ class Command(BaseCommand):
 
         for idx, e in enumerate(es):
             print('{} / {}: {}'.format(idx + 1, es_count, e.id))
-            EsEntity.from_entity(e, prices_dict, leads_dict)
+            EsEntity.from_entity(e, prices_dict, leads_dict).save()

@@ -48,12 +48,12 @@ class ProductsBrowseForm(forms.Form):
 
     ORDERING_CHOICES = {
         'offer_price_usd': {
-            'script': "doc['offer_price_usd'].value",
+            'script': "doc['offer_price_usd_with_coupon'].value",
             'direction': 'asc',
             'score_mode': 'min'
         },
         'normal_price_usd': {
-            'script': "doc['normal_price_usd'].value",
+            'script': "doc['normal_price_usd_with_coupon'].value",
             'direction': 'asc',
             'score_mode': 'min'
         },
@@ -159,7 +159,7 @@ class ProductsBrowseForm(forms.Form):
                     subquery_params[es_range_field_field] = form_field_value
 
                 if subquery_params:
-                    es_field_name = '{}_price{}'.format(price_type, currency_choice)
+                    es_field_name = '{}_price{}_with_coupon'.format(price_type, currency_choice)
                     price_filter &= Q('range', **{es_field_name: subquery_params})
 
         return price_filter
@@ -330,8 +330,8 @@ class ProductsBrowseForm(forms.Form):
         # Third part of the query. Obtain the stats aggregation for the price
         # results
         search.aggs.bucket('entity_prices', 'children', type='entity')\
-            .metric('offer_price_usd', 'stats', field='offer_price_usd')\
-            .metric('normal_price_usd', 'stats', field='normal_price_usd')
+            .metric('offer_price_usd', 'stats', field='offer_price_usd_with_coupon')\
+            .metric('normal_price_usd', 'stats', field='normal_price_usd_with_coupon')
 
         # Fifth part, add a bucket to obtain the number of results
         filtered_products_bucket.metric(
@@ -372,11 +372,11 @@ class ProductsBrowseForm(forms.Form):
         prices_search.aggs \
             .bucket('per_product', 'terms', field='product_id',
                     size=self.COLLAPSE_SIZE * page_size) \
-            .metric('normal_price_usd', 'min', field='normal_price_usd') \
-            .metric('offer_price_usd', 'min', field='offer_price_usd') \
+            .metric('normal_price_usd', 'min', field='normal_price_usd_with_coupon') \
+            .metric('offer_price_usd', 'min', field='offer_price_usd_with_coupon') \
             .bucket('price_per_currency', 'terms', field='currency_id') \
-            .metric('normal_price', 'min', field='normal_price') \
-            .metric('offer_price', 'min', field='offer_price')
+            .metric('normal_price', 'min', field='normal_price_with_coupon') \
+            .metric('offer_price', 'min', field='offer_price_with_coupon')
 
         price_results = prices_search[:0].execute().to_dict()
 

@@ -9,7 +9,7 @@ from solotodo.models import Language, Store, Currency, Country, StoreType, \
     Category, StoreUpdateLog, Entity, EntityHistory, Product, NumberFormat, \
     Lead, Website, CategorySpecsFilter, CategorySpecsOrder, Visit, Rating, \
     ProductPicture, Brand, StoreSection, EntitySectionPosition, ProductVideo, \
-    Bundle
+    Bundle, Coupon
 from solotodo.serializer_utils import StorePrimaryKeyRelatedField, \
     ProductPrimaryKeyRelatedField
 from solotodo.utils import get_client_ip
@@ -132,6 +132,10 @@ class BundleModelSerializer(serializers.ModelSerializer):
         fields = ['name']
 
 
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = ['code', 'amount', 'amount_type', 'amount_type_text']
 
 
 class CategorySerializer(serializers.HyperlinkedModelSerializer):
@@ -276,6 +280,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
     product = NestedProductSerializer(read_only=True)
     cell_plan = NestedProductSerializer(read_only=True)
     bundle = BundleSerializer(read_only=True)
+    best_coupon = CouponSerializer(read_only=True)
     url = serializers.HyperlinkedIdentityField(view_name='entity-detail')
     external_url = serializers.URLField(source='url')
     picture_urls = serializers.ListField(
@@ -302,6 +307,7 @@ class EntitySerializer(serializers.HyperlinkedModelSerializer):
             'product',
             'cell_plan',
             'bundle',
+            'coupon',
             'currency',
             'description',
             'picture_urls',
@@ -326,6 +332,7 @@ class EntityWithoutDescriptionSerializer(EntitySerializer):
             'cell_plan_name',
             'store',
             'bundle',
+            'best_coupon',
             'category',
             'sku',
             'external_url',
@@ -394,26 +401,6 @@ class EntityEventUserSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['url', 'id', 'full_name']
 
 
-class EntityESSerializer(serializers.ModelSerializer):
-    normal_price = serializers.DecimalField(
-        decimal_places=2, max_digits=20, source='active_registry.normal_price')
-    offer_price = serializers.DecimalField(
-        decimal_places=2, max_digits=20, source='active_registry.offer_price')
-    normal_price_usd = serializers.DecimalField(
-        decimal_places=2, max_digits=20)
-    offer_price_usd = serializers.DecimalField(
-        decimal_places=2, max_digits=20)
-    currency_id = serializers.IntegerField()
-    country_id = serializers.IntegerField(source='store.country_id')
-    store_type_id = serializers.IntegerField(source='store.type_id')
-
-    class Meta:
-        model = Entity
-        fields = ['id', 'store_id', 'normal_price', 'normal_price_usd',
-                  'offer_price', 'offer_price_usd', 'currency_id',
-                  'country_id', 'store_type_id']
-
-
 class LeadSerializer(serializers.HyperlinkedModelSerializer):
     normal_price = serializers.DecimalField(
         source='entity_history.normal_price',
@@ -458,32 +445,6 @@ class VisitWithUserDataSerializer(VisitSerializer):
     class Meta:
         model = Visit
         fields = ['url', 'id', 'product', 'website', 'timestamp', 'user', 'ip']
-
-
-class CategoryBrowsePricesSerializer(serializers.Serializer):
-    currency = serializers.HyperlinkedRelatedField(
-        view_name='currency-detail', read_only=True, source='currency.id')
-    min_normal_price = serializers.DecimalField(
-        max_digits=None, decimal_places=2)
-    min_offer_price = serializers.DecimalField(
-        max_digits=None, decimal_places=2)
-    min_normal_price_usd = serializers.DecimalField(
-        max_digits=None, decimal_places=2)
-    min_offer_price_usd = serializers.DecimalField(
-        max_digits=None, decimal_places=2)
-
-    class Meta:
-        fields = ['currency', 'min_normal_price', 'min_offer_price',
-                  'min_normal_price_usd', 'min_offer_price_usd']
-
-
-class CategoryBrowseProductEntrySerializer(serializers.Serializer):
-    product = ProductSerializer()
-    ordering_value = serializers.DecimalField(max_digits=20, decimal_places=2)
-    prices = CategoryBrowsePricesSerializer(many=True)
-
-    class Meta:
-        fields = ['product', 'ordering_value', 'prices']
 
 
 class CategoryFullBrowseResultEntityHistorySerializer(
@@ -562,6 +523,7 @@ class ProductAvailableEntitiesMinimalSerializer(serializers.Serializer):
                 fields = ['id', 'normal_price', 'offer_price']
 
         active_registry = EntityHistoryCustomSerializer()
+        best_coupon = CouponSerializer()
         external_url = serializers.URLField(source='url')
 
         class Meta:
@@ -570,7 +532,8 @@ class ProductAvailableEntitiesMinimalSerializer(serializers.Serializer):
                 'id',
                 'store',
                 'external_url',
-                'active_registry'
+                'active_registry',
+                'best_coupon'
             )
 
     product = ProductSerializer()

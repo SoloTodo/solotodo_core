@@ -16,6 +16,7 @@ from .currency import Currency
 from .category import Category
 from .store import Store
 from .bundle import Bundle
+from .coupon import Coupon
 from .es_product import EsProduct
 
 
@@ -203,6 +204,9 @@ class Entity(models.Model):
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE, null=True)
     cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
                                   related_name='+')
+    best_coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL,
+                                    null=True, blank=True,
+                                    related_name='entities')
     active_registry = models.OneToOneField('EntityHistory',
                                            on_delete=models.CASCADE,
                                            related_name='+',

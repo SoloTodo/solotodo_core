@@ -40,6 +40,7 @@ from .visit import Visit
 from .store_section import StoreSection
 from .entity_section_position import EntitySectionPosition
 from .product_video import ProductVideo
+from .coupon import Coupon
 
 # ElasticSearch DSL persistence models
 from .es_product_entities import EsProductEntities

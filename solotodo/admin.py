@@ -12,7 +12,7 @@ from solotodo.models import Currency, Entity, EntityHistory, Category, \
     StoreType, CategoryTier, NumberFormat, EntityLog, Website, \
     CategorySpecsFilter, CategorySpecsOrder, Lead, Visit, Rating, \
     ProductPicture, Brand, StoreSection, EntitySectionPosition, ProductVideo, \
-    Bundle
+    Bundle, Coupon
 
 
 @admin.register(Permission)
@@ -243,3 +243,8 @@ class StoreSectionAdmin(admin.ModelAdmin):
 @admin.register(ProductVideo)
 class ProductVideoAdmin(admin.ModelAdmin):
     list_display = ('youtube_id', 'name', 'conditions')
+
+
+@admin.register(Coupon)
+class CouponModelAdmin(admin.ModelAdmin):
+    list_display = ['id', 'store', 'amount', 'amount_type_text']

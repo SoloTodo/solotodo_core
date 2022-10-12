@@ -40,6 +40,11 @@ class EsEntity(EsProductEntities):
     normal_price_usd_per_unit = ScaledFloat(scaling_factor=100)
     offer_price_usd_per_unit = ScaledFloat(scaling_factor=100)
 
+    normal_price_with_coupon = ScaledFloat(scaling_factor=100)
+    offer_price_with_coupon = ScaledFloat(scaling_factor=100)
+    normal_price_usd_with_coupon = ScaledFloat(scaling_factor=100)
+    offer_price_usd_with_coupon = ScaledFloat(scaling_factor=100)
+
     name = Keyword()
     part_number = Keyword()
     sku = Keyword()
@@ -133,6 +138,22 @@ class EsEntity(EsProductEntities):
             normal_price_usd_per_unit = normal_price_usd
             offer_price_usd_per_unit = offer_price_usd
 
+        if entity.best_coupon:
+            coupon = entity.best_coupon
+            normal_price_with_coupon = coupon.calculate_price(
+                active_registry.normal_price)
+            offer_price_with_coupon = coupon.calculate_price(
+                active_registry.offer_price)
+            normal_price_usd_with_coupon = normal_price_with_coupon \
+                / exchange_rate
+            offer_price_usd_with_coupon = offer_price_with_coupon \
+                / exchange_rate
+        else:
+            normal_price_with_coupon = active_registry.normal_price
+            offer_price_with_coupon = active_registry.offer_price
+            normal_price_usd_with_coupon = normal_price_usd
+            offer_price_usd_with_coupon = offer_price_usd
+
         return cls(
             entity_id=entity.id,
             store_id=entity.store_id,
@@ -162,6 +183,10 @@ class EsEntity(EsProductEntities):
             offer_price_per_unit=offer_price_per_unit,
             normal_price_usd_per_unit=normal_price_usd_per_unit,
             offer_price_usd_per_unit=offer_price_usd_per_unit,
+            normal_price_with_coupon=normal_price_with_coupon,
+            offer_price_with_coupon=offer_price_with_coupon,
+            normal_price_usd_with_coupon=normal_price_usd_with_coupon,
+            offer_price_usd_with_coupon=offer_price_usd_with_coupon,
             name=entity.name,
             part_number=entity.part_number,
             sku=entity.sku,

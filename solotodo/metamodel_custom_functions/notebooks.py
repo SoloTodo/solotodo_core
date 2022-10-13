@@ -198,4 +198,21 @@ def additional_es_fields(elastic_search_result, model_name):
 
         result['tags'] = tags
 
+        warnings = []
+        if elastic_search_result['keyboard_layout_unicode'] == 'Inglés':
+            warnings.append(
+                'Este notebook tiene teclado en inglés, por lo que hacer la '
+                '"ñ", tildes, o símbolos especiales con él puede ser incómodo')
+
+        for storage_drive in elastic_search_result['storage_drive']:
+            if storage_drive['drive_type_unicode'] in ['SSD', 'eMMC']:
+                break
+        else:
+            warnings.append(
+                'Este notebook usa un disco duro (HDD) como unidad de '
+                'almancenamiento, lo que lo vuelve lento para su uso normal. '
+                'Recomendamos buscar equipos con almacenamiento SSD')
+
+        result['warnings'] = warnings
+
         return result

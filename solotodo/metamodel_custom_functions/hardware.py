@@ -36,6 +36,9 @@ def additional_es_fields(elastic_search_original, model_name):
             elastic_search_original['frequency']
         result['brand_unicode'] = \
             elastic_search_original['line_family_brand_brand_unicode']
+        result['total_core_count'] = \
+            elastic_search_original['core_count_value'] + \
+            elastic_search_original['e_core_count_value']
         return result
     if m == 'PowerSupply':
         result = {}

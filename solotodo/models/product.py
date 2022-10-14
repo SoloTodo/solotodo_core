@@ -161,6 +161,8 @@ class Product(models.Model):
 
         if part_number:
             self.part_number = part_number.strip()
+        else:
+            self.part_number = None
 
         if creator_id:
             self.creator_id = creator_id

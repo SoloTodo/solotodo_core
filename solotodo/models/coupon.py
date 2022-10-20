@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import models
 
 from .store import Store
+from .category import Category
 
 
 class Coupon(models.Model):
@@ -15,6 +16,7 @@ class Coupon(models.Model):
     ]
 
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
+    categories = models.ManyToManyField(Category, blank=True)
     code = models.CharField(max_length=100)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     amount_type = models.IntegerField(
@@ -38,6 +40,9 @@ class Coupon(models.Model):
         ).exclude(
             best_coupon=self
         ).select_related('active_registry')
+
+        if self.categories.all():
+            es = es.filter(category__in=self.categories.all())
 
         for e in es:
             price_with_coupon = self.calculate_price(

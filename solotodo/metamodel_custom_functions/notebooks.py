@@ -210,8 +210,26 @@ def additional_es_fields(elastic_search_result, model_name):
         else:
             warnings.append(
                 'Este notebook usa un disco duro (HDD) como unidad de '
-                'almancenamiento, lo que lo vuelve lento para su uso normal. '
+                'almacenamiento, lo que lo vuelve lento para su uso normal. '
                 'Recomendamos buscar equipos con almacenamiento SSD')
+
+        os_brand = elastic_search_result[
+            'operating_system_family_brand_unicode']
+        if os_brand == 'Linux':
+            warnings.append(
+                'Este notebook usa Linux como sistema operativo, que es '
+                'bastante diferente a Windows (lo más común en '
+                'notebooks)')
+        elif os_brand == 'FreeDOS':
+            warnings.append(
+                'Este notebook no incluye sistema operativo. Va a ser '
+                'necesitar instalarle Windows u otro sistema operativo '
+                'por su cuenta')
+        elif os_brand == 'Google':
+            warnings.append(
+                'Este notebook usa Chrome OS como sistema operativo, que es '
+                'un poco más limitado y no incluye las aplicaciones '
+                'típicas (como Office) disponibles en Windows')
 
         result['warnings'] = warnings
 

@@ -1,11 +1,12 @@
 from datetime import timedelta
+from itertools import repeat
+from multiprocessing import cpu_count, Pool
 
 from django.core.management import BaseCommand
 from django.db import models
 from django.db.models import Avg, Min, Count
 
 from solotodo.models import Entity, EntityHistory, EsEntity, Lead
-from solotodo.tasks import entity_save
 
 
 class Epoch(models.expressions.Func):
@@ -16,6 +17,11 @@ class Epoch(models.expressions.Func):
 class DateTimeFromFloat(models.expressions.Func):
     template = 'To_TIMESTAMP(%(expressions)s)::TIMESTAMP at time zone \'UTC\''
     output_field = models.DateTimeField()
+
+
+def index_entity(entity, prices_dict, leads_dict):
+    # Top level function used by multiprocessing
+    EsEntity.from_entity(entity, prices_dict, leads_dict).save()
 
 
 class Command(BaseCommand):
@@ -68,8 +74,15 @@ class Command(BaseCommand):
 
         leads_dict = {x['entity_history__entity']: x['c'] for x in leads}
 
-        es_count = es.count()
-
-        for idx, e in enumerate(es):
-            print('{} / {}: {}'.format(idx + 1, es_count, e.id))
-            EsEntity.from_entity(e, prices_dict, leads_dict).save()
+        print('Before indexing, it is a good idea to limit '
+              'ElasticSearch RAM usage to 8 GB or so by creating a '
+              'config/jvm.options.d/memory.options with the flags -Xms8g '
+              'and -Xmx8g')
+        print('Your computer has {} available cores'.format(cpu_count()))
+        core_target = int(input('How many cores do you want to use for '
+                                'indexing? (ideally leave 4 or so for '
+                                'Elasticsearch and other stuff)'))
+        print('Creating pool with {} workers'.format(core_target))
+        pool = Pool(processes=core_target)
+        pool.starmap(index_entity, zip(
+            leads, repeat(prices_dict), repeat(leads_dict)))

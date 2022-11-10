@@ -146,6 +146,11 @@ class EntityFilterSet(rest_framework.FilterSet):
         method='_exclude_marketplace',
         label='Exclude marketplace?'
     )
+    is_marketplace = rest_framework.BooleanFilter(
+        field_name='is_marketplace',
+        method='_is_marketplace',
+        label='Is from marketplace?'
+    )
     exclude_with_monthly_payment = rest_framework.BooleanFilter(
         field_name='exclude_with_monthly_payment',
         method='_exclude_with_monthly_payment',
@@ -201,6 +206,15 @@ class EntityFilterSet(rest_framework.FilterSet):
 
     def _exclude_marketplace(self, queryset, name, value):
         if value:
+            return queryset.filter(seller__isnull=True)
+        else:
+            return queryset
+
+
+    def _is_marketplace(self, queryset, name, value):
+        if value:
+            return queryset.filter(seller__isnull=False)
+        elif value is False:
             return queryset.filter(seller__isnull=True)
         else:
             return queryset

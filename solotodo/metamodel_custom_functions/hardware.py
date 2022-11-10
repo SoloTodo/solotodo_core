@@ -10,9 +10,9 @@ def unicode_function(im):
     if m == 'VideoCardMemoryQuantity':
         value = im.value
         if value % 1024 == 0:
-            return '{} GB'.format(value / 1024)
+            return '{} GB'.format(value // 1024)
         elif value > 512 and (value - 512) % 1024 == 0:
-            return '{}.5 GB'.format((value - 512) / 1024)
+            return '{}.5 GB'.format((value - 512) // 1024)
         else:
             return '{} MB'.format(value)
 
@@ -26,7 +26,8 @@ def additional_es_fields(elastic_search_original, model_name):
                 elastic_search_original['gpu_boost_core_clock'],
             'display_memory_clock':
                 elastic_search_original['memory_clock'] -
-                elastic_search_original['gpu_default_memory_clock'] >= 10
+                elastic_search_original['gpu_default_memory_clock'] >= 10,
+            'tags': [elastic_search_original['gpu_unicode']]
         }
         return result
     if m == 'Processor':
@@ -39,6 +40,14 @@ def additional_es_fields(elastic_search_original, model_name):
         result['total_core_count'] = \
             elastic_search_original['core_count_value'] + \
             elastic_search_original['e_core_count_value']
+
+        warnings = []
+        if 'MPK' in (elastic_search_original.get('part_number', '') or ''):
+            warnings.append('Este procesador se vende sin caja. Consulte a '
+                            'la tienda si es que incluye cooler y '
+                            'accesorios')
+        result['warnings'] = warnings
+
         return result
     if m == 'PowerSupply':
         result = {}

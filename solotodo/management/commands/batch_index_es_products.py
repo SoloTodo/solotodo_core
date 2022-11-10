@@ -20,6 +20,9 @@ def index_product(product, d):
     EsProduct.from_product(product, es_document).save()
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('--categories', nargs='*', type=int)
+
     def handle(self, *args, **options):
         filename = 'metamodel_data.json'
 
@@ -48,6 +51,10 @@ class Command(BaseCommand):
         products = Product.objects.all().select_related(
             'instance_model__model__category', 'brand')
 
+        category_ids = options['categories']
+        if category_ids:
+            products = products.filter_by_category(category_ids)
+
         print('Before indexing, it is a good idea to limit '
               'ElasticSearch RAM usage to 8 GB or so by creating a '
               'config/jvm.options.d/memory.options with the flags -Xms8g '
@@ -55,7 +62,9 @@ class Command(BaseCommand):
         print('Your computer has {} available cores'.format(cpu_count()))
         core_target = int(input('How many cores do you want to use for '
                                 'indexing? (ideally leave 4 or so for '
-                                'Elasticsearch and other stuff)'))
+                                'Elasticsearch and other stuff) '))
         print('Creating pool with {} workers'.format(core_target))
         pool = Pool(processes=core_target)
         pool.starmap(index_product, zip(products, repeat(d)))
+        pool.close()
+        pool.join()

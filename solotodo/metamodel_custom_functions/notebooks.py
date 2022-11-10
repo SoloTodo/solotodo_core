@@ -222,14 +222,14 @@ def additional_es_fields(elastic_search_result, model_name):
                 'notebooks)')
         elif os_brand == 'FreeDOS':
             warnings.append(
-                'Este notebook no incluye sistema operativo. Va a ser '
-                'necesitar instalarle Windows u otro sistema operativo '
+                'Este notebook no incluye sistema operativo. '
+                'Necesitará instalarle Windows u otro sistema operativo '
                 'por su cuenta')
         elif os_brand == 'Google':
             warnings.append(
                 'Este notebook usa Chrome OS como sistema operativo, que es '
                 'un poco más limitado y no incluye las aplicaciones '
-                'típicas (como Office) disponibles en Windows')
+                'típicas disponibles en Windows (como Office)')
 
         result['warnings'] = warnings
 

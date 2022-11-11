@@ -228,7 +228,8 @@ class Entity(models.Model):
     review_count = models.IntegerField(blank=True, null=True)
     review_avg_score = models.FloatField(blank=True, null=True)
     has_virtual_assistant = models.NullBooleanField(blank=True)
-    seller = models.CharField(max_length=256, blank=True, null=True)
+    seller = models.CharField(max_length=256, blank=True, null=True,
+                              db_index=True)
     is_visible = models.BooleanField(default=True)
 
     # Metadata

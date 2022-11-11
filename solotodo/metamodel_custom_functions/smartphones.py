@@ -143,6 +143,43 @@ def additional_es_fields(elastic_search_result, model_name):
         else:
             general_score = 0
 
+        tags = []
+        if elastic_search_result['network_generation_unicode'] == '5G':
+            tags.append('5G')
+
+        result['tags'] = tags
+
+        warnings = []
+
+        if elastic_search_result['operating_system_line_is_discontinued']:
+            warnings.append('El sistema operativo con el que este celular '
+                            'fue lanzado está descontinuado. Por favor '
+                            'verifique si es que tiene disponible una '
+                            'actualización de software reciente antes '
+                            'de comprarlo')
+
+        if elastic_search_result['line_brand_unicode'] == 'Huawei':
+            warnings.append('Los smartphones Huawei no tienen disponibles las '
+                            'aplicaciones de Google (Youtube, GMail, etc) '
+                            'ni acceso a la Play Store.')
+        if elastic_search_result['operating_system_line_unicode'] == \
+                'Google Android Go':
+            warnings.append('Este equipo viene con Android "Go" como sistema '
+                            'operativo, que es más básico y limitado que '
+                            'Android tradicional')
+        if elastic_search_result['category_unicode'] == 'Smartphone' and elastic_search_result['ram_value'] < 4096:
+            warnings.append('Este equipo solo tiene {} de RAM. SoloTodo '
+                            'recomienda equipos con por lo menos 4 GB de RAM '
+                            'para un celular actual.'.format(
+                elastic_search_result['ram_unicode']))
+        if elastic_search_result['category_unicode'] == 'Smartphone' and elastic_search_result['internal_storage_value'] < 65536:
+            warnings.append('Este equipo solo tiene {} de memoria. SoloTodo '
+                            'recomienda equipos con por lo menos 64 GB de '
+                            'almacenamiento para un celular actual.'.format(
+                elastic_search_result['internal_storage_unicode']))
+
+        result['warnings'] = warnings
+
         result['general_score'] = general_score
 
         return result

@@ -57,6 +57,32 @@ def additional_es_fields(elastic_search_original, model_name):
         else:
             result['currents_on_12V_rails_unicode'] = current.split(',')
         return result
+    if m == 'StorageDrive':
+        result = {}
+
+        tags = []
+        warnings = []
+
+        is_server = elastic_search_original['type_unicode'] == 'Servidor'
+
+        if is_server:
+            tags.append('Servidor')
+            warnings.append('Este disco es para servidores, no para PCs de '
+                            'escritorio o notebooks')
+        elif elastic_search_original['size_unicode'] == '3.5"':
+            tags.append('Desktop')
+            if elastic_search_original['rpm_value'] < 7200:
+                warnings.append('Recomendamos buscar discos duros de 7200 RPM '
+                                'o más para un PC desktop a menos que sea '
+                                'solamente para almacenamiento de archivos '
+                                'multimedia')
+        elif elastic_search_original['size_unicode'] == '2.5"':
+            tags.append('Notebook')
+
+        result['tags'] = tags
+        result['warnings'] = warnings
+
+        return result
     big_value = 1000 * 1000 * 1000 * 10
     if m == 'ComputerCase':
         result = {}
@@ -176,5 +202,28 @@ def additional_es_fields(elastic_search_original, model_name):
             segment = 'Gamer'
 
         result['segment'] = segment
+
+        tags = []
+
+        is_server = elastic_search_original['is_ecc'] or \
+            elastic_search_original['is_fully_buffered']
+
+        if is_server:
+            tags.append('Servidor')
+        elif elastic_search_original['bus_bus_bus_format_unicode'] == 'DIMM':
+            tags.append('Desktop')
+        elif elastic_search_original['bus_bus_bus_format_unicode'] == \
+                'SO-DIMM':
+            tags.append('Notebook')
+
+        result['tags'] = tags
+
+        warnings = []
+
+        if is_server:
+            warnings.append('Esta RAM es para servidores, no para notebooks o '
+                            'equipos de escritorio convencionales')
+
+        result['warnings'] = warnings
 
         return result

@@ -56,6 +56,16 @@ def additional_es_fields(elastic_search_original, model_name):
             result['currents_on_12V_rails_unicode'] = []
         else:
             result['currents_on_12V_rails_unicode'] = current.split(',')
+
+        tags = []
+
+        if elastic_search_original['certification_value']:
+            tags.append(elastic_search_original['certification_unicode'])
+
+        if elastic_search_original['is_modular']:
+            tags.append('Modular')
+
+        result['tags'] = tags
         return result
     if m == 'StorageDrive':
         result = {}

@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.db.models import Q
 from rest_framework import viewsets, mixins, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -49,7 +50,8 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
         from wtb.models import WtbEntity
 
         microsite_brand = self.get_object()
-        entries = microsite_brand.entries.all()
+        entries = microsite_brand.entries.filter(
+            Q(home_ordering__isnull=False) | Q(ordering__isnull=False))
         stores = microsite_brand.stores.all()
 
         products = [entry.product for entry in entries]

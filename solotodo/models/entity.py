@@ -148,7 +148,8 @@ class EntityQueryset(models.QuerySet):
                 Q(cell_plan=entry['cell_plan']) & \
                 Q(bundle=entry['bundle'])
 
-        entities = Entity.objects.filter(entities_query).select_related()
+        entities = Entity.objects.get_available().filter(
+            entities_query).select_related()
 
         entities_dict = {}
         for entity in entities:

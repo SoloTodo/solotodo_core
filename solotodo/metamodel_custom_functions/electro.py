@@ -64,6 +64,11 @@ def additional_es_fields(elastic_search_original, model_name):
 
         result['lg_cac_segment'] = lg_cac_segment
 
+        tags = []
+        if elastic_search_original['display_unicode'] != 'LED':
+            tags.append(elastic_search_original['display_unicode'])
+        result['tags'] = tags
+
         return result
 
     if m == 'ExternalStorageDrive':

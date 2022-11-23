@@ -118,6 +118,13 @@ def additional_es_fields(elastic_search_original, model_name):
             included_fan_count += included_fan['quantity']
         result['included_fan_count'] = included_fan_count
 
+        tags = []
+
+        if elastic_search_original['illumination_priority'] >= 4:
+            tags.append(elastic_search_original['illumination_unicode'])
+
+        result['tags'] = tags
+
         return result
     if m == 'CpuCooler':
         result = {}

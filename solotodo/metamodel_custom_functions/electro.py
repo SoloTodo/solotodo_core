@@ -294,6 +294,36 @@ def additional_es_fields(elastic_search_original, model_name):
 
         result['general_score'] = general_score
 
+        warnings = []
+
+        if elastic_search_original['operating_system_line_is_discontinued']:
+            warnings.append('El sistema operativo con el que esta tablet '
+                            'fue lanzado está obsoleto. Por favor '
+                            'verifique si es que tiene disponible una '
+                            'actualización de software reciente antes '
+                            'de comprarla')
+
+        if elastic_search_original['line_brand_unicode'] == 'Huawei':
+            warnings.append('Las tablets Huawei no tienen disponibles las '
+                            'aplicaciones de Google (Youtube, GMail, etc) '
+                            'ni acceso a la Play Store.')
+        if 'Android Go' in elastic_search_original['operating_system_unicode']:
+            warnings.append('Este equipo viene con Android "Go" como sistema '
+                            'operativo, que es más básico y limitado que '
+                            'Android tradicional')
+        if elastic_search_original['ram_value'] < 3072:
+            warnings.append('Este equipo solo tiene {} de RAM. SoloTodo '
+                            'recomienda equipos con por lo menos 3 GB de RAM '
+                            'para una tablet actual.'.format(
+                elastic_search_original['ram_unicode']))
+        if elastic_search_original['internal_storage_value'] < 32:
+            warnings.append('Esta tablet solo tiene {} de memoria. SoloTodo '
+                            'recomienda equipos con por lo menos 32 GB de '
+                            'almacenamiento para una tablet actual.'.format(
+                elastic_search_original['internal_storage_unicode']))
+
+        result['warnings'] = warnings
+
         return result
 
     if m == 'Wearable':

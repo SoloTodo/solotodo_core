@@ -294,6 +294,15 @@ def additional_es_fields(elastic_search_original, model_name):
 
         result['general_score'] = general_score
 
+        has_cell_connectivity = elastic_search_original[
+            'cell_connectivity_unicode'] != 'No'
+        result['has_cell_connectivity'] = has_cell_connectivity
+
+        tags = []
+        if has_cell_connectivity:
+            tags.append(elastic_search_original['cell_connectivity_unicode'])
+        result['tags'] = tags
+
         warnings = []
 
         if elastic_search_original['operating_system_line_is_discontinued']:

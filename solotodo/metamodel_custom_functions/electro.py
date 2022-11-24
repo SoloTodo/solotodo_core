@@ -136,6 +136,19 @@ def additional_es_fields(elastic_search_original, model_name):
             result['sorting_consumption'] = consumption
         else:
             result['sorting_consumption'] = big_value
+
+        warnings = []
+
+        if 'refrigerador' in \
+            elastic_search_original['r_format_unicode'].lower() and \
+            elastic_search_original['frosting_unicode'] == 'Frío Directo':
+                warnings.append('Los refrigeradores de Frío Directo tienden '
+                                'a formar hielo que se debe descongelar '
+                                'manualmente, además de ser menos '
+                                'eficientes que los No Frost.')
+
+        result['warnings'] = warnings
+
         return result
 
     if m == 'UsbFlashDrive':

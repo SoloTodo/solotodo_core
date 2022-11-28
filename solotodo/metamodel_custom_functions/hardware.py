@@ -153,6 +153,18 @@ def additional_es_fields(elastic_search_original, model_name):
         result['pretty_sequential_write_speed'] = \
             format_optional_field(sequential_write_speed, 'MB/s')
 
+        warnings = []
+
+        if elastic_search_original['has_dram_unicode'] == 'No':
+            warnings.append('Este SSD no tiene memoria DRAM propia, así que '
+                            'su rendimiento puede ser menor que el de uno '
+                            'que sí tenga DRAM')
+        elif elastic_search_original['has_dram_unicode'] == 'Desconocido':
+            warnings.append('No estamos seguros si este SSD posee memoria '
+                            'DRAM propia o no')
+
+        result['warnings'] = warnings
+
         return result
     if m == 'Monitor':
         result = {}

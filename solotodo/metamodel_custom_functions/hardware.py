@@ -256,3 +256,16 @@ def additional_es_fields(elastic_search_original, model_name):
         result['warnings'] = warnings
 
         return result
+
+    if m == 'Keyboard':
+        result = {}
+
+        tags = []
+
+        if elastic_search_original['backlight_unicode'] == \
+                'RGB (Programable por Software)':
+            tags.append('RGB Programable')
+
+        result['tags'] = tags
+
+        return result

@@ -284,9 +284,7 @@ def additional_es_fields(elastic_search_original, model_name):
 
         if not elastic_search_original['includes_hub']:
             for conn in elastic_search_original['power_connectors']:
-                if conn['unicode'] in ['Molex', 'SATA']:
-                    warnings.append(
-                        'Este ventilador no permite controlar sus RPM')
+                if conn['unicode'] in ['3 pin', '4 pin']:
                     break
                 elif conn['unicode'] == '6 pin':
                     warnings.append(
@@ -294,6 +292,8 @@ def additional_es_fields(elastic_search_original, model_name):
                         'estándar, por favor confirme con la tienda antes '
                         'de comprarlo')
                     break
+            else:
+                warnings.append('Este ventilador no permite controlar sus RPM')
 
         result['warnings'] = warnings
 

@@ -269,3 +269,32 @@ def additional_es_fields(elastic_search_original, model_name):
         result['tags'] = tags
 
         return result
+
+    if m == 'CaseFan':
+        result = {}
+
+        tags = []
+
+        if elastic_search_original['illumination_unicode'] == 'ARGB / Rainbow':
+            tags.append(elastic_search_original['illumination_unicode'])
+
+        result['tags'] = tags
+
+        warnings = []
+
+        if not elastic_search_original['includes_hub']:
+            for conn in elastic_search_original['power_connectors']:
+                if conn['unicode'] == '4 pin':
+                    break
+                elif conn['unicode'] == '6 pin':
+                    warnings.append(
+                        'Este ventilador usa un conector de energía no '
+                        'estándar, por favor confirme con la tienda antes '
+                        'de comprarlo')
+                    break
+            else:
+                warnings.append('Este ventilador no permite controlar sus RPM')
+
+        result['warnings'] = warnings
+
+        return result

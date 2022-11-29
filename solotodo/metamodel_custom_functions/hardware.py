@@ -26,8 +26,7 @@ def additional_es_fields(elastic_search_original, model_name):
                 elastic_search_original['gpu_boost_core_clock'],
             'display_memory_clock':
                 elastic_search_original['memory_clock'] -
-                elastic_search_original['gpu_default_memory_clock'] >= 10,
-            'tags': [elastic_search_original['gpu_unicode']]
+                elastic_search_original['gpu_default_memory_clock'] >= 10
         }
         return result
     if m == 'Processor':

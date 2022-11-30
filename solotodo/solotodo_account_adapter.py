@@ -6,8 +6,14 @@ from django.contrib.sites.models import Site
 class SoloTodoAccountAdapter(DefaultAccountAdapter):
     def send_confirmation_mail(self, request, emailconfirmation, signup):
         current_site = Site.objects.get(pk=settings.SOLOTODO_COM_SITE_ID)
-        activate_url = 'https://{}/account/verify-email?key={}'.format(
-            current_site.domain, emailconfirmation.key)
+
+        if 'origin' in request.headers:
+            activation_domain = request.headers['origin']
+        else:
+            activation_domain = 'https://' + current_site.domain
+
+        activate_url = '{}/account/verify-email?key={}'.format(
+            activation_domain, emailconfirmation.key)
 
         ctx = {
             "user": emailconfirmation.email_address.user,

@@ -606,7 +606,11 @@ El puerto {} es de tipo M.2 pero el SSD {} no es M.2""".format(port['port_unicod
                         bus_warnings = []
                         bus_errors = []
 
-                        if bus['bus_with_version_id'] != ssd['ssd_type_bus_bus_with_version_id']:
+                        mb_bus_version_compatibilities = bus['bus_with_version_id']
+                        for mb_bus in bus.get('bus_with_version_backwards_compatibility', []):
+                            mb_bus_version_compatibilities.append(mb_bus['id'])
+
+                        if ssd['ssd_type_bus_bus_with_version_id'] not in mb_bus_version_compatibilities:
                             bw_compatiblity_ids = []
                             for x in ssd.get('ssd_type_bus_bus_with_version_backwards_compatibility', []):
                                 bw_compatiblity_ids.append(x['id'])

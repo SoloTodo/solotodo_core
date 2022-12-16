@@ -156,6 +156,7 @@ class Budget(models.Model):
         ssds = filter_products('SolidStateDrive')
         coolers = filter_products('CpuCooler')
         monitors = filter_products('Monitor')
+        fans = filter_products('CaseFan')
 
         # First test, we need 0 or 1 processor, motherboard, psu, case, and
         # cooler
@@ -701,6 +702,17 @@ el SSD puede que no funcione a plena capacidad""".format(port['port_unicode'], b
 El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
  DisplayPort). Las tarjetas de video actuales solo funcionan con esas entradas
  y no son compatibles con el puerto VGA.""".format(monitor.name))
+
+        # Fans
+
+        if mb and fans:
+            mb_rgb_header_ids = [x['header_id'] for x in mb.specs.to_dict().get('rgb_headers', [])]
+            for fan in fans:
+                for illumination_control in fan.specs.to_dict().get(
+                        'illumination_controls', []):
+                    if 'motherboard_header_id' in illumination_control and \
+                            illumination_control['motherboard_header_id'] not in mb_rgb_header_ids:
+                        warnings.append('El ventilador {} usa un conector {} que no es compatible con la placa madre'.format(fan['name'], illumination_control['unicode']))
 
         warnings = [' '.join(e.split()).replace('\z', '\n') for e in
                     warnings]

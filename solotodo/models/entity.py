@@ -353,6 +353,11 @@ class Entity(models.Model):
                 'has_virtual_assistant': scraped_product.has_virtual_assistant,
                 'active_registry': new_active_registry,
             })
+
+            # If the entity condition hasn't been changed manually by the
+            # staff, update it with the scraped condition
+            if self.condition == self.scraped_condition:
+                updated_data['condition'] = scraped_product.condition
         else:
             updated_data.update({
                 'active_registry': None

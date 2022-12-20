@@ -14,4 +14,5 @@ class MetaModelAddFieldForm(forms.ModelForm):
 
     class Meta:
         model = MetaField
-        fields = ['name', 'model', 'nullable', 'multiple', 'hidden']
+        fields = ['name', 'model', 'nullable', 'multiple', 'hidden',
+                  'help_text']

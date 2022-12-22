@@ -15,8 +15,9 @@ def trim(im):
     :param im:
     :return:
     """
-    bg = Image.new(im.mode, im.size, im.getpixel((0, 0)))
-    diff = ImageChops.difference(im, bg)
+    rgb_im = im.convert('RGB')
+    bg = Image.new(rgb_im.mode, rgb_im.size, rgb_im.getpixel((0, 0)))
+    diff = ImageChops.difference(rgb_im, bg)
     bbox = diff.getbbox()
     if bbox:
         return im.crop(bbox)

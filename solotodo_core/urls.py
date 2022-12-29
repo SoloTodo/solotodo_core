@@ -17,9 +17,13 @@ from allauth.socialaccount.providers.facebook.views import \
     FacebookOAuth2Adapter
 from django.conf.urls import url, include
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path
 from rest_auth.registration.views import SocialLoginView
+from rest_framework import permissions
 from rest_framework.authtoken.views import obtain_auth_token
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView, \
     TokenObtainPairView
 from solotodo.router import router as solotodo_router
@@ -67,12 +71,24 @@ class FacebookLogin(SocialLoginView):
     adapter_class = FacebookOAuth2Adapter
 
 
+class JwtTokens(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        token = RefreshToken.for_user(request.user)
+        return JsonResponse({
+            'access': str(token.access_token),
+            'refresh': str(token)
+        })
+
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^obtain-auth-token/$', obtain_auth_token),
     url(r'^accounts/', include('allauth.urls')),
     url(r'^metamodel/', include('metamodel.urls')),
     # url(r'^api-auth/', include('rest_framework.urls')),
+    url(r'^auth/get_jwt_tokens/$', JwtTokens.as_view()),
     url(r'^rest-auth/', include('rest_auth.urls')),
     url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
     url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),

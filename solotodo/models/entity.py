@@ -192,7 +192,7 @@ class Entity(models.Model):
         ('https://schema.org/RefurbishedCondition', 'Refurbished'),
         ('https://schema.org/UsedCondition', 'Used'),
         # This is not part of the schema standard
-        ('https://schema.org/OpenBox', 'Open Box'),
+        ('https://schema.org/OpenBoxCondition', 'Open Box'),
     ]
     CONDITION_CHOICES_DICT = dict(CONDITION_CHOICES)
 

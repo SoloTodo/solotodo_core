@@ -900,7 +900,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         entity.update_keeping_log({
             'condition': new_condition
-        })
+        }, request.user)
         serialized_data = EntitySerializer(
             entity, context={'request': self.request}).data
 

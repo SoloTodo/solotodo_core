@@ -10,6 +10,7 @@ from reports.forms.report_daily_prices_form import ReportDailyPricesForm
 from reports.forms.report_prices_history_form import ReportPricesHistoryForm
 from reports.forms.report_sec_prices_form import ReportSecPricesForm
 from reports.forms.report_store_analysis_form import ReportStoreAnalysisForm
+from reports.forms.report_store_analytics_form import ReportStoreAnalyticsForm
 from reports.forms.report_websites_traffic_form import \
     ReportWebsitesTrafficForm
 from reports.forms.report_weekly_prices_form import ReportWeeklyPricesForm
@@ -72,6 +73,35 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({
             'message': 'ok'
         }, status=status.HTTP_200_OK)
+
+    @action(detail=False)
+    def store_analytics(self, request):
+        report = Report.objects.get(slug='store_analytics')
+        user = request.user
+
+        if not user.has_perm('view_report', report):
+            raise PermissionDenied
+
+        form = ReportStoreAnalyticsForm(request.user, request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        report_path = form.generate_report()['path']
+
+        ReportDownload.objects.create(
+            report=report,
+            user=user,
+            file=report_path
+        )
+
+        storage = PrivateS3Boto3Storage()
+        report_url = storage.url(report_path)
+        return Response({
+            'url': report_url
+        })
 
     @action(detail=False)
     def weekly_prices(self, request):

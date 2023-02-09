@@ -466,3 +466,5 @@ ANTICAPTCHA = {
     'PROXY_USERNAME': None,
     'PROXY_PASSWORD': None,
 }
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './gcp_credentials.json'

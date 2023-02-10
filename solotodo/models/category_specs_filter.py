@@ -146,7 +146,7 @@ class CategorySpecsFilter(models.Model):
         # Returns the ES DSL Aggregation object (A) that represents the
         # aggregation of a ES search on this field
         term_field = 'specs.{}'.format(self.es_value_field('id'))
-        spec_bucket = A('terms', field=term_field, size=100)
+        spec_bucket = A('terms', field=term_field, size=200)
 
         if self._is_es_nested():
             path = 'specs.{}'.format(self.es_field.split('.')[0])

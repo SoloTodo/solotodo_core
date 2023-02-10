@@ -59,7 +59,7 @@ class ReportStoreAnalyticsForm(forms.Form):
                 sum({retailer_case_price}) as retailer_sum,
                 round((sum({retailer_case_price}) / sum(price)), 4) as percentage_sum,
                 round(sum(price) / count(*)) as average_price,
-                round(sum({retailer_case_price}) / count(*)) as retailer_average_price,
+                round(sum({retailer_case_price}) / count({retailer_case_count})) as retailer_average_price,
                 max(price) as max_price,
                 max({retailer_case_price}) as retailer_max_price,
                 min(price) as min_price,
@@ -78,6 +78,9 @@ class ReportStoreAnalyticsForm(forms.Form):
                     (SELECT ep.value.int_value
                     FROM UNNEST(event_params) AS ep
                     WHERE ep.key = 'retailer_id') AS retailer_id,
+                    (SELECT ep.value.string_value
+                    FROM UNNEST(event_params) AS ep
+                    WHERE ep.key = 'condition') AS condition,
                 FROM
                     `solotodo-207819.analytics_340597961.events*`
                 WHERE
@@ -85,6 +88,7 @@ class ReportStoreAnalyticsForm(forms.Form):
                 AND event_date >= '{start_date}'
                 AND event_date <= '{stop_date}')
             WHERE category_id in ({category_ids})
+            AND condition = 'https://schema.org/NewCondition'
             GROUP BY product_id
             HAVING retailer_clicks > 0;
         '''
@@ -104,32 +108,38 @@ class ReportStoreAnalyticsForm(forms.Form):
         products_df = products_df[products_df['product_id'].isin(
             current_product_ids)]
 
-        es = Entity.objects.filter(product__isnull=False) \
-            .filter(
-            product__instance_model__model__category__in=categories,
-            store=selected_store,
-            active_registry__cell_monthly_payment__isnull=True
-        ).get_available().select_related(
-            'product',
-            'active_registry'
-        )
+        if products_df.size != 0:
+            es = Entity.objects.filter(product__isnull=False) \
+                .filter(
+                product__instance_model__model__category__in=categories,
+                store=selected_store,
+                active_registry__cell_monthly_payment__isnull=True
+            ).get_available().select_related(
+                'product',
+                'active_registry'
+            )
+            entity_dict = {}
+            for e in es:
+                entity_dict[e.product_id] = int(e.active_registry.offer_price)
 
-        entity_dict = {}
-        for e in es:
-            entity_dict[e.product_id] = int(e.active_registry.offer_price)
+            products_dict = {
+                product.id: {'name': product.name, 'category': product.category.name,
+                             'brand': product.brand.name} for product in products}
 
-        products_dict = {
-            product.id: {'name': product.name, 'category': product.category.name,
-                         'brand': product.brand.name} for product in products}
+            products_df['product_name'] = products_df.apply(
+                lambda x: products_dict[x.product_id]['name'], axis=1)
+            products_df['product_brand'] = products_df.apply(
+                lambda x: products_dict[x.product_id]['brand'], axis=1)
+            products_df['product_category'] = products_df.apply(
+                lambda x: products_dict[x.product_id]['category'], axis=1)
+            products_df['entity_price'] = products_df.apply(
+                lambda x: entity_dict.get(x.product_id, None), axis=1)
 
-        products_df['product_name'] = products_df.apply(
-            lambda x: products_dict[x.product_id]['name'], axis=1)
-        products_df['product_brand'] = products_df.apply(
-            lambda x: products_dict[x.product_id]['brand'], axis=1)
-        products_df['product_category'] = products_df.apply(
-            lambda x: products_dict[x.product_id]['category'], axis=1)
-        products_df['entity_price'] = products_df.apply(
-            lambda x: entity_dict.get(x.product_id, None), axis=1)
+        else:
+            products_df['product_name'] = None
+            products_df['product_brand'] = None
+            products_df['product_category'] = None
+            products_df['entity_price'] = None
 
         cols = products_df.columns.tolist()
         cols = [cols[0]] + cols[-4:] + cols[1:-4]

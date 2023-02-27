@@ -1,14 +1,12 @@
 import json
 from decimal import Decimal
 from itertools import repeat
-
-from multiprocessing import cpu_count, Pool
-
-
+from multiprocessing import cpu_count, Pool, set_start_method
 from django.core.management import BaseCommand
-
 from metamodel.models import MetaModel, InstanceModel
 from solotodo.models import Product, EsProduct
+
+set_start_method("spawn")
 
 
 def index_product(product, d):

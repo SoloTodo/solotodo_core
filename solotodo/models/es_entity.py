@@ -11,6 +11,7 @@ class EsEntity(EsProductEntities):
     entity_id = Integer()
     store_id = Integer()
     store_name = Keyword()
+    seller = Keyword()
     category_id = Integer()
     category_name = Keyword()
     currency_id = Integer()
@@ -158,6 +159,7 @@ class EsEntity(EsProductEntities):
             entity_id=entity.id,
             store_id=entity.store_id,
             store_name=str(entity.store),
+            seller=entity.seller,
             category_id=entity.category_id,
             category_name=str(entity.category),
             currency_id=entity.currency_id,

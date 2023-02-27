@@ -1,12 +1,13 @@
 from datetime import timedelta
 from itertools import repeat
-from multiprocessing import cpu_count, Pool
-
+from multiprocessing import cpu_count, Pool, set_start_method
 from django.core.management import BaseCommand
 from django.db import models
 from django.db.models import Avg, Min, Count
 
 from solotodo.models import Entity, EntityHistory, EsEntity, Lead
+
+set_start_method("spawn")
 
 
 class Epoch(models.expressions.Func):

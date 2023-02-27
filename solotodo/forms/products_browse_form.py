@@ -38,6 +38,8 @@ class ProductsBrowseForm(forms.Form):
     offer_price_usd_max = forms.DecimalField(required=False)
 
     exclude_refurbished = forms.BooleanField(required=False)
+    exclude_marketplace = forms.BooleanField(required=False)
+    exclude_without_part_number = forms.BooleanField(required=False)
 
     ordering = forms.CharField(required=False)
     search = forms.CharField(required=False)
@@ -201,6 +203,11 @@ class ProductsBrowseForm(forms.Form):
         else:
             condition_filter = Q()
 
+        if self.cleaned_data['exclude_marketplace']:
+            marketplace_filter = ~Q('exists', field='seller')
+        else:
+            marketplace_filter = Q()
+
         search = EsProduct.search()
 
         if category:
@@ -216,13 +223,18 @@ class ProductsBrowseForm(forms.Form):
                 'terms', brand_id=[x.id for x in
                                    self.cleaned_data['db_brands']])
 
+        if self.cleaned_data['exclude_without_part_number']:
+            search = search.filter(Q('exists', field='part_number'))
+
         # Main part of the query. Returns the products:
-        # * Filtered by store, refurbished status, price and specs
+        # * Filtered by store, refurbished status, price, markeplate status
+        #   and specs
         # * Ordered by one of the available choices (offer_price_usd by def)
         # * Grouped ("collapsed") by the given bucket_key, or by product_id by
         #   default
 
-        entities_filter = stores_filter & condition_filter & price_filter
+        entities_filter = stores_filter & condition_filter & price_filter & \
+            marketplace_filter
         all_specs_filter = specs_form.get_filter()
 
         if ordering == 'discount':

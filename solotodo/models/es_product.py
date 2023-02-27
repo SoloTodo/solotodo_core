@@ -10,6 +10,7 @@ class EsProduct(EsProductEntities):
     category_name = Keyword()
     brand_id = Integer()
     brand_name = Keyword()
+    part_number = Keyword()
     instance_model_id = Integer()
     creation_date = Date()
     last_updated = Date()
@@ -48,6 +49,7 @@ class EsProduct(EsProductEntities):
             category_name=str(product.category),
             brand_id=product.brand_id,
             brand_name=str(product.brand),
+            part_number=product.part_number,
             instance_model_id=product.instance_model_id,
             creation_date=product.creation_date,
             last_updated=product.last_updated,

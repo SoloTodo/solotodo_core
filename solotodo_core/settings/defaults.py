@@ -450,8 +450,6 @@ CATEGORY_PURPOSE_BROWSE_ID = 1
 
 PUBLICAPI_HOST = 'https://publicapi.solotodo.com'
 
-BRAND_COMPARISON_DEFAULT_STORE_IDS = [9, 18, 11]
-RIPLEY_STORE_ID = 18
 LG_CHILE_GROUP_ID = 14
 
 SOICOS_USER = ''
@@ -468,3 +466,8 @@ ANTICAPTCHA = {
 }
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './gcp_credentials.json'
+
+LENOVO_RETAILER_TIER = {
+    'A': [9, 11, 18, 43, 87, 30, 5, 12, 260],
+    'B': [86, 14, 294, 45, 4880, 788]
+}

@@ -20,6 +20,11 @@ class ProductsBrowseForm(forms.Form):
         queryset=Store.objects.all(),
         required=False
     )
+    lenovo_store_tiers = forms.MultipleChoiceField(
+        choices=[(key, 'Retailer {}'.format(key)
+                  for key in settings.LENOVO_RETAILER_TIER)],
+        required=False,
+    )
     products = forms.ModelMultipleChoiceField(
         queryset=Product.objects.all(),
         required=False
@@ -194,7 +199,16 @@ class ProductsBrowseForm(forms.Form):
         assert specs_form.is_valid()
 
         store_ids = [x.id for x in self.cleaned_data['stores']]
+
+        lenovo_store_tiers = self.cleaned_data['lenovo_store_tiers']
+        if lenovo_store_tiers:
+            lenovo_store_ids = []
+            for tier in lenovo_store_tiers:
+                lenovo_store_ids.extend(settings.LENOVO_RETAILER_TIER[tier])
+            store_ids = [sid for sid in store_ids if sid in lenovo_store_ids]
+
         stores_filter = Q('terms', store_id=store_ids)
+
         price_filter = self.get_price_filter()
 
         if self.cleaned_data['exclude_refurbished']:

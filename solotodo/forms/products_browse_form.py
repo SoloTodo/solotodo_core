@@ -21,8 +21,8 @@ class ProductsBrowseForm(forms.Form):
         required=False
     )
     lenovo_store_tiers = forms.MultipleChoiceField(
-        choices=[(key, 'Retailer {}'.format(key)
-                  for key in settings.LENOVO_RETAILER_TIER)],
+        choices=[(key, 'Retailer {}'.format(key))
+                 for key in settings.LENOVO_RETAILER_TIER.keys()],
         required=False,
     )
     products = forms.ModelMultipleChoiceField(

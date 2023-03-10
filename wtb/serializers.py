@@ -26,6 +26,7 @@ class WtbEntitySerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='wtbentity-detail')
     external_url = serializers.URLField(source='url')
     product = NestedProductSerializer(read_only=True)
+    brand = WtbBrandSerializer(read_only=True)
 
     class Meta:
         model = WtbEntity

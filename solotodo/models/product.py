@@ -184,6 +184,34 @@ class Product(models.Model):
         else:
             return ''
 
+    def bucket(self, fields):
+        product_specs = self.specs
+        search = EsProduct.category_search(self.category)
+
+        for field in fields:
+            field_value = product_specs.get(field)
+            if isinstance(field_value, str):
+                query_type = 'match_phrase'
+            else:
+                query_type = 'term'
+
+            search = search.filter(query_type,
+                                   **{'specs.' + field: field_value})
+
+        es_products_dict = {
+            es_product.product_id: es_product.to_dict()
+            for es_product in search[:100].execute()
+        }
+
+        bucket_products = Product.objects.filter(
+            pk__in=es_products_dict.keys()
+        ).select_related('instance_model__model__category')
+
+        for product in bucket_products:
+            product._es_entry = es_products_dict[product.id]
+
+        return bucket_products
+
     @staticmethod
     def query_es_by_search_string(search, mode='OR'):
         from elasticsearch_dsl import Q

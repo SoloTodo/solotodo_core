@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from solotodo.serializers import NestedProductSerializer
+from solotodo.serializers import NestedProductSerializer, CategorySerializer
 from wtb.models import WtbBrand, WtbEntity, WtbBrandUpdateLog
 
 
@@ -27,13 +27,14 @@ class WtbEntitySerializer(serializers.HyperlinkedModelSerializer):
     external_url = serializers.URLField(source='url')
     product = NestedProductSerializer(read_only=True)
     brand = WtbBrandSerializer(read_only=True)
+    full_category = CategorySerializer(read_only=True, source='category')
 
     class Meta:
         model = WtbEntity
         fields = ('url', 'id', 'name', 'model_name', 'brand', 'category',
-                  'external_url', 'product', 'key', 'picture_url', 'section',
-                  'creation_date', 'last_updated', 'is_visible', 'is_active',
-                  'price')
+                  'full_category', 'external_url', 'product', 'key',
+                  'picture_url', 'section', 'creation_date', 'last_updated',
+                  'is_visible', 'is_active', 'price')
 
 
 class WtbEntityStaffInfoSerializer(serializers.HyperlinkedModelSerializer):

@@ -203,6 +203,10 @@ class WtbEntity(models.Model):
 
         super(WtbEntity, self).save(*args, **kwargs)
 
+    def available_entities(self):
+        assert self.product
+        es = self.product.entity_set.get_available().filter(seller__isnull=True)
+
     def update_with_scraped_product(self, scraped_product):
         assert scraped_product is None or self.key == scraped_product.key
 

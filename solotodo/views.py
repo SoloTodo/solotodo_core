@@ -1326,30 +1326,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
         fields = form.cleaned_data['fields'].split(',')
-        product_specs = product.specs
-        search = EsProduct.category_search(product.category)
-
-        for field in fields:
-            field_value = product_specs.get(field)
-            if isinstance(field_value, str):
-                query_type = 'match_phrase'
-            else:
-                query_type = 'term'
-
-            search = search.filter(query_type,
-                                   **{'specs.' + field: field_value})
-
-        es_products_dict = {
-            es_product.product_id: es_product.to_dict()
-            for es_product in search[:100].execute()
-        }
-
-        bucket_products = Product.objects.filter(
-            pk__in=es_products_dict.keys()
-        ).select_related('instance_model__model__category')
-
-        for product in bucket_products:
-            product._es_entry = es_products_dict[product.id]
+        bucket_products = product.bucket(fields)
 
         serializer = ProductSerializer(
             bucket_products, many=True, context={'request': request})

@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 from django.db import IntegrityError
 from django_filters import rest_framework
 from rest_framework import viewsets, status
@@ -9,6 +11,7 @@ from rest_framework.response import Response
 from solotodo.drf_extensions import PermissionReadOnlyModelViewSet
 from solotodo.forms.category_form import CategoryForm
 from solotodo.models import Entity
+from solotodo.serializers import ProductAvailableEntitiesSerializer
 from wtb.filters import create_wtb_brand_filter, WtbEntityFilterSet, \
     WtbBrandUpdateLogFilterSet, WtbEntityStaffFilterSet, WtbStoreFilterSet
 from wtb.forms import WtbEntityAssociationForm
@@ -29,6 +32,7 @@ class WtbBrandViewSet(PermissionReadOnlyModelViewSet):
 class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = WtbEntity.objects.select_related(
         'product__instance_model',
+        'category'
     ).prefetch_related('brand__stores')
     serializer_class = WtbEntitySerializer
     pagination_class = WtbEntityPagination
@@ -56,6 +60,48 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
                                          context={'request': request})
 
         return paginator.get_paginated_response(serializer.data)
+
+    @action(detail=True)
+    def available_entities(self, request, *args, **kwargs):
+        wtb_entity = self.get_object()
+
+        if not wtb_entity.product:
+            return Response({'detail': 'Must be called on a WTB entity '
+                                       'associated with a product'},
+                            status=400)
+
+        field = request.GET.get('bucket_field', None)
+
+        if field:
+            products = wtb_entity.product.bucket([field])
+        else:
+            products = [wtb_entity.product]
+
+        es = Entity.objects.get_available().filter(
+            product__in=products,
+            seller__isnull=True,
+            store__in=wtb_entity.brand.stores.all()
+        ).select_related(
+            'active_registry',
+            'product__instance_model',
+            'best_coupon'
+        )
+
+        result_dict = {}
+
+        for product in products:
+            result_dict[product] = []
+
+        for entity in es:
+            result_dict[entity.product].append(entity)
+
+        result_array = [{'product': product, 'entities': entities}
+                        for product, entities in result_dict.items()]
+
+        serializer = ProductAvailableEntitiesSerializer(
+            result_array, many=True, context={'request': request})
+
+        return Response(serializer.data)
 
     @action(detail=True)
     def staff_info(self, request, pk):

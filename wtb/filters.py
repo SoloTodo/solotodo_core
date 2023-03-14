@@ -44,11 +44,18 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
         )
 
         brands_with_permission = create_wtb_brand_filter()(self.request)
-        categories_with_permission = create_category_filter()(self.request)
+
+        # Formally we would need to filter the categories to allow access only
+        # to those the user has permission, but for the WTB service we
+        # allow full read access to allow querying categories that SoloTodo
+        # does not fully support (such as projectors and accesories)
+
+        # categories_with_permission = create_category_filter()(self.request)
 
         return qs.filter(
-            Q(brand__in=brands_with_permission) &
-            Q(category__in=categories_with_permission))
+            Q(brand__in=brands_with_permission)
+            # & Q(category__in=categories_with_permission)
+        )
 
     def _is_associated(self, queryset, name, value):
         return queryset.filter(product__isnull=not value)

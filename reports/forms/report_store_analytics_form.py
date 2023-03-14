@@ -57,11 +57,10 @@ class ReportStoreAnalyticsForm(forms.Form):
                 round((count({retailer_case_count}) / count(*)), 4) as precentage_clicks,
                 sum(price) as total_price_sum,
                 sum({retailer_case_price}) as retailer_sum,
+                sum(price) - sum({retailer_case_price}) as diff,
                 round((sum({retailer_case_price}) / sum(price)), 4) as percentage_sum,
                 round(sum(price) / count(*)) as average_price,
                 round(sum({retailer_case_price}) / count({retailer_case_count})) as retailer_average_price,
-                max(price) as max_price,
-                max({retailer_case_price}) as retailer_max_price,
                 min(price) as min_price,
                 min({retailer_case_price}) as retailer_min_price,
             FROM
@@ -90,7 +89,8 @@ class ReportStoreAnalyticsForm(forms.Form):
             WHERE category_id in ({category_ids})
             AND condition = 'https://schema.org/NewCondition'
             GROUP BY product_id
-            HAVING retailer_clicks > 0;
+            HAVING retailer_clicks > 0
+            ORDER BY -diff;
         '''
 
         client = bigquery.Client()
@@ -161,11 +161,10 @@ class ReportStoreAnalyticsForm(forms.Form):
             'Clicks porcentaje',
             'Precio sumado total',
             'Precio sumado tienda',
+            'Precio sumado diff',
             'Precio sumado porcentaje',
             'Precio promedio total',
             'Precio promedio tienda',
-            'Precio máximo total',
-            'Precio máximo tienda',
             'Precio mínimo total',
             'Precio mínimo tienda',
         ]

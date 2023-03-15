@@ -11,6 +11,35 @@ class ProductSpecsForm(forms.Form):
         required=False
     )
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user')
+        super(ProductSpecsForm, self).__init__(*args, **kwargs)
+        self.user = user
+
+    def clean_categories(self):
+        requested_categories = self.cleaned_data['categories']
+
+        if not requested_categories:
+            return Category.objects.filter_by_user_perms(
+                self.user, 'view_category')
+
+        def _get_invalid_categories(reload_cache=False):
+            valid_categories = requested_categories.filter_by_user_perms(
+                self.user, 'view_category', reload_cache=reload_cache)
+            return requested_categories.difference(valid_categories)
+
+        invalid_categories = _get_invalid_categories()
+
+        if invalid_categories:
+            # Try flushing the cache
+            invalid_categories = _get_invalid_categories(reload_cache=True)
+
+            if invalid_categories:
+                raise forms.ValidationError('Invalid categories: {}'.format(
+                    [x.id for x in invalid_categories]))
+
+        return requested_categories
+
     def get_field_names(self):
         return ['categories']
 

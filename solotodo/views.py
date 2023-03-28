@@ -47,6 +47,7 @@ from solotodo.forms.entity_association_form import EntityAssociationForm
 from solotodo.forms.entity_by_url_form import EntityByUrlForm
 from solotodo.forms.entity_dissociation_form import EntityDisssociationForm
 from solotodo.forms.entity_estimated_sales_form import EntityEstimatedSalesForm
+from solotodo.forms.product_analytics_form import ProductAnalyticsForm
 from solotodo.forms.products_browse_form import ProductsBrowseForm
 from solotodo.forms.lead_grouping_form import LeadGroupingForm
 from solotodo.forms.ip_form import IpForm
@@ -1288,6 +1289,20 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             result_for_serialization, many=True, context={'request': request})
 
         return Response(serializer.data)
+
+    @action(detail=True)
+    def analytics(self, request, pk):
+        product = self.get_object()
+
+        form = ProductAnalyticsForm(request.GET)
+
+        if not form.is_valid():
+            return Response({
+                'errors': form.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        results = form.generate_report(product)
+        return Response(results)
 
     @action(methods=['post'], detail=True)
     def register_visit(self, request, pk):

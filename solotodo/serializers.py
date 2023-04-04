@@ -113,7 +113,7 @@ class StoreSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Store
         fields = ('url', 'id', 'name', 'country', 'last_activation', 'type',
-                  'storescraper_class', 'logo')
+                  'storescraper_class', 'logo', 'preferred_payment_method')
 
 
 class BundleSerializer(serializers.HyperlinkedModelSerializer):

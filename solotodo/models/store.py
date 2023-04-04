@@ -75,6 +75,8 @@ class Store(models.Model):
                                                blank=True)
     type = models.ForeignKey(StoreType, on_delete=models.CASCADE)
     logo = ImageField(upload_to='store_logos')
+    preferred_payment_method = models.CharField(null=True, blank=True,
+                                                max_length=100)
     active_banner_update = models.OneToOneField('banners.BannerUpdate',
                                                 on_delete=models.SET_NULL,
                                                 null=True, blank=True,

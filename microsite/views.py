@@ -47,9 +47,20 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
 
     @action(methods=['get'], detail=True)
     def site_data(self, request, pk, *args, **kwargs):
-        from wtb.models import WtbEntity
+        from wtb.models import WtbEntity, WtbBrand
+        from wtb.forms import WtbBrandForm
 
         microsite_brand = self.get_object()
+        form = WtbBrandForm(request.query_params)
+
+        if not form.is_valid():
+            return Response(form.errors, status=400)
+
+        wtb_brand = form.cleaned_data['wtb_brand']
+        if not wtb_brand:
+            # LG CL is the default
+            wtb_brand = WtbBrand.objects.get(pk=1)
+
         entries = microsite_brand.entries.filter(
             Q(home_ordering__isnull=False) | Q(ordering__isnull=False))
         stores = microsite_brand.stores.all()
@@ -62,7 +73,7 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
         wtb_entities_dict = {
             wtb_entity.product: wtb_entity
             for wtb_entity in WtbEntity.objects.filter(
-                brand=1, product__isnull=False
+                brand=wtb_brand, product__isnull=False
             ).select_related('product', 'category', 'brand')
         }
 

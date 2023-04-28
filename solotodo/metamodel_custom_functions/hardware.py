@@ -41,7 +41,10 @@ def additional_es_fields(elastic_search_original, model_name):
             elastic_search_original['e_core_count_value']
 
         warnings = []
-        if 'MPK' in (elastic_search_original.get('part_number', '') or ''):
+
+        part_number = (elastic_search_original.get('part_number', '') or '')
+
+        if 'MPK' in part_number or part_number.startswith('CM'):
             warnings.append('Este procesador se vende sin caja. Consulte a '
                             'la tienda si es que incluye cooler y '
                             'accesorios')

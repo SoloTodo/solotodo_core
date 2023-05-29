@@ -6,7 +6,7 @@ class RdsDbRouter:
         if model._meta.app_label == 'metamodel':
             return 'writer'
         if model._meta.app_label != 'lg_pricing':
-            if random.random() <= 0.75:
+            if random.random() <= 1:
                 return 'reader'
             else:
                 return 'writer'

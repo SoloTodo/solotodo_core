@@ -46,8 +46,17 @@ class ProductQuerySet(models.QuerySet):
 
     def filter_by_search_string(self, search):
         es_search = EsProduct.search()
-        es_search = es_search.filter('terms', product_id=[p.id for p in self])
+        # es_search = es_search.filter('terms', product_id=[p.id for p in self])
         q = Product.query_es_by_search_string(search, mode='AND')
+        es_search = es_search.filter(q)
+
+        matching_product_ids = [r.product_id for r in
+                                es_search[:self.count()].execute()]
+        return self.filter(pk__in=matching_product_ids)
+
+    def filter_by_name(self, search):
+        es_search = EsProduct.search()
+        q = Product.query_es_by_name(search, mode='AND')
         es_search = es_search.filter(q)
 
         matching_product_ids = [r.product_id for r in
@@ -242,6 +251,31 @@ class Product(models.Model):
                 search_query = keywords_term_query
                 if mode == 'OR':
                     search_query |= name_term_query
+
+        return search_query
+
+    @staticmethod
+    def query_es_by_name(search, mode='OR'):
+        from elasticsearch_dsl import Q
+
+        search = search.strip()
+
+        if not search:
+            return Q()
+
+        search_terms = [term.lower() for term in re.split(r'\W+', search)]
+        search_query = None
+        for search_term in search_terms:
+            name_term_query = Q('wildcard',
+                                name_analyzed='*{}*'.format(search_term))
+
+            if search_query:
+                if mode == 'OR':
+                    search_query |= name_term_query
+                else:
+                    search_query &= name_term_query
+            else:
+                search_query = name_term_query
 
         return search_query
 

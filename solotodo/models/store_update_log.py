@@ -20,7 +20,7 @@ class StoreUpdateLog(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
     discovery_url_concurrency = models.IntegerField(null=True, blank=True)
     products_for_url_concurrency = models.IntegerField(null=True, blank=True)
-    use_async = models.NullBooleanField()
+    use_async = models.BooleanField(null=True)
     registry_file = models.FileField(storage=PrivateS3Boto3Storage(),
                                      upload_to='logs/scrapings',
                                      null=True, blank=True)

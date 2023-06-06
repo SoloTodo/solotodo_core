@@ -410,7 +410,7 @@ class InstanceModel(models.Model):
 
         if item in ['as_sql', 'is_compatible_query_object_type',
                     'get_compiler', 'resolve_expression', 'query',
-                    'bump_prefix']:
+                    'bump_prefix', 'get_source_expressions']:
             raise AttributeError
 
         meta_field = self.get_metafield_by_parent_model_id_and_field_name(

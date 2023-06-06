@@ -113,6 +113,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'solotodo_core.urls'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 TEMPLATES = [
     {
@@ -232,7 +233,11 @@ LOGGING = {
         'mail_admins': {
             'level': 'ERROR',
             'class': 'solotodo_core.email_handler.ThrottledAdminEmailHandler'
-        }
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
     },
     'loggers': {
         'django': {
@@ -240,6 +245,15 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': True,
         },
+        'werkzeug': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'django_extensions.management.commands.runserver_plus': {
+            'handlers': ['console'],
+            'level': 'INFO'
+        }
     }
 }
 
@@ -291,7 +305,7 @@ REST_FRAMEWORK = {
 # CORS headers configuration
 ##############################################################################
 
-CORS_ORIGIN_WHITELIST = ['localhost:3000', ]
+CORS_ORIGIN_WHITELIST = ['http://localhost:3000', ]
 
 ###############################################################################
 # Django-guardian Configuration
@@ -380,6 +394,12 @@ THUMBNAIL_PADDING = True
 SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=14)
 }
+
+##############################################################################
+# Django extensions settings
+##############################################################################
+
+RUNSERVER_PLUS_PRINT_SQL_TRUNCATE = None
 
 ##############################################################################
 # Made up settings

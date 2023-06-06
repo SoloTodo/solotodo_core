@@ -201,8 +201,8 @@ class Entity(models.Model):
     scraped_category = models.ForeignKey(Category, on_delete=models.CASCADE,
                                          related_name='+')
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE)
-    condition = models.URLField(choices=CONDITION_CHOICES)
-    scraped_condition = models.URLField(choices=CONDITION_CHOICES)
+    condition = models.URLField(choices=CONDITION_CHOICES, db_index=True)
+    scraped_condition = models.URLField(choices=CONDITION_CHOICES, db_index=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     bundle = models.ForeignKey(Bundle, on_delete=models.CASCADE, null=True)
     cell_plan = models.ForeignKey(Product, on_delete=models.CASCADE, null=True,
@@ -230,7 +230,7 @@ class Entity(models.Model):
     flixmedia_id = models.CharField(max_length=256, blank=True, null=True)
     review_count = models.IntegerField(blank=True, null=True)
     review_avg_score = models.FloatField(blank=True, null=True)
-    has_virtual_assistant = models.NullBooleanField(blank=True)
+    has_virtual_assistant = models.BooleanField(null=True, blank=True)
     seller = models.CharField(max_length=256, blank=True, null=True,
                               db_index=True)
     is_visible = models.BooleanField(default=True)

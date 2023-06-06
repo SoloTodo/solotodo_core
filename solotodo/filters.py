@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.db.models import F
+from django.db.models import F, Q
 from django_filters import rest_framework, IsoDateTimeFromToRangeFilter
 
 from solotodo.custom_model_multiple_choice_filter import \
@@ -370,6 +370,14 @@ class ProductFilterSet(rest_framework.FilterSet):
         label='Available in stores',
         method='_availability_stores'
     )
+    exclude_marketplace = rest_framework.BooleanFilter(
+        label='Exclude marketplace',
+        method='_exclude_marketplace'
+    )
+    exclude_refurbished = rest_framework.BooleanFilter(
+        label='Exclude refurbished',
+        method='_exclude_refurbished'
+    )
     brands = CustomModelMultipleChoiceFilter(
         queryset=Brand.objects.all(),
         field_name='brand',
@@ -396,11 +404,18 @@ class ProductFilterSet(rest_framework.FilterSet):
 
     @property
     def qs(self):
+        self.entities_filter = Q()
+
         qs = super(ProductFilterSet, self).qs.select_related(
             'instance_model__model__category')
 
         if self.request:
             qs = qs.filter_by_user_perms(self.request.user, 'view_product')
+
+        if self.entities_filter:
+            print('Filering by entities')
+            entities_query = Entity.objects.get_available().filter(self.entities_filter)
+            qs = qs.filter(entity__in=entities_query).distinct()
 
         return qs
 
@@ -409,14 +424,24 @@ class ProductFilterSet(rest_framework.FilterSet):
             return queryset & value
         return queryset
 
+    def _exclude_marketplace(self, queryset, name, value):
+        if value:
+            self.entities_filter &= Q(seller__isnull=True)
+        return queryset
+
+    def _exclude_refurbished(self, queryset, name, value):
+        if value:
+            self.entities_filter &= Q(condition='https://schema.org/NewCondition')
+        return queryset
+
     def _availability_countries(self, queryset, name, value):
         if value:
-            return queryset.filter_by_availability_in_countries(value)
+            self.entities_filter &= Q(store__country__in=value)
         return queryset
 
     def _availability_stores(self, queryset, name, value):
         if value:
-            return queryset.filter_by_availability_in_stores(value)
+            self.entities_filter &= Q(store__in=value)
         return queryset
 
     def _search(self, queryset, name, value):

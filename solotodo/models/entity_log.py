@@ -50,7 +50,7 @@ class EntityLog(models.Model):
     flixmedia_id = models.CharField(max_length=256, blank=True, null=True)
     review_count = models.IntegerField(blank=True, null=True)
     review_avg_score = models.FloatField(blank=True, null=True)
-    has_virtual_assistant = models.NullBooleanField(blank=True)
+    has_virtual_assistant = models.BooleanField(null=True, blank=True)
 
     DATA_FIELDS = [
         'category',

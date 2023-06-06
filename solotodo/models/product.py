@@ -31,18 +31,18 @@ class ProductQuerySet(models.QuerySet):
         return self.filter(**{lookup: category_or_categories})
 
     def filter_by_availability_in_countries(self, countries):
-        return self.filter(
-            Q(entity__active_registry__isnull=False) & ~Q(
-                entity__active_registry__stock=0) & Q(
-                entity__store__country__in=countries)
-        ).distinct()
+        query = Q(entity__active_registry__isnull=False) & ~Q(
+            entity__active_registry__stock=0) & Q(
+            entity__store__country__in=countries)
+
+        return self.filter(query).distinct()
 
     def filter_by_availability_in_stores(self, stores):
-        return self.filter(
-            Q(entity__active_registry__isnull=False) & ~Q(
+        query = Q(entity__active_registry__isnull=False) & ~Q(
                 entity__active_registry__stock=0) & Q(
                 entity__store__in=stores)
-        ).distinct()
+
+        return self.filter(query).distinct()
 
     def filter_by_search_string(self, search):
         es_search = EsProduct.search()

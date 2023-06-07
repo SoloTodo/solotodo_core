@@ -48,7 +48,7 @@ class Currency(models.Model):
 
     @classmethod
     def update_exchange_rates(cls):
-        currencies = cls.objects.all()
+        currencies = cls.objects.exclude(iso_code='USD')
 
         currency_codes = ','.join([c.iso_code for c in currencies])
         url = 'http://apilayer.net/api/live?access_key={}&currencies={}' \

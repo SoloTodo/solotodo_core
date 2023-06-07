@@ -413,8 +413,8 @@ class ProductFilterSet(rest_framework.FilterSet):
             qs = qs.filter_by_user_perms(self.request.user, 'view_product')
 
         if self.entities_filter:
-            print('Filering by entities')
-            entities_query = Entity.objects.get_available().filter(self.entities_filter)
+            entities_query = Entity.objects.get_available().filter(
+                self.entities_filter)
             qs = qs.filter(entity__in=entities_query).distinct()
 
         return qs

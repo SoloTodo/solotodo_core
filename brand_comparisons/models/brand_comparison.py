@@ -89,7 +89,7 @@ class BrandComparison(models.Model):
             9: 1,
             18: 2,
             11: 3,
-            43: 4
+            # 43: 4
         }
         stores = sorted(stores,
                         key=lambda x: retailer_a_priority.get(x.id, 999))
@@ -304,9 +304,13 @@ class BrandComparison(models.Model):
 
             col += 2
 
-        # Print a final column for the averages of Retail A
+        # Print a column for the averages of Retail A
         worksheet.merge_range(row, col, row, col + 1,
                               "Retail A", cell_format=store_header_format)
+
+        # Print a column for the averages of Retail in general
+        worksheet.merge_range(row, col + 2, row, col + 3,
+                              "Retail", cell_format=store_header_format)
 
         row += 1
 
@@ -323,8 +327,8 @@ class BrandComparison(models.Model):
             worksheet.write(row, col, title, table_hardcoded_header_format)
             col += 1
 
-        # We print an additional column ("+1") for the Retail A averages
-        for idx in range(len(stores) + 1):
+        # We print two additional columns ("+2") for the Retail averages
+        for idx in range(len(stores) + 2):
             worksheet.write(row, col, str(self.brand_1),
                             table_brand_1_header_format)
             col += 1
@@ -496,7 +500,7 @@ class BrandComparison(models.Model):
                                 }
                             )
 
-                # Last column for Retailer A average
+                # Retailer A average
                 retailer_a_base_formula = '=IFERROR(AVERAGEA({}), "-")'
 
                 worksheet.write_formula(
@@ -510,6 +514,23 @@ class BrandComparison(models.Model):
                     xl_rowcol_to_cell(row, col),
                     retailer_a_base_formula.format(
                         ','.join(brand_2_retailer_a_cells)),
+                    brand_2_price_format_to_use)
+                col += 1
+
+                # Retailer average
+                retailer_base_formula = '=IFERROR(AVERAGEA({}), "-")'
+
+                worksheet.write_formula(
+                    xl_rowcol_to_cell(row, col),
+                    retailer_base_formula.format(
+                        ','.join(brand_1_cells_with_prices)),
+                    brand_1_price_format_to_use)
+                col += 1
+
+                worksheet.write_formula(
+                    xl_rowcol_to_cell(row, col),
+                    retailer_base_formula.format(
+                        ','.join(brand_2_cells_with_prices)),
                     brand_2_price_format_to_use)
                 col += 1
 

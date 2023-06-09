@@ -32,5 +32,5 @@ def PrivateSaS3Boto3Storage():
 
     return S3Boto3Storage(
         default_acl='private',
-        bucket=settings.AWS_SA_STORAGE_BUCKET_NAME
+        bucket_name=settings.AWS_SA_STORAGE_BUCKET_NAME
     )

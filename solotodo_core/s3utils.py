@@ -16,6 +16,7 @@ class MediaRootS3Boto3Storage(S3Boto3Storage):
 
 class MediaRootPrivateS3Boto3Storage(S3Boto3Storage):
     location = setting('AWS_LOCATION', 'media')
+    custom_domain = None
     file_overwrite = False
     querystring_auth = True
 

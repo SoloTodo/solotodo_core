@@ -318,8 +318,7 @@ class Entity(models.Model):
                 review_avg_score=scraped_product.review_avg_score
             )
 
-            for section_name, position_value in \
-                    scraped_product.positions.items():
+            for section_name, position_value in scraped_product.positions:
                 store_section = sections_dict.get(section_name)
 
                 if not store_section:
@@ -416,7 +415,7 @@ class Entity(models.Model):
         new_entity.active_registry = new_entity_history
         new_entity.save()
 
-        for section_name, position_value in scraped_product.positions.items():
+        for section_name, position_value in scraped_product.positions:
             store_section = sections_dict.get(section_name)
 
             if not store_section:

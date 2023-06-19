@@ -217,7 +217,7 @@ class WtbEntity(models.Model):
                 picture_url = 'https://via.placeholder.com/200'
 
             if scraped_product.positions:
-                self.section = list(scraped_product.positions.keys())[0]
+                self.section = scraped_product.positions[0][0]
 
             self.name = scraped_product.name[:254]
             self.model_name = scraped_product.sku
@@ -292,7 +292,7 @@ class WtbEntity(models.Model):
             picture_url = 'https://via.placeholder.com/200'
 
         if scraped_product.positions:
-            section = list(scraped_product.positions.keys())[0]
+            section = scraped_product.positions[0][0]
         else:
             section = None
 

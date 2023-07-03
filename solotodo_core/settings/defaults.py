@@ -263,15 +263,14 @@ LOGGING = {
 
 CELERY_ENABLE_UTC = True
 
-CELERY_BROKER_URL = \
-    'amqp://solotodo:solotodo@localhost/solotodo'
+BROKER_URL = 'amqp://solotodo:solotodo@localhost/solotodo'
 CELERY_RESULT_BACKEND = 'rpc://'
 
 CELERY_IMPORTS = (
     'storescraper.store'
 )
 
-CELERYD_TASK_TIME_LIMIT = 300
+CELERYD_TIME_LIMIT = 300
 
 ##############################################################################
 # Django storages configuration

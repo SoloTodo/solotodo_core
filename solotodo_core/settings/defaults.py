@@ -263,7 +263,7 @@ LOGGING = {
 
 CELERY_ENABLE_UTC = True
 
-BROKER_URL = 'amqp://solotodo:solotodo@localhost/solotodo'
+CELERY_BROKER_URL = 'amqp://solotodo:solotodo@localhost/solotodo'
 CELERY_RESULT_BACKEND = 'rpc://'
 
 CELERY_IMPORTS = (

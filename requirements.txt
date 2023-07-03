@@ -89,7 +89,7 @@ pbr==3.1.1
 pep8==1.7.0
 pexpect==4.6.0
 pickleshare==0.7.5
-Pillow==10.0.0
+Pillow==9.5.0
 pipdeptree==1.0.0
 premailer==3.0.0
 prompt-toolkit==3.0.38

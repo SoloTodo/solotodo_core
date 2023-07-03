@@ -1,3 +1,9 @@
+from guardian import core
+from solotodo_core.guardian_patched_object_permission_checker import \
+    GuardianPatchedObjectPermissionChecker
+
+core.ObjectPermissionChecker = GuardianPatchedObjectPermissionChecker
+
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.db.models.signals import post_save, post_delete, m2m_changed

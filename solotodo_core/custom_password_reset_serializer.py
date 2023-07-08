@@ -1,5 +1,6 @@
 from urllib.parse import urlparse
-from rest_auth.serializers import PasswordResetSerializer
+
+from dj_rest_auth.serializers import PasswordResetSerializer
 
 
 class CustomPasswordResetSerializer(PasswordResetSerializer):

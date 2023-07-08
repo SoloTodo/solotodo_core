@@ -214,7 +214,7 @@ class BrandComparisonAlertViewSet(mixins.RetrieveModelMixin,
                                   viewsets.GenericViewSet):
     queryset = BrandComparisonAlert.objects.all()
     filter_backends = (rest_framework.DjangoFilterBackend,)
-    filter_class = BrandComparisonAlertFilterSet
+    filterset_class = BrandComparisonAlertFilterSet
     serializer_class = BrandComparisonAlertSerializer
 
     def get_queryset(self):

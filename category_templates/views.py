@@ -20,7 +20,7 @@ class CategoryTemplateViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CategoryTemplate.objects.all()
     serializer_class = CategoryTemplateSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, )
-    filter_class = CategoryTemplateFilterSet
+    filterset_class = CategoryTemplateFilterSet
 
     @action(detail=True)
     def render(self, request, pk, *args, **kwargs):

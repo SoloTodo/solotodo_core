@@ -34,7 +34,7 @@ class BannerViewSet(mixins.RetrieveModelMixin,
     serializer_class = BannerSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
-    filter_class = BannerFilterSet
+    filterset_class = BannerFilterSet
     ordering_fields = ('position', 'update__store', 'update__timestamp',
                        'subsection', 'id')
     pagination_class = BannerPagination
@@ -100,7 +100,7 @@ class BannerUpdateViewSet(mixins.RetrieveModelMixin,
     serializer_class = BannerUpdateSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
-    filter_class = BannerUpdateFilterSet
+    filterset_class = BannerUpdateFilterSet
     pagination_class = BannerUpdatePagination
 
     @action(detail=False)
@@ -134,7 +134,7 @@ class BannerAssetViewSet(mixins.RetrieveModelMixin,
     serializer_class = BannerAssetSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
-    filter_class = BannerAssetFilterSet
+    filterset_class = BannerAssetFilterSet
     ordering_fields = ('id',)
     pagination_class = BannerAssetPagination
 

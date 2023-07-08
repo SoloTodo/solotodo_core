@@ -5,21 +5,21 @@ The `urlpatterns` list routes URLs to views. For more information please see:
 Examples:
 Function views
     1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
+    2. Add a URL to urlpatterns:  re_path(r'^$', views.home, name='home')
 Class-based views
     1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
+    2. Add a URL to urlpatterns:  re_path(r'^$', Home.as_view(), name='home')
 Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
-    2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
+    2. Add a URL to urlpatterns:  re_path(r'^blog/', include('blog.urls'))
 """
 from allauth.socialaccount.providers.facebook.views import \
     FacebookOAuth2Adapter
-from django.conf.urls import url, include
+from django.urls import include, re_path
 from django.contrib import admin
 from django.http import JsonResponse
 from django.urls import path
-from rest_auth.registration.views import SocialLoginView
+from dj_rest_auth.registration.views import SocialLoginView
 from rest_framework import permissions
 from rest_framework.authtoken.views import obtain_auth_token
 from rest_framework.views import APIView
@@ -83,19 +83,20 @@ class JwtTokens(APIView):
 
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
-    url(r'^obtain-auth-token/$', obtain_auth_token),
-    url(r'^accounts/', include('allauth.urls')),
-    url(r'^metamodel/', include('metamodel.urls')),
-    # url(r'^api-auth/', include('rest_framework.urls')),
-    url(r'^auth/get_jwt_tokens/$', JwtTokens.as_view()),
-    url(r'^rest-auth/', include('rest_auth.urls')),
-    url(r'^rest-auth/registration/', include('rest_auth.registration.urls')),
-    url(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
+    re_path(r'^admin/', admin.site.urls),
+    re_path(r'^obtain-auth-token/$', obtain_auth_token),
+    re_path(r'^accounts/', include('allauth.urls')),
+    re_path(r'^metamodel/', include('metamodel.urls')),
+    # re_path(r'^api-auth/', include('rest_framework.urls')),
+    re_path(r'^auth/get_jwt_tokens/$', JwtTokens.as_view()),
+    re_path(r'^rest-auth/', include('dj_rest_auth.urls')),
+    re_path(r'^rest-auth/registration/', include(
+        'dj_rest_auth.registration.urls')),
+    re_path(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
     path('auth/token/', TokenObtainPairView.as_view(),
          name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(),
          name='token_refresh'),
-    url(r'^', include(router.urls)),
-    url(r'^', include('django.contrib.auth.urls')),
+    re_path(r'^', include(router.urls)),
+    re_path(r'^', include('django.contrib.auth.urls')),
 ]

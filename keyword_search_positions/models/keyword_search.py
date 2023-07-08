@@ -3,8 +3,8 @@ import json
 from django.db import models
 from django.core.mail import EmailMessage
 from django.contrib.auth import get_user_model
+from django.conf import settings
 
-from solotodo_core.settings import ADMINS
 from solotodo.models import Store, Category, Entity, SoloTodoUser
 
 
@@ -81,12 +81,13 @@ class KeywordSearch(models.Model):
         update.save()
 
     def send_keyword_mail(self, message):
+
         sender = SoloTodoUser.get_bot().email_recipient_text()
         subject = 'Actualización Keyword Search {} ({})'\
             .format(self.store, self.category)
         recipients = []
 
-        for admin in ADMINS:
+        for admin in settings.ADMINS:
             recipients.append(admin[1])
 
         email = EmailMessage(subject, message, sender, recipients)

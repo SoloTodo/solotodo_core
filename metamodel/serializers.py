@@ -4,7 +4,7 @@ from metamodel.models import MetaModel, MetaField, InstanceModel, InstanceField
 
 
 class MetaModelWithoutFieldsSerializer(serializers.HyperlinkedModelSerializer):
-    is_primitive = serializers.BooleanField('is_primitive')
+    is_primitive = serializers.BooleanField()
 
     class Meta:
         model = MetaModel

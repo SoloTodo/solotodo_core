@@ -11,5 +11,5 @@ class WebsiteSlideViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = WebsiteSlide.objects.all()
     serializer_class = WebsiteSlideSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = WebsiteSlideFilterSet
+    filterset_class = WebsiteSlideFilterSet
 

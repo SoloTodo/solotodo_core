@@ -1,4 +1,3 @@
-import collections
 import json
 
 import re
@@ -25,7 +24,7 @@ from .brand import Brand
 class ProductQuerySet(models.QuerySet):
     def filter_by_category(self, category_or_categories):
         lookup = 'instance_model__model__category'
-        if isinstance(category_or_categories, collections.Iterable):
+        if hasattr(category_or_categories, '__iter__'):
             lookup += '__in'
 
         return self.filter(**{lookup: category_or_categories})

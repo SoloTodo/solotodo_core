@@ -68,7 +68,7 @@ class KeywordSearchUpdateViewSet(mixins.RetrieveModelMixin,
     serializer_class = KeywordSearchUpdateSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
-    filter_class = KeywordSearchUpdateFilterSet
+    filterset_class = KeywordSearchUpdateFilterSet
     pagination_class = KeywordSearchUpdatePagination
 
     def get_queryset(self):

@@ -10,4 +10,4 @@ class CarouselSlideViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CarouselSlide.objects.all()
     serializer_class = CarouselSlideSerializer
     filter_backends = (rest_framework.DjangoFilterBackend,)
-    filter_class = CarouselSlideFilterSet
+    filterset_class = CarouselSlideFilterSet

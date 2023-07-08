@@ -15,7 +15,6 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from datetime import timedelta
 from decimal import Decimal
-# from django_filters import STRICTNESS
 
 
 from elasticsearch import Elasticsearch
@@ -59,8 +58,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'allauth',
     'allauth.account',
-    'rest_auth',
-    'rest_auth.registration',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     'django_filters',
     'crispy_forms',
     'storages',
@@ -68,7 +67,6 @@ INSTALLED_APPS = [
     'custom_user',
     'corsheaders',
     'django_premailer',
-    'gtin_fields',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
     'metamodel',
@@ -350,12 +348,6 @@ PREMAILER_OPTIONS = {
 }
 
 ##############################################################################
-# PubNub configuration
-##############################################################################
-
-BACKEND_CHANNEL = 'backend'
-
-##############################################################################
 # all-auth settings
 ##############################################################################
 
@@ -368,16 +360,12 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 
 ##############################################################################
-# rest-auth configuration
+# dj-rest-auth configuration
 ##############################################################################
 
 OLD_PASSWORD_FIELD_ENABLED = True
-
-REST_AUTH_SERIALIZERS = {
-    'PASSWORD_RESET_SERIALIZER':
-        'solotodo_core.custom_password_reset_serializer.'
-        'CustomPasswordResetSerializer'
-}
+PASSWORD_RESET_SERIALIZER = 'solotodo_core.custom_password_reset_serializer.' \
+                            'CustomPasswordResetSerializer'
 
 ##############################################################################
 # SORL Thumbnail settings

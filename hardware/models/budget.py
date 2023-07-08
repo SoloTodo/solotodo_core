@@ -14,13 +14,11 @@ from django.core.files.base import ContentFile
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.text import slugify
-from selenium import webdriver
 
 from metamodel.utils import trim, convert_image_to_inmemoryfile
 from solotodo.models import Product, Entity, EsProduct
 from solotodo_core.s3utils import PrivateS3Boto3Storage, \
     MediaRootS3Boto3Storage
-from storescraper.utils import HeadlessChrome
 
 
 class Budget(models.Model):
@@ -873,6 +871,7 @@ El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
         context = self.__bbcode_and_img_context(
             product_store_to_cheapest_entity_dict)
         rendered_html = render_to_string('budget_export_img.html', context)
+        print(rendered_html)
 
         filename = '/tmp/{}.html'.format(self.id)
         f = open(filename, 'w')

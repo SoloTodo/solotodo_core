@@ -5,7 +5,7 @@ from django.db import models
 from django.db.models import Count
 from django.template.loader import render_to_string
 from django.utils import translation, timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from custom_user.models import AbstractEmailUser, EmailUserManager
 
 from .number_format import NumberFormat

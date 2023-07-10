@@ -18,10 +18,10 @@ from decimal import Decimal
 
 
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import connections
+from elasticsearch_dsl import connections   # noqa
 
 # I know this import is not used, but the plugin gets loaded this way
-from solotodo.metamodel_plugin import MetaModelPlugin
+from solotodo.metamodel_plugin import MetaModelPlugin   # noqa
 
 
 def _(s):
@@ -363,9 +363,12 @@ SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 # dj-rest-auth configuration
 ##############################################################################
 
-OLD_PASSWORD_FIELD_ENABLED = True
-PASSWORD_RESET_SERIALIZER = 'solotodo_core.custom_password_reset_serializer.' \
-                            'CustomPasswordResetSerializer'
+REST_AUTH = {
+    'PASSWORD_RESET_SERIALIZER':
+        'solotodo_core.custom_password_reset_serializer.'
+        'CustomPasswordResetSerializer',
+    'OLD_PASSWORD_FIELD_ENABLED': True
+}
 
 ##############################################################################
 # SORL Thumbnail settings

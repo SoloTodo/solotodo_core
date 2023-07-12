@@ -1127,37 +1127,42 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return ProductSerializer
 
-    @action(methods=['GET', 'POST'], detail=False,
-            url_name='available_entities')
+    @action(detail=False, url_name='available_entities')
     def available_entities(self, request):
-        if request.method == 'GET':
-            queryset = self.filter_queryset(self.get_queryset())
-        elif request.method == 'POST':
-            queryset = self.filter_class(request.POST).qs
-        else:
-            raise Exception('Invalid method')
-        products = self.paginate_queryset(queryset)
+        params = request.query_params.copy()
+
+        product_filters = {
+            'ids': params.pop('ids', [])
+        }
+
+        products_filterset = self.filterset_class(
+            data=product_filters,
+            queryset=self.get_queryset(),
+            request=request
+        )
+
+        products = products_filterset.qs
+        products = self.paginate_queryset(products)
         Product.prefetch_specs(products)
 
-        entities = Entity.objects \
+        entity_filterset = EntityFilterSet(
+            data=params,
+            request=request
+        )
+
+        entities = entity_filterset.qs \
             .filter(product__in=products) \
             .get_available() \
             .order_by('active_registry__offer_price',
                       'active_registry__normal_price') \
-            .select_related('bundle')
-
-        entity_query_params = request.query_params.copy()
-        entity_query_params.pop('ids', None)
-        entity_filterset = EntityFilterSet(data=entity_query_params,
-                                           queryset=entities,
-                                           request=request)
+            .select_related('bundle', 'product')
 
         result_dict = {}
 
         for product in products:
             result_dict[product] = []
 
-        for entity in entity_filterset.qs:
+        for entity in entities:
             result_dict[entity.product].append(entity)
 
         result_array = [{'product': product, 'entities': entities}

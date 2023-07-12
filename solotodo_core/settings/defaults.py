@@ -474,14 +474,6 @@ SOICOS_PASS = ''
 
 SENDINBLUE_KEY = ''
 
-ANTICAPTCHA = {
-    'KEY': None,
-    'PROXY_IP': None,
-    'PROXY_PORT': None,
-    'PROXY_USERNAME': None,
-    'PROXY_PASSWORD': None,
-}
-
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './gcp_credentials.json'
 
 LENOVO_RETAILER_TIER = {

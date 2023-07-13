@@ -1071,12 +1071,14 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             uuid = request.data.get('uuid', None)
             ip = get_client_ip(request) or '127.0.0.1'
 
-            lead = Lead.objects.create(
+            lead, created = Lead.objects.get_or_create(
                 uuid=uuid,
-                entity_history=entity.active_registry,
-                website=website,
-                user=user,
-                ip=ip
+                defaults={
+                    'entity_history': entity.active_registry,
+                    'website': website,
+                    'user': user,
+                    'ip': ip
+                }
             )
 
             serializer = LeadSerializer(lead, context={'request': request})

@@ -15,6 +15,7 @@ Including another URLconf
 """
 from allauth.socialaccount.providers.facebook.views import \
     FacebookOAuth2Adapter
+from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from django.urls import include, re_path
 from django.contrib import admin
 from django.http import JsonResponse
@@ -71,6 +72,10 @@ class FacebookLogin(SocialLoginView):
     adapter_class = FacebookOAuth2Adapter
 
 
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+
+
 class JwtTokens(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -93,6 +98,7 @@ urlpatterns = [
     re_path(r'^rest-auth/registration/', include(
         'dj_rest_auth.registration.urls')),
     re_path(r'^rest-auth/facebook/$', FacebookLogin.as_view(), name='fb_login'),
+    re_path(r'^rest-auth/google/$', GoogleLogin.as_view()),
     path('auth/token/', TokenObtainPairView.as_view(),
          name='token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(),

@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     'django_premailer',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google',
     'metamodel',
     'solotodo',
     'notebooks',

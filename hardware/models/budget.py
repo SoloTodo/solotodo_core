@@ -13,7 +13,7 @@ from django.template.loader import render_to_string
 from django.utils.text import slugify
 
 from solotodo.models import Product, Entity, EsProduct
-from solotodo_core.s3utils import PrivateS3Boto3Storage
+from solotodo_core.s3utils import PrivateS3Boto3Storage, MediaRootS3Boto3Storage
 
 
 class Budget(models.Model):
@@ -874,11 +874,18 @@ El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
             product_store_to_cheapest_entity_dict)
         rendered_html = render_to_string('budget_export_img.html', context)
 
-        data = {'html': rendered_html}
-        image = requests.post('https://hcti.io/v1/image', json=data,
-                              auth=(settings.HCTI_API_USER_ID,
-                                    settings.HCTI_API_KEY)).json()
-        return image['url']
+        data = {
+            'key': settings.GRABZIT_KEY,
+            'format': 'jpg',
+            'html': rendered_html
+        }
+        image = requests.post('https://api.grabz.it/services/convert',
+                              data=data)
+        storage = MediaRootS3Boto3Storage()
+        upload_file = ContentFile(image.content)
+        path = storage.save('budgets/{}.jpg'.format(self.id), upload_file)
+
+        return storage.url(path)
 
     def __bbcode_and_img_context(self, product_store_to_cheapest_entity_dict):
         budget_entries = []

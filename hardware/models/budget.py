@@ -5,6 +5,7 @@ import requests
 import xlsxwriter
 from decimal import Decimal
 
+from PIL import Image
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
@@ -12,8 +13,10 @@ from django.db import models
 from django.template.loader import render_to_string
 from django.utils.text import slugify
 
+from metamodel.utils import trim
 from solotodo.models import Product, Entity, EsProduct
-from solotodo_core.s3utils import PrivateS3Boto3Storage, MediaRootS3Boto3Storage
+from solotodo_core.s3utils import (PrivateS3Boto3Storage,
+                                   MediaRootS3Boto3Storage)
 
 
 class Budget(models.Model):
@@ -879,11 +882,15 @@ El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
             'format': 'jpg',
             'html': rendered_html
         }
-        image = requests.post('https://api.grabz.it/services/convert',
-                              data=data)
+        http_response = requests.post('https://api.grabz.it/services/convert',
+                                      data=data)
+        image = Image.open(io.BytesIO(http_response.content))
+        trimmed_image = trim(image)
+        trimmed_image_io = io.BytesIO()
+        trimmed_image.save(trimmed_image_io, 'JPEG')
+
         storage = MediaRootS3Boto3Storage()
-        upload_file = ContentFile(image.content)
-        path = storage.save('budgets/{}.jpg'.format(self.id), upload_file)
+        path = storage.save('budgets/{}.jpg'.format(self.id), trimmed_image_io)
 
         return storage.url(path)
 

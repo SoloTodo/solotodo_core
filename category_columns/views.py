@@ -10,4 +10,4 @@ class CategoryColumnViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = CategoryColumn.objects.all()
     serializer_class = CategoryColumnSerializer
     filter_backends = (rest_framework.DjangoFilterBackend,)
-    filter_class = CategoryColumnFilterSet
+    filterset_class = CategoryColumnFilterSet

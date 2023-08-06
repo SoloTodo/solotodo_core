@@ -1,8 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
-from gtin_fields import fields as gtin_fields
-
 from .bundle import Bundle
 from .entity import Entity
 from .category import Category
@@ -40,7 +38,7 @@ class EntityLog(models.Model):
     cell_plan_name = models.CharField(max_length=60, null=True)
     part_number = models.CharField(max_length=50, null=True)
     sku = models.CharField(max_length=50, null=True)
-    ean = gtin_fields.EAN13Field(null=True, blank=True)
+    ean = models.CharField(max_length=50, null=True, blank=True)
     url = models.URLField(max_length=512)
     discovery_url = models.URLField(max_length=512)
     picture_urls = models.TextField(null=True)

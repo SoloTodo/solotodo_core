@@ -1,13 +1,13 @@
 from datetime import timedelta
 from itertools import repeat
 from multiprocessing import cpu_count, Pool, set_start_method
+import django
+django.setup()
 from django.core.management import BaseCommand
 from django.db import models
 from django.db.models import Avg, Min, Count
 
 from solotodo.models import Entity, EntityHistory, EsEntity, Lead
-
-set_start_method("spawn")
 
 
 class Epoch(models.expressions.Func):
@@ -86,6 +86,7 @@ class Command(BaseCommand):
                                 'indexing? (ideally leave 4 or so for '
                                 'Elasticsearch and other stuff) '))
         print('Creating pool with {} workers'.format(core_target))
+        set_start_method("spawn")
         pool = Pool(processes=core_target)
         pool.starmap(index_entity, zip(
             es, repeat(prices_dict), repeat(leads_dict), range(len(es))))

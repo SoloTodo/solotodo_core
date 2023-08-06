@@ -111,7 +111,7 @@ class Command(BaseCommand):
                     .annotate(count=Count('entity_history__entity__product'))
 
                 leads_dict = {
-                    lead['entity_history__entity__product']: l['count']
+                    lead['entity_history__entity__product']: lead['count']
                     for lead in leads_aggs
                 }
 

@@ -10,4 +10,4 @@ class CategorySpecsFormLayoutViewset(viewsets.ReadOnlyModelViewSet):
     queryset = CategorySpecsFormLayout.objects.all()
     serializer_class = CategorySpecsFormLayoutSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, )
-    filter_class = CategorySpecsFormLayoutFilterset
+    filterset_class = CategorySpecsFormLayoutFilterset

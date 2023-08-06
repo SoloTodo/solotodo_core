@@ -28,7 +28,7 @@ class BudgetViewSet(viewsets.ModelViewSet):
     pagination_class = BudgetPagination
     permission_classes = (BudgetPermission,)
     filter_backends = (rest_framework.DjangoFilterBackend, )
-    filter_class = BudgetFilterSet
+    filterset_class = BudgetFilterSet
 
     @action(methods=['post'], detail=True)
     def add_product(self, request, pk, *args, **kwargs):

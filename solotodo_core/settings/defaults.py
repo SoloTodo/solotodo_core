@@ -15,14 +15,13 @@ import os
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from datetime import timedelta
 from decimal import Decimal
-# from django_filters import STRICTNESS
 
 
 from elasticsearch import Elasticsearch
-from elasticsearch_dsl import connections
+from elasticsearch_dsl import connections   # noqa
 
 # I know this import is not used, but the plugin gets loaded this way
-from solotodo.metamodel_plugin import MetaModelPlugin
+from solotodo.metamodel_plugin import MetaModelPlugin   # noqa
 
 
 def _(s):
@@ -59,8 +58,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'allauth',
     'allauth.account',
-    'rest_auth',
-    'rest_auth.registration',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     'django_filters',
     'crispy_forms',
     'storages',
@@ -68,9 +67,9 @@ INSTALLED_APPS = [
     'custom_user',
     'corsheaders',
     'django_premailer',
-    'gtin_fields',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.facebook',
+    'allauth.socialaccount.providers.google',
     'metamodel',
     'solotodo',
     'notebooks',
@@ -263,15 +262,14 @@ LOGGING = {
 
 CELERY_ENABLE_UTC = True
 
-CELERY_BROKER_URL = \
-    'amqp://solotodo:solotodo@localhost/solotodo'
+CELERY_BROKER_URL = 'amqp://solotodo:solotodo@localhost/solotodo'
 CELERY_RESULT_BACKEND = 'rpc://'
 
 CELERY_IMPORTS = (
     'storescraper.store'
 )
 
-CELERYD_TASK_TIME_LIMIT = 300
+CELERYD_TIME_LIMIT = 300
 
 ##############################################################################
 # Django storages configuration
@@ -351,12 +349,6 @@ PREMAILER_OPTIONS = {
 }
 
 ##############################################################################
-# PubNub configuration
-##############################################################################
-
-BACKEND_CHANNEL = 'backend'
-
-##############################################################################
 # all-auth settings
 ##############################################################################
 
@@ -369,15 +361,14 @@ ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 
 ##############################################################################
-# rest-auth configuration
+# dj-rest-auth configuration
 ##############################################################################
 
-OLD_PASSWORD_FIELD_ENABLED = True
-
-REST_AUTH_SERIALIZERS = {
+REST_AUTH = {
     'PASSWORD_RESET_SERIALIZER':
         'solotodo_core.custom_password_reset_serializer.'
-        'CustomPasswordResetSerializer'
+        'CustomPasswordResetSerializer',
+    'OLD_PASSWORD_FIELD_ENABLED': True
 }
 
 ##############################################################################
@@ -400,6 +391,12 @@ SIMPLE_JWT = {
 ##############################################################################
 
 RUNSERVER_PLUS_PRINT_SQL_TRUNCATE = None
+
+##############################################################################
+# GRABZIT settings
+##############################################################################
+
+GRABZIT_KEY = ''
 
 ##############################################################################
 # Made up settings
@@ -476,14 +473,6 @@ SOICOS_USER = ''
 SOICOS_PASS = ''
 
 SENDINBLUE_KEY = ''
-
-ANTICAPTCHA = {
-    'KEY': None,
-    'PROXY_IP': None,
-    'PROXY_PORT': None,
-    'PROXY_USERNAME': None,
-    'PROXY_PASSWORD': None,
-}
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = './gcp_credentials.json'
 

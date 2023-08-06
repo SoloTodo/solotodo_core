@@ -1,26 +1,22 @@
-import base64
 import io
 import re
 
-import os
-from io import BytesIO
-
+import requests
 import xlsxwriter
 from decimal import Decimal
 
 from PIL import Image
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
 from django.db import models
 from django.template.loader import render_to_string
 from django.utils.text import slugify
-from selenium import webdriver
 
-from metamodel.utils import trim, convert_image_to_inmemoryfile
+from metamodel.utils import trim
 from solotodo.models import Product, Entity, EsProduct
-from solotodo_core.s3utils import PrivateS3Boto3Storage, \
-    MediaRootS3Boto3Storage
-from storescraper.utils import HeadlessChrome
+from solotodo_core.s3utils import (PrivateS3Boto3Storage,
+                                   MediaRootS3Boto3Storage)
 
 
 class Budget(models.Model):
@@ -39,7 +35,9 @@ class Budget(models.Model):
         # Returnes a "fixed" product pool of the budget that also considers
         # the "selected_product" of each entry
         products = list(self.products_pool.all())
-        for entry in self.entries.filter(selected_product__isnull=False).select_related('selected_product'):
+        for entry in self.entries.filter(
+                selected_product__isnull=False).select_related(
+                'selected_product'):
             products.append(entry.selected_product)
         return products
 
@@ -320,12 +318,16 @@ El sistema solo puede verificar la compatibilidad de 0, 1 o 2 tarjetas de video
         if processor and mb:
             default_cores = []
 
-            for x in getattr(mb.specs, 'chipset_supported_processor_cores_by_default', []):
+            for x in getattr(
+                    mb.specs,
+                    'chipset_supported_processor_cores_by_default', []):
                 default_cores.append(x.id)
 
             update_cores = []
 
-            for x in getattr(mb.specs, 'chipset_supported_processor_cores_with_bios_update', []):
+            for x in getattr(
+                    mb.specs,
+                    'chipset_supported_processor_cores_with_bios_update', []):
                 update_cores.append(x.id)
 
             if processor.specs.socket_socket_id != \
@@ -562,7 +564,8 @@ El SSD {} es de tipo M.2, pero no tenemos información de su tamaño (2280,
 """.format(ssd['unicode']))
                         else:
                             local_errors.append("""
-El SSD {} es de tipo M.2 pero el puerto {} no es M.2""".format(ssd['unicode'], port['port_unicode']))
+El SSD {} es de tipo M.2 pero el puerto {} no es M.2""".format(
+                                ssd['unicode'], port['port_unicode']))
 
                     if port['port_connector_id'] == 1559371:
                         if 'M.2' in ssd['ssd_type_connector_unicode']:
@@ -828,7 +831,7 @@ El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
         worksheet.write(row, STORE_COLUMN, 'Total', header_format)
 
         if currency_to_money_format:
-            # Most likely all of the entries are oof the same currency, so
+            # Most likely all the entries are of the same currency, so
             # using the "first" one should be safe
             currency = list(currency_to_money_format.keys())[0]
 
@@ -874,28 +877,22 @@ El monitor {} no tiene entradas de video digital (e.g. DVI, HDMI o
             product_store_to_cheapest_entity_dict)
         rendered_html = render_to_string('budget_export_img.html', context)
 
-        filename = '/tmp/{}.html'.format(self.id)
-        f = open(filename, 'w')
-        f.write(rendered_html)
-        f.close()
+        data = {
+            'key': settings.GRABZIT_KEY,
+            'format': 'jpg',
+            'html': rendered_html
+        }
+        http_response = requests.post('https://api.grabz.it/services/convert',
+                                      data=data)
+        image = Image.open(io.BytesIO(http_response.content))
+        trimmed_image = trim(image)
+        trimmed_image_io = io.BytesIO()
+        trimmed_image.save(trimmed_image_io, 'JPEG')
 
-        with HeadlessChrome() as driver:
-            driver.set_window_size(1000, 1000)
-            driver.get('file://{}'.format(filename))
-
-            image = Image.open(BytesIO(base64.b64decode(
-                driver.get_screenshot_as_base64())))
-            # driver.close()
-
-        new_filename = 'budget_screenshots/{}.png'.format(self.id)
-        file_to_upload = convert_image_to_inmemoryfile(trim(image))
         storage = MediaRootS3Boto3Storage()
-        screenshot_path = storage.save(new_filename, file_to_upload)
-        screenshot_url = storage.url(screenshot_path)
+        path = storage.save('budgets/{}.jpg'.format(self.id), trimmed_image_io)
 
-        os.remove(filename)
-
-        return screenshot_url
+        return storage.url(path)
 
     def __bbcode_and_img_context(self, product_store_to_cheapest_entity_dict):
         budget_entries = []

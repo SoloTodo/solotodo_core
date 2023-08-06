@@ -7,9 +7,6 @@ from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
 from django.db.models import Q, Count
 from django.utils import timezone
-
-from gtin_fields import fields as gtin_fields
-
 from solotodo.utils import iterable_to_dict
 from .product import Product
 from .currency import Currency
@@ -220,7 +217,7 @@ class Entity(models.Model):
     part_number = models.CharField(max_length=50, null=True, blank=True,
                                    db_index=True)
     sku = models.CharField(max_length=50, null=True, blank=True, db_index=True)
-    ean = gtin_fields.EAN13Field(null=True, blank=True)
+    ean = models.CharField(max_length=50, null=True, blank=True)
     key = models.CharField(max_length=256, db_index=True)
     url = models.URLField(max_length=512, db_index=True)
     discovery_url = models.URLField(max_length=512, db_index=True)

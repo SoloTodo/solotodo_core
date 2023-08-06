@@ -107,7 +107,7 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserSerializer
     pagination_class = UserPagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = UserFilterSet
+    filterset_class = UserFilterSet
 
     @action(methods=['get', 'patch'],
             permission_classes=(permissions.IsAuthenticated,),
@@ -219,7 +219,7 @@ class WebsiteViewSet(PermissionReadOnlyModelViewSet):
     queryset = Website.objects.all()
     serializer_class = WebsiteSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = WebsiteFilterSet
+    filterset_class = WebsiteFilterSet
 
 
 class LanguageViewSet(viewsets.ReadOnlyModelViewSet):
@@ -458,7 +458,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
     serializer_class = StoreSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
-    filter_class = StoreFilterSet
+    filterset_class = StoreFilterSet
 
     @action(detail=False)
     def average_ratings(self, request, *args, **kwargs):
@@ -628,7 +628,7 @@ class StoreUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = StoreUpdateLogSerializer
     pagination_class = StoreUpdateLogPagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = StoreUpdateLogFilterSet
+    filterset_class = StoreUpdateLogFilterSet
     ordering_fields = ('last_updated',)
 
     @action(detail=False)
@@ -660,7 +660,7 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EntitySerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        CustomEntityOrderingFilter)
-    filter_class = EntityFilterSet
+    filterset_class = EntityFilterSet
     search_fields = ('product__instance_model__unicode_representation',
                      'cell_plan__instance_model__unicode_representation',
                      'bundle__name',
@@ -1071,12 +1071,14 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
             uuid = request.data.get('uuid', None)
             ip = get_client_ip(request) or '127.0.0.1'
 
-            lead = Lead.objects.create(
+            lead, created = Lead.objects.get_or_create(
                 uuid=uuid,
-                entity_history=entity.active_registry,
-                website=website,
-                user=user,
-                ip=ip
+                defaults={
+                    'entity_history': entity.active_registry,
+                    'website': website,
+                    'user': user,
+                    'ip': ip
+                }
             )
 
             serializer = LeadSerializer(lead, context={'request': request})
@@ -1101,7 +1103,7 @@ class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = EntityHistorySerializer
     pagination_class = EntityHistoryPagination
     filter_backends = (rest_framework.DjangoFilterBackend,)
-    filter_class = EntityHistoryFilterSet
+    filterset_class = EntityHistoryFilterSet
 
     @action(detail=True)
     def stock(self, request, pk):
@@ -1117,7 +1119,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ProductSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        CustomProductOrderingFilter)
-    filter_class = ProductFilterSet
+    filterset_class = ProductFilterSet
     ordering_fields = None
     pagination_class = ProductPagination
 
@@ -1127,37 +1129,42 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return ProductSerializer
 
-    @action(methods=['GET', 'POST'], detail=False,
-            url_name='available_entities')
+    @action(detail=False, url_name='available_entities')
     def available_entities(self, request):
-        if request.method == 'GET':
-            queryset = self.filter_queryset(self.get_queryset())
-        elif request.method == 'POST':
-            queryset = self.filter_class(request.POST).qs
-        else:
-            raise Exception('Invalid method')
-        products = self.paginate_queryset(queryset)
+        params = request.query_params.copy()
+
+        product_filters = {
+            'ids': params.pop('ids', [])
+        }
+
+        products_filterset = self.filterset_class(
+            data=product_filters,
+            queryset=self.get_queryset(),
+            request=request
+        )
+
+        products = products_filterset.qs
+        products = self.paginate_queryset(products)
         Product.prefetch_specs(products)
 
-        entities = Entity.objects \
+        entity_filterset = EntityFilterSet(
+            data=params,
+            request=request
+        )
+
+        entities = entity_filterset.qs \
             .filter(product__in=products) \
             .get_available() \
             .order_by('active_registry__offer_price',
                       'active_registry__normal_price') \
-            .select_related('bundle')
-
-        entity_query_params = request.query_params.copy()
-        entity_query_params.pop('ids', None)
-        entity_filterset = EntityFilterSet(data=entity_query_params,
-                                           queryset=entities,
-                                           request=request)
+            .select_related('bundle', 'product')
 
         result_dict = {}
 
         for product in products:
             result_dict[product] = []
 
-        for entity in entity_filterset.qs:
+        for entity in entities:
             result_dict[entity.product].append(entity)
 
         result_array = [{'product': product, 'entities': entities}
@@ -1443,7 +1450,7 @@ class LeadViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = LeadSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
-    filter_class = LeadFilterSet
+    filterset_class = LeadFilterSet
     pagination_class = LeadPagination
     ordering_fields = ('timestamp',)
 
@@ -1481,7 +1488,7 @@ class VisitViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Visit.objects.all()
     serializer_class = VisitSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = VisitFilterSet
+    filterset_class = VisitFilterSet
     pagination_class = VisitPagination
     ordering_fields = ('timestamp',)
 
@@ -1542,7 +1549,7 @@ class RatingViewSet(viewsets.ModelViewSet):
     permission_classes = (RatingPermission,)
     pagination_class = RatingPagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = RatingFilterSet
+    filterset_class = RatingFilterSet
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -1577,7 +1584,7 @@ class ProductPictureViewSet(viewsets.ModelViewSet):
     permission_classes = (DjangoModelPermissionsOrAnonReadOnly,)
     pagination_class = ProductPicturePagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = ProductPictureFilterSet
+    filterset_class = ProductPictureFilterSet
 
     @action(detail=True)
     def thumbnail(self, request, pk):
@@ -1623,7 +1630,7 @@ class EntitySectionPositionViewSet(mixins.CreateModelMixin,
     queryset = EntitySectionPosition.objects.all()
     serializer_class = EntitySectionPositionSerializer
     filter_backends = (rest_framework.DjangoFilterBackend,)
-    filter_class = EntitySectionPositionFilterSet
+    filterset_class = EntitySectionPositionFilterSet
     pagination_class = EntitySectionPositionPagination
 
 
@@ -1634,7 +1641,7 @@ class StoreSectionViewSet(mixins.CreateModelMixin,
     queryset = StoreSection.objects.all()
     serializer_class = StoreSectionSerializer
     filter_backends = (rest_framework.DjangoFilterBackend,)
-    filter_class = StoreSectionFilterSet
+    filterset_class = StoreSectionFilterSet
 
 
 class ProductVideoViewSet(mixins.CreateModelMixin,

@@ -38,7 +38,7 @@ class WtbEntityViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = WtbEntityPagination
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
                        OrderingFilter)
-    filter_class = WtbEntityFilterSet
+    filterset_class = WtbEntityFilterSet
     ordering_fields = ('name', 'brand', 'last_updated', 'key', 'category',
                        'product')
     search_fields = ('product__instance_model__unicode_representation',
@@ -252,5 +252,5 @@ class WtbBrandUpdateLogViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = WtbBrandUpdateLogSerializer
     pagination_class = WtbStoreUpdateLogPagination
     filter_backends = (rest_framework.DjangoFilterBackend, OrderingFilter)
-    filter_class = WtbBrandUpdateLogFilterSet
+    filterset_class = WtbBrandUpdateLogFilterSet
     ordering_fields = ('last_updated', )

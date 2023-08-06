@@ -6,8 +6,6 @@ from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
-import gtin_fields.fields
-import gtin_fields.validators
 import storages.backends.s3boto3
 
 
@@ -147,7 +145,7 @@ class Migration(migrations.Migration):
                 ('cell_plan_name', models.CharField(blank=True, db_index=True, max_length=50, null=True)),
                 ('part_number', models.CharField(blank=True, db_index=True, max_length=50, null=True)),
                 ('sku', models.CharField(blank=True, db_index=True, max_length=50, null=True)),
-                ('ean', gtin_fields.fields.EAN13Field(blank=True, max_length=13, null=True, validators=[gtin_fields.validators._EAN13Validator()], verbose_name='EAN-13')),
+                ('ean', models.CharField(blank=True, max_length=13, null=True, verbose_name='EAN-13')),
                 ('key', models.CharField(db_index=True, max_length=256)),
                 ('url', models.URLField(db_index=True, max_length=512)),
                 ('discovery_url', models.URLField(db_index=True, max_length=512)),
@@ -191,7 +189,7 @@ class Migration(migrations.Migration):
                 ('cell_plan_name', models.CharField(max_length=50, null=True)),
                 ('part_number', models.CharField(max_length=50, null=True)),
                 ('sku', models.CharField(max_length=50, null=True)),
-                ('ean', gtin_fields.fields.EAN13Field(blank=True, max_length=13, null=True, validators=[gtin_fields.validators._EAN13Validator()], verbose_name='EAN-13')),
+                ('ean', models.CharField(blank=True, max_length=13, null=True, verbose_name='EAN-13')),
                 ('url', models.URLField(max_length=512)),
                 ('discovery_url', models.URLField(max_length=512)),
                 ('picture_urls', models.TextField(null=True)),

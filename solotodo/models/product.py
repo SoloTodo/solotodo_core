@@ -1,4 +1,3 @@
-import collections
 import json
 
 import re
@@ -25,7 +24,7 @@ from .brand import Brand
 class ProductQuerySet(models.QuerySet):
     def filter_by_category(self, category_or_categories):
         lookup = 'instance_model__model__category'
-        if isinstance(category_or_categories, collections.Iterable):
+        if hasattr(category_or_categories, '__iter__'):
             lookup += '__in'
 
         return self.filter(**{lookup: category_or_categories})
@@ -460,6 +459,7 @@ class Product(models.Model):
             results_per_product=results_per_product)[0]
 
     def fuse(self, target_product):
+        from .entity import Entity
         # Transfers all related objects that point to this product to the
         # target, then deletes self
 
@@ -476,6 +476,10 @@ class Product(models.Model):
         for e in self.entity_set.all():
             e.category = target_product.category
             e.product = target_product
+            e.save()
+
+        for e in Entity.objects.filter(cell_plan=self):
+            e.cell_plan = target_product
             e.save()
 
         self.pictures.update(product=target_product)

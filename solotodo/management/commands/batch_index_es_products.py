@@ -2,12 +2,11 @@ import json
 from decimal import Decimal
 from itertools import repeat
 from multiprocessing import cpu_count, Pool, set_start_method
+import django
+django.setup()
 from django.core.management import BaseCommand
 from metamodel.models import MetaModel, InstanceModel
 from solotodo.models import Product, EsProduct
-
-set_start_method("spawn")
-
 
 def index_product(product, d):
     # Top level function used by multiprocessing
@@ -62,6 +61,7 @@ class Command(BaseCommand):
                                 'indexing? (ideally leave 4 or so for '
                                 'Elasticsearch and other stuff) '))
         print('Creating pool with {} workers'.format(core_target))
+        set_start_method('spawn')
         pool = Pool(processes=core_target)
         pool.starmap(index_product, zip(products, repeat(d)))
         pool.close()

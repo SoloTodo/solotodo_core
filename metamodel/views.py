@@ -563,7 +563,7 @@ class InstanceModelViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = InstancePagination
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter)
     search_fields = ['unicode_representation']
-    filter_class = InstanceFilterSet
+    filterset_class = InstanceFilterSet
     permission_classes = [IsAdminUser]
 
     def get_serializer_class(self):
@@ -615,7 +615,7 @@ class InstanceFieldViewSet(viewsets.ModelViewSet):
     pagination_class = InstancePagination
     serializer_class = InstanceFieldSerializer
     filter_backends = (rest_framework.DjangoFilterBackend,)
-    filter_class = InstanceFieldFilterSet
+    filterset_class = InstanceFieldFilterSet
     permission_classes = [IsSuperuser]
 
 
@@ -623,7 +623,7 @@ class MetaFieldViewSet(viewsets.ModelViewSet):
     queryset = MetaField.objects.select_related('model', 'parent')
     permission_classes = [IsSuperuser]
     filter_backends = (rest_framework.DjangoFilterBackend,)
-    filter_class = MetaFieldFilterSet
+    filterset_class = MetaFieldFilterSet
 
     def get_serializer_class(self):
         if self.action == 'create':

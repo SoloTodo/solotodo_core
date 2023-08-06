@@ -709,7 +709,7 @@ class StoreSectionFilterSet(rest_framework.FilterSet):
 
         if self.request:
             qs = qs.filter_by_user_perms(self.request.user,
-                                         'view_entity_positions')
+                                         'view_store_section')
 
         return qs
 

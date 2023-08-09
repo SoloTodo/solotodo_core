@@ -34,6 +34,13 @@ class RatingQuerySet(models.QuerySet):
 
 
 class Rating(models.Model):
+    STATUS_CHOICES = [
+        (1, 'Pending'),
+        (2, 'Approved'),
+        (3, 'Rejected'),
+        (4, 'Investigating')
+    ]
+
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     store_rating = models.IntegerField()
@@ -47,6 +54,7 @@ class Rating(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     ip = models.GenericIPAddressField()
     email_or_phone = models.CharField(max_length=255, blank=True, null=True)
+    status = models.IntegerField(choices=STATUS_CHOICES, default=1)
 
     objects = RatingQuerySet.as_manager()
 

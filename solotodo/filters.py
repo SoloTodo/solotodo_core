@@ -623,14 +623,14 @@ class RatingFilterSet(rest_framework.FilterSet):
 
         if self.request:
             if not self.request.user.has_perm('solotodo.is_ratings_staff'):
-                qs = qs.filter(approval_date__isnull=False)
+                qs = qs.filter(status=Rating.RATING_APPROVED)
             qs = qs.filter_by_user_perms(self.request.user, 'view_rating')
 
         return qs
 
     def _pending_only(self, queryset, name, value):
         if value:
-            queryset = queryset.filter(approval_date__isnull=True)
+            queryset = queryset.filter(status=Rating.RATING_PENDING)
         return queryset
 
     def _with_product_rating_only(self, queryset, name, value):

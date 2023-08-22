@@ -211,7 +211,7 @@ class VisitModelAdmin(admin.ModelAdmin):
 @admin.register(Rating)
 class RatingModelAdmin(admin.ModelAdmin):
     list_display = ('__str__', 'product', 'store', 'creation_date',
-                    'approval_date')
+                    'status')
     list_filter = ('store', )
     readonly_fields = ('product', 'store', 'user')
 

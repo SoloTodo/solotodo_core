@@ -34,11 +34,16 @@ class RatingQuerySet(models.QuerySet):
 
 
 class Rating(models.Model):
+    RATING_PENDING = 1
+    RATING_APPROVED = 2
+    RATING_REJECTED = 3
+    RATING_INVESTIGATING = 4
+
     STATUS_CHOICES = [
-        (1, 'Pending'),
-        (2, 'Approved'),
-        (3, 'Rejected'),
-        (4, 'Investigating')
+        (RATING_PENDING, 'Pending'),
+        (RATING_APPROVED, 'Approved'),
+        (RATING_REJECTED, 'Rejected'),
+        (RATING_INVESTIGATING, 'Investigating')
     ]
 
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -54,7 +59,9 @@ class Rating(models.Model):
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     ip = models.GenericIPAddressField()
     email_or_phone = models.CharField(max_length=255, blank=True, null=True)
-    status = models.IntegerField(choices=STATUS_CHOICES, default=1)
+    status = models.IntegerField(choices=STATUS_CHOICES,
+                                 default=RATING_PENDING)
+    last_updated = models.DateTimeField(auto_now=True)
 
     objects = RatingQuerySet.as_manager()
 
@@ -62,10 +69,11 @@ class Rating(models.Model):
         return '{}: {}'.format(self.product, self.store)
 
     def approve(self):
-        if self.approval_date:
+        if self.status == self.RATING_APPROVED:
             raise ValidationError('Rating already approved')
 
         self.approval_date = timezone.now()
+        self.status = self.RATING_APPROVED
         self.save()
 
     class Meta:

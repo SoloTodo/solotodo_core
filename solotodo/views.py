@@ -466,7 +466,7 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
 
         ratings = Rating.objects.filter(
             store__in=stores,
-            approval_date__isnull=False
+            status=Rating.RATING_APPROVED
         ).values('store') \
             .annotate(rating=Avg('store_rating')) \
             .order_by('store')
@@ -1439,7 +1439,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def average_rating(self, request, pk):
         product = self.get_object()
 
-        rating = product.rating_set.filter(approval_date__isnull=False) \
+        rating = product.rating_set.filter(status=Rating.RATING_APPROVED) \
             .aggregate(average=Avg('product_rating'), count=Count('*'))
 
         return Response(rating)

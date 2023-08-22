@@ -117,7 +117,7 @@ class EntityByUrlForm(forms.Form):
             else:
                 return None
         elif url.netloc == 'www.ttchile.cl':
-            store = Store.objects.get(name='TtChile')
+            store = Store.objects.get(name='TyT Chile')
             parsed_qs = parse_qs(url.query)
             if 'i' in parsed_qs:
                 sku = parsed_qs['i'][0]

@@ -223,6 +223,7 @@ def additional_es_fields(elastic_search_original, model_name):
 
     if m == 'Ram':
         result = {}
+        result['part_number'] = elastic_search_original['name']
         heat_spreader = elastic_search_original['heat_spreader_unicode']
 
         if heat_spreader == 'Desconocido':

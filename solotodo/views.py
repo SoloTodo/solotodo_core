@@ -55,6 +55,7 @@ from solotodo.forms.category_form import CategoryForm
 from solotodo.forms.product_bucket_fields_form import ProductBucketFieldForm
 from solotodo.forms.product_form import ProductForm
 from solotodo.forms.product_picture_form import ProductPictureForm
+from solotodo.forms.rating_status_form import RatingStatusForm
 from solotodo.forms.resource_names_form import ResourceNamesForm
 from solotodo.forms.send_contact_message_form import SendContactEmailForm
 from solotodo.forms.website_form import WebsiteForm
@@ -1572,6 +1573,25 @@ class RatingViewSet(viewsets.ModelViewSet):
         except ValidationError as err:
             return Response({'detail': err},
                             status=status.HTTP_400_BAD_REQUEST)
+
+        serializer_class = self.get_serializer_class()
+        serializer = serializer_class(rating, context={'request': request})
+        return Response(serializer.data)
+
+    @action(methods=['post'], detail=True)
+    def change_status(self, request, pk, *args, **kwargs):
+        if not request.user.has_perm('solotodo.is_ratings_staff'):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        form = RatingStatusForm(request.data)
+
+        if not form.is_valid():
+            return Response({'detail': form.errors},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        rating = self.get_object()
+        rating.status = form.cleaned_data['status']
+        rating.save()
 
         serializer_class = self.get_serializer_class()
         serializer = serializer_class(rating, context={'request': request})

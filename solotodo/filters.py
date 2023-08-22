@@ -612,6 +612,9 @@ class RatingFilterSet(rest_framework.FilterSet):
     with_product_rating_only = rest_framework.BooleanFilter(
         method='_with_product_rating_only'
     )
+    status = rest_framework.NumberFilter(
+        field_name='status'
+    )
 
     @property
     def qs(self):

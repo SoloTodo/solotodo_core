@@ -550,7 +550,7 @@ class RatingSerializer(serializers.ModelSerializer):
         model = Rating
         fields = ('id', 'url', 'product', 'product_rating', 'product_comments',
                   'store', 'store_rating', 'store_comments', 'creation_date',
-                  'approval_date')
+                  'approval_date', 'status')
 
 
 class RatingFullSerializer(RatingSerializer):
@@ -561,7 +561,7 @@ class RatingFullSerializer(RatingSerializer):
         fields = ('id', 'url', 'product', 'product_rating', 'product_comments',
                   'store', 'store_rating', 'store_comments', 'creation_date',
                   'user', 'ip', 'purchase_proof', 'approval_date',
-                  'email_or_phone')
+                  'email_or_phone', 'status', 'last_updated')
 
 
 class RatingCreateSerializer(serializers.ModelSerializer):

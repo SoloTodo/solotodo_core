@@ -444,9 +444,10 @@ class Store(models.Model):
 
         worksheet = workbook.add_worksheet()
         headers = [
-            'Identificador', 'SKU', 'Nombre', 'URL', 'Precio Normal',
-            'Precio Oferta', 'Categoría SoloTodo', 'Producto SoloTodo',
-            'URL SoloTodo', 'ID SoloTodo'
+            'Identificador', 'SKU', 'Nombre', 'Condición', 'URL',
+            'Precio Normal', 'Precio Oferta', 'ID SKU SoloTodo',
+            'Categoría SoloTodo', 'Producto SoloTodo', 'URL SoloTodo',
+            'ID Producto SoloTodo'
         ]
         for idx, header in enumerate(headers):
             if 'Precio' in header:
@@ -463,11 +464,15 @@ class Store(models.Model):
             col += 1
             worksheet.write(row, col, entity.name)
             col += 1
+            worksheet.write(row, col, entity.condition_as_text)
+            col += 1
             worksheet.write(row, col, entity.url)
             col += 1
             worksheet.write(row, col, entity.active_registry.normal_price)
             col += 1
             worksheet.write(row, col, entity.active_registry.offer_price)
+            col += 1
+            worksheet.write(row, col, entity.id)
             col += 1
             worksheet.write(row, col, entity.category.name)
             col += 1

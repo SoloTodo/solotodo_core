@@ -176,6 +176,7 @@ class ReportCurrentPricesForm(forms.Form):
 
         headers = [
             'Producto',
+            'Part number',
             'Bundle',
         ]
 
@@ -251,6 +252,10 @@ class ReportCurrentPricesForm(forms.Form):
 
             # Product
             worksheet.write(row, col, str(e.product))
+            col += 1
+
+            # Part number
+            worksheet.write(row, col, e.product.part_number or 'N/A')
             col += 1
 
             # Bundle

@@ -53,6 +53,8 @@ class ReportCurrentPricesForm(forms.Form):
         valid_stores = get_objects_for_user(user, 'view_store_reports', Store)
         self.fields['stores'].queryset = valid_stores
 
+        self.user = user
+
     def clean_stores(self):
         selected_stores = self.cleaned_data['stores']
         if selected_stores:
@@ -120,8 +122,10 @@ class ReportCurrentPricesForm(forms.Form):
         workbook.formats[0].set_font_size(10)
 
         extended = self.cleaned_data['extended']
+        display_sii_data = self.user.has_perm('view_store_sii_details')
+
         self.generate_worksheet(workbook, category, currency, entities,
-                                es_dict, extended)
+                                es_dict, extended, display_sii_data)
 
         workbook.close()
 
@@ -148,7 +152,7 @@ class ReportCurrentPricesForm(forms.Form):
 
     @staticmethod
     def generate_worksheet(workbook, category, currency, es, es_dict,
-                           extended):
+                           extended, display_sii_data):
         worksheet = workbook.add_worksheet()
 
         date_format = workbook.add_format({
@@ -206,7 +210,16 @@ class ReportCurrentPricesForm(forms.Form):
 
         headers.extend([
             'Tienda',
-            'Seller',
+            'Seller'
+        ])
+
+        if display_sii_data:
+            headers.extend([
+                'RUT Tienda',
+                'Razón Social Tienda'
+            ])
+
+        headers.extend([
             'SKU',
             'URL',
             'Condición',
@@ -304,6 +317,14 @@ class ReportCurrentPricesForm(forms.Form):
 
             worksheet.write(row, col, str(e.store))
             col += 1
+
+            # Optional SII Data
+
+            if display_sii_data:
+                worksheet.write(row, col, e.store.sii_rut or 'N/A')
+                col += 1
+                worksheet.write(row, col, e.store.sii_razon_social or 'N/A')
+                col += 1
 
             # Seller
 

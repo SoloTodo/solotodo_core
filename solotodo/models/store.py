@@ -16,7 +16,7 @@ from sorl.thumbnail import ImageField
 from .store_type import StoreType
 from .country import Country
 from .category import Category
-from solotodo.utils import iterable_to_dict
+from solotodo.utils import iterable_to_dict, validate_sii_rut
 from solotodo_core.s3utils import PrivateS3Boto3Storage, \
     MediaRootS3Boto3Storage
 from storescraper.product import Product as StorescraperProduct
@@ -86,6 +86,9 @@ class Store(models.Model):
                                  blank=True, null=True,
                                  related_name='preferred_store')
     last_updated = models.DateTimeField(auto_now=True)
+    sii_rut = models.CharField(max_length=10, null=True, blank=True,
+                               validators=[validate_sii_rut])
+    sii_razon_social = models.CharField(max_length=255, null=True, blank=True)
 
     objects = StoreQuerySet.as_manager()
 
@@ -514,5 +517,7 @@ class Store(models.Model):
             ['view_store_banners', 'Can view store banners'],
             ['view_store_entity_positions', 'Can view store entity positions'],
             ['create_store_keyword_search',
-             'Can create keyword searches in this store']
+             'Can create keyword searches in this store'],
+            ['view_store_sii_details',
+             'Can view the SII details for the store']
         )

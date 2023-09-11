@@ -1,5 +1,8 @@
 import collections
+import re
 from decimal import Decimal
+
+from django.core.exceptions import ValidationError
 
 
 def iterable_to_dict(iterable_or_model, field='id'):
@@ -82,3 +85,9 @@ def get_dotted_dict_value(d, key):
         iterator = iterator[key_part]
 
     return iterator
+
+
+def validate_sii_rut(value):
+    match = re.match(r'\d{7,8}-\d$', value)
+    if not match:
+        raise ValidationError('Invalid RUT format')

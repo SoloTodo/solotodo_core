@@ -88,6 +88,6 @@ def get_dotted_dict_value(d, key):
 
 
 def validate_sii_rut(value):
-    match = re.match(r'\d{7,8}-\d$', value)
+    match = re.match(r'\d{7,8}-[\d|K]$', value)
     if not match:
         raise ValidationError('Invalid RUT format')

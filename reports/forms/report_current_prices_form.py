@@ -122,7 +122,7 @@ class ReportCurrentPricesForm(forms.Form):
         workbook.formats[0].set_font_size(10)
 
         extended = self.cleaned_data['extended']
-        display_sii_data = self.user.has_perm('view_store_sii_details')
+        display_sii_data = self.user.has_perm('solotodo.view_store_sii_details')
 
         self.generate_worksheet(workbook, category, currency, entities,
                                 es_dict, extended, display_sii_data)

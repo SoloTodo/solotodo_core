@@ -318,6 +318,12 @@ class ReportCurrentPricesForm(forms.Form):
             worksheet.write(row, col, str(e.store))
             col += 1
 
+            # Seller
+
+            seller_name = str(e.seller) if e.seller else 'N/A'
+            worksheet.write(row, col, seller_name)
+            col += 1
+
             # Optional SII Data
 
             if display_sii_data:
@@ -325,12 +331,6 @@ class ReportCurrentPricesForm(forms.Form):
                 col += 1
                 worksheet.write(row, col, e.store.sii_razon_social or 'N/A')
                 col += 1
-
-            # Seller
-
-            seller_name = str(e.seller) if e.seller else 'N/A'
-            worksheet.write(row, col, seller_name)
-            col += 1
 
             # SKU
 

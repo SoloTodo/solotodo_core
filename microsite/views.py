@@ -74,7 +74,7 @@ class MicrositeBrandViewSet(mixins.RetrieveModelMixin,
             wtb_entity.product: wtb_entity
             for wtb_entity in WtbEntity.objects.filter(
                 brand=wtb_brand, product__isnull=False, is_active=True
-            ).select_related('product', 'category', 'brand')
+            ).select_related('product', 'category', 'brand').order_by('-pk')
         }
 
         entities = Entity.objects.filter(

@@ -49,7 +49,7 @@ class BannerAssetQuerySet(models.QuerySet):
 
 class BannerAsset(models.Model):
     key = models.CharField(max_length=255, unique=True, default="")
-    picture_url = models.URLField()
+    picture_url = models.URLField(max_length=255)
     creation_date = models.DateTimeField(auto_now_add=True)
     objects = BannerAssetQuerySet.as_manager()
 

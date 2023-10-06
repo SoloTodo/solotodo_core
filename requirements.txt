@@ -36,6 +36,7 @@ pycodestyle==2.10.0
 pyjson5==1.6.4
 pymemcache==4.0.0
 python-memcached==1.59
+pyzbar==0.1.9
 scikit-learn==1.3.0
 selenium-wire==5.1.0
 sorl-thumbnail==12.9.0

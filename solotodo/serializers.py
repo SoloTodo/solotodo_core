@@ -180,7 +180,7 @@ class ProductSerializer(serializers.HyperlinkedModelSerializer):
         model = Product
         fields = ('url', 'id', 'name', 'category', 'slug', 'instance_model_id',
                   'creation_date', 'last_updated', 'picture_url', 'brand',
-                  'part_number', 'specs', 'keywords')
+                  'part_number', 'sec_qr_codes', 'specs', 'keywords')
 
 
 class StaffProductSerializer(ProductSerializer):
@@ -188,9 +188,7 @@ class StaffProductSerializer(ProductSerializer):
 
     class Meta:
         model = Product
-        fields = ('url', 'id', 'name', 'category', 'slug', 'instance_model_id',
-                  'creation_date', 'last_updated', 'picture_url', 'brand',
-                  'part_number', 'specs', 'creator', 'keywords')
+        fields = ProductSerializer.Meta.fields + ('creator',)
 
 
 class NestedProductSerializerWithCategory(NestedProductSerializer):

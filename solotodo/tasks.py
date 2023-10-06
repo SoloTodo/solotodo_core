@@ -156,3 +156,9 @@ def send_historic_entity_positions_report_task(store_id, user_id,
         report_filename, report_file,
         'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
     email.send()
+
+
+@shared_task(queue='general', ignore_result=True)
+def update_entity_sec_qr_codes(entity_id):
+    e = Entity.objects.get(pk=entity_id)
+    e.update_sec_qr_codes()

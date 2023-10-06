@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.files.storage import default_storage
+from django.core.validators import validate_comma_separated_integer_list
 from django.db import models, IntegrityError
 from django.db.models import Q
 from django.db.models.deletion import Collector
@@ -88,6 +89,9 @@ class Product(models.Model):
     instance_model = models.ForeignKey(InstanceModel, on_delete=models.CASCADE)
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT)
     part_number = models.CharField(max_length=255, blank=True, null=True)
+    sec_qr_codes = models.CharField(
+        validators=[validate_comma_separated_integer_list],
+        null=True, blank=True, max_length=255)
     creation_date = models.DateTimeField(db_index=True, auto_now_add=True)
     creator = models.ForeignKey(get_user_model(), on_delete=models.CASCADE)
     last_updated = models.DateTimeField(auto_now=True)
@@ -171,6 +175,12 @@ class Product(models.Model):
             self.part_number = part_number.strip()
         else:
             self.part_number = None
+
+        sec_qr_codes = es_document[0].get('sec_qr_codes', '')
+        if sec_qr_codes:
+            self.sec_qr_codes = sec_qr_codes.strip()
+        else:
+            self.sec_qr_codes = None
 
         if creator_id:
             self.creator_id = creator_id

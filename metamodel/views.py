@@ -182,39 +182,6 @@ class MetaModelAddFieldView(DetailView):
     queryset = MetaModel.get_non_primitive()
     template_name = 'metamodel/model_add_field.html'
 
-    def get(self, request, *args, **kwargs):
-        if request.is_ajax():
-            model_type = request.GET['model']
-            nullable = request.GET['nullable'] == 'true'
-            multiple = request.GET['multiple'] == 'true'
-
-            meta_model = self.get_object()
-
-            requires_default = True
-
-            if nullable or multiple:
-                requires_default = False
-
-            if not meta_model.instancemodel_set.all():
-                requires_default = False
-
-            default_choices = None
-
-            if model_type:
-                meta_model = MetaModel.objects.get(pk=model_type)
-                if meta_model.is_primitive():
-                    default_choices = meta_model.html_input_type()
-                else:
-                    default_choices = [(e.pk, str(e)) for e
-                                       in meta_model.instancemodel_set.all()]
-
-            return HttpResponse(json.dumps([requires_default,
-                                            default_choices]))
-
-        else:
-            return super(MetaModelAddFieldView, self).get(request, *args,
-                                                          **kwargs)
-
     def get_context_data(self, **kwargs):
         context = super(MetaModelAddFieldView, self).get_context_data(**kwargs)
 

@@ -401,6 +401,10 @@ class ProductFilterSet(rest_framework.FilterSet):
         label='Part number',
         method='_part_number'
     )
+    sec_qr_code = rest_framework.NumberFilter(
+        label='SEC QR Code',
+        method='_sec_qr_code'
+    )
 
     @property
     def qs(self):
@@ -457,6 +461,11 @@ class ProductFilterSet(rest_framework.FilterSet):
     def _part_number(self, queryset, name, value):
         if value:
             return queryset.filter(part_number__icontains=value)
+        return queryset
+
+    def _sec_qr_code(self, queryset, name, value):
+        if value:
+            return queryset.filter(sec_qr_codes__contains=str(value))
         return queryset
 
     class Meta:

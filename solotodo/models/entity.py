@@ -1,8 +1,14 @@
+import io
 import json
+import re
 import urllib
 
 from decimal import Decimal
 
+import requests
+from PIL import Image
+from django.core.validators import validate_comma_separated_integer_list
+from pyzbar.pyzbar import decode
 from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
 from django.db.models import Q, Count
@@ -228,6 +234,9 @@ class Entity(models.Model):
     review_count = models.IntegerField(blank=True, null=True)
     review_avg_score = models.FloatField(blank=True, null=True)
     has_virtual_assistant = models.BooleanField(null=True, blank=True)
+    sec_qr_codes = models.CharField(
+        validators=[validate_comma_separated_integer_list],
+        null=True, blank=True, max_length=255)
     seller = models.CharField(max_length=256, blank=True, null=True,
                               db_index=True)
     is_visible = models.BooleanField(default=True)
@@ -693,6 +702,52 @@ class Entity(models.Model):
             return url
 
         return None
+
+    def update_sec_qr_codes(self):
+        picture_urls = self.picture_urls_as_list() or []
+        session = requests.Session()
+        session.headers['user-agent'] = \
+            ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+             'AppleWebKit/537.36 (KHTML, like Gecko) '
+             'Chrome/116.0.0.0 Safari/537.36')
+
+        qr_codes = set()
+        for picture_url in picture_urls:
+            response = session.get(picture_url, timeout=10)
+            if response.status_code != 200:
+                continue
+            image = Image.open(io.BytesIO(response.content))
+            decoded_qr_codes = decode(image)
+            for decoded_qr_code in decoded_qr_codes:
+                if decoded_qr_code.type != 'QRCODE':
+                    continue
+                qr_url = decoded_qr_code.data.decode('UTF-8')
+                qr_code_match = re.match(
+                    r'https://ww6.sec.cl/qr/qr.do\?a=prod&i=(\d+)$', qr_url)
+                if not qr_code_match:
+                    continue
+                qr_code = str(int(qr_code_match.groups()[0]))
+                qr_codes.add(qr_code)
+
+        if qr_codes:
+            sec_qr_codes = ','.join(qr_codes)
+        else:
+            sec_qr_codes = '0'
+
+        self.sec_qr_codes = sec_qr_codes
+        self.save()
+
+    def sec_urls(self):
+        if not self.sec_qr_codes or self.sec_qr_codes == '0':
+            return []
+        urls = []
+        for sec_qr_code in self.sec_qr_codes.split(','):
+            zeros = 13 - len(sec_qr_code)
+            url = 'https://ww6.sec.cl/qr/qr.do?a=prod&i={}{}'.format(
+                zeros * '0', sec_qr_code
+            )
+            urls.append(url)
+        return urls
 
     class Meta:
         app_label = 'solotodo'

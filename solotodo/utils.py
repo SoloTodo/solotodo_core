@@ -2,6 +2,8 @@ import collections
 import re
 from decimal import Decimal
 
+import requests
+from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 
 
@@ -91,3 +93,16 @@ def validate_sii_rut(value):
     match = re.match(r'\d{7,8}-[\d|K]$', value)
     if not match:
         raise ValidationError('Invalid RUT format')
+
+
+def fetch_sec_fields(qr_code):
+    zeros = 13 - len(str(qr_code))
+    url = 'https://ww6.sec.cl/qr/qr.do?a=prod&i={}{}'.format(zeros * '0', qr_code)
+    res = requests.get(url)
+    soup = BeautifulSoup(res.text, 'html.parser')
+    d = {}
+    for label in soup.findAll('strong'):
+        key = label.text.strip()[:-1]
+        value = label.next.next.next.strip()
+        d[key] = value
+    return d

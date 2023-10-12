@@ -1098,6 +1098,12 @@ class EntityViewSet(viewsets.ReadOnlyModelViewSet):
 
         return Response({'affiliate_url': affiliate_url})
 
+    @action(detail=True)
+    def sec_info(self, *args, **kwargs):
+        entity = self.get_object()
+        data = entity.sec_info()
+        return Response(data)
+
 
 class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = EntityHistory.objects.all()

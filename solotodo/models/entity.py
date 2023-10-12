@@ -13,7 +13,7 @@ from django.contrib.auth import get_user_model
 from django.db import models, IntegrityError
 from django.db.models import Q, Count
 from django.utils import timezone
-from solotodo.utils import iterable_to_dict
+from solotodo.utils import iterable_to_dict, fetch_sec_fields
 from .product import Product
 from .currency import Currency
 from .category import Category
@@ -236,7 +236,9 @@ class Entity(models.Model):
     has_virtual_assistant = models.BooleanField(null=True, blank=True)
     sec_qr_codes = models.CharField(
         validators=[validate_comma_separated_integer_list],
-        null=True, blank=True, max_length=255)
+        null=True, blank=True, max_length=255,
+        db_index=True
+    )
     seller = models.CharField(max_length=256, blank=True, null=True,
                               db_index=True)
     is_visible = models.BooleanField(default=True)
@@ -737,17 +739,25 @@ class Entity(models.Model):
         self.sec_qr_codes = sec_qr_codes
         self.save()
 
-    def sec_urls(self):
+    def sec_info(self):
         if not self.sec_qr_codes or self.sec_qr_codes == '0':
             return []
-        urls = []
-        for sec_qr_code in self.sec_qr_codes.split(','):
+        sec_qr_codes = self.sec_qr_codes.split(',')
+        sec_entries = []
+        for sec_qr_code in sec_qr_codes:
             zeros = 13 - len(sec_qr_code)
-            url = 'https://ww6.sec.cl/qr/qr.do?a=prod&i={}{}'.format(
+            sec_url = 'https://ww6.sec.cl/qr/qr.do?a=prod&i={}{}'.format(
                 zeros * '0', sec_qr_code
             )
-            urls.append(url)
-        return urls
+            raw_sec_data = fetch_sec_fields(sec_qr_code)
+            sec_entry = {
+                'code': sec_qr_code,
+                'sec_url': sec_url,
+                'brands': raw_sec_data['Marcas'],
+                'models': raw_sec_data['Modelos'],
+            }
+            sec_entries.append(sec_entry)
+        return sec_entries
 
     class Meta:
         app_label = 'solotodo'

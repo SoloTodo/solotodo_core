@@ -190,6 +190,41 @@ class MetaModelAddFieldView(DetailView):
 
         return context
 
+    def get(self, request, *args, **kwargs):
+        if request.headers.get('X-Requested-With', None) == 'XMLHttpRequest':
+            # Used to populate the "default" choices in the old metamodel UI
+            # when adding a new field to a model
+            model_type = request.GET['model']
+            nullable = request.GET['nullable'] == 'true'
+            multiple = request.GET['multiple'] == 'true'
+
+            meta_model = self.get_object()
+
+            requires_default = True
+
+            if nullable or multiple:
+                requires_default = False
+
+            if not meta_model.instancemodel_set.all():
+                requires_default = False
+
+            default_choices = None
+
+            if model_type:
+                meta_model = MetaModel.objects.get(pk=model_type)
+                if meta_model.is_primitive():
+                    default_choices = meta_model.html_input_type()
+                else:
+                    default_choices = [(e.pk, str(e)) for e
+                                       in meta_model.instancemodel_set.all()]
+
+            return HttpResponse(json.dumps([requires_default,
+                                            default_choices]))
+
+        else:
+            return super(MetaModelAddFieldView, self).get(request, *args,
+                                                          **kwargs)
+
     def post(self, request, pk, *args, **kwargs):
         meta_model = self.get_object()
 

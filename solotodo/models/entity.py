@@ -5,7 +5,7 @@ import urllib
 
 from decimal import Decimal
 
-import requests
+from storescraper.utils import session_with_proxy
 from PIL import Image
 from django.core.validators import validate_comma_separated_integer_list
 from pyzbar.pyzbar import decode
@@ -706,12 +706,17 @@ class Entity(models.Model):
         return None
 
     def update_sec_qr_codes(self):
-        picture_urls = self.picture_urls_as_list() or []
-        session = requests.Session()
+        if self.store.storescraper_extra_args:
+            extra_args = json.loads(self.store.storescraper_extra_args)
+        else:
+            extra_args = None
+        session = session_with_proxy(extra_args)
         session.headers['user-agent'] = \
             ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
              'AppleWebKit/537.36 (KHTML, like Gecko) '
              'Chrome/116.0.0.0 Safari/537.36')
+
+        picture_urls = self.picture_urls_as_list() or []
 
         qr_codes = set()
         for picture_url in picture_urls:

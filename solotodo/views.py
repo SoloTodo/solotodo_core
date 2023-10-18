@@ -27,6 +27,7 @@ from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly, \
     IsAdminUser
 from rest_framework.response import Response
 from rest_framework.reverse import reverse
+from rest_framework_tracking.mixins import LoggingMixin
 from sorl.thumbnail import get_thumbnail
 
 from navigation.models import NavDepartment
@@ -1121,7 +1122,7 @@ class EntityHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             raise PermissionDenied
 
 
-class ProductViewSet(viewsets.ReadOnlyModelViewSet):
+class ProductViewSet(LoggingMixin, viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     filter_backends = (rest_framework.DjangoFilterBackend, SearchFilter,
@@ -1129,6 +1130,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     filterset_class = ProductFilterSet
     ordering_fields = None
     pagination_class = ProductPagination
+    TOPTEN_USER_ID = 665187
+
+    def should_log(self, request, response):
+        if request.user and request.user.id == self.TOPTEN_USER_ID:
+            return True
+        else:
+            return False
 
     def get_serializer_class(self):
         if self.request.user.is_staff:

@@ -17,6 +17,7 @@ django-querycount==0.8.3
 django-redshift-backend==3.0.0
 django-storages==1.13.2
 djangorestframework-simplejwt==5.2.2
+drf-api-tracking==1.8.4
 elasticsearch-dsl==7.4.1
 future==0.18.3
 geoip2==4.7.0

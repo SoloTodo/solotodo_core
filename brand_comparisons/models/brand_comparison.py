@@ -62,7 +62,8 @@ class BrandComparison(models.Model):
             self.as_worksheet(workbook)
             self.as_worksheet_2(workbook, highlight_prices=True)
         elif report_format == '2':
-            self.as_worksheet_2(workbook, highlight_prices=False)
+            for price_type in ['offer', 'normal']:
+                self.as_worksheet_2(workbook, highlight_prices=True, price_type=price_type)
         else:
             raise Exception('Invalid report format')
 
@@ -79,7 +80,7 @@ class BrandComparison(models.Model):
             'path': path
         }
 
-    def as_worksheet_2(self, workbook, highlight_prices=False):
+    def as_worksheet_2(self, workbook, highlight_prices=False, price_type='offer'):
         stores = self.stores.all()
 
         # Put Falabella, Ripley and Paris first, this is just hardcoded because
@@ -113,12 +114,16 @@ class BrandComparison(models.Model):
             .order_by('store', 'product')\
             .values('store', 'product')\
             .annotate(price=Min('active_registry__{}_price'.format(
-                self.price_type)))
+                price_type)))
 
         store_product_price_dict = {(x['store'], x['product']): x['price']
                                     for x in es}
 
-        worksheet = workbook.add_worksheet()
+        worksheet_names_dict = {
+            'offer': 'Precio oferta',
+            'normal': 'Precio normal'
+        }
+        worksheet = workbook.add_worksheet(worksheet_names_dict[price_type])
 
         # Styling
         store_header_format = workbook.add_format({

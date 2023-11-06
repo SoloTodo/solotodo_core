@@ -226,7 +226,7 @@ class WtbEntity(models.Model):
             self.description = scraped_product.description
             self.is_active = True
 
-            if scraped_product.normal_price:
+            if scraped_product.normal_price and scraped_product.stock != 0:
                 self.price = scraped_product.normal_price
             else:
                 self.price = None
@@ -296,7 +296,7 @@ class WtbEntity(models.Model):
         else:
             section = None
 
-        if scraped_product.normal_price:
+        if scraped_product.normal_price and scraped_product.stock != 0:
             price = scraped_product.normal_price
         else:
             price = None

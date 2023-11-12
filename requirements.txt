@@ -28,7 +28,7 @@ gunicorn==20.1.0
 html2text==2020.1.16
 html5lib==1.1
 ipdb==0.13.13
-Pillow==10.0.0
+Pillow==10.0.1
 pip==23.2.1
 pipdeptree==2.9.4
 playwright==1.35.0

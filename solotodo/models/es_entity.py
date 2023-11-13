@@ -121,18 +121,24 @@ class EsEntity(EsProductEntities):
         normal_price_usd = entity.active_registry.normal_price / exchange_rate
         offer_price_usd = entity.active_registry.offer_price / exchange_rate
 
-        if entity.category_id == settings.GROCERIES_CATEGORY_ID:
+        category_unit_fields = {
+            settings.STORAGE_DRIVE_CATEGORY_ID: 'capacity_value',
+            # settings.GROCERIES_CATEGORY_ID: 'volume_weight',
+            settings.SOLID_STATE_DRIVE_CATEGORY_ID: 'capacity_value'
+        }
+
+        unit_field = category_unit_fields.get(entity.category_id, None)
+
+        if unit_field:
             # entity.product is not null because only associated entities
             # can be indexed
             specs = entity.product.specs
-            conversion_factor = \
-                Decimal(specs['category_unit_price_per_unit_conversion_factor']) / \
-                Decimal(specs['volume_weight'])
+            conversion_factor = Decimal(specs[unit_field])
 
-            normal_price_per_unit = (active_registry.normal_price * conversion_factor).quantize(0)
-            offer_price_per_unit = (active_registry.offer_price * conversion_factor).quantize(0)
-            normal_price_usd_per_unit = (normal_price_usd * conversion_factor).quantize(Decimal('0.01'))
-            offer_price_usd_per_unit = (offer_price_usd * conversion_factor).quantize(Decimal('0.01'))
+            normal_price_per_unit = (active_registry.normal_price / conversion_factor).quantize(0)
+            offer_price_per_unit = (active_registry.offer_price / conversion_factor).quantize(0)
+            normal_price_usd_per_unit = (normal_price_usd / conversion_factor).quantize(Decimal('0.01'))
+            offer_price_usd_per_unit = (offer_price_usd / conversion_factor).quantize(Decimal('0.01'))
         else:
             normal_price_per_unit = active_registry.normal_price
             offer_price_per_unit = active_registry.offer_price

@@ -199,14 +199,14 @@ def additional_es_fields(elastic_search_result, model_name):
         result['tags'] = tags
 
         warnings = []
-        if elastic_search_result['keyboard_layout_unicode'] == 'Inglés':
-            warnings.append(
-                'Este notebook tiene teclado en inglés, por lo que hacer la '
-                '"ñ", tildes, o símbolos especiales con él puede ser incómodo')
-        elif elastic_search_result['keyboard_layout_unicode'] == 'Desconocido':
+        if elastic_search_result['keyboard_layout_unicode'] == 'Desconocido':
             warnings.append(
                 'No sabemos el idioma del teclado de este notebook, por '
                 'favor confirma con la tienda antes de comprarlo')
+        elif elastic_search_result['keyboard_layout_unicode'] != 'Español':
+            warnings.append(
+                'Este notebook no tiene teclado en español, por lo que hacer la '
+                '"ñ", tildes, o símbolos especiales con él puede ser incómodo')
 
         for storage_drive in elastic_search_result['storage_drive']:
             if storage_drive['drive_type_unicode'] in ['SSD', 'eMMC']:

@@ -2,9 +2,10 @@ from django.contrib.auth.models import Group
 from django.core.mail import EmailMessage
 from django.core.management import BaseCommand
 from django.utils import timezone
+from guardian.shortcuts import get_objects_for_group
 
 from reports.forms.report_wtb_prices_form import ReportWtbPricesForm
-from solotodo.models import SoloTodoUser
+from solotodo.models import SoloTodoUser, Store
 
 
 class Command(BaseCommand):
@@ -14,9 +15,15 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         group = Group.objects.get(name='LG Chile')
         reference_user = SoloTodoUser.objects.filter(groups=group)[0]
+
+        all_stores = get_objects_for_group(group, 'view_store', Store)
+        store_ids = [30, 9, 87, 5, 43, 195, 11, 18, 67, 170, 12, 86]
+        secondary_store_ids = [x.id for x in all_stores if x.id not in store_ids]
+
         data = {
             'wtb_brand': 1,
-            'stores': [30, 9, 87, 5, 43, 195, 11, 18, 67, 170, 12, 86],
+            'stores': store_ids,
+            'secondary_stores': secondary_store_ids,
             'price_type': 'offer_price'
         }
         form = ReportWtbPricesForm(reference_user, data)

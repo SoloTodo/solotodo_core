@@ -19,6 +19,9 @@ class ReportWtbPricesForm(forms.Form):
     stores = forms.ModelMultipleChoiceField(
         queryset=Store.objects.all(),
         required=False)
+    secondary_stores = forms.ModelMultipleChoiceField(
+        queryset=Store.objects.all(),
+        required=False)
     price_type = forms.ChoiceField(
         choices=[
             ('normal_price', 'Normal price'),
@@ -45,6 +48,7 @@ class ReportWtbPricesForm(forms.Form):
     def generate_report(self):
         wtb_brand = self.cleaned_data['wtb_brand']
         stores = self.cleaned_data['stores']
+        secondary_stores = self.cleaned_data['secondary_stores'] or []
 
         wtb_entities = WtbEntity.objects.filter(
             brand=wtb_brand,
@@ -63,21 +67,33 @@ class ReportWtbPricesForm(forms.Form):
             condition='https://schema.org/NewCondition'
         )
 
-        prices = base_entities\
-            .order_by('product', 'store')\
+        prices = base_entities \
+            .order_by('product', 'store') \
             .values('product', 'store').annotate(
-                price=Min('active_registry__{}'.format(
-                    self.cleaned_data['price_type'])))
+            price=Min('active_registry__{}'.format(
+                self.cleaned_data['price_type'])))
 
-        prices_per_product = base_entities\
-            .order_by('product')\
+        prices_per_product = base_entities \
+            .order_by('product') \
             .values('product').annotate(
-                price=Min('active_registry__{}'.format(
-                    self.cleaned_data['price_type'])))
+            price=Min('active_registry__{}'.format(
+                self.cleaned_data['price_type'])))
 
         product_store_prices_dict = {(x['product'], x['store']): x['price']
                                      for x in prices}
-        products_available_in_retail = [x['product'] for x in prices_per_product]
+        products_available_in_retail = [x['product'] for x in
+                                        prices_per_product]
+
+        secondary_stores_prices_qs = (Entity.objects.get_available().filter(
+            store__in=secondary_stores,
+            product__in=product_ids,
+            active_registry__cell_monthly_payment__isnull=True,
+            condition='https://schema.org/NewCondition'
+        ).order_by('product')
+            .values('product').annotate(
+            price=Min('active_registry__{}'.format(
+                self.cleaned_data['price_type']))))
+        secondary_stores_prices = {x['product']: x['price'] for x in secondary_stores_prices_qs}
 
         output = io.BytesIO()
 
@@ -176,6 +192,10 @@ class ReportWtbPricesForm(forms.Form):
             worksheet.set_column(col, col, 12)
             col += 1
 
+        worksheet.write_string(row, col, 'Mín. Otros', header_store_format)
+        worksheet.set_column(col, col, 12)
+        col += 1
+
         worksheet.write_string(row, col, 'Average', header_1_format)
         worksheet.set_column(col, col, 10)
         col += 1
@@ -226,6 +246,11 @@ class ReportWtbPricesForm(forms.Form):
                     worksheet.write_number(row, col, price, currency_format)
                 col += 1
 
+            secondary_stores_price = secondary_stores_prices.get(wtb_e.product_id, None)
+            if secondary_stores_price is not None:
+                worksheet.write_number(row, col, secondary_stores_price, currency_format)
+            col += 1
+
             stores_range = '{}:{}'.format(
                 xl_rowcol_to_cell(row, START_RETAILER_COLUMN),
                 xl_rowcol_to_cell(row, START_RETAILER_COLUMN + len(stores) - 1),
@@ -262,7 +287,7 @@ class ReportWtbPricesForm(forms.Form):
 
         STARTING_DATA_ROW = STARTING_ROW + 1
         ENDING_DATA_ROW = STARTING_DATA_ROW + row - 2
-        AVERAGE_VARIATION_COLUMN = START_RETAILER_COLUMN + len(stores) + 1
+        AVERAGE_VARIATION_COLUMN = START_RETAILER_COLUMN + len(stores) + 2
 
         for i in [0, 2, 4]:
             target_column = AVERAGE_VARIATION_COLUMN + i

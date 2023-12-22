@@ -30,10 +30,12 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
         field_name='product',
         label='Products'
     )
-
     is_associated = rest_framework.BooleanFilter(
         field_name='is_associated', method='_is_associated',
         label='Is associated?')
+    lg_product_comparison = rest_framework.BooleanFilter(
+        field_name='lg_product_comparison', method='_lg_product_comparison',
+        label='Is it for LG Product Comparison site?')
 
     @property
     def qs(self):
@@ -59,6 +61,10 @@ class WtbEntityFilterSet(rest_framework.FilterSet):
 
     def _is_associated(self, queryset, name, value):
         return queryset.filter(product__isnull=not value)
+
+    def _lg_product_comparison(self, queryset, name, value):
+        # Product comparison entities have JSON in their description that starts with '['
+        return queryset.filter(description__startswith='[', description__endswith=']', is_active=True)
 
     class Meta:
         model = WtbEntity

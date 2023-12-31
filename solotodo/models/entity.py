@@ -212,7 +212,7 @@ class Entity(models.Model):
                                   related_name='+')
     best_coupon = models.ForeignKey(Coupon, on_delete=models.SET_NULL,
                                     null=True, blank=True,
-                                    related_name='entities')
+                                    related_name='entities_with_coupon')
     active_registry = models.OneToOneField('EntityHistory',
                                            on_delete=models.CASCADE,
                                            related_name='+',

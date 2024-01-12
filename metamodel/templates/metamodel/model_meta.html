@@ -36,7 +36,11 @@
                     {% for meta_field in metamodel.fields.all %}
                         <tr>
                             <td>
-                                <a href="{% url 'metamodel_field_detail' meta_field.id %}">{{ meta_field.name }}</a></td>
+                                <a href="{% url 'metamodel_field_detail' meta_field.id %}">{{ meta_field.name }}</a>
+                                {% if meta_field.help_text %}
+                                    <span class="help-block">{{ meta_field.help_text }}</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 {% if meta_field.model.is_primitive %}
                                     {{ meta_field.model.name }}

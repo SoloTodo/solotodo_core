@@ -711,10 +711,11 @@ class Entity(models.Model):
         else:
             extra_args = None
         session = session_with_proxy(extra_args)
-        session.headers['user-agent'] = \
-            ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-             'AppleWebKit/537.36 (KHTML, like Gecko) '
-             'Chrome/116.0.0.0 Safari/537.36')
+        if not extra_args or 'user-agent' not in extra_args:
+            session.headers['user-agent'] = \
+                ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                 'AppleWebKit/537.36 (KHTML, like Gecko) '
+                 'Chrome/116.0.0.0 Safari/537.36')
 
         picture_urls = self.picture_urls_as_list() or []
 

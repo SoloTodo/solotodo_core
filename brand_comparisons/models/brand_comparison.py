@@ -853,7 +853,9 @@ class BrandComparison(models.Model):
                         store_index = tier_a_stores.index(store)
                         store_column = brand_2_start + len(stores) + 4 + store_index
                         cell_format = number_format
-                        if not price1 and not price2:
+                        if not segment_row.product_1 or not segment_row.product_2:
+                            message = ''
+                        elif not price1 and not price2:
                             message = ''
                         elif price1 and not price2:
                             message = 'SS Short'
@@ -870,7 +872,9 @@ class BrandComparison(models.Model):
                 # Write the OBS column text
                 obs_column = brand_2_start + len(stores) + 4 + len(tier_a_stores)
                 cell_format = number_format
-                if not brand_1_official_store_price and not brand_2_official_store_price:
+                if not segment_row.product_1 or not segment_row.product_2:
+                    message = ''
+                elif not brand_1_official_store_price and not brand_2_official_store_price:
                     message = ''
                 elif brand_1_official_store_price and not brand_2_official_store_price:
                     message = 'SS Short'

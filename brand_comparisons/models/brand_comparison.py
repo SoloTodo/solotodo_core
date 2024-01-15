@@ -8,6 +8,7 @@ from django.core.files.base import ContentFile
 from django.contrib.auth import get_user_model
 
 from solotodo.models import Brand, Store, Category, Entity, Product, Currency
+from solotodo.utils import iterable_to_dict
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
 
@@ -543,6 +544,24 @@ class BrandComparison(models.Model):
 
     def as_worksheet(self, workbook):
         preferred_currency = self.user.preferred_currency
+        stores = self.stores.all()
+
+        # Harcoded values for LG reports
+
+        tier_a_store_ids = [
+            9,  # Falabella
+            170,  # Tottus
+            11,  # Paris
+            18,  # Ripley
+            43,  # Lider
+            87,  # Hites
+            5,  # La Polar
+            30,  # AbcDin
+        ]
+        tier_a_stores = list(stores.filter(pk__in=tier_a_store_ids))
+
+        brand_1_official_store_id = 3032
+        brand_2_official_store_id = 223
 
         workbook.formats[0].set_font_size(10)
 
@@ -597,6 +616,30 @@ class BrandComparison(models.Model):
             'bg_color': '#66FFCC',
         })
 
+        percentage_danger_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#ffc7ce',
+            'font_color': '#ab1419',
+        })
+
+        number_danger_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#ffc7ce',
+            'font_color': '#ab1419',
+            'num_format': '#,##0',
+        })
+
+        text_danger_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': '#ffc7ce',
+            'font_color': '#ab1419',
+            'bold': True,
+            'align': 'center',
+        })
+
         product_1_highlight_format = workbook.add_format({
             'font_name': 'Arial Narrow',
             'font_size': 10,
@@ -641,9 +684,14 @@ class BrandComparison(models.Model):
         })
         bottom_percentage_format.set_num_format('0%')
 
-        worksheet = workbook.add_worksheet()
+        number_format = workbook.add_format({
+            'font_name': 'Arial Narrow',
+            'font_size': 10,
+            'bg_color': 'white',
+            'num_format': '#,##0'
+        })
 
-        stores = self.stores.all()
+        worksheet = workbook.add_worksheet()
         data = ['Promedio', 'Mínimo', 'Moda']
         data_formula = [
             '=IFERROR(AVERAGE({0}:{1}), "")',
@@ -659,6 +707,8 @@ class BrandComparison(models.Model):
         headers.extend([s.name for s in stores[::-1]])
         headers.extend([""])
         headers.extend(data)
+        headers.extend([s.name for s in tier_a_stores])
+        headers.append('OBS')
 
         for idx, header in enumerate(headers):
             worksheet.write(1, idx, header, header_format)
@@ -721,7 +771,11 @@ class BrandComparison(models.Model):
                     product_2_format_to_use = product_2_highlight_format
 
                 col = 0
+
+                brand_1_official_store_price = None
+                brand_2_official_store_price = None
                 for store in stores:
+                    price1 = None
                     if segment_row.product_1:
                         entity1 = Entity.objects.filter(
                             store=store,
@@ -736,12 +790,12 @@ class BrandComparison(models.Model):
 
                         if entity1 and entity1.active_registry:
                             entity_currency = entity1.currency
-                            price = getattr(entity1.active_registry, '{}_price'
+                            price1 = getattr(entity1.active_registry, '{}_price'
                                             .format(self.price_type))
-                            price = preferred_currency.convert_from(
-                                price, entity_currency)
+                            price1 = preferred_currency.convert_from(
+                                price1, entity_currency)
                             worksheet.write(
-                                row, col, price, currency_format_to_use)
+                                row, col, price1, currency_format_to_use)
                         else:
                             worksheet.write(
                                 row, col, "", currency_format_to_use)
@@ -751,6 +805,10 @@ class BrandComparison(models.Model):
                             row, segment_step, "", product_1_format_to_use)
                         worksheet.write(row, col, "", currency_format_to_use)
 
+                    if store.id == brand_1_official_store_id:
+                        brand_1_official_store_price = price1
+
+                    price2 = None
                     if segment_row.product_2:
                         entity2 = Entity.objects.filter(
                             store=store,
@@ -766,13 +824,13 @@ class BrandComparison(models.Model):
 
                         if entity2 and entity2.active_registry:
                             entity_currency = entity2.currency
-                            price = getattr(entity2.active_registry, '{}_price'
+                            price2 = getattr(entity2.active_registry, '{}_price'
                                             .format(self.price_type))
-                            price = preferred_currency.convert_from(
-                                price, entity_currency)
+                            price2 = preferred_currency.convert_from(
+                                price2, entity_currency)
                             worksheet.write(
                                 row, brand_2_start + len(stores) - col - 1,
-                                price, currency_format_to_use)
+                                price2, currency_format_to_use)
                         else:
                             worksheet.write(
                                 row, brand_2_start + len(stores) - col - 1,
@@ -784,7 +842,83 @@ class BrandComparison(models.Model):
                             row, brand_2_start + len(stores) - col - 1, "",
                             currency_format_to_use)
 
+                    if store.id == brand_2_official_store_id:
+                        brand_2_official_store_price = price2
+
                     col += 1
+
+                    # Make the calculations for the ATA table at the end
+                    # If the store is a tier A retailer, determine if it's a short of one of the brands
+                    if store.id in tier_a_store_ids:
+                        store_index = tier_a_stores.index(store)
+                        store_column = brand_2_start + len(stores) + 4 + store_index
+                        cell_format = number_format
+                        if not price1 and not price2:
+                            message = ''
+                        elif price1 and not price2:
+                            message = 'SS Short'
+                        elif not price1 and price2:
+                            message = 'LG Short'
+                            cell_format = text_danger_format
+                        else:
+                            message = 100 * price1 / price2
+                            if message < 100:
+                                cell_format = number_danger_format
+                        worksheet.write(
+                            row, store_column, message, cell_format)
+
+                # Write the OBS column text
+                obs_column = brand_2_start + len(stores) + 4 + len(tier_a_stores)
+                cell_format = number_format
+                if not brand_1_official_store_price and not brand_2_official_store_price:
+                    message = ''
+                elif brand_1_official_store_price and not brand_2_official_store_price:
+                    message = 'SS Short'
+                elif not brand_1_official_store_price and brand_2_official_store_price:
+                    message = 'LG Short'
+                    cell_format = text_danger_format
+                else:
+                    message = 100 * brand_1_official_store_price / brand_2_official_store_price
+                    if message < 100:
+                        cell_format = number_danger_format
+                worksheet.write(
+                    row, obs_column, message, cell_format)
+
+                worksheet.write_blank(row, brand_2_start + len(stores), "", blanks_format)
+
+                worksheet.conditional_format('{}:{}'.format(
+                    xl_rowcol_to_cell(row, 0),
+                    xl_rowcol_to_cell(row, len(stores) - 1),
+                ), {
+                    'type': 'blanks',
+                    'format': blanks_format
+                })
+
+                worksheet.conditional_format('{}:{}'.format(
+                    xl_rowcol_to_cell(row, 0),
+                    xl_rowcol_to_cell(row, len(stores) - 1),
+                ), {
+                    'type': 'bottom',
+                    'value': 1,
+                    'format': highlight_format
+                })
+
+                worksheet.conditional_format('{}:{}'.format(
+                    xl_rowcol_to_cell(row, brand_2_start),
+                    xl_rowcol_to_cell(row, brand_2_start + len(stores) - 1)
+                ), {
+                    'type': 'blanks',
+                    'format': blanks_format
+                })
+
+                worksheet.conditional_format('{}:{}'.format(
+                    xl_rowcol_to_cell(row, brand_2_start),
+                    xl_rowcol_to_cell(row, brand_2_start + len(stores) - 1)
+                ), {
+                    'type': 'bottom',
+                    'value': 1,
+                    'format': highlight_format
+                })
 
                 for index, formula in enumerate(data_formula):
                     rowcol_1 = xl_rowcol_to_cell(row, brand_1_data_start+index)
@@ -792,44 +926,10 @@ class BrandComparison(models.Model):
                         xl_rowcol_to_cell(row, 0),
                         xl_rowcol_to_cell(row, len(stores)-1))
 
-                    worksheet.conditional_format('{}:{}'.format(
-                        xl_rowcol_to_cell(row, 0),
-                        xl_rowcol_to_cell(row, len(stores) - 1),
-                    ), {
-                        'type': 'blanks',
-                        'format': blanks_format
-                    })
-
-                    worksheet.conditional_format('{}:{}'.format(
-                        xl_rowcol_to_cell(row, 0),
-                        xl_rowcol_to_cell(row, len(stores) - 1),
-                    ), {
-                        'type': 'bottom',
-                        'value': 1,
-                        'format': highlight_format
-                    })
-
                     rowcol_2 = xl_rowcol_to_cell(row, brand_2_data_start-index)
                     formula_2 = formula.format(
                         xl_rowcol_to_cell(row, brand_2_start),
                         xl_rowcol_to_cell(row, brand_2_start+len(stores)-1))
-
-                    worksheet.conditional_format('{}:{}'.format(
-                        xl_rowcol_to_cell(row, brand_2_start),
-                        xl_rowcol_to_cell(row, brand_2_start + len(stores) - 1)
-                    ), {
-                        'type': 'blanks',
-                        'format': blanks_format
-                    })
-
-                    worksheet.conditional_format('{}:{}'.format(
-                        xl_rowcol_to_cell(row, brand_2_start),
-                        xl_rowcol_to_cell(row, brand_2_start + len(stores) - 1)
-                    ), {
-                        'type': 'bottom',
-                        'value': 1,
-                        'format': highlight_format
-                    })
 
                     worksheet.write_formula(rowcol_1, formula_1,
                                             currency_format_to_use)
@@ -867,7 +967,7 @@ class BrandComparison(models.Model):
         avg_average_rowcol = xl_rowcol_to_cell(0, stats_table_start)
         avg_average_formula = average_formula.format(
             xl_rowcol_to_cell(2, stats_table_start),
-            xl_rowcol_to_cell(row, stats_table_start))
+            xl_rowcol_to_cell(row-1, stats_table_start))
 
         worksheet.write_formula(
             avg_average_rowcol, avg_average_formula, percentage_format)
@@ -875,15 +975,27 @@ class BrandComparison(models.Model):
         min_average_rowcol = xl_rowcol_to_cell(0, stats_table_start+1)
         min_average_formula = average_formula.format(
             xl_rowcol_to_cell(2, stats_table_start+1),
-            xl_rowcol_to_cell(row, stats_table_start+1))
+            xl_rowcol_to_cell(row-1, stats_table_start+1))
 
         worksheet.write_formula(
             min_average_rowcol, min_average_formula, percentage_format)
 
         mode_average_rowcol = xl_rowcol_to_cell(0, stats_table_start + 2)
+        mode_average_start_cell = xl_rowcol_to_cell(2, stats_table_start + 2)
+        mode_average_end_cell = xl_rowcol_to_cell(row-1, stats_table_start + 2)
         mode_average_formula = average_formula.format(
-            xl_rowcol_to_cell(2, stats_table_start + 2),
-            xl_rowcol_to_cell(row, stats_table_start + 2))
+            mode_average_start_cell,
+            mode_average_end_cell)
+
+        worksheet.conditional_format('{}:{}'.format(
+            mode_average_start_cell,
+            mode_average_end_cell
+        ), {
+            'type': 'cell',
+            'criteria': '<',
+            'value': 1,
+            'format': percentage_danger_format
+        })
 
         worksheet.write_formula(
             mode_average_rowcol, mode_average_formula, percentage_format)

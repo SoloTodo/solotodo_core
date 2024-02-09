@@ -76,7 +76,9 @@ class ReportProductListForm(forms.Form):
             col += 1
 
             for column in specs_columns:
-                worksheet.write(row, col, product.specs[column.field.es_field])
+                worksheet.write(
+                    row, col, product.specs.get(column.field.es_field, "N/A")
+                )
                 col += 1
 
             row += 1

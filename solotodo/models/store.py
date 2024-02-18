@@ -150,7 +150,7 @@ class Store(models.Model):
         try:
             scraped_products_data = scraper.products(
                 categories=[c.storescraper_name for c in categories],
-                extra_args=extra_args,
+                extra_args=local_extra_args,
                 discover_urls_concurrency=discover_urls_concurrency,
                 products_for_url_concurrency=products_for_url_concurrency,
                 use_async=use_async,

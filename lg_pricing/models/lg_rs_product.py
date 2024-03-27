@@ -108,8 +108,8 @@ class LgRsProduct(models.Model):
                     str(product.category),
                     product.brand.id,
                     str(product.brand),
-                    product.creation_date.isoformat(),
-                    product.last_updated.isoformat(),
+                    str(product.creation_date),
+                    str(product.last_updated),
                     *specs,
                 ]
             )

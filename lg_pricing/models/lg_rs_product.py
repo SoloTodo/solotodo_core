@@ -77,11 +77,6 @@ class LgRsProduct(models.Model):
         Product.prefetch_specs(products_to_synchronize)
 
         print("Obtaining data")
-        import ipdb
-
-        ipdb.set_trace()
-        return
-
         print("Creating in memory CSV File")
         output = io.StringIO()
         writer = csv.writer(output)
@@ -90,7 +85,9 @@ class LgRsProduct(models.Model):
         for idx, product in enumerate(products_to_synchronize):
             print("Processing: {} / {}".format(idx + 1, data_count))
 
-            num_spec_fields, txt_spec_fields = category_specs_dict[product.category.id]
+            num_spec_fields, txt_spec_fields = cls.category_specs_dict[
+                product.category.id
+            ]
             num_specs = [None] * 5
             txt_specs = [None] * 5
 
@@ -101,7 +98,6 @@ class LgRsProduct(models.Model):
                 txt_specs[i] = product.specs.get(txt_spec_field, None)
 
             specs = num_specs + txt_specs
-
             writer.writerow(
                 [
                     product.id,
@@ -110,8 +106,8 @@ class LgRsProduct(models.Model):
                     str(product.category),
                     product.brand.id,
                     str(product.brand),
-                    product.creation_date,
-                    product.last_updated,
+                    product.creation_date.isoformat(),
+                    product.last_updated.isoformat(),
                     *specs,
                 ]
             )

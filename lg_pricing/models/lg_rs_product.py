@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import models, connections
 from django.db.models import Max
+from django_redshift_backend import DistKey
 
 from solotodo_core.s3utils import PrivateSaS3Boto3Storage
 
@@ -101,6 +102,7 @@ class LgRsProduct(models.Model):
             writer.writerow(
                 [
                     product.id,
+                    product.id,
                     str(product),
                     product.category.id,
                     str(product.category),
@@ -142,3 +144,5 @@ class LgRsProduct(models.Model):
 
     class Meta:
         app_label = "lg_pricing"
+        indexes = [DistKey(fields=["product_id"])]
+        ordering = ["last_updated"]

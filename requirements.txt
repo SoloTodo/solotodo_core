@@ -1,6 +1,7 @@
 beautifulsoup4==4.12.2
 boto3==1.28.1
 celery==5.3.1
+curl_cffi==0.6.3
 db-dtypes==1.1.1
 dj-rest-auth==4.0.1
 django-allauth==0.54.0
@@ -29,11 +30,12 @@ html2text==2020.1.16
 html5lib==1.1
 ipdb==0.13.13
 Pillow==10.0.0
-pip==23.2.1
+pip==24.0
 pipdeptree==2.9.4
 playwright==1.35.0
 psycopg2==2.9.6
 pycodestyle==2.10.0
+pycurl==7.45.3
 pyjson5==1.6.4
 pymemcache==4.0.0
 python-memcached==1.59

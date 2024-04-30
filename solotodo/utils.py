@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from django.core.exceptions import ValidationError
 
 
-def iterable_to_dict(iterable_or_model, field='id'):
+def iterable_to_dict(iterable_or_model, field="id"):
     if not isinstance(iterable_or_model, collections.abc.Iterable):
         iterable_or_model = iterable_or_model.objects.all()
 
@@ -19,15 +19,15 @@ def iterable_to_dict(iterable_or_model, field='id'):
 # Yes, I know this can be spoofed, but hopefully it is only used for
 # convenience
 def get_client_ip(request):
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
     if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
+        ip = x_forwarded_for.split(",")[0]
     else:
-        ip = request.META.get('REMOTE_ADDR')
+        ip = request.META.get("REMOTE_ADDR")
     return ip
 
 
-def format_currency(value, curr='$', places=2, sep='.', dp=','):
+def format_currency(value, curr="$", places=2, sep=".", dp=","):
     """Convert Decimal to a money formatted string.
 
     curr: optional currency symbol before the sign (may be blank)
@@ -43,11 +43,11 @@ def format_currency(value, curr='$', places=2, sep='.', dp=','):
     build, iter_next = result.append, digits.pop
 
     for i in range(places):
-        build(iter_next() if digits else '0')
+        build(iter_next() if digits else "0")
     if places:
         build(dp)
     if not digits:
-        build('0')
+        build("0")
     i = 0
     while digits:
         build(iter_next())
@@ -57,7 +57,7 @@ def format_currency(value, curr='$', places=2, sep='.', dp=','):
             build(sep)
     build(curr)
 
-    return ''.join(reversed(result))
+    return "".join(reversed(result))
 
 
 def recursive_dict_search(d, target):
@@ -81,7 +81,7 @@ def get_dotted_dict_value(d, key):
     # is not found
     iterator = d
 
-    for key_part in key.split('.'):
+    for key_part in key.split("."):
         if key_part not in iterator:
             return None
         iterator = iterator[key_part]
@@ -90,18 +90,20 @@ def get_dotted_dict_value(d, key):
 
 
 def validate_sii_rut(value):
-    match = re.match(r'\d{7,8}-[\d|K]$', value)
+    match = re.match(r"\d{7,8}-[\d|K]$", value)
     if not match:
-        raise ValidationError('Invalid RUT format')
+        raise ValidationError("Invalid RUT format")
 
 
 def fetch_sec_fields(qr_code):
     zeros = 13 - len(str(qr_code))
-    url = 'https://ww6.sec.cl/qr/qr.do?a=prod&i={}{}'.format(zeros * '0', qr_code)
+    url = "https://ww6.sec.cl/qr/qr.do?a=prod&i={}{}".format(zeros * "0", qr_code)
+    print(url)
+
     res = requests.get(url)
-    soup = BeautifulSoup(res.text, 'html.parser')
+    soup = BeautifulSoup(res.text, "html.parser")
     d = {}
-    for label in soup.findAll('strong'):
+    for label in soup.find("table", "tabla").findAll("strong"):
         key = label.text.strip()[:-1]
         value = label.next.next.next.strip()
         d[key] = value

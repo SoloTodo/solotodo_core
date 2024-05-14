@@ -20,24 +20,25 @@ class WtbBrandQuerySet(models.QuerySet):
 class WtbBrand(models.Model):
     name = models.CharField(max_length=100)
     prefered_brand = models.CharField(max_length=100, blank=True, null=True)
-    storescraper_class = models.CharField(max_length=100, blank=True,
-                                          null=True)
+    storescraper_class = models.CharField(max_length=100, blank=True, null=True)
     website = models.ForeignKey(Website, on_delete=models.CASCADE)
     stores = models.ManyToManyField(Store)
     brand = models.ForeignKey(Brand, on_delete=models.PROTECT)
 
     objects = WtbBrandQuerySet.as_manager()
 
-    scraper = property(
-        lambda self: get_store_class_by_name(self.storescraper_class))
+    scraper = property(lambda self: get_store_class_by_name(self.storescraper_class))
 
     def __str__(self):
         return self.name
 
-    def update_entities(self,
-                        discover_urls_concurrency=None,
-                        products_for_url_concurrency=None,
-                        use_async=None, update_log=None):
+    def update_entities(
+        self,
+        discover_urls_concurrency=None,
+        products_for_url_concurrency=None,
+        use_async=None,
+        update_log=None,
+    ):
         assert self.storescraper_class
 
         scraper = self.scraper
@@ -51,13 +52,16 @@ class WtbBrand(models.Model):
         def log_update_error(exception):
             if update_log:
                 update_log.status = update_log.ERROR
-                desired_filename = 'logs/scrapings/{}_{}.json'.format(
-                    self, timezone.localtime(
-                        update_log.creation_date).strftime('%Y-%m-%d_%X'))
+                desired_filename = "logs/scrapings/{}_{}.json".format(
+                    self,
+                    timezone.localtime(update_log.creation_date).strftime(
+                        "%Y-%m-%d_%X"
+                    ),
+                )
                 storage = PrivateS3Boto3Storage()
                 real_filename = storage.save(
-                    desired_filename, ContentFile(
-                        str(exception).encode('utf-8')))
+                    desired_filename, ContentFile(str(exception).encode("utf-8"))
+                )
                 update_log.registry_file = real_filename
                 update_log.save()
 
@@ -65,72 +69,68 @@ class WtbBrand(models.Model):
             scraped_products_data = scraper.products(
                 discover_urls_concurrency=discover_urls_concurrency,
                 products_for_url_concurrency=products_for_url_concurrency,
-                use_async=use_async
+                use_async=use_async,
             )
         except Exception as e:
             log_update_error(e)
             raise
 
-        scraped_products = scraped_products_data['products']
-        scraped_products_dict = iterable_to_dict(scraped_products, 'key')
+        scraped_products = scraped_products_data["products"]
+        scraped_products_dict = iterable_to_dict(scraped_products, "key")
 
         entities_to_be_updated = self.wtbentity_set.select_related()
 
-        categories_dict = iterable_to_dict(Category, 'storescraper_name')
+        categories_dict = iterable_to_dict(Category, "storescraper_name")
 
         for entity in entities_to_be_updated:
-            scraped_product_for_update = scraped_products_dict.pop(
-                entity.key, None)
+            scraped_product_for_update = scraped_products_dict.pop(entity.key, None)
 
-            entity.update_with_scraped_product(
-                scraped_product_for_update)
+            entity.update_with_scraped_product(scraped_product_for_update)
 
         for scraped_product in scraped_products_dict.values():
             WtbEntity.create_from_scraped_product(
-                scraped_product,
-                self,
-                categories_dict[scraped_product.category]
+                scraped_product, self, categories_dict[scraped_product.category]
             )
 
         if update_log:
             update_log.status = update_log.SUCCESS
 
-            serialized_scraping_info = [p.serialize()
-                                        for p in scraped_products]
+            serialized_scraping_info = [p.serialize() for p in scraped_products]
 
             storage = PrivateS3Boto3Storage()
-            scraping_record_file = ContentFile(json.dumps(
-                serialized_scraping_info, indent=4).encode('utf-8'))
+            scraping_record_file = ContentFile(
+                json.dumps(serialized_scraping_info, indent=4).encode("utf-8")
+            )
 
-            desired_filename = 'logs/scrapings/{}_{}.json'.format(
-                self, timezone.localtime(update_log.creation_date).strftime(
-                    '%Y-%m-%d_%X'))
-            real_filename = storage.save(desired_filename,
-                                         scraping_record_file)
+            desired_filename = "logs/scrapings/{}_{}.json".format(
+                self,
+                timezone.localtime(update_log.creation_date).strftime("%Y-%m-%d_%X"),
+            )
+            real_filename = storage.save(desired_filename, scraping_record_file)
             update_log.registry_file = real_filename
 
             update_log.save()
 
     class Meta:
-        ordering = ('name', )
+        ordering = ("name",)
         permissions = [
-            ('view_wtb_brand', 'Can view the WTB brand'),
-            ('is_wtb_brand_staff', 'Is staff of this WTB brand'),
-            ('backend_view_wtb', 'Display the WTB menu in the backend'),
+            ("view_wtb_brand", "Can view the WTB brand"),
+            ("is_wtb_brand_staff", "Is staff of this WTB brand"),
+            ("backend_view_wtb", "Display the WTB menu in the backend"),
         ]
 
 
 class WtbEntityQuerySet(models.QuerySet):
     def filter_by_user_perms(self, user, permission):
         synth_permissions = {
-            'view_wtb_entity': {
-                'wtb_brand': 'view_wtb_brand',
-                'category': 'view_category',
+            "view_wtb_entity": {
+                "wtb_brand": "view_wtb_brand",
+                "category": "view_category",
             },
-            'is_wtb_entity_staff': {
-                'wtb_brand': 'is_wtb_brand_staff',
-                'category': 'is_category_staff',
-            }
+            "is_wtb_entity_staff": {
+                "wtb_brand": "is_wtb_brand_staff",
+                "category": "is_category_staff",
+            },
         }
 
         assert permission in synth_permissions
@@ -138,9 +138,11 @@ class WtbEntityQuerySet(models.QuerySet):
         permissions = synth_permissions[permission]
 
         brands_with_permissions = WtbBrand.objects.filter_by_user_perms(
-            user, permissions['wtb_brand'])
+            user, permissions["wtb_brand"]
+        )
         categories_with_permissions = Category.objects.filter_by_user_perms(
-            user, permissions['category'])
+            user, permissions["category"]
+        )
 
         return self.filter(
             brand__in=brands_with_permissions,
@@ -156,14 +158,14 @@ class WtbEntity(models.Model):
     model_name = models.CharField(max_length=255, db_index=True)
     brand = models.ForeignKey(WtbBrand, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE,
-                                blank=True, null=True)
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, blank=True, null=True
+    )
     key = models.CharField(max_length=255, db_index=True)
     section = models.CharField(max_length=255, blank=True, null=True)
     url = models.URLField()
     picture_url = models.URLField()
-    price = models.DecimalField(max_digits=12, decimal_places=2,
-                                blank=True, null=True)
+    price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
@@ -176,30 +178,35 @@ class WtbEntity(models.Model):
     # it is used for staff payments
     last_association = models.DateTimeField(null=True, blank=True)
     last_association_user = models.ForeignKey(
-        get_user_model(), on_delete=models.CASCADE, null=True, blank=True)
+        get_user_model(), on_delete=models.CASCADE, null=True, blank=True
+    )
 
     def __str__(self):
-        return '{} - {}'.format(self.brand, self.name)
+        return "{} - {}".format(self.brand, self.name)
 
     def user_has_staff_perms(self, user):
-        return user.has_perm('is_wtb_brand_staff', self.brand) \
-               and user.has_perm('is_category_staff', self.category)
+        return user.has_perm("is_wtb_brand_staff", self.brand) and user.has_perm(
+            "is_category_staff", self.category
+        )
 
     def save(self, *args, **kwargs):
         is_associated = bool(self.product_id)
 
         if bool(self.last_association_user_id) != bool(self.last_association):
-            raise IntegrityError('WtbEntity must have both last_association '
-                                 'fields or none of them')
+            raise IntegrityError(
+                "WtbEntity must have both last_association " "fields or none of them"
+            )
 
         if not self.is_visible and is_associated:
-            raise IntegrityError('WtbEntity cannot be associated and be '
-                                 'hidden at the same time')
+            raise IntegrityError(
+                "WtbEntity cannot be associated and be " "hidden at the same time"
+            )
 
         if is_associated != bool(self.last_association_user_id):
             raise IntegrityError(
-                'Associated wtb entities must have association metadata, '
-                'non-associated entities must not')
+                "Associated wtb entities must have association metadata, "
+                "non-associated entities must not"
+            )
 
         super(WtbEntity, self).save(*args, **kwargs)
 
@@ -214,15 +221,15 @@ class WtbEntity(models.Model):
             if scraped_product.picture_urls:
                 picture_url = scraped_product.picture_urls[0]
             else:
-                picture_url = 'https://via.placeholder.com/200'
+                picture_url = "https://via.placeholder.com/200"
 
             if scraped_product.positions:
                 self.section = scraped_product.positions[0][0]
 
             self.name = scraped_product.name[:254]
             self.model_name = scraped_product.sku
-            self.url = scraped_product.url
-            self.picture_url = picture_url
+            self.url = scraped_product.url[:190]
+            self.picture_url = picture_url[:190]
             self.description = scraped_product.description
             self.is_active = True
 
@@ -238,15 +245,15 @@ class WtbEntity(models.Model):
 
     def associate(self, user, product):
         if not self.is_visible:
-            raise IntegrityError('Non-visible cannot be associated')
+            raise IntegrityError("Non-visible cannot be associated")
 
         if self.product == product:
-            raise IntegrityError(
-                'Re-associations must be made to a different product')
+            raise IntegrityError("Re-associations must be made to a different product")
 
         if self.category != product.category:
             raise IntegrityError(
-                'Entities must be associated to products of the same category')
+                "Entities must be associated to products of the same category"
+            )
 
         self.last_association = timezone.now()
         self.last_association_user = user
@@ -255,7 +262,7 @@ class WtbEntity(models.Model):
 
     def dissociate(self):
         if not self.product:
-            raise IntegrityError('Cannot dissociate non-associated entity')
+            raise IntegrityError("Cannot dissociate non-associated entity")
 
         self.last_association = None
         self.last_association_user = None
@@ -273,13 +280,12 @@ class WtbEntity(models.Model):
         # even if the visitor is checking from another one. This is useful
         # for example for people in Korea to check the WTB for Paraguay,
         # which would normally display Chile's prices by default.
-        return '{}?country={}'.format(self.url, entity.store.country.iso_code)
+        return "{}?country={}".format(self.url, entity.store.country.iso_code)
 
     def external_site_url(self, entity):
         from django.conf import settings
 
-        if self.brand_id in [settings.WTB_LG_CHILE_BRAND,
-                             settings.WTB_LG_PANAMA_BRAND]:
+        if self.brand_id in [settings.WTB_LG_CHILE_BRAND, settings.WTB_LG_PANAMA_BRAND]:
             return self._lg_external_site_url(entity)
 
         return self.url
@@ -289,7 +295,7 @@ class WtbEntity(models.Model):
         if scraped_product.picture_urls:
             picture_url = scraped_product.picture_urls[0]
         else:
-            picture_url = 'https://via.placeholder.com/200'
+            picture_url = "https://via.placeholder.com/200"
 
         if scraped_product.positions:
             section = scraped_product.positions[0][0]
@@ -307,19 +313,20 @@ class WtbEntity(models.Model):
             brand=brand,
             category=category,
             key=scraped_product.key,
-            url=scraped_product.url,
-            picture_url=picture_url,
+            url=scraped_product.url[:190],
+            picture_url=picture_url[:190],
             section=section,
             price=price,
-            description=scraped_product.description
+            description=scraped_product.description,
         )
 
     class Meta:
-        ordering = ('brand', 'name')
+        ordering = ("brand", "name")
         permissions = [
-            ('backend_view_pending_wtb_entities',
-             'Can view the pending WTB entities interface in the backend'
-             ),
+            (
+                "backend_view_pending_wtb_entities",
+                "Can view the pending WTB entities interface in the backend",
+            ),
         ]
 
 
@@ -327,22 +334,25 @@ class WtbBrandUpdateLog(models.Model):
     PENDING, IN_PROCESS, SUCCESS, ERROR = [1, 2, 3, 4]
 
     brand = models.ForeignKey(WtbBrand, on_delete=models.CASCADE)
-    status = models.IntegerField(choices=[
-        (PENDING, 'Pending'),
-        (IN_PROCESS, 'In process'),
-        (SUCCESS, 'Success'),
-        (ERROR, 'Error'),
-    ], default=PENDING)
+    status = models.IntegerField(
+        choices=[
+            (PENDING, "Pending"),
+            (IN_PROCESS, "In process"),
+            (SUCCESS, "Success"),
+            (ERROR, "Error"),
+        ],
+        default=PENDING,
+    )
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
-    registry_file = models.FileField(storage=PrivateS3Boto3Storage(),
-                                     upload_to='logs/wtb',
-                                     null=True, blank=True)
+    registry_file = models.FileField(
+        storage=PrivateS3Boto3Storage(), upload_to="logs/wtb", null=True, blank=True
+    )
 
     entity_count = models.IntegerField(null=True, blank=True)
 
     def __str__(self):
-        return '{} - {}'.format(self.brand, self.last_updated)
+        return "{} - {}".format(self.brand, self.last_updated)
 
     class Meta:
-        ordering = ('brand', '-last_updated')
+        ordering = ("brand", "-last_updated")

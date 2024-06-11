@@ -229,7 +229,7 @@ class WtbEntity(models.Model):
             self.name = scraped_product.name[:254]
             self.model_name = scraped_product.sku
             self.url = scraped_product.url[:190]
-            self.picture_url = picture_url[:190]
+            self.picture_url = picture_url[:250]
             self.description = scraped_product.description
             self.is_active = True
 

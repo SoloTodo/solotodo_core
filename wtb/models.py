@@ -164,7 +164,7 @@ class WtbEntity(models.Model):
     key = models.CharField(max_length=255, db_index=True)
     section = models.CharField(max_length=255, blank=True, null=True)
     url = models.URLField()
-    picture_url = models.URLField()
+    picture_url = models.URLField(max_length=256)
     price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     creation_date = models.DateTimeField(auto_now_add=True)

@@ -193,7 +193,10 @@ def additional_es_fields(elastic_search_result, model_name):
         )
 
         tags = []
-        if result["score_games"] >= 300:
+        if (
+            result["score_games"] >= 300
+            and "dedicated_video_card_id" in elastic_search_result
+        ):
             tags.append("Gamer")
 
         if (

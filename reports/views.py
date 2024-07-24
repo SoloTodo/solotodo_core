@@ -24,6 +24,7 @@ from reports.tasks import (
     send_current_prices_task,
     send_store_analysis_report_task,
     send_weekly_prices_task,
+    send_store_analytics_task,
 )
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
@@ -82,13 +83,9 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         if not form.is_valid():
             return Response({"errors": form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        report_path = form.generate_report()["path"]
+        send_store_analytics_task.delay(user.id, request.META["QUERY_STRING"])
 
-        ReportDownload.objects.create(report=report, user=user, file=report_path)
-
-        storage = PrivateS3Boto3Storage()
-        report_url = storage.url(report_path)
-        return Response({"url": report_url})
+        return Response({"message": "ok"}, status=status.HTTP_200_OK)
 
     @action(detail=False)
     def weekly_prices(self, request):

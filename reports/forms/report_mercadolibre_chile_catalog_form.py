@@ -50,7 +50,6 @@ class ReportMercadoLibreChileCatalogForm(forms.Form):
 
         row = 1
         for entry in scraped_data:
-            print(entry)
             col = 0
             item = entry["item"]
             catalog = entry["catalog"]

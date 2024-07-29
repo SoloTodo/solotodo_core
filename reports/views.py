@@ -7,6 +7,9 @@ from rest_framework.response import Response
 from reports.forms.pc_factory_sku_analysis_form import PcFactorySkuAnalysisForm
 from reports.forms.report_current_prices_form import ReportCurrentPricesForm
 from reports.forms.report_daily_prices_form import ReportDailyPricesForm
+from reports.forms.report_mercadolibre_chile_catalog_form import (
+    ReportMercadoLibreChileCatalogForm,
+)
 from reports.forms.report_prices_history_form import ReportPricesHistoryForm
 from reports.forms.report_product_list_form import ReportProductListForm
 from reports.forms.report_sec_prices_form import ReportSecPricesForm
@@ -24,6 +27,8 @@ from reports.tasks import (
     send_current_prices_task,
     send_store_analysis_report_task,
     send_weekly_prices_task,
+    send_store_analytics_task,
+    send_report_mercadolibre_chile_catalog_task,
 )
 from solotodo_core.s3utils import PrivateS3Boto3Storage
 
@@ -82,13 +87,9 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         if not form.is_valid():
             return Response({"errors": form.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-        report_path = form.generate_report()["path"]
+        send_store_analytics_task.delay(user.id, request.META["QUERY_STRING"])
 
-        ReportDownload.objects.create(report=report, user=user, file=report_path)
-
-        storage = PrivateS3Boto3Storage()
-        report_url = storage.url(report_path)
-        return Response({"url": report_url})
+        return Response({"message": "ok"}, status=status.HTTP_200_OK)
 
     @action(detail=False)
     def weekly_prices(self, request):
@@ -282,3 +283,22 @@ class ReportViewSet(viewsets.ReadOnlyModelViewSet):
         data = PcFactorySkuAnalysisForm.generate_report()
 
         return Response(data)
+
+    @action(detail=False)
+    def mercadolibre_chile_catalog_report(self, request):
+        report = Report.objects.get(slug="mercadolibre_chile_catalog")
+        user = request.user
+
+        if not user.has_perm("view_report", report):
+            raise PermissionDenied
+
+        form = ReportMercadoLibreChileCatalogForm(request.GET)
+
+        if not form.is_valid():
+            return Response({"errors": form.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        send_report_mercadolibre_chile_catalog_task.delay(
+            user.id, request.META["QUERY_STRING"]
+        )
+
+        return Response({"message": "ok"}, status=status.HTTP_200_OK)

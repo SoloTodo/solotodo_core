@@ -544,6 +544,14 @@ class Product(models.Model):
         )
         queries = [
             {
+                "name": "Procesadores de All-In-One deben tener número de threads",
+                "category_id": 37,
+                "es_label_path": "processor_unicode",
+                "es_value_path": "processor_thread_count",
+                "es_instance_model_id_path": "processor_id",
+                "es_target_value": 0,
+            },
+            {
                 "name": "Procesadores de All-In-One deben tener puntaje",
                 "category_id": 37,
                 "es_label_path": "processor_unicode",

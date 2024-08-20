@@ -757,14 +757,14 @@ class Product(models.Model):
                     result_dict["specs"][query["es_instance_model_id_path"]]
                 ] = result_dict["specs"][query["es_label_path"]]
 
-            result.append(
-                {
-                    "label": query["name"],
-                    "pending_fields": sorted(
-                        subresult.items(), key=lambda x: x[0], reverse=True
-                    ),
-                }
-            )
+            pending_fields = [
+                {"id": key, "label": value}
+                for key, value in sorted(
+                    subresult.items(), key=lambda x: x[0], reverse=True
+                )
+            ]
+
+            result.append({"label": query["name"], "pending_fields": pending_fields})
         return result
 
     class Meta:

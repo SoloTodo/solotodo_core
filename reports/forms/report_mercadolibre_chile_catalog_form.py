@@ -22,7 +22,7 @@ class ReportMercadoLibreChileCatalogForm(forms.Form):
         scraper_extra_args = json.loads(store.storescraper_extra_args)
         preflight_data = scraper.preflight(scraper_extra_args)
         access_token = preflight_data["access_token"]
-        scraped_data = scraper.get_catalog_competitors_for_seller(
+        scraped_data, seller_data = scraper.get_catalog_competitors_for_seller(
             seller_id, access_token
         )
 
@@ -39,10 +39,11 @@ class ReportMercadoLibreChileCatalogForm(forms.Form):
             "ID Producto",
             "Nombre Producto",
             "URL Producto",
-            "ID Dreamtec",
-            "Precio Dreamtec",
+            "ID Retailer",
+            "Precio Retailer",
             "¿Oferta ganadora?",
             "Precio oferta ganadora",
+            "Retailer ganador",
         ]
 
         for idx, header in enumerate(headers):
@@ -87,12 +88,12 @@ class ReportMercadoLibreChileCatalogForm(forms.Form):
             worksheet.write(row, col, catalog["permalink"])
             col += 1
 
-            # ID Dreamtec
+            # ID Retailer
 
             worksheet.write(row, col, item["id"])
             col += 1
 
-            # Precio Dreamtec
+            # Precio Retailer
 
             worksheet.write(row, col, seller_price)
             col += 1
@@ -106,6 +107,13 @@ class ReportMercadoLibreChileCatalogForm(forms.Form):
             # Precio oferta ganadora
 
             worksheet.write(row, col, winning_item["price"])
+            col += 1
+
+            # Retailer ganador
+
+            worksheet.write(
+                row, col, seller_data[catalog["buy_box_winner"]["seller_id"]]
+            )
             col += 1
 
             row += 1

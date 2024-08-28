@@ -11,3 +11,4 @@ cyber.tsv
 http_ca.crt
 elasticsearch-ca.pem
 *.csv
+.DS_Store

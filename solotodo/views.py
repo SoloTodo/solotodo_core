@@ -96,7 +96,7 @@ from solotodo.serializers import UserSerializer, LanguageSerializer, \
     ProductAvailableEntitiesMinimalSerializer, StoreSectionSerializer, \
     EntitySectionPositionSerializer, ProductVideoSerializer, \
     StaffProductSerializer, BundleSerializer, BundleModelSerializer
-from solotodo.tasks import store_update, \
+from solotodo.tasks import store_update, store_update_non_blocker, \
     send_historic_entity_positions_report_task
 from solotodo.utils import get_client_ip, iterable_to_dict
 from solotodo_core.s3utils import MediaRootS3Boto3Storage
@@ -603,6 +603,63 @@ class StoreViewSet(PermissionReadOnlyModelViewSet):
                 'task_id': task.id,
                 'log_id': store_update_log.id
             })
+        else:
+            return Response(form.errors)
+        
+    @action(methods=['post'], detail=True)
+    def update_pricing_non_blocker(self, request, pk):
+        store = self.get_object()
+
+        if not request.user.has_perm('update_store_pricing', store):
+            raise PermissionDenied
+
+        form = StoreUpdatePricingForm.from_store_and_user(
+            store, request.user, request.data)
+
+        if form.is_valid():
+            cleaned_data = form.cleaned_data
+
+            categories = cleaned_data['categories']
+            if categories:
+                # The request specifies the categories to update
+                category_ids = [category.id for category in categories]
+            elif form.default_categories().count() == \
+                    store.scraper_categories().count():
+                # The request does not specify the categories, and the user
+                # has permissions over all of the categories available to the
+                # scraper. Setting category_ids to None tells the updating
+                # process to also update the store entities whose type is not
+                # in the scraper official list (e.g. "power supplies" in Paris
+                # gaming section).
+                category_ids = None
+            else:
+                # The request does not specify the categories, and the user
+                # only has permission over a subset of the available categories
+                # Use the categories with permissions.
+                category_ids = [category.id
+                                for category in form.default_categories()]
+
+            discover_urls_concurrency = \
+                cleaned_data['discover_urls_concurrency']
+            products_for_url_concurrency = \
+                cleaned_data['products_for_url_concurrency']
+            use_async = cleaned_data['prefer_async']
+
+            store_update_log = StoreUpdateLog.objects.create(store=store)
+
+            task = store_update_non_blocker.delay(
+                store.id,
+                category_ids=category_ids,
+                discover_urls_concurrency=discover_urls_concurrency,
+                products_for_url_concurrency=products_for_url_concurrency,
+                use_async=use_async,
+                update_log_id=store_update_log.id
+            )
+
+            """return Response({
+                'task_id': task.id,
+                'log_id': store_update_log.id
+            })"""
         else:
             return Response(form.errors)
 

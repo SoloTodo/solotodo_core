@@ -169,6 +169,76 @@ class Store(models.Model):
             update_log=update_log,
         )
 
+    def update_pricing_non_blocker(
+        self,
+        categories=None,
+        discover_urls_concurrency=None,
+        products_for_url_concurrency=None,
+        use_async=None,
+        update_log=None,
+        extra_args=None,
+    ):
+        assert self.last_activation is not None
+
+        scraper = self.scraper
+
+        categories = self.sanitize_categories_for_update(categories)
+
+        if not categories:
+            return
+
+        if update_log:
+            update_log.status = update_log.IN_PROCESS
+            update_log.save()
+
+        local_extra_args = {}
+
+        if self.storescraper_extra_args:
+            local_extra_args = json.loads(self.storescraper_extra_args)
+        if extra_args:
+            local_extra_args.update(extra_args)
+
+        def log_update_error(local_error_message):
+            if update_log:
+                update_log.status = update_log.ERROR
+                desired_filename = "logs/scrapings/{}_{}.json".format(
+                    self,
+                    timezone.localtime(update_log.creation_date).strftime(
+                        "%Y-%m-%d_%X"
+                    ),
+                )
+                storage = PrivateS3Boto3Storage()
+                real_filename = storage.save(
+                    desired_filename, ContentFile(local_error_message.encode("utf-8"))
+                )
+                update_log.registry_file = real_filename
+                update_log.save()
+
+        print("Scraping products")
+
+        try:
+            scraped_products_data = scraper.products_non_blocker(
+                categories=[c.storescraper_name for c in categories],
+                extra_args=local_extra_args,
+                discover_urls_concurrency=discover_urls_concurrency,
+                products_for_url_concurrency=products_for_url_concurrency,
+                use_async=use_async,
+            )
+        except Exception as e:
+            error_message = "Unknown error: {}".format(traceback.format_exc())
+            log_update_error(error_message)
+            raise
+
+        print("Products scraped")
+        """
+        self.update_with_scraped_products(
+            categories,
+            scraped_products_data["products"],
+            scraped_products_data["discovery_urls_without_products"],
+            update_log=update_log,
+        )
+        """
+
     def update_pricing_from_json(self, json_data, update_log=None):
         assert self.last_activation is not None
 

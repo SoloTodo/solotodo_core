@@ -216,28 +216,14 @@ class Store(models.Model):
 
         print("Scraping products")
 
-        try:
-            scraped_products_data = scraper.products_non_blocker(
-                categories=[c.storescraper_name for c in categories],
-                extra_args=local_extra_args,
-                discover_urls_concurrency=discover_urls_concurrency,
-                products_for_url_concurrency=products_for_url_concurrency,
-                use_async=use_async,
-            )
-        except Exception as e:
-            error_message = "Unknown error: {}".format(traceback.format_exc())
-            log_update_error(error_message)
-            raise
-
-        print("Products scraped")
-        """
-        self.update_with_scraped_products(
-            categories,
-            scraped_products_data["products"],
-            scraped_products_data["discovery_urls_without_products"],
-            update_log=update_log,
+        scraper.products_non_blocker(
+            categories=[c.storescraper_name for c in categories],
+            extra_args=local_extra_args,
+            discover_urls_concurrency=discover_urls_concurrency,
+            products_for_url_concurrency=products_for_url_concurrency,
+            use_async=use_async,
+            update_log_id=update_log.id,
         )
-        """
 
     def update_pricing_from_json(self, json_data, update_log=None):
         assert self.last_activation is not None
@@ -621,3 +607,60 @@ class Store(models.Model):
             ],
             ["view_store_sii_details", "Can view the SII details for the store"],
         )
+
+
+def process_non_blocker_positions_data(url, positions, category):
+    print("URL scraped")
+    print(url, positions, category)
+
+
+def process_non_blocker_product_data(
+    scraped_product,
+    store_class_name,
+    categories,
+    update_log_id=None,
+):
+    from solotodo.models import Currency
+
+    scraped_product = StorescraperProduct.deserialize(scraped_product[0])
+    print("Product scraped")
+    store = Store.objects.get(name=store_class_name)
+
+    try:
+        entity = store.entity_set.get(key=scraped_product.key)
+        print(entity.id)
+    except:
+        print("Entity not found")
+        return
+
+    if not entity.active_registry_id:
+        print("skipping")
+        return
+
+    categories_dict = iterable_to_dict(Category, "storescraper_name")
+    currencies_dict = iterable_to_dict(Currency, "iso_code")
+    sections_dict = iterable_to_dict(store.sections.all(), "name")
+
+    entity.update_with_scraped_product(
+        scraped_product=scraped_product,
+        sections_dict=sections_dict,
+        category=categories_dict[scraped_product.category],
+        currency=currencies_dict[scraped_product.currency],
+    )
+
+    print("Done")
+
+
+def process_non_blocker_store_update_log_data(update_log_id, products_account_data):
+    from solotodo.models import StoreUpdateLog
+
+    update_log = StoreUpdateLog.objects.get(pk=update_log_id)
+    update_log.status = update_log.SUCCESS
+    update_log.available_products_count = products_account_data["available"]
+    update_log.unavailable_products_count = products_account_data["unavailable"]
+    update_log.discovery_urls_without_products_count = products_account_data[
+        "with_error"
+    ]
+    update_log.save()
+
+    print("\nStore update log updated")

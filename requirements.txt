@@ -32,7 +32,7 @@ ipdb==0.13.13
 Pillow==10.0.0
 pip==24.0
 pipdeptree==2.9.4
-playwright==1.35.0
+playwright==1.46.0
 psycopg2==2.9.6
 pycodestyle==2.10.0
 pycurl==7.45.3
@@ -45,5 +45,5 @@ selenium-wire==5.1.0
 sorl-thumbnail==12.9.0
 validators==0.22.0
 Werkzeug==2.3.6
-wheel==0.40.0
+wheel==0.44.0
 XlsxWriter==3.1.2

@@ -538,232 +538,24 @@ class Product(models.Model):
     @classmethod
     def pending_field_values(cls):
         from elasticsearch_dsl import Q as ES_Q
+        from .product_field_watcher import ProductFieldWatcher
 
         base_search = EsProduct.search().filter(
             "has_child", type="entity", query=ES_Q("match_all")
         )
-        queries = [
-            {
-                "name": "Procesadores de All-In-One deben tener número de threads",
-                "category_id": 37,
-                "es_label_path": "processor_unicode",
-                "es_value_path": "processor_thread_count",
-                "es_instance_model_id_path": "processor_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "Procesadores de All-In-One deben tener puntaje",
-                "category_id": 37,
-                "es_label_path": "processor_unicode",
-                "es_value_path": "processor_speed_score",
-                "es_instance_model_id_path": "processor_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs de All-In-One deben tener puntaje",
-                "category_id": 37,
-                "es_label_path": "processor_gpu_unicode",
-                "es_value_path": "processor_gpu_speed_score",
-                "es_instance_model_id_path": "processor_gpu_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs de celulares deben tener puntaje",
-                "category_id": 6,
-                "es_label_path": "soc_gpu_unicode",
-                "es_value_path": "soc_gpu_gfx_bench_score",
-                "es_instance_model_id_path": "soc_gpu_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "SOCs de celular tienen que tener puntaje single core de GeekBench 4.4",
-                "category_id": 6,
-                "es_label_path": "soc_unicode",
-                "es_value_path": "soc_geekbench_44_single_core_score",
-                "es_instance_model_id_path": "soc_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "SOCs de celular tienen que tener puntaje multi core de GeekBench 4.4",
-                "category_id": 6,
-                "es_label_path": "soc_unicode",
-                "es_value_path": "soc_geekbench_44_multi_core_score",
-                "es_instance_model_id_path": "soc_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "SOCs de celular tienen que tener puntaje single core de GeekBench 5",
-                "category_id": 6,
-                "es_label_path": "soc_unicode",
-                "es_value_path": "soc_geekbench_5_single_core_score",
-                "es_instance_model_id_path": "soc_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "SOCs de celular tienen que tener puntaje multi core de GeekBench 5",
-                "category_id": 6,
-                "es_label_path": "soc_unicode",
-                "es_value_path": "soc_geekbench_5_multi_core_score",
-                "es_instance_model_id_path": "soc_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "Procesadores de notebook tienen que tener puntaje",
-                "category_id": 1,
-                "es_label_path": "processor_unicode",
-                "es_value_path": "processor_speed_score",
-                "es_instance_model_id_path": "processor_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs integradas de notebook tienen que tener puntaje",
-                "category_id": 1,
-                "es_label_path": "processor_gpu_unicode",
-                "es_value_path": "processor_gpu_speed_score",
-                "es_instance_model_id_path": "processor_gpu_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs dedicadas de notebook tienen que tener puntaje",
-                "category_id": 1,
-                "es_label_path": "dedicated_video_card_unicode",
-                "es_value_path": "dedicated_video_card_speed_score",
-                "es_instance_model_id_path": "dedicated_video_card_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "Notebooks no pueden tener tarjetas de video dedicadas sin memoria",
-                "category_id": 1,
-                "es_label_path": "unicode",
-                "es_value_path": "dedicated_video_card_card_type_id",
-                "es_instance_model_id_path": "id",
-                "es_target_value": 102975,
-            },
-            {
-                "name": "Notebooks deben tener peso",
-                "category_id": 1,
-                "es_label_path": "unicode",
-                "es_value_path": "weight",
-                "es_instance_model_id_path": "id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "Procesadores deben tener puntaje PCMark10",
-                "category_id": 3,
-                "es_label_path": "unicode",
-                "es_value_path": "pcmark_10_score",
-                "es_instance_model_id_path": "id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "Procesadores deben tener puntaje PassMark",
-                "category_id": 3,
-                "es_label_path": "unicode",
-                "es_value_path": "passmark_score",
-                "es_instance_model_id_path": "id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "Procesadores deben tener puntaje CineBench R20 Single Core",
-                "category_id": 3,
-                "es_label_path": "unicode",
-                "es_value_path": "cinebench_r20_single_score",
-                "es_instance_model_id_path": "id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "Procesadores deben tener puntaje CineBench R20 Multi Core",
-                "category_id": 3,
-                "es_label_path": "unicode",
-                "es_value_path": "cinebench_r20_multi_score",
-                "es_instance_model_id_path": "id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs de Tablets tienen que tener puntaje",
-                "category_id": 14,
-                "es_label_path": "soc_gpu_unicode",
-                "es_value_path": "soc_gpu_gfx_bench_score",
-                "es_instance_model_id_path": "soc_gpu_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "SOCs de tablets tienen que tener puntaje single core de GeekBench 4.4",
-                "category_id": 14,
-                "es_label_path": "soc_unicode",
-                "es_value_path": "soc_geekbench_44_single_core_score",
-                "es_instance_model_id_path": "soc_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "SOCs de tablets tienen que tener puntaje multi core de GeekBench 4.4",
-                "category_id": 14,
-                "es_label_path": "soc_unicode",
-                "es_value_path": "soc_geekbench_44_multi_core_score",
-                "es_instance_model_id_path": "soc_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "SOCs de tablets tienen que tener puntaje single core de GeekBench 5",
-                "category_id": 14,
-                "es_label_path": "soc_unicode",
-                "es_value_path": "soc_geekbench_5_single_core_score",
-                "es_instance_model_id_path": "soc_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "SOCs de tablets tienen que tener puntaje multi core de GeekBench 5",
-                "category_id": 14,
-                "es_label_path": "soc_unicode",
-                "es_value_path": "soc_geekbench_5_multi_core_score",
-                "es_instance_model_id_path": "soc_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs deben tener puntaje Fire Strike",
-                "category_id": 2,
-                "es_label_path": "gpu_unicode",
-                "es_value_path": "gpu_tdmark_fire_strike_score",
-                "es_instance_model_id_path": "gpu_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs deben tener puntaje Time Spy",
-                "category_id": 2,
-                "es_label_path": "gpu_unicode",
-                "es_value_path": "gpu_tdmark_time_spy_score",
-                "es_instance_model_id_path": "gpu_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs deben tener puntaje Port Royal",
-                "category_id": 2,
-                "es_label_path": "gpu_unicode",
-                "es_value_path": "gpu_tdmark_port_royal_score",
-                "es_instance_model_id_path": "gpu_id",
-                "es_target_value": 0,
-            },
-            {
-                "name": "GPUs deben tener puntaje VR Room Orange",
-                "category_id": 2,
-                "es_label_path": "gpu_unicode",
-                "es_value_path": "gpu_tdmark_vr_room_orange_score",
-                "es_instance_model_id_path": "gpu_id",
-                "es_target_value": 0,
-            },
-        ]
+        watchers = ProductFieldWatcher.objects.all()
         result = []
-        for query in queries:
-            search = base_search.filter("term", category_id=query["category_id"])
+        for watcher in watchers:
+            search = base_search.filter("term", category_id=watcher.category_id)
             search = search.filter(
-                "term", **{"specs." + query["es_value_path"]: query["es_target_value"]}
+                "term", **{"specs." + watcher.es_value_path: watcher.es_target_value}
             )
             subresult = {}
             for search_result in search.scan():
                 result_dict = search_result.to_dict()
-                subresult[
-                    result_dict["specs"][query["es_instance_model_id_path"]]
-                ] = result_dict["specs"][query["es_label_path"]]
+                subresult[result_dict["specs"][watcher.es_instance_model_id_path]] = (
+                    result_dict["specs"][watcher.es_label_path]
+                )
 
             pending_fields = [
                 {"id": key, "label": value}
@@ -772,7 +564,7 @@ class Product(models.Model):
                 )
             ]
 
-            result.append({"label": query["name"], "pending_fields": pending_fields})
+            result.append({"label": watcher.name, "pending_fields": pending_fields})
         return result
 
     class Meta:

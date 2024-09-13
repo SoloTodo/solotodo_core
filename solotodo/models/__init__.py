@@ -1,6 +1,7 @@
 from guardian import core
-from solotodo_core.guardian_patched_object_permission_checker import \
-    GuardianPatchedObjectPermissionChecker
+from solotodo_core.guardian_patched_object_permission_checker import (
+    GuardianPatchedObjectPermissionChecker,
+)
 
 core.ObjectPermissionChecker = GuardianPatchedObjectPermissionChecker
 
@@ -47,6 +48,7 @@ from .store_section import StoreSection
 from .entity_section_position import EntitySectionPosition
 from .product_video import ProductVideo
 from .coupon import Coupon
+from .product_field_watcher import ProductFieldWatcher
 
 # ElasticSearch DSL persistence models
 from .es_product_entities import EsProductEntities
@@ -60,8 +62,7 @@ def handle_user_creation(sender, instance=None, created=False, **kwargs):
         # Create Authorization token
         Token.objects.create(user=instance)
         # Add user to base group with basic permissions
-        group, created = Group.objects.get_or_create(
-            name=settings.DEFAULT_GROUP_NAME)
+        group, created = Group.objects.get_or_create(name=settings.DEFAULT_GROUP_NAME)
         instance.groups.add(group)
 
 
@@ -71,8 +72,7 @@ def create_or_update_product(instance_model, created, creator_id, **kwargs):
 
     if instance_model.model in category_models:
         try:
-            existing_product = Product.objects.get(
-                instance_model=instance_model)
+            existing_product = Product.objects.get(instance_model=instance_model)
             existing_product.save()
         except Product.DoesNotExist:
             new_product = Product()
@@ -117,10 +117,10 @@ def delete_entity_from_es(sender, instance, using, **kwargs):
 
 @Field.register_lookup
 class NotEqual(Lookup):
-    lookup_name = 'ne'
+    lookup_name = "ne"
 
     def as_sql(self, compiler, connection):
         lhs, lhs_params = self.process_lhs(compiler, connection)
         rhs, rhs_params = self.process_rhs(compiler, connection)
         params = lhs_params + rhs_params
-        return '%s <> %s' % (lhs, rhs), params
+        return "%s <> %s" % (lhs, rhs), params

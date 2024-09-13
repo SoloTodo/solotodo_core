@@ -17,8 +17,7 @@ from django.db.models import Q, FileField
 from django.db.models.fields.files import FieldFile
 from metamodel.models import MetaModel, MetaField
 from metamodel.signals import instance_model_saved
-from metamodel.utils import strip_whitespace, trim, \
-    convert_image_to_inmemoryfile
+from metamodel.utils import strip_whitespace, trim, convert_image_to_inmemoryfile
 
 
 class InstanceModelQuerySet(models.QuerySet):
@@ -27,21 +26,25 @@ class InstanceModelQuerySet(models.QuerySet):
         from metamodel.models import InstanceField
 
         instance_fields = InstanceField.objects.filter(
-            parent__in=self,
-            field__name=field
-        ).select_related('parent', 'value')
+            parent__in=self, field__name=field
+        ).select_related("parent", "value")
 
-        return {instance_field.parent: instance_field.value.value
-                for instance_field in instance_fields}
+        return {
+            instance_field.parent: instance_field.value.value
+            for instance_field in instance_fields
+        }
 
 
 class InstanceModel(models.Model):
-    decimal_value = models.DecimalField(max_digits=200, decimal_places=5,
-                                        null=True, blank=True, db_index=True)
-    unicode_value = models.CharField(max_length=1024, null=True, blank=True,
-                                     db_index=True)
-    unicode_representation = models.CharField(max_length=255, null=True,
-                                              blank=True, db_index=True)
+    decimal_value = models.DecimalField(
+        max_digits=200, decimal_places=5, null=True, blank=True, db_index=True
+    )
+    unicode_value = models.CharField(
+        max_length=1024, null=True, blank=True, db_index=True
+    )
+    unicode_representation = models.CharField(
+        max_length=255, null=True, blank=True, db_index=True
+    )
     model = models.ForeignKey(MetaModel, on_delete=models.CASCADE)
 
     objects = InstanceModelQuerySet.as_manager()
@@ -56,65 +59,69 @@ class InstanceModel(models.Model):
         if mtype:
             mtype = mtype.name
 
-            if mtype == 'BooleanField':
+            if mtype == "BooleanField":
                 return bool(self.decimal_value)
-            if mtype == 'CharField':
+            if mtype == "CharField":
                 return self.unicode_value
-            if mtype == 'DateField':
+            if mtype == "DateField":
                 return date.fromordinal(self.decimal_value)
-            if mtype == 'DateTimeField':
+            if mtype == "DateTimeField":
                 epoch = datetime.utcfromtimestamp(0)
                 delta = timedelta(seconds=int(self.decimal_value))
                 return epoch + delta
-            if mtype == 'DecimalField':
+            if mtype == "DecimalField":
                 return self.decimal_value
-            if mtype == 'FileField':
-                return FieldFile(default_storage.open(self.unicode_value),
-                                 FileField(), self.unicode_value)
-            if mtype == 'IntegerField':
+            if mtype == "FileField":
+                return FieldFile(
+                    default_storage.open(self.unicode_value),
+                    FileField(),
+                    self.unicode_value,
+                )
+            if mtype == "IntegerField":
                 return int(self.decimal_value)
 
-        return self.__getattr__('value')
+        return self.__getattr__("value")
 
     def _set_value(self, new_value):
         mtype = MetaModel.get_primitive_models_dict()[self.model_id].name
 
-        if mtype == 'BooleanField':
+        if mtype == "BooleanField":
             if not isinstance(new_value, bool):
                 raise ValueError
 
             self.decimal_value = int(new_value)
             self.unicode_value = None
 
-        if mtype == 'CharField':
+        if mtype == "CharField":
             if not isinstance(new_value, str):
                 raise ValueError
 
             self.unicode_value = str(new_value)
             self.decimal_value = None
 
-        if mtype == 'DateField':
+        if mtype == "DateField":
             if not isinstance(new_value, date):
                 raise ValueError
 
             self.decimal_value = new_value.toordinal()
             self.unicode_value = None
 
-        if mtype == 'DateTimeField':
+        if mtype == "DateTimeField":
             if not isinstance(new_value, datetime):
                 raise ValueError
 
             epoch = datetime.utcfromtimestamp(0)
 
-            self.decimal_value = (new_value.replace(tzinfo=None) -
-                                  epoch).total_seconds()
+            self.decimal_value = (
+                new_value.replace(tzinfo=None) - epoch
+            ).total_seconds()
             self.unicode_value = None
 
-        if mtype == 'DecimalField':
+        if mtype == "DecimalField":
             self.decimal_value = Decimal(new_value)
             self.unicode_value = None
 
-        if mtype == 'FileField':
+        if mtype == "FileField":
             if isinstance(new_value, File):
                 self.unicode_value = new_value.name
                 self.decimal_value = None
@@ -126,7 +133,7 @@ class InstanceModel(models.Model):
             self.unicode_value = str(new_value)
             self.decimal_value = None
 
-        if mtype == 'IntegerField':
+        if mtype == "IntegerField":
             if not isinstance(new_value, int):
                 raise ValueError
 
@@ -144,20 +151,18 @@ class InstanceModel(models.Model):
             if self.unicode_representation:
                 return self.unicode_representation
             else:
-                return '[No unicode representation]'.format(self.model)
+                return "[No unicode representation]".format(self.model)
 
         else:
             return str(self.value)
 
     def get_unicode_representation(self):
         # 1. Custom logic for unicode representation?
-        if hasattr(settings, 'METAMODEL'):
-            unicode_functions_paths = \
-                settings.METAMODEL.get('UNICODE_FUNCTIONS', [])
+        if hasattr(settings, "METAMODEL"):
+            unicode_functions_paths = settings.METAMODEL.get("UNICODE_FUNCTIONS", [])
             for path in unicode_functions_paths:
-                path_components = path.split('.')
-                module = importlib.import_module(
-                    '.'.join(path_components[:-1]))
+                path_components = path.split(".")
+                module = importlib.import_module(".".join(path_components[:-1]))
                 unicode_function = getattr(module, path_components[-1])
                 result = unicode_function(self)
                 if result:
@@ -165,9 +170,7 @@ class InstanceModel(models.Model):
 
         # 2. MetaModel unicode template field?
         if self.model.unicode_template:
-            result = Template(self.model.unicode_template).render(Context({
-                'im': self
-            }))
+            result = Template(self.model.unicode_template).render(Context({"im": self}))
             return strip_whitespace(result)
 
         # Nothing found
@@ -178,23 +181,23 @@ class InstanceModel(models.Model):
         if not self.unicode_representation:
             self.unicode_representation = None
 
-        initial = kwargs.pop(
-            'initial', False)
+        initial = kwargs.pop("initial", False)
 
-        creator_id = kwargs.pop(
-            'creator_id', None)
+        creator_id = kwargs.pop("creator_id", None)
 
         if not initial:
-            if settings.METAMODEL['DEBUG']:
+            if settings.METAMODEL["DEBUG"]:
                 # Check integrity
                 for instance_field in self.fields.select_related():
-                    if not instance_field.field.multiple and \
-                            not instance_field.field.nullable:
+                    if (
+                        not instance_field.field.multiple
+                        and not instance_field.field.nullable
+                    ):
                         if instance_field.value is None:
                             raise IntegrityError(
-                                '{} is a required field of {}'
-                                ''.format(instance_field.field.name,
-                                          self.model))
+                                "{} is a required field of {}"
+                                "".format(instance_field.field.name, self.model)
+                            )
 
             self.unicode_representation = self.get_unicode_representation()
 
@@ -209,31 +212,32 @@ class InstanceModel(models.Model):
         if not self.unicode_value:
             self.unicode_value = None
 
-        if self.is_model_primitive() and \
-                self.unicode_representation is not None:
-            raise IntegrityError('Primitive values cannot have unicode '
-                                 'representations')
+        if self.is_model_primitive() and self.unicode_representation is not None:
+            raise IntegrityError(
+                "Primitive values cannot have unicode " "representations"
+            )
 
-        if self.model.name == 'BooleanField':
+        if self.model.name == "BooleanField":
             if self.decimal_value not in [0, 1]:
                 raise IntegrityError
 
             self.unicode_value = None
 
-        if self.model.name == 'CharField':
-            if not isinstance(self.unicode_value, str) \
-                    and not isinstance(self.unicode_value, str):
+        if self.model.name == "CharField":
+            if not isinstance(self.unicode_value, str) and not isinstance(
+                self.unicode_value, str
+            ):
                 raise IntegrityError
 
             self.decimal_value = None
 
-        if self.model.name == 'IntegerField':
+        if self.model.name == "IntegerField":
             if self.decimal_value is None:
                 raise IntegrityError
 
             self.unicode_value = None
 
-        if self.model.name == 'DateField':
+        if self.model.name == "DateField":
             if self.decimal_value is None:
                 raise IntegrityError
 
@@ -244,7 +248,7 @@ class InstanceModel(models.Model):
 
             self.unicode_value = None
 
-        if self.model.name == 'DateTimeField':
+        if self.model.name == "DateTimeField":
             if self.decimal_value is None:
                 raise IntegrityError
 
@@ -256,15 +260,16 @@ class InstanceModel(models.Model):
 
             self.unicode_value = None
 
-        if self.model.name == 'FileField':
+        if self.model.name == "FileField":
             if not isinstance(self.unicode_value, str):
                 raise IntegrityError
 
             self.decimal_value = None
 
-        if self.model.name == 'IntegerField':
-            if not isinstance(self.decimal_value, int) and \
-                    not isinstance(self.decimal_value, Decimal):
+        if self.model.name == "IntegerField":
+            if not isinstance(self.decimal_value, int) and not isinstance(
+                self.decimal_value, Decimal
+            ):
                 raise IntegrityError
 
             self.unicode_value = None
@@ -277,14 +282,15 @@ class InstanceModel(models.Model):
                 sender=self.__class__,
                 instance_model=self,
                 created=created,
-                creator_id=creator_id
+                creator_id=creator_id,
             )
 
         return result
 
     def delete(self, *args, **kwargs):
         primitive_instance_fields = self.fields.filter(
-            value__model__in=MetaModel.get_primitive())
+            value__model__in=MetaModel.get_primitive()
+        )
 
         for field in primitive_instance_fields:
             field.value.delete()
@@ -294,29 +300,35 @@ class InstanceModel(models.Model):
     @classmethod
     def get_non_primitive(cls):
         return cls.objects.filter(
-            ~Q(model__name__in=MetaModel.NAME_INPUT_TYPES_DICT.keys()))
+            ~Q(model__name__in=MetaModel.NAME_INPUT_TYPES_DICT.keys())
+        )
 
     def get_form(self):
         form_klass = self.model.get_form()
 
         for field in self.model.fields.filter(hidden=False):
-            form_klass.base_fields[field.name].initial = \
-                getattr(self, field.name)
+            form_klass.base_fields[field.name].initial = getattr(self, field.name)
 
         return form_klass
 
     def __setattr__(self, name, value):
-        if name in ['id', 'decimal_value', 'unicode_value',
-                    'unicode_representation', 'model_id', 'model']:
+        if name in [
+            "id",
+            "decimal_value",
+            "unicode_value",
+            "unicode_representation",
+            "model_id",
+            "model",
+        ]:
             return super(InstanceModel, self).__setattr__(name, value)
 
         primitive_models_dict = MetaModel.get_primitive_models_dict()
 
-        if name == 'value' and self.model_id in primitive_models_dict:
+        if name == "value" and self.model_id in primitive_models_dict:
             self._set_value(value)
             return
 
-        if name.startswith('_'):
+        if name.startswith("_"):
             return super(InstanceModel, self).__setattr__(name, value)
 
         from metamodel.models import InstanceField
@@ -328,12 +340,12 @@ class InstanceModel(models.Model):
 
             if not mf.nullable and not mf.multiple and not is_primitive:
                 if value is None:
-                    raise IntegrityError('This field cannot be None')
+                    raise IntegrityError("This field cannot be None")
 
                 InstanceField.get_or_create_with_value(self, mf, value)
             if not mf.nullable and not mf.multiple and is_primitive:
                 if value is None:
-                    raise IntegrityError('This field cannot be None')
+                    raise IntegrityError("This field cannot be None")
 
                 InstanceField.get_or_create_with_value(self, mf, value)
             if mf.multiple and not is_primitive:
@@ -348,8 +360,7 @@ class InstanceModel(models.Model):
                     new_field.save()
 
             if mf.multiple and is_primitive:
-                existing_fields = InstanceField.objects.filter(field=mf,
-                                                               parent=self)
+                existing_fields = InstanceField.objects.filter(field=mf, parent=self)
                 for field in existing_fields:
                     field.value.delete()
 
@@ -376,15 +387,13 @@ class InstanceModel(models.Model):
             return object.__setattr__(self, name, value)
 
     @classmethod
-    def get_metafield_by_parent_model_id_and_field_name(
-            cls, model_id, field_name):
+    def get_metafield_by_parent_model_id_and_field_name(cls, model_id, field_name):
 
         def get_metafields_dict(refresh_cache=False):
             result = cls.METAMODEL_METAFIELDS_DICT
             if result is None or refresh_cache:
                 meta_fields = MetaField.objects.select_related()
-                result = {(field.parent_id, field.name): field
-                          for field in meta_fields}
+                result = {(field.parent_id, field.name): field for field in meta_fields}
                 cls.METAMODEL_METAFIELDS_DICT = result
 
             return result
@@ -399,22 +408,29 @@ class InstanceModel(models.Model):
 
     def __getattr__(self, item):
         # Prevent clashing with django's lookups (e.g. "_model_cache")
-        if item.startswith('_'):
+        if item.startswith("_"):
             raise AttributeError
 
-        if item == 'field':
+        if item == "field":
             return getattr(super(InstanceModel, self), item)
 
-        if item == 'model':
-            raise AttributeError('Model for this instance is not specified')
+        if item == "model":
+            raise AttributeError("Model for this instance is not specified")
 
-        if item in ['as_sql', 'is_compatible_query_object_type',
-                    'get_compiler', 'resolve_expression', 'query',
-                    'bump_prefix', 'get_source_expressions']:
+        if item in [
+            "as_sql",
+            "is_compatible_query_object_type",
+            "get_compiler",
+            "resolve_expression",
+            "query",
+            "bump_prefix",
+            "get_source_expressions",
+        ]:
             raise AttributeError
 
         meta_field = self.get_metafield_by_parent_model_id_and_field_name(
-            self.model_id, item)
+            self.model_id, item
+        )
 
         instance_fields = self.fields.filter(field=meta_field).select_related()
 
@@ -436,8 +452,8 @@ class InstanceModel(models.Model):
         for field in self.model.fields.filter(hidden=False):
             cleaned_value = form_cleaned_data[field.name]
 
-            if field.model.name == 'FileField':
-                clear_value = data.get(field.name + '-clear', None)
+            if field.model.name == "FileField":
+                clear_value = data.get(field.name + "-clear", None)
 
                 if clear_value:
                     cleaned_value = None
@@ -448,28 +464,29 @@ class InstanceModel(models.Model):
                         uploaded_image = Image.open(uploaded_file)
                         uploaded_image = trim(uploaded_image)
 
-                        extension = uploaded_file.name.split('.')[-1]
+                        extension = uploaded_file.name.split(".")[-1]
 
-                        new_filename = '{0}_{1}_{2}.{3}'.format(
+                        new_filename = "{0}_{1}_{2}.{3}".format(
                             self.id,
                             field.name,
                             calendar.timegm(time.gmtime()),
-                            extension)
+                            extension,
+                        )
 
-                        if hasattr(settings, 'METAMODEL'):
+                        if hasattr(settings, "METAMODEL"):
                             path = os.path.join(
-                                settings.METAMODEL.get('MEDIA_PATH', ''),
-                                new_filename)
+                                settings.METAMODEL.get("MEDIA_PATH", ""), new_filename
+                            )
                         else:
                             path = new_filename
 
                         new_uploaded_file = convert_image_to_inmemoryfile(
-                            uploaded_image)
+                            uploaded_image
+                        )
 
-                        cleaned_value = default_storage.save(
-                            path, new_uploaded_file)
+                        cleaned_value = default_storage.save(path, new_uploaded_file)
 
-            if cleaned_value == '':
+            if cleaned_value == "":
                 cleaned_value = None
             setattr(self, field.name, cleaned_value)
         self.save(creator_id=creator_id)
@@ -485,37 +502,37 @@ class InstanceModel(models.Model):
         if self.is_model_primitive():
             result = self.value
             model_name = self.model.name
-            if model_name == 'BooleanField':
+            if model_name == "BooleanField":
                 return int(result)
-            if model_name in ['CharField', 'DecimalField', 'IntegerField']:
+            if model_name in ["CharField", "DecimalField", "IntegerField"]:
                 return result
-            if model_name == 'DateField':
+            if model_name == "DateField":
                 return result.toordinal()
 
-            if model_name == 'DateTimeField':
+            if model_name == "DateTimeField":
                 epoch = datetime.utcfromtimestamp(0)
-                return (result.replace(tzinfo=None) -
-                        epoch).total_seconds()
-            if model_name == 'FileField':
+                return (result.replace(tzinfo=None) - epoch).total_seconds()
+            if model_name == "FileField":
                 return result.name
 
-        if hasattr(settings, 'METAMODEL'):
+        if hasattr(settings, "METAMODEL"):
             ordering_valur_function_path = settings.METAMODEL.get(
-                'ORDERING_FUNCTIONS', [])
+                "ORDERING_FUNCTIONS", []
+            )
 
             for path in ordering_valur_function_path:
-                path_components = path.split('.')
-                module = importlib.import_module(
-                    '.'.join(path_components[:-1]))
+                path_components = path.split(".")
+                module = importlib.import_module(".".join(path_components[:-1]))
                 ordering_value_function = getattr(module, path_components[-1])
                 result = ordering_value_function(self)
                 if result:
                     return result
 
-        if 'unicode' == self.model.ordering_field.strip():
+        if "unicode" == self.model.ordering_field.strip():
             return self.unicode_representation
-        ordering_field_names = \
-            [field.strip() for field in self.model.ordering_field.split(',')]
+        ordering_field_names = [
+            field.strip() for field in self.model.ordering_field.split(",")
+        ]
         result = None
         for field_name in ordering_field_names:
             field_value = getattr(self, field_name)
@@ -524,16 +541,15 @@ class InstanceModel(models.Model):
                 field_ordering_value = field_value.compute_ordering_value()
             else:
                 try:
-                    field_instance_model = \
-                        self.fields.get(field__name=field_name).value
-                    field_ordering_value = \
-                        field_instance_model.get_ordering_value()
+                    field_instance_model = self.fields.get(field__name=field_name).value
+                    field_ordering_value = field_instance_model.get_ordering_value()
                 except InstanceField.DoesNotExist:
-                    field_ordering_value = ''
+                    field_ordering_value = ""
                 if isinstance(field_ordering_value, str):
                     len_field = len(field_ordering_value)
-                    field_ordering_value = '{}'.format(
-                        field_ordering_value + ' ' * (30 - len_field))
+                    field_ordering_value = "{}".format(
+                        field_ordering_value + " " * (30 - len_field)
+                    )
 
             if result is None:
                 result = field_ordering_value
@@ -541,28 +557,31 @@ class InstanceModel(models.Model):
 
             if type(result) == type(field_ordering_value):
                 if isinstance(result, str):
-                    result = '{0}{1}'.format(result, field_ordering_value)
+                    result = "{0}{1}".format(result, field_ordering_value)
                 else:
-                    result = result * 10 ** 15 + field_ordering_value
+                    result = result * 10**15 + field_ordering_value
             else:
                 if isinstance(result, str):
-                    field_ordering_value = '{:.0f}'.format(
-                        (field_ordering_value * 1000).quantize(0))
-                    result = '{0}{1}{2}'.format(
+                    field_ordering_value = "{:.0f}".format(
+                        (field_ordering_value * 1000).quantize(0)
+                    )
+                    result = "{0}{1}{2}".format(
                         result,
-                        '0' * (15 - len(field_ordering_value) % 15),
-                        field_ordering_value)
+                        "0" * (15 - len(field_ordering_value) % 15),
+                        field_ordering_value,
+                    )
                 else:
-                    result = '{0}{1}'.format(
-                        str((result * 1000).quantize(0)),
-                        field_ordering_value)
+                    result = "{0}{1}".format(
+                        str((result * 1000).quantize(0)), field_ordering_value
+                    )
 
         return result
 
     @classmethod
     def delete_non_used_primitives(cls):
-        cls.objects.filter(model__in=MetaModel.get_primitive(),
-                           fields_usage__isnull=True).delete()
+        cls.objects.filter(
+            model__in=MetaModel.get_primitive(), fields_usage__isnull=True
+        ).delete()
 
     def clone(self, creator_id):
         from metamodel.models import InstanceField
@@ -578,21 +597,22 @@ class InstanceModel(models.Model):
             atr_field_name = instance_field_to_clone.field.name
             new_instance_field = instance_field_to_clone.copy(cloned_instance)
 
-            if atr_field_name == 'old_id':
-                new_instance_field.value.decimal_value = Decimal('0')
+            if atr_field_name == "old_id":
+                new_instance_field.value.decimal_value = Decimal("0")
                 new_instance_field.value.save()
             new_instance_fields.append(new_instance_field)
 
         InstanceField.objects.bulk_create(new_instance_fields)
 
-        for label_field in ['name', 'part_number']:
+        for label_field in ["name", "part_number"]:
             try:
                 original_value = getattr(cloned_instance, label_field)
                 if original_value is None:
-                    original_value = ''
+                    original_value = ""
 
-                setattr(cloned_instance, label_field,
-                        '{} (clone)'.format(original_value))
+                setattr(
+                    cloned_instance, label_field, "{} (clone)".format(original_value)
+                )
 
                 break
             except KeyError:
@@ -623,39 +643,39 @@ class InstanceModel(models.Model):
                 raise
 
         if not self:
-            return {}, []
+            return {}, [], []
 
-        result = {
-            'id': self.id,
-            'unicode': str(self)
-        }
+        result = {"id": self.id, "unicode": str(self)}
 
-        keywords = result['unicode'].split()
+        keywords = result["unicode"].split()
+        related_instance_model_ids = []
 
-        meta_fields = MetaModel.get_metafields_by_model_id(
-            self.model_id)
+        meta_fields = MetaModel.get_metafields_by_model_id(self.model_id)
 
         instance_fields = self.fields.select_related()
 
-        instance_values_dict = {instance_field.field: instance_field.value
-                                for instance_field in instance_fields}
+        instance_values_dict = {
+            instance_field.field: instance_field.value
+            for instance_field in instance_fields
+        }
 
         for meta_field in meta_fields:
             if meta_field.multiple:
                 m2m_documents = []
 
                 m2m_instance_fields = instance_fields.filter(
-                    field=meta_field).select_related()
+                    field=meta_field
+                ).select_related()
 
                 if not m2m_instance_fields:
                     continue
 
                 for m2m_instance_field in m2m_instance_fields:
-                    m2m_document = m2m_instance_field.value \
-                        .elasticsearch_document()
+                    m2m_document = m2m_instance_field.value.elasticsearch_document()
 
                     m2m_documents.append(m2m_document[0])
                     keywords.extend(m2m_document[1])
+                    related_instance_model_ids.extend(m2m_document[2])
 
                 result[meta_field.name] = m2m_documents
             else:
@@ -664,7 +684,7 @@ class InstanceModel(models.Model):
                 except KeyError:
                     instance_value = None
 
-                if meta_field.model.name == 'FileField':
+                if meta_field.model.name == "FileField":
                     if instance_value:
                         result[meta_field.name] = instance_value.unicode_value
                 elif meta_field.model.is_primitive():
@@ -679,25 +699,27 @@ class InstanceModel(models.Model):
                     fk_result = instance_value.elasticsearch_document()
                     for fk_key, fk_value in fk_result[0].items():
                         try:
-                            result[meta_field.name + '_' + fk_key] = \
-                                sanitize_value(fk_value)
+                            result[meta_field.name + "_" + fk_key] = sanitize_value(
+                                fk_value
+                            )
                         except TypeError:
                             pass
 
                     keywords.extend(fk_result[1])
+                    related_instance_model_ids.append(instance_value.id)
+                    related_instance_model_ids.extend(fk_result[2])
 
         for function_path in settings.METAMODEL[
-                'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS']:
-            path_components = function_path.split('.')
-            f_module = importlib.import_module('.'.join(path_components[:-1]))
-            additional_es_fields_function = getattr(
-                f_module, path_components[-1])
-            additional_fields = \
-                additional_es_fields_function(result, self.model.name)
+            "ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS"
+        ]:
+            path_components = function_path.split(".")
+            f_module = importlib.import_module(".".join(path_components[:-1]))
+            additional_es_fields_function = getattr(f_module, path_components[-1])
+            additional_fields = additional_es_fields_function(result, self.model.name)
             if additional_fields:
                 result.update(additional_fields)
 
-        return result, keywords
+        return result, keywords, related_instance_model_ids
 
     @staticmethod
     def elasticsearch_document_from_dict(instance_id, metamodel_dict):
@@ -705,93 +727,107 @@ class InstanceModel(models.Model):
             if instance_model is None:
                 return None
 
-            if model_name == 'BooleanField':
-                return bool(Decimal(instance_model['decimal_value']))
-            if model_name == 'CharField':
-                return instance_model['unicode_value']
-            if model_name == 'DateField':
-                return date.fromordinal(int(instance_model['decimal_value']))
-            if model_name == 'DateTimeField':
+            if model_name == "BooleanField":
+                return bool(Decimal(instance_model["decimal_value"]))
+            if model_name == "CharField":
+                return instance_model["unicode_value"]
+            if model_name == "DateField":
+                return date.fromordinal(int(instance_model["decimal_value"]))
+            if model_name == "DateTimeField":
                 epoch = datetime.utcfromtimestamp(0)
-                delta = timedelta(seconds=int(instance_model['decimal_value']))
+                delta = timedelta(seconds=int(instance_model["decimal_value"]))
                 return epoch + delta
-            if model_name == 'DecimalField':
-                return float(instance_model['decimal_value'])
-            if model_name == 'FileField':
-                return FieldFile(default_storage.open(instance_model['unicode_value']),
-                                 FileField(), instance_model['unicode_value'])
-            if model_name == 'IntegerField':
-                return int(instance_model['decimal_value'])
+            if model_name == "DecimalField":
+                return float(instance_model["decimal_value"])
+            if model_name == "FileField":
+                return FieldFile(
+                    default_storage.open(instance_model["unicode_value"]),
+                    FileField(),
+                    instance_model["unicode_value"],
+                )
+            if model_name == "IntegerField":
+                return int(instance_model["decimal_value"])
             else:
-                raise Exception('Invalid primitive model name: ' + model_name)
+                raise Exception("Invalid primitive model name: " + model_name)
 
-        instance = metamodel_dict['IM_' + str(instance_id)]
+        instance = metamodel_dict["IM_" + str(instance_id)]
 
-        result = {
-            'id': instance['id'],
-            'unicode': instance['unicode_representation']
+        result = {"id": instance["id"], "unicode": instance["unicode_representation"]}
+
+        keywords = result["unicode"].split()
+        related_instance_model_ids = []
+
+        meta_fields = metamodel_dict["MM_" + str(instance["model_id"])]["fields"]
+        instance_fields = metamodel_dict["IM_" + str(instance["id"])]["fields"]
+
+        instance_values_dict = {
+            instance_field["field_id"]: metamodel_dict[
+                "IM_" + str(instance_field["value_id"])
+            ]
+            for instance_field in instance_fields
         }
 
-        keywords = result['unicode'].split()
-
-        meta_fields = metamodel_dict['MM_' + str(instance['model_id'])]['fields']
-        instance_fields = metamodel_dict['IM_' + str(instance['id'])]['fields']
-
-        instance_values_dict = {instance_field['field_id']: metamodel_dict['IM_' + str(instance_field['value_id'])]
-                                for instance_field in instance_fields}
-
         for meta_field in meta_fields:
-            if meta_field['multiple']:
+            if meta_field["multiple"]:
                 m2m_documents = []
 
-                m2m_instance_fields = list(filter(lambda x: x['field_id'] == meta_field['id'], instance_fields))
+                m2m_instance_fields = list(
+                    filter(lambda x: x["field_id"] == meta_field["id"], instance_fields)
+                )
 
                 if not m2m_instance_fields:
                     continue
 
                 for m2m_instance_field in m2m_instance_fields:
-                    m2m_document = InstanceModel.elasticsearch_document_from_dict(m2m_instance_field['value_id'], metamodel_dict)
+                    m2m_document = InstanceModel.elasticsearch_document_from_dict(
+                        m2m_instance_field["value_id"], metamodel_dict
+                    )
 
                     m2m_documents.append(m2m_document[0])
                     keywords.extend(m2m_document[1])
+                    related_instance_model_ids.extend(m2m_document[2])
 
-                result[meta_field['name']] = m2m_documents
+                result[meta_field["name"]] = m2m_documents
             else:
-                instance_value = instance_values_dict.get(meta_field['id'], None)
-                model = metamodel_dict['MM_' + str(meta_field['model_id'])]
+                instance_value = instance_values_dict.get(meta_field["id"], None)
+                model = metamodel_dict["MM_" + str(meta_field["model_id"])]
 
-                if model['name'] == 'FileField':
+                if model["name"] == "FileField":
                     if instance_value:
-                        result[meta_field['name']] = instance_value['unicode_value']
-                elif model['name'] in MetaModel.NAME_INPUT_TYPES_DICT:
+                        result[meta_field["name"]] = instance_value["unicode_value"]
+                elif model["name"] in MetaModel.NAME_INPUT_TYPES_DICT:
                     # Is primitive
-                    sanitized_value = sanitize_value(instance_value, model['name'])
-                    result[meta_field['name']] = sanitized_value
+                    sanitized_value = sanitize_value(instance_value, model["name"])
+                    result[meta_field["name"]] = sanitized_value
                     keywords.append(str(sanitized_value))
                 elif instance_value:
-                    fk_result = InstanceModel.elasticsearch_document_from_dict(instance_value['id'], metamodel_dict)
+                    fk_result = InstanceModel.elasticsearch_document_from_dict(
+                        instance_value["id"], metamodel_dict
+                    )
                     for fk_key, fk_value in fk_result[0].items():
                         try:
-                            result[meta_field['name'] + '_' + fk_key] = fk_value
+                            result[meta_field["name"] + "_" + fk_key] = fk_value
                         except TypeError:
                             pass
 
                     keywords.extend(fk_result[1])
+                    related_instance_model_ids.append(instance_value["id"])
+                    related_instance_model_ids.extend(fk_result[2])
 
         for function_path in settings.METAMODEL[
-                'ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS']:
-            path_components = function_path.split('.')
-            f_module = importlib.import_module('.'.join(path_components[:-1]))
-            additional_es_fields_function = getattr(
-                f_module, path_components[-1])
-            additional_fields = \
-                additional_es_fields_function(result, metamodel_dict['MM_' + str(instance['model_id'])]['name'])
+            "ADDITIONAL_ELASTICSEARCH_FIELDS_FUNCTIONS"
+        ]:
+            path_components = function_path.split(".")
+            f_module = importlib.import_module(".".join(path_components[:-1]))
+            additional_es_fields_function = getattr(f_module, path_components[-1])
+            additional_fields = additional_es_fields_function(
+                result, metamodel_dict["MM_" + str(instance["model_id"])]["name"]
+            )
             if additional_fields:
                 result.update(additional_fields)
 
-        return result, keywords
+        return result, keywords, related_instance_model_ids
 
     class Meta:
-        app_label = 'metamodel'
-        ordering = ('decimal_value', 'unicode_value',
-                    'unicode_representation')
+        app_label = "metamodel"
+        ordering = ("decimal_value", "unicode_value", "unicode_representation")

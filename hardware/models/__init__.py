@@ -11,24 +11,20 @@ def create_budget_entries(sender, instance, created, **kwargs):
 
     if created:
         budget_categories = Category.objects.filter(
-            budget_ordering__isnull=False).order_by('budget_ordering')
+            budget_ordering__isnull=False
+        ).order_by("budget_ordering")
         for category in budget_categories:
-            BudgetEntry.objects.create(
-                budget=instance,
-                category=category
-            )
+            BudgetEntry.objects.create(budget=instance, category=category)
 
 
 post_save.connect(create_budget_entries, sender=Budget)
 
 
 def handle_instance_model_saved(instance_model, created, creator_id, **kwargs):
-    if instance_model.model.name == 'VideoCardGpu':
+    if instance_model.model.name == "VideoCardGpu":
         es = settings.ES
-        document, keywords = instance_model.elasticsearch_document()
-        es.index(index='videocard-gpus',
-                 id=instance_model.id,
-                 body=document)
+        document = instance_model.elasticsearch_document()[0]
+        es.index(index="videocard-gpus", id=instance_model.id, body=document)
 
 
 instance_model_saved.connect(handle_instance_model_saved)

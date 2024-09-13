@@ -4,6 +4,7 @@ from datetime import datetime
 from django.db import models, IntegrityError
 from django import forms
 from django.urls import reverse
+from django.utils.safestring import mark_safe
 
 from metamodel.models.meta_model import MetaModel
 import re
@@ -106,7 +107,7 @@ class MetaField(models.Model):
                     "".format(url, self.meta_field.model.id)
                 )
 
-                return result
+                return mark_safe(result)
 
         class MetaSelectMultiple(forms.SelectMultiple):
             def __init__(self, meta_field, attrs=None, choices=()):

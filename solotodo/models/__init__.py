@@ -80,6 +80,18 @@ def create_or_update_product(instance_model, created, creator_id, **kwargs):
             new_product.save(creator_id=creator_id)
 
 
+@receiver(instance_model_saved)
+def update_related_products(instance_model, created, creator_id, **kwargs):
+    from solotodo.tasks import product_save
+
+    for related_product in (
+        EsProduct.search()
+        .filter("term", related_instance_model_ids=instance_model.id)
+        .scan()
+    ):
+        product_save.delay(related_product.product_id)
+
+
 @receiver(product_saved)
 def update_product_in_es(product, es_document, **kwargs):
     EsProduct.from_product(product, es_document).save()

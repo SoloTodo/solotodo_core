@@ -16,30 +16,31 @@ class EsProduct(EsProductEntities):
     last_updated = Date()
     keywords = Text()
     specs = Object(dynamic=True)
+    related_instance_model_ids = Integer(multi=True)
 
     @classmethod
     def search(cls, **kwargs):
         return cls._index.search(**kwargs).filter(
-            'term',
-            product_relationships='product')
+            "term", product_relationships="product"
+        )
 
     @classmethod
     def category_search(cls, category, **kwargs):
-        return cls.search(**kwargs).filter('term', category_id=category.id)
+        return cls.search(**kwargs).filter("term", category_id=category.id)
 
     @classmethod
     def get_by_product_id(cls, product_id):
-        return cls.get('PRODUCT_{}'.format(product_id))
+        return cls.get("PRODUCT_{}".format(product_id))
 
     @classmethod
     def from_product(cls, product, es_document=None):
         if not es_document:
             es_document = product.instance_model.elasticsearch_document()
 
-        specs, keywords = es_document
+        specs, keywords, related_instance_model_ids = es_document
 
-        if 'default_bucket' not in specs:
-            specs['default_bucket'] = specs['id']
+        if "default_bucket" not in specs:
+            specs["default_bucket"] = specs["id"]
 
         return cls(
             product_id=product.id,
@@ -53,8 +54,9 @@ class EsProduct(EsProductEntities):
             instance_model_id=product.instance_model_id,
             creation_date=product.creation_date,
             last_updated=product.last_updated,
-            keywords=' '.join(keywords),
+            keywords=" ".join(keywords),
             specs=specs,
-            product_relationships='product',
-            meta={'id': 'PRODUCT_{}'.format(product.id)}
+            related_instance_model_ids=related_instance_model_ids,
+            product_relationships="product",
+            meta={"id": "PRODUCT_{}".format(product.id)},
         )

@@ -9,22 +9,24 @@ from solotodo.models import SoloTodoUser
 
 class Command(BaseCommand):
     def add_arguments(self, parser):
-        parser.add_argument('--user_ids', nargs='+', type=int)
+        parser.add_argument("--user_ids", nargs="+", type=int)
+        parser.add_argument("--store_ids", nargs="+", type=int)
+        parser.add_argument("--category_ids", nargs="*", type=int)
 
     def handle(self, *args, **options):
-        group = Group.objects.get(name='LG Chile')
+        group = Group.objects.get(name="LG Chile")
         reference_user = SoloTodoUser.objects.filter(groups=group)[0]
         data = {
-            'wtb_brand': 1,
-            'stores': [30, 9, 87, 5, 43, 195, 11, 18, 67, 170, 12, 86],
-            'price_type': 'offer_price'
+            "wtb_brand": 1,
+            "stores": options["store_ids"],
+            "price_type": "offer_price",
         }
+        category_ids = options["category_ids"]
+        if category_ids:
+            data["categories"] = category_ids
         form = ReportWtbPricesForm(reference_user, data)
         assert form.is_valid(), form.errors
-
-        user_ids = options['user_ids']
-
-        users = SoloTodoUser.objects.filter(pk__in=user_ids)
+        users = SoloTodoUser.objects.filter(pk__in=options["user_ids"])
         emails = [user.email for user in users]
         sender = SoloTodoUser.get_bot().email_recipient_text()
 
@@ -35,18 +37,17 @@ class Command(BaseCommand):
         """
         message = timezone.now().strftime(message)
 
-        subject = 'Comparación de precios WTB - %Y-%m-%d'
+        subject = "Comparación de precios WTB - %Y-%m-%d"
         subject = timezone.now().strftime(subject)
 
-        email = EmailMessage(subject,
-                             message, sender,
-                             emails)
+        email = EmailMessage(subject, message, sender, emails)
 
-        report_file = form.generate_report()['file']
+        report_file = form.generate_report()["file"]
 
         email.attach(
-            'wtb_price_comparison_report.xlsx', report_file,
-            'application/vnd.openxmlformats-'
-            'officedocument.spreadsheetml.sheet')
+            "wtb_price_comparison_report.xlsx",
+            report_file,
+            "application/vnd.openxmlformats-" "officedocument.spreadsheetml.sheet",
+        )
 
         email.send()

@@ -2,8 +2,10 @@ import json
 import io
 import base64
 import traceback
+import uuid
 
 import xlsxwriter
+from celery import chord, group, chain, shared_task
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import ContentFile
@@ -19,7 +21,8 @@ from .category import Category
 from solotodo.utils import iterable_to_dict, validate_sii_rut
 from solotodo_core.s3utils import PrivateS3Boto3Storage, MediaRootS3Boto3Storage
 from storescraper.product import Product as StorescraperProduct
-from storescraper.utils import get_store_class_by_name
+from storescraper.utils import get_store_class_by_name, chunks
+from storescraper.store import Store as StorescraperStore
 
 
 class StoreQuerySet(models.QuerySet):
@@ -199,30 +202,41 @@ class Store(models.Model):
             local_extra_args.update(extra_args)
 
         def log_update_error(local_error_message):
-            if update_log:
-                update_log.status = update_log.ERROR
-                desired_filename = "logs/scrapings/{}_{}.json".format(
-                    self,
-                    timezone.localtime(update_log.creation_date).strftime(
-                        "%Y-%m-%d_%X"
-                    ),
-                )
-                storage = PrivateS3Boto3Storage()
-                real_filename = storage.save(
-                    desired_filename, ContentFile(local_error_message.encode("utf-8"))
-                )
-                update_log.registry_file = real_filename
-                update_log.save()
+            raise NotImplementedError
 
-        print("Scraping products")
+        if extra_args is None:
+            extra_args = {}
 
-        scraper.products_non_blocker(
-            categories=[c.storescraper_name for c in categories],
-            extra_args=local_extra_args,
-            discover_urls_concurrency=discover_urls_concurrency,
-            products_for_url_concurrency=products_for_url_concurrency,
-            use_async=use_async,
-            update_log_id=update_log.id,
+        extra_args["process_id"] = str(uuid.uuid4())
+        category_chunks = chunks(categories, discover_urls_concurrency)
+        task_chains = []
+        print(
+            f"Process ID: {extra_args['process_id']} | Update log ID: {update_log.pk}"
+        )
+
+        for category_chunk in category_chunks:
+            for category in category_chunk:
+                task_chain = chain(
+                    StorescraperStore.discover_entries_for_category_non_blocker_task.s(
+                        store_class_name=self.storescraper_class,
+                        category=category.storescraper_name,
+                        logger_name="logstash",
+                        extra_args=extra_args,
+                    ).set(queue="storescraper"),
+                    process_non_blocker_entries_data.s(
+                        products_for_url_concurrency=products_for_url_concurrency,
+                        store_class_name=self.storescraper_class,
+                        category=category.storescraper_name,
+                        extra_args=extra_args,
+                    ).set(queue="storescraper"),
+                )
+                task_chains.append(task_chain)
+
+        chord(task_chains)(
+            process_non_blocker_store_update_log_data.si(
+                update_log_id=update_log.pk,
+                extra_args=extra_args,
+            ).set(queue="storescraper")
         )
 
     def update_pricing_from_json(self, json_data, update_log=None):
@@ -609,58 +623,94 @@ class Store(models.Model):
         )
 
 
-def process_non_blocker_positions_data(url, positions, category):
-    print("URL scraped")
-    print(url, positions, category)
-
-
-def process_non_blocker_product_data(
-    scraped_product,
+@shared_task
+def process_non_blocker_entries_data(
+    discovered_entries,
+    products_for_url_concurrency,
     store_class_name,
-    categories,
-    update_log_id=None,
+    category=None,
+    extra_args=None,
+):
+    entries_chunks = chunks(
+        list(discovered_entries.items()), products_for_url_concurrency
+    )
+    tasks = []
+
+    for entries_chunk in entries_chunks:
+        for entry_url, _ in entries_chunk:
+            task_chain = chain(
+                StorescraperStore.products_for_url_task.s(
+                    store_class_name=store_class_name,
+                    url=entry_url,
+                    category=category,
+                    extra_args=extra_args,
+                ).set(queue="storescraper"),
+                process_non_blocker_products_data_task.s(
+                    store_class_name=store_class_name,
+                ).set(queue="storescraper"),
+            )
+            tasks.append(task_chain)
+
+    tasks.append(process_non_blocker_positions_data_task.s(discovered_entries))
+    group(tasks).apply_async(queue="storescraper")
+
+
+@shared_task
+def process_non_blocker_positions_data_task(discovered_entries):
+    for url, positions in discovered_entries.items():
+        if positions:
+            print(
+                f"{url} - positions: {positions['positions']}, category: {positions['category']}, weight: {positions['category_weight']}"
+            )
+        else:
+            print(f"{url} - positions: []")
+
+    # TODO add logic for positions
+
+
+@shared_task
+def process_non_blocker_products_data_task(
+    scraped_products,
+    store_class_name,
 ):
     from solotodo.models import Currency
 
-    scraped_product = StorescraperProduct.deserialize(scraped_product[0])
-    print("Product scraped")
-    store = Store.objects.get(name=store_class_name)
+    for scraped_product in scraped_products:
+        scraped_product = StorescraperProduct.deserialize(scraped_product)
+        print("Product scraped")
+        store = Store.objects.get(name=store_class_name)
 
-    try:
-        entity = store.entity_set.get(key=scraped_product.key)
-        print(entity.id)
-    except:
-        print("Entity not found")
-        return
+        try:
+            entity = store.entity_set.get(key=scraped_product.key)
+            print(entity.id)
+        except:
+            print("Entity not found")
+            return
 
-    if not entity.active_registry_id:
-        print("skipping")
-        return
+        if not entity.active_registry_id:
+            print("skipping")
+            return
 
-    categories_dict = iterable_to_dict(Category, "storescraper_name")
-    currencies_dict = iterable_to_dict(Currency, "iso_code")
-    sections_dict = iterable_to_dict(store.sections.all(), "name")
+        categories_dict = iterable_to_dict(Category, "storescraper_name")
+        currencies_dict = iterable_to_dict(Currency, "iso_code")
+        sections_dict = iterable_to_dict(store.sections.all(), "name")
 
-    entity.update_with_scraped_product(
-        scraped_product=scraped_product,
-        sections_dict=sections_dict,
-        category=categories_dict[scraped_product.category],
-        currency=currencies_dict[scraped_product.currency],
-    )
+        entity.update_with_scraped_product(
+            scraped_product=scraped_product,
+            sections_dict=sections_dict,
+            category=categories_dict[scraped_product.category],
+            currency=currencies_dict[scraped_product.currency],
+        )
 
-    print("Done")
+        print("Done")
 
 
-def process_non_blocker_store_update_log_data(update_log_id, products_account_data):
+@shared_task
+def process_non_blocker_store_update_log_data(update_log_id, extra_args=None):
     from solotodo.models import StoreUpdateLog
 
     update_log = StoreUpdateLog.objects.get(pk=update_log_id)
     update_log.status = update_log.SUCCESS
-    update_log.available_products_count = products_account_data["available"]
-    update_log.unavailable_products_count = products_account_data["unavailable"]
-    update_log.discovery_urls_without_products_count = products_account_data[
-        "with_error"
-    ]
     update_log.save()
 
-    print("\nStore update log updated")
+    print(f"Process {extra_args['process_id']} finished")

@@ -637,41 +637,29 @@ def process_non_blocker_entries_data(
     tasks = []
 
     for entries_chunk in entries_chunks:
-        for entry_url, _ in entries_chunk:
+        for entry in entries_chunk:
             task_chain = chain(
                 StorescraperStore.products_for_url_task.s(
                     store_class_name=store_class_name,
-                    url=entry_url,
+                    url=entry[0],
                     category=category,
                     extra_args=extra_args,
                 ).set(queue="storescraper"),
                 process_non_blocker_products_data_task.s(
                     store_class_name=store_class_name,
+                    entry=entry,
                 ).set(queue="storescraper"),
             )
             tasks.append(task_chain)
 
-    tasks.append(process_non_blocker_positions_data_task.s(discovered_entries))
     group(tasks).apply_async(queue="storescraper")
-
-
-@shared_task
-def process_non_blocker_positions_data_task(discovered_entries):
-    for url, positions in discovered_entries.items():
-        if positions:
-            print(
-                f"{url} - positions: {positions['positions']}, category: {positions['category']}, weight: {positions['category_weight']}"
-            )
-        else:
-            print(f"{url} - positions: []")
-
-    # TODO add logic for positions
 
 
 @shared_task
 def process_non_blocker_products_data_task(
     scraped_products,
     store_class_name,
+    entry,
 ):
     from solotodo.models import Currency
 
@@ -702,7 +690,22 @@ def process_non_blocker_products_data_task(
             currency=currencies_dict[scraped_product.currency],
         )
 
+        process_non_blocker_positions_data(entry)
+
         print("Done")
+
+
+def process_non_blocker_positions_data(entry):
+    url, positions = entry
+
+    if positions:
+        print(
+            f"{url} - positions: {positions['positions']}, category: {positions['category']}, weight: {positions['category_weight']}"
+        )
+    else:
+        print(f"{url} - positions: []")
+
+    # TODO add logic for positions
 
 
 @shared_task

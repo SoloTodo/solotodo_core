@@ -665,8 +665,7 @@ def process_non_blocker_products_data_task(
 
     for scraped_product in scraped_products:
         scraped_product = StorescraperProduct.deserialize(scraped_product)
-        print("Product scraped")
-        store = Store.objects.get(name=store_class_name)
+        store = Store.objects.get(storescraper_class=store_class_name)
 
         try:
             entity = store.entity_set.get(key=scraped_product.key)
@@ -682,6 +681,8 @@ def process_non_blocker_products_data_task(
         categories_dict = iterable_to_dict(Category, "storescraper_name")
         currencies_dict = iterable_to_dict(Currency, "iso_code")
         sections_dict = iterable_to_dict(store.sections.all(), "name")
+        _, position = entry
+        scraped_product.positions = position["positions"]
 
         entity.update_with_scraped_product(
             scraped_product=scraped_product,
@@ -690,29 +691,34 @@ def process_non_blocker_products_data_task(
             currency=currencies_dict[scraped_product.currency],
         )
 
-        process_non_blocker_positions_data(entry)
-
-        print("Done")
-
-
-def process_non_blocker_positions_data(entry):
-    url, positions = entry
-
-    if positions:
-        print(
-            f"{url} - positions: {positions['positions']}, category: {positions['category']}, weight: {positions['category_weight']}"
-        )
-    else:
-        print(f"{url} - positions: []")
-
-    # TODO add logic for positions
-
 
 @shared_task
 def process_non_blocker_store_update_log_data(update_log_id, extra_args=None):
-    from solotodo.models import StoreUpdateLog
+    from solotodo.models import StoreUpdateLog, Entity
 
     update_log = StoreUpdateLog.objects.get(pk=update_log_id)
+    old_entities_keys = set(
+        Entity.objects.filter(
+            store=update_log.store,
+            scraped_category__in=update_log.categories.all(),
+            active_registry__timestamp__lt=update_log.creation_date,
+        ).values_list("key", flat=True)
+    )
+    new_entities_keys = set(
+        Entity.objects.filter(
+            store=update_log.store,
+            scraped_category__in=update_log.categories.all(),
+            active_registry__timestamp__gte=update_log.creation_date,
+        ).values_list("key", flat=True)
+    )
+    inactive_keys = list(old_entities_keys - new_entities_keys)
+
+    for key in inactive_keys:
+        entity = Entity.objects.get(store=update_log.store, key=key)
+        entity.active_registry = None
+        entity.save()
+        print(f"Key {key} deactivated")
+
     update_log.status = update_log.SUCCESS
     update_log.save()
 

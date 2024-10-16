@@ -1,11 +1,14 @@
 import json
 import io
 import base64
+import logging
 import traceback
 import uuid
+import redis
 
 import xlsxwriter
-from celery import chord, group, chain, shared_task
+from celery import group, chain, shared_task
+from celery.result import allow_join_result
 from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.core.files.base import ContentFile
@@ -23,6 +26,8 @@ from solotodo_core.s3utils import PrivateS3Boto3Storage, MediaRootS3Boto3Storage
 from storescraper.product import Product as StorescraperProduct
 from storescraper.utils import get_store_class_by_name, chunks
 from storescraper.store import Store as StorescraperStore
+
+redis_client = redis.StrictRedis(host="localhost", port=6379, db=0)
 
 
 class StoreQuerySet(models.QuerySet):
@@ -184,7 +189,6 @@ class Store(models.Model):
         assert self.last_activation is not None
 
         scraper = self.scraper
-
         categories = self.sanitize_categories_for_update(categories)
 
         if not categories:
@@ -210,6 +214,7 @@ class Store(models.Model):
         extra_args["process_id"] = str(uuid.uuid4())
         category_chunks = chunks(categories, discover_urls_concurrency)
         task_chains = []
+
         print(
             f"Process ID: {extra_args['process_id']} | Update log ID: {update_log.pk}"
         )
@@ -227,17 +232,16 @@ class Store(models.Model):
                         products_for_url_concurrency=products_for_url_concurrency,
                         store_class_name=self.storescraper_class,
                         category=category.storescraper_name,
+                        update_log_id=update_log.pk,
                         extra_args=extra_args,
                     ).set(queue="storescraper"),
                 )
                 task_chains.append(task_chain)
 
-        chord(task_chains)(
-            process_non_blocker_store_update_log_data.si(
-                update_log_id=update_log.pk,
-                extra_args=extra_args,
-            ).set(queue="storescraper")
-        )
+        chain_group = group(task_chains).apply_async(queue="storescraper")
+        chain_group.save()
+        update_log.celery_group_id = chain_group.id
+        update_log.save()
 
     def update_pricing_from_json(self, json_data, update_log=None):
         assert self.last_activation is not None
@@ -628,6 +632,7 @@ def process_non_blocker_entries_data(
     discovered_entries,
     products_for_url_concurrency,
     store_class_name,
+    update_log_id,
     category=None,
     extra_args=None,
 ):
@@ -652,7 +657,19 @@ def process_non_blocker_entries_data(
             )
             tasks.append(task_chain)
 
-    group(tasks).apply_async(queue="storescraper")
+    result = group(tasks).apply_async(queue="storescraper")
+
+    with allow_join_result():
+        try:
+            result.get()
+
+            process_non_blocker_store_update_log_data.s(
+                update_log_id=update_log_id,
+                extra_args=extra_args,
+            ).apply_async(queue="storescraper", countdown=10)
+        except Exception as e:
+            print("YAY", e, traceback.format_exc())
+            raise
 
 
 @shared_task
@@ -661,42 +678,62 @@ def process_non_blocker_products_data_task(
     store_class_name,
     entry,
 ):
-    from solotodo.models import Currency
+    from solotodo.models import Currency, Store, Entity
+
+    store = Store.objects.get(storescraper_class=store_class_name)
+    assert store.last_activation is not None
+
+    _, position = entry
+    categories_dict = iterable_to_dict(Category, "storescraper_name")
+    currencies_dict = iterable_to_dict(Currency, "iso_code")
+    sections_dict = iterable_to_dict(store.sections.all(), "name")
 
     for scraped_product in scraped_products:
         scraped_product = StorescraperProduct.deserialize(scraped_product)
-        store = Store.objects.get(storescraper_class=store_class_name)
+        # scraped_product.positions = position["positions"]
 
         try:
-            entity = store.entity_set.get(key=scraped_product.key)
+            entity = Entity.objects.get(store=store, key=scraped_product.key)
             print(entity.id)
-        except:
-            print("Entity not found")
-            return
-
-        if not entity.active_registry_id:
-            print("skipping")
-            return
-
-        categories_dict = iterable_to_dict(Category, "storescraper_name")
-        currencies_dict = iterable_to_dict(Currency, "iso_code")
-        sections_dict = iterable_to_dict(store.sections.all(), "name")
-        _, position = entry
-        scraped_product.positions = position["positions"]
-
-        entity.update_with_scraped_product(
-            scraped_product=scraped_product,
-            sections_dict=sections_dict,
-            category=categories_dict[scraped_product.category],
-            currency=currencies_dict[scraped_product.currency],
-        )
+            entity.update_with_scraped_product(
+                scraped_product=scraped_product,
+                sections_dict=sections_dict,
+                category=categories_dict[scraped_product.category],
+                currency=currencies_dict[scraped_product.currency],
+            )
+        except Entity.DoesNotExist:
+            print(scraped_product.key)
+            Entity.create_from_scraped_product(
+                scraped_product,
+                store,
+                categories_dict[scraped_product.category],
+                currencies_dict[scraped_product.currency],
+                sections_dict,
+            )
 
 
 @shared_task
 def process_non_blocker_store_update_log_data(update_log_id, extra_args=None):
     from solotodo.models import StoreUpdateLog, Entity
+    from celery.result import GroupResult
 
     update_log = StoreUpdateLog.objects.get(pk=update_log_id)
+    celery_group_id = update_log.celery_group_id
+
+    if (
+        update_log.status != update_log.IN_PROCESS
+        or not GroupResult.restore(celery_group_id).ready()
+    ):
+        return
+
+    lock_acquired = redis_client.set(celery_group_id, "locked", nx=True)
+
+    if not lock_acquired:
+        return
+
+    logger = logging.getLogger("logstash")
+    process_id = extra_args["process_id"]
+
     old_entities_keys = set(
         Entity.objects.filter(
             store=update_log.store,
@@ -711,15 +748,37 @@ def process_non_blocker_store_update_log_data(update_log_id, extra_args=None):
             active_registry__timestamp__gte=update_log.creation_date,
         ).values_list("key", flat=True)
     )
+    print("old", len(old_entities_keys), "new", len(new_entities_keys))
+
+    logger.info(
+        f"test count",
+        extra={
+            "process_id": process_id,
+            "new_entities_count": len(new_entities_keys),
+        },
+    )
+
     inactive_keys = list(old_entities_keys - new_entities_keys)
 
     for key in inactive_keys:
         entity = Entity.objects.get(store=update_log.store, key=key)
         entity.active_registry = None
-        entity.save()
-        print(f"Key {key} deactivated")
+        # entity.save()
+        # print(f"Key {key} deactivated")
+
+        logger.info(
+            f"Key {key} deactivated",
+            extra={"key": key, "process_id": process_id},
+        )
 
     update_log.status = update_log.SUCCESS
     update_log.save()
 
-    print(f"Process {extra_args['process_id']} finished")
+    print(f"Process {process_id} finished")
+
+    logger.info(
+        f"Process {process_id} finished",
+        extra={"process_id": process_id},
+    )
+
+    redis_client.delete(celery_group_id)

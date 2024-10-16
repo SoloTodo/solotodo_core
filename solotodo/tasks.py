@@ -92,12 +92,16 @@ def store_update_non_blocker(
 
     categories = store.sanitize_categories_for_update(categories)
 
+    # TODO update this
+    if category_ids and not categories.exists():
+        print(f"Categories {category_ids} not found for store {store.name}")
+        return
+
     sanitized_parameters = store.scraper.sanitize_parameters(
         discover_urls_concurrency=discover_urls_concurrency,
         products_for_url_concurrency=products_for_url_concurrency,
         use_async=use_async,
     )
-
     discover_urls_concurrency = sanitized_parameters["discover_urls_concurrency"]
     products_for_url_concurrency = sanitized_parameters["products_for_url_concurrency"]
     use_async = sanitized_parameters["use_async"]
@@ -110,9 +114,8 @@ def store_update_non_blocker(
     update_log.discovery_url_concurrency = discover_urls_concurrency
     update_log.products_for_url_concurrency = products_for_url_concurrency
     update_log.use_async = use_async
-    update_log.save()
-
     update_log.categories.set(categories)
+    update_log.save()
 
     # Reset the categories to synchronize the task signature with the
     # actual method implementation

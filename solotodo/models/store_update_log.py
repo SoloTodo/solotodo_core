@@ -10,29 +10,37 @@ class StoreUpdateLog(models.Model):
 
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     categories = models.ManyToManyField(Category)
-    status = models.IntegerField(choices=[
-        (PENDING, 'Pending'),
-        (IN_PROCESS, 'In process'),
-        (SUCCESS, 'Success'),
-        (ERROR, 'Error'),
-    ], default=PENDING)
+    status = models.IntegerField(
+        choices=[
+            (PENDING, "Pending"),
+            (IN_PROCESS, "In process"),
+            (SUCCESS, "Success"),
+            (ERROR, "Error"),
+        ],
+        default=PENDING,
+    )
     creation_date = models.DateTimeField(auto_now_add=True)
     last_updated = models.DateTimeField(auto_now=True)
     discovery_url_concurrency = models.IntegerField(null=True, blank=True)
     products_for_url_concurrency = models.IntegerField(null=True, blank=True)
     use_async = models.BooleanField(null=True)
-    registry_file = models.FileField(storage=PrivateS3Boto3Storage(),
-                                     upload_to='logs/scrapings',
-                                     null=True, blank=True)
+    registry_file = models.FileField(
+        storage=PrivateS3Boto3Storage(),
+        upload_to="logs/scrapings",
+        null=True,
+        blank=True,
+    )
 
     available_products_count = models.IntegerField(null=True, blank=True)
     unavailable_products_count = models.IntegerField(null=True, blank=True)
-    discovery_urls_without_products_count = models.IntegerField(
-        null=True, blank=True)
+    discovery_urls_without_products_count = models.IntegerField(null=True, blank=True)
+    celery_group_id = models.CharField(
+        max_length=255, null=True, blank=True, unique=True
+    )
 
     def __str__(self):
-        return '{} - {}'.format(self.store, self.creation_date)
+        return "{} - {}".format(self.store, self.creation_date)
 
     class Meta:
-        app_label = 'solotodo'
-        ordering = ['store', '-creation_date']
+        app_label = "solotodo"
+        ordering = ["store", "-creation_date"]

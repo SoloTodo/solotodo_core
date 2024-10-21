@@ -46,6 +46,10 @@ class WtbBrand(models.Model):
         if update_log:
             update_log.status = update_log.IN_PROCESS
             update_log.save()
+        else:
+            update_log = WtbBrandUpdateLog.objects.create(
+                brand=self, status=WtbBrandUpdateLog.IN_PROCESS
+            )
 
         # First pass of product retrieval
 

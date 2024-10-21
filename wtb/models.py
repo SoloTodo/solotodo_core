@@ -38,6 +38,7 @@ class WtbBrand(models.Model):
         products_for_url_concurrency=None,
         use_async=None,
         update_log=None,
+        extra_args=None,
     ):
         assert self.storescraper_class
 
@@ -74,6 +75,7 @@ class WtbBrand(models.Model):
                 discover_urls_concurrency=discover_urls_concurrency,
                 products_for_url_concurrency=products_for_url_concurrency,
                 use_async=use_async,
+                extra_args=extra_args,
             )
         except Exception as e:
             log_update_error(e)

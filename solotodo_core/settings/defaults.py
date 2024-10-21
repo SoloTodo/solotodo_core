@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
+
 import logging
 import os
 
@@ -436,10 +437,6 @@ SOLOTODO_COM_SITE_ID = 1
 SOLOTODO_PRICING_SITE_ID = 2
 DEFAULT_GROUP_NAME = "base"
 
-LINIO_AFFILIATE_SETTINGS = {"STORE_ID": None, "AFFILIATE_ID": None}
-
-AFFILIATE_IDS = {30: "-149x", 11: "-149A", 18: "-149I", 199: "-15Dd", 87: "-16ON"}
-
 WTB_TOPTEN_CHILE_BRAND = None
 WTB_LG_CHILE_BRAND = 1
 WTB_LG_PANAMA_BRAND = 5
@@ -463,3 +460,8 @@ LENOVO_RETAILER_TIER = {
 }
 
 DUEMINT_KEY = ""
+
+STAFF_EXTERNAL_SERVICES_IDS = {}
+DISQUS_KEY = ""
+ZENDESK_EMAIL = ""
+ZENDESK_API_KEY = ""

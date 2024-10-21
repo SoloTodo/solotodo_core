@@ -70,6 +70,7 @@ from solotodo.forms.product_picture_form import ProductPictureForm
 from solotodo.forms.rating_status_form import RatingStatusForm
 from solotodo.forms.resource_names_form import ResourceNamesForm
 from solotodo.forms.send_contact_message_form import SendContactEmailForm
+from solotodo.forms.staff_activity_form import StaffActivityForm
 from solotodo.forms.website_form import WebsiteForm
 from solotodo.forms.store_update_pricing_form import StoreUpdatePricingForm
 from solotodo.forms.visit_grouping_form import VisitGroupingForm
@@ -287,6 +288,29 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
             [settings.CONTACT_EMAIL],
         )
         return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+    @action(detail=True)
+    def staff_metrics(self, request, pk, *args, **kwargs):
+        request_user = request.user
+
+        if not request_user.is_authenticated:
+            raise PermissionDenied
+
+        user = self.get_object()
+
+        if user != request_user and not request_user.has_perm(
+            "solotodo.is_staff_manager"
+        ):
+            raise PermissionDenied
+
+        query = request.GET.copy()
+        query["staff"] = pk
+
+        form = StaffActivityForm(query)
+        if not form.is_valid():
+            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(form.get_data())
 
 
 class WebsiteViewSet(PermissionReadOnlyModelViewSet):
